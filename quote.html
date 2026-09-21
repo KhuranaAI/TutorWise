@@ -302,6 +302,18 @@
     cursor:pointer; padding:0 4px; text-decoration:underline;
   }
   .more-body .waive-link:hover{opacity:.85}
+  .prorate-box{
+    margin-top:8px; padding:10px 12px; background:#fff; border:1px solid var(--line);
+    border-radius:8px; display:grid; gap:6px;
+  }
+  .prorate-row{
+    display:grid; grid-template-columns: 170px 80px 1fr; gap:8px; align-items:center;
+  }
+  .prorate-row label{ font-size:12px; font-weight:700; color:var(--ink-soft); }
+  .prorate-row input[type="number"]{
+    width:80px; border:1.5px solid var(--line-2); border-radius:6px; padding:6px 8px; font-size:13px;
+  }
+  .prorate-row .hint{ font-size:11px; color:var(--muted); }
   .more-body .small-lbl{font-size:11px; font-weight:800; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.5px; display:block; margin-bottom:4px}
 
   .add-student{
@@ -825,8 +837,19 @@ function weekdaysLeftInMonth(dateStr){
   }
   return Math.max(1, count);
 }
-function prorateDefault(billing, dateStr){
-  return billing === 'quarterly' ? weeksLeftInQuarter(dateStr) : weekdaysLeftInMonth(dateStr);
+/* Lesson-based prorate estimate.
+   total   = lessons in a full billing period at this plan (pricing treats a month as 4 weeks)
+   lessons = estimated lessons the student will actually complete in the remainder of this period */
+function prorateTotalLessons(billing, sessions){
+  return sessions * 4;   // a priced month = 4 weeks of sessions, regardless of billing
+}
+/* Proration only ever applies to the FIRST MONTH. A quarterly sign-up mid-month pays the
+   prorated first month + 2 full months at the quarterly per-month rate. */
+function prorateEstimate(billing, dateStr, sessions){
+  const total = prorateTotalLessons(billing, sessions);
+  let lessons = Math.round(sessions * (weekdaysLeftInMonth(dateStr) / 5));
+  lessons = Math.max(0, Math.min(total, lessons));
+  return { lessons, total };
 }
 
 /* ============================================================
@@ -848,7 +871,8 @@ function newStudent(){
     assessWaived: false,
     discPct: 0,
     prorate: false,
-    prorateUnits: null,   // weeks-left-in-quarter OR weekdays-left-in-month; null = auto-default
+    prorateLessons: null, // lessons the student will complete this period; null = auto-estimate
+    prorateTotal: null,   // lessons in a full period at this plan; null = auto
   };
 }
 
@@ -1063,13 +1087,32 @@ function buildStudentCard(s, idx){
             </div>
             ${ s.prorate ? (() => {
               const isQ = s.billing === 'quarterly';
-              const units = (s.prorateUnits == null) ? prorateDefault(s.billing, state.family.date) : s.prorateUnits;
-              const max = isQ ? 13 : totalWeekdaysInMonth(state.family.date);
-              const unitLbl = isQ ? 'weeks left in quarter' : 'weekdays left in month';
-              return `<div class="field-inline" style="margin-top:6px">
-                <input type="number" min="1" max="${max}" step="1" data-role="prounits" value="${units}">
-                <span style="font-size:12px; color:var(--muted)">${unitLbl} (of ${max})</span>
-                <button class="waive-link" data-role="proreset" style="color:var(--navy)">↺ Reset to default</button>
+              const pObj = planById(s.planId);
+              if (!pObj) return `<div style="font-size:12px; color:var(--muted); margin-top:6px">Pick a learning plan to estimate lessons.</div>`;
+              const est = prorateEstimate(s.billing, state.family.date, pObj.sessions);
+              const total    = (s.prorateTotal   == null) ? est.total   : s.prorateTotal;
+              const rawLess  = (s.prorateLessons == null) ? est.lessons : s.prorateLessons;
+              const lessons  = Math.max(0, Math.min(rawLess, total));
+              const capped   = rawLess > total;
+              return `<div class="prorate-box">
+                <div class="prorate-row">
+                  <label>Lessons this month</label>
+                  <input type="number" min="0" max="${total}" step="1" data-role="prolessons" value="${lessons}">
+                  <span class="hint">${ capped
+                    ? `<b style="color:var(--red)">Capped at ${total}</b> — a prorated month can't exceed a full month`
+                    : `est. from ${pObj.sessions}×/wk and weekdays left this month` }</span>
+                </div>
+                <div class="prorate-row">
+                  <label>Lessons in a full month</label>
+                  <input type="number" min="1" step="1" data-role="prototal" value="${total}">
+                  <span class="hint">${pObj.sessions}×/wk × 4 weeks</span>
+                </div>
+                <div class="prorate-row" style="margin-top:2px">
+                  <span class="hint" style="grid-column:1 / 3">${ isQ
+                    ? `First quarter = (quarterly per-month rate × ${lessons} ÷ ${total}) + 2 full months`
+                    : `First month = monthly rate × ${lessons} ÷ ${total}` }</span>
+                  <button class="waive-link" data-role="proreset" style="color:var(--navy)">↺ Reset estimate</button>
+                </div>
               </div>`;
             })() : '' }
           </div>
@@ -1124,6 +1167,7 @@ function buildStudentCard(s, idx){
     el.innerHTML = `<div class="pn">${p.name}</div><div class="pf">${p.sessions}×/wk</div>`;
     el.addEventListener('click', () => {
       s.planId = p.id;
+      s.prorateLessons = null; s.prorateTotal = null;   // sessions/wk changed → re-estimate
       const replacement = buildStudentCard(s, idx);
       card.replaceWith(replacement);
     });
@@ -1148,7 +1192,7 @@ function buildStudentCard(s, idx){
   `;
   qBtn.addEventListener('click', () => {
     s.billing = 'quarterly';
-    s.prorateUnits = null;   // clear so default recomputes on next render
+    s.prorateLessons = null; s.prorateTotal = null;   // re-estimate for the new period
     const replacement = buildStudentCard(s, idx);
     card.replaceWith(replacement);
   });
@@ -1160,7 +1204,7 @@ function buildStudentCard(s, idx){
   `;
   mBtn.addEventListener('click', () => {
     s.billing = 'monthly';
-    s.prorateUnits = null;
+    s.prorateLessons = null; s.prorateTotal = null;
     const replacement = buildStudentCard(s, idx);
     card.replaceWith(replacement);
   });
@@ -1225,27 +1269,43 @@ function buildStudentCard(s, idx){
   const proCheck = card.querySelector('[data-role="prorate"]');
   proCheck.addEventListener('change', (e) => {
     s.prorate = e.target.checked;
-    if (s.prorate && s.prorateUnits == null){
-      s.prorateUnits = prorateDefault(s.billing, state.family.date);
-    }
     const replacement = buildStudentCard(s, idx);
     card.replaceWith(replacement);
   });
-  const proUnits = card.querySelector('[data-role="prounits"]');
-  if (proUnits){
-    proUnits.addEventListener('input', e => {
+  const proLessons = card.querySelector('[data-role="prolessons"]');
+  if (proLessons){
+    proLessons.addEventListener('input', e => {
+      let v = parseInt(e.target.value || '0', 10);
+      if (isNaN(v) || v < 0) v = 0;
+      s.prorateLessons = v;
+      updateRateChip(card, s);
+    });
+    // On blur, snap an over-cap entry back down so the field matches the charge.
+    proLessons.addEventListener('change', () => {
+      const pObj = planById(s.planId);
+      if (!pObj) return;
+      const est = prorateEstimate(s.billing, state.family.date, pObj.sessions);
+      const tot = (s.prorateTotal == null) ? est.total : s.prorateTotal;
+      if (s.prorateLessons != null && s.prorateLessons > tot){
+        s.prorateLessons = tot;
+        const replacement = buildStudentCard(s, idx);
+        card.replaceWith(replacement);
+      }
+    });
+  }
+  const proTotal = card.querySelector('[data-role="prototal"]');
+  if (proTotal){
+    proTotal.addEventListener('input', e => {
       let v = parseInt(e.target.value || '0', 10);
       if (isNaN(v) || v < 1) v = 1;
-      const max = s.billing === 'quarterly' ? 13 : totalWeekdaysInMonth(state.family.date);
-      if (v > max) v = max;
-      s.prorateUnits = v;
+      s.prorateTotal = v;
       updateRateChip(card, s);
     });
   }
   const proReset = card.querySelector('[data-role="proreset"]');
   if (proReset){
     proReset.addEventListener('click', () => {
-      s.prorateUnits = prorateDefault(s.billing, state.family.date);
+      s.prorateLessons = null; s.prorateTotal = null;
       const replacement = buildStudentCard(s, idx);
       card.replaceWith(replacement);
     });
@@ -1296,19 +1356,22 @@ function computeStudent(s){
   const isQ = (s.billing === 'quarterly');
   let periodBase = isQ ? out.lumpQuarter : out.monthlyRate;
 
-  // Prorate (replaces periodBase for first payment)
+  // Prorate by lessons (replaces periodBase for first payment)
   let prorated = null;
-  let prorateUnits = s.prorateUnits;
-  let prorateMax = isQ ? 13 : totalWeekdaysInMonth(state.family.date);
-  let prorateUnitLabel = isQ ? 'weeks' : 'weekdays';
+  let prorateLessons = null, prorateTotal = null, prorateFullMonths = 0;
   if (s.prorate){
-    if (prorateUnits == null) prorateUnits = prorateDefault(s.billing, state.family.date);
-    if (isQ){
-      prorated = out.lumpQuarter * (prorateUnits / 13);
-    } else {
-      prorated = out.monthlyRate * (prorateUnits / prorateMax);
-    }
-    periodBase = prorated;
+    const est = prorateEstimate(s.billing, state.family.date, p.sessions);
+    prorateLessons = (s.prorateLessons == null) ? est.lessons : s.prorateLessons;
+    prorateTotal   = (s.prorateTotal   == null) ? est.total   : s.prorateTotal;
+    if (prorateTotal < 1) prorateTotal = 1;
+    // A prorated month can never cost more than a full month, so cap attended
+    // lessons at the month's total. Guards against typos like "99" in the field.
+    prorateLessons = Math.max(0, Math.min(prorateLessons, prorateTotal));
+    // Only the first month is prorated. Quarterly adds 2 full months at the quarterly per-month rate.
+    const perMonth = isQ ? out.quarterlyRate : out.monthlyRate;
+    prorated = perMonth * (prorateLessons / prorateTotal);
+    prorateFullMonths = isQ ? 2 * out.quarterlyRate : 0;
+    periodBase = prorated + prorateFullMonths;
   }
 
   // Discounts
@@ -1331,10 +1394,11 @@ function computeStudent(s){
   out.discPct = s.discPct;
   out.sibling = s.sibling;
   out.prorate = s.prorate;
-  out.prorateUnits = prorateUnits;
-  out.prorateMax = prorateMax;
-  out.prorateUnitLabel = prorateUnitLabel;
-  out.prorateAmt = prorated;
+  out.prorateLessons = prorateLessons;
+  out.prorateTotal = prorateTotal;
+  out.prorateAmt = prorated;              // prorated FIRST MONTH only
+  out.prorateFullMonths = prorateFullMonths; // the 2 full months added for quarterly
+  out.periodBase = periodBase;
   out.firstPayment = firstPayment;
 
   // Steady-state 3-month tuition: what a typical 3-month window costs at the plan's regular rate.
@@ -1369,11 +1433,11 @@ function syncScenariosWithStudents(){
           planId: stu.planId || '',
           billing: stu.billing || 'quarterly',
         });
-      } else {
-        // Lazy auto-fill: if the user hadn't yet picked a plan when this entry was
-        // first created, mirror whatever the student has selected now. Once a value
-        // is set in the option (explicitly or auto-filled), it sticks.
-        if (!entry.planId && stu.planId) entry.planId = stu.planId;
+      } else if (!entry.touched) {
+        // Untouched entries mirror the student card. Once the user changes a
+        // dropdown inside the option, it's "touched" and stops following.
+        entry.planId  = stu.planId || '';
+        entry.billing = stu.billing || 'quarterly';
       }
     });
   });
@@ -1436,8 +1500,8 @@ function renderScenarios(){
           <option value="monthly"   ${entry.billing === 'monthly'   ? 'selected' : ''}>Monthly</option>
         </select>
       `;
-      row.querySelector('[data-role="plan"]').addEventListener('change', e => entry.planId = e.target.value);
-      row.querySelector('[data-role="billing"]').addEventListener('change', e => entry.billing = e.target.value);
+      row.querySelector('[data-role="plan"]').addEventListener('change', e => { entry.planId = e.target.value; entry.touched = true; });
+      row.querySelector('[data-role="billing"]').addEventListener('change', e => { entry.billing = e.target.value; entry.touched = true; });
       grid.appendChild(row);
     });
     card.appendChild(grid);
@@ -1505,8 +1569,20 @@ function renderQuote(){
   }
 
   // Payment info
-  const anyQ = readyStudents.some(s => s.billing === 'quarterly');
-  const anyM = readyStudents.some(s => s.billing === 'monthly');
+  // Which billing cycles actually appear on this quote? In comparison mode the
+  // per-option billing is what the parent sees, not the student card's own setting.
+  let anyQ, anyM;
+  if (comparisonMode){
+    const billings = new Set();
+    state.scenarios.forEach(sc => sc.perStudent.forEach(p => {
+      if (readyStudents.some(st => st.id === p.studentId)) billings.add(p.billing);
+    }));
+    anyQ = billings.has('quarterly');
+    anyM = billings.has('monthly');
+  } else {
+    anyQ = readyStudents.some(s => s.billing === 'quarterly');
+    anyM = readyStudents.some(s => s.billing === 'monthly');
+  }
   html += `
     <div class="pay-info">
       <b>Payment Information.</b> Payment can be made via e-transfer to <b>${BRAND.payEmail}</b> or by cash. Please include your child's name in the e-transfer message.
@@ -1559,16 +1635,20 @@ function renderSingle(students){
         </div>
 
         <div class="row"><span class="lbl">Monthly Rate</span><span class="val">${fmt$(c.monthlyRate)}/mo</span></div>
-        ${ c.isQ
-            ? `<div class="row hl"><span class="lbl">Quarterly Payment</span><span class="val">${fmt$(c.lumpQuarter)} / quarter</span></div>
-               ${ (!c.sibling && c.discPct === 0 && !c.prorate) ? `<div class="save-line">★ You save ${fmt$(c.savingQuarter)} this quarter vs monthly</div>` : '' }`
-            : `<div class="row hl"><span class="lbl">Monthly Payment</span><span class="val">${fmt$(c.monthlyRate)} / month</span></div>`
+        ${ c.prorate
+            ? ( c.isQ
+                ? `<div class="row hl"><span class="lbl">First Quarter Payment (prorated)</span><span class="val">${fmt$(c.periodBase)}</span></div>
+                   <div class="row"><span class="lbl">&nbsp;&nbsp;First month, prorated (${c.prorateLessons} of ${c.prorateTotal} lessons)</span><span class="val">${fmt$(c.prorateAmt)}</span></div>
+                   <div class="row"><span class="lbl">&nbsp;&nbsp;Plus 2 full months at ${fmt$(c.quarterlyRate)}/mo</span><span class="val">${fmt$(c.prorateFullMonths)}</span></div>
+                   <div class="reg-rate">Regular quarterly payment from next quarter: ${fmt$(c.lumpQuarter)} / quarter</div>`
+                : `<div class="row hl"><span class="lbl">First Month Payment (prorated)</span><span class="val">${fmt$(c.prorateAmt)}</span></div>
+                   <div class="row"><span class="lbl">&nbsp;&nbsp;${c.prorateLessons} of ${c.prorateTotal} lessons this month</span><span class="val"></span></div>
+                   <div class="reg-rate">Regular monthly payment from next month: ${fmt$(c.monthlyRate)} / month</div>` )
+            : ( c.isQ
+                ? `<div class="row hl"><span class="lbl">Quarterly Payment</span><span class="val">${fmt$(c.lumpQuarter)} / quarter</span></div>
+                   ${ (!c.sibling && c.discPct === 0) ? `<div class="save-line">★ You save ${fmt$(c.savingQuarter)} this quarter vs monthly</div>` : '' }`
+                : `<div class="row hl"><span class="lbl">Monthly Payment</span><span class="val">${fmt$(c.monthlyRate)} / month</span></div>` )
         }
-
-        ${ c.prorate ? `
-          <div class="row"><span class="lbl">Prorated tuition for this period</span><span class="val">${fmt$(c.prorateAmt)}</span></div>
-          <div class="reg-rate">Regular rate from next period: ${ c.isQ ? fmt$(c.lumpQuarter) + ' / quarter' : fmt$(c.monthlyRate) + ' / month'}</div>
-        ` : '' }
 
         ${ c.discPct > 0 ? `<div class="row deduct"><span class="lbl">Discretionary discount (${c.discPct}%)</span><span class="val">− ${fmt$(c.discPctAmt)}</span></div>` : '' }
         ${ c.sibling ? `<div class="row deduct"><span class="lbl">Sibling discount (5%)</span><span class="val">− ${fmt$(c.sibAmt)}</span></div>` : '' }
@@ -1600,7 +1680,43 @@ function renderSingle(students){
   return html;
 }
 
+/* Build the per-option view of a student.
+   Proration is first-month-only, so the lesson count depends on the PLAN (sessions/week)
+   and the start date — never on the billing cycle. So:
+     - same plan  → carry the manual lesson override across verbatim, whatever the billing.
+     - diff plan  → rescale the override to the new plan's frequency, preserving the
+                    fraction-of-month the family actually attends.
+   This keeps "6 of 16 lessons" identical in the monthly and quarterly columns. */
+function studentForOption(s, entry){
+  const planId = entry.planId || s.planId;
+  let lessons = s.prorateLessons;
+  let total   = s.prorateTotal;
+
+  const hasOverride = (lessons != null || total != null);
+  if (hasOverride && planId !== s.planId){
+    const oldP = planById(s.planId), newP = planById(planId);
+    if (oldP && newP){
+      const oldEst    = prorateEstimate(s.billing, state.family.date, oldP.sessions);
+      const oldTotal  = (total   == null) ? oldEst.total   : total;
+      const oldLesson = (lessons == null) ? oldEst.lessons : lessons;
+      const frac = oldTotal > 0 ? (oldLesson / oldTotal) : 0;
+      total   = prorateTotalLessons(entry.billing, newP.sessions);
+      lessons = Math.max(0, Math.min(total, Math.round(frac * total)));
+    } else {
+      lessons = null; total = null;   // can't rescale — fall back to auto-estimate
+    }
+  }
+
+  return Object.assign({}, s, {
+    billing: entry.billing,
+    planId:  planId,
+    prorateLessons: lessons,
+    prorateTotal:   total,
+  });
+}
+
 function renderComparison(students){
+  syncScenariosWithStudents();
   let html = `<div class="quote-section-title">Plan Comparison</div>`;
   const cols = state.scenarios;
   const colTotals = [];
@@ -1633,11 +1749,7 @@ function renderComparison(students){
       const entry = sc.perStudent.find(p => p.studentId === s.id);
       if (!entry) return;
       // Apply this option's plan + billing for this student
-      const ss = Object.assign({}, s, {
-        billing: entry.billing,
-        planId:  entry.planId || s.planId,
-        prorateUnits: null,
-      });
+      const ss = studentForOption(s, entry);
       const c = computeStudent(ss);
       if (!c.ready) return;
       total += c.firstPayment;
@@ -1645,11 +1757,17 @@ function renderComparison(students){
       inner += `
         <div class="cs">
           <div class="csn">${escapeHtml(stuName)}<div style="color:var(--muted); font-weight:600; font-size:11px; margin-top:2px">${escapeHtml(c.gradeLabel)} · ${escapeHtml(c.planName)} · ${c.sessions}×/wk</div></div>
-          ${ c.isQ
-              ? `<div class="csl hl"><span class="l">Quarterly Payment</span><span class="v">${fmt$(c.lumpQuarter)}</span></div>`
-              : `<div class="csl hl"><span class="l">Monthly Payment</span><span class="v">${fmt$(c.monthlyRate)}</span></div>`
+          ${ c.prorate
+              ? ( c.isQ
+                  ? `<div class="csl hl"><span class="l">First Quarter (prorated)</span><span class="v">${fmt$(c.periodBase)}</span></div>
+                     <div class="csl"><span class="l">&nbsp;First month (${c.prorateLessons} of ${c.prorateTotal} lessons)</span><span class="v">${fmt$(c.prorateAmt)}</span></div>
+                     <div class="csl"><span class="l">&nbsp;+ 2 full months</span><span class="v">${fmt$(c.prorateFullMonths)}</span></div>`
+                  : `<div class="csl hl"><span class="l">First Month (prorated)</span><span class="v">${fmt$(c.prorateAmt)}</span></div>
+                     <div class="csl"><span class="l">&nbsp;${c.prorateLessons} of ${c.prorateTotal} lessons</span><span class="v"></span></div>` )
+              : ( c.isQ
+                  ? `<div class="csl hl"><span class="l">Quarterly Payment</span><span class="v">${fmt$(c.lumpQuarter)}</span></div>`
+                  : `<div class="csl hl"><span class="l">Monthly Payment</span><span class="v">${fmt$(c.monthlyRate)}</span></div>` )
           }
-          ${ c.prorate ? `<div class="csl"><span class="l">Prorated this period</span><span class="v">${fmt$(c.prorateAmt)}</span></div>` : '' }
           ${ c.discPct > 0 ? `<div class="csl deduct"><span class="l">Discount (${c.discPct}%)</span><span class="v">− ${fmt$(c.discPctAmt)}</span></div>` : '' }
           ${ c.sibling ? `<div class="csl deduct"><span class="l">Sibling (5%)</span><span class="v">− ${fmt$(c.sibAmt)}</span></div>` : '' }
           <div class="csl"><span class="l">Registration Fee</span><span class="v">${ c.regWaived ? 'Waived' : fmt$(c.regFee) }</span></div>
@@ -1663,11 +1781,7 @@ function renderComparison(students){
     students.forEach((s) => {
       const entry = sc.perStudent.find(p => p.studentId === s.id);
       if (!entry) return;
-      const ss = Object.assign({}, s, {
-        billing: entry.billing,
-        planId:  entry.planId || s.planId,
-        prorateUnits: null,
-      });
+      const ss = studentForOption(s, entry);
       const c = computeStudent(ss);
       if (!c.ready) return;
       cTotal3 += c.threeMonthTotal;
