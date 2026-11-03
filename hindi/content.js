@@ -29,6 +29,7 @@ window.BOLO_CONTENT = {
     {
       id: "m1",
       number: 1,
+      icon: "🏃🏽‍♀️",
       title: "What Am I Doing?",
       tagline: "Say what you're doing right now",
       minutes: "15–20",

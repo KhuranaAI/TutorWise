@@ -4,7 +4,7 @@
    Progress lives in localStorage / the cloud, never in this cache, so updates can't touch it. */
 const CACHE = "bolo-app";
 const SHELL = [
-  "./", "index.html", "app.css", "app.js", "content.js", "config.js", "manifest.webmanifest",
+  "./", "index.html", "app.css", "app.js", "content.js", "modules.js", "config.js", "manifest.webmanifest",
   "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"
 ];
 const TIMEOUT_MS = 3500;

@@ -4,12 +4,34 @@ A static, no-build web app. Open `hindi/index.html` from any static host (it's s
 
 | File | Purpose |
 | --- | --- |
-| `content.js` | All teaching content: sentence pattern, verbs, accepted spellings, common-mistake explanations |
+| `content.js` | Module 1 content: sentence pattern, verbs, accepted spellings, common-mistake explanations |
+| `modules.js` | Modules 2–8 content and the shared word list (lexicon) — see the guide at the top of the file |
 | `app.js` | Game engine: stage runner, exercise types, sentence checker, progress (localStorage key `bolo.m1.v1`) |
 | `app.css` | Styles |
 | `config.js` | Cloud save settings (Firebase; empty = device-only saving) |
 | `firestore.rules` | Firebase security rules for cloud save |
 | `manifest.webmanifest`, `sw.js`, `icons/` | Home-screen app: name, icon, full-screen, offline support |
+
+## The course (made for Anissa)
+
+She always speaks as herself (female forms: rahi, gayi, aaungi) and uses **aap** + **ji** with Aunty, Uncle and
+other elders. Everyday family Hindi with plenty of Hinglish (e.g. *bhaag* for run, *shopping kar*). Modules unlock in
+order; tap the **Bolo!** logo 5 times on the home screen to unlock all of them for testing (until the app is closed).
+
+| # | Module | She learns to say |
+| --- | --- | --- |
+| 1 | What Am I Doing? | Main kha rahi hoon — 8 everyday verbs |
+| 2 | Chai, TV aur Kaam | Main chai pee rahi hoon · when to use **kar** · Main shopping kar rahi hoon |
+| 3 | Namaste! Kaise Hain? | Namaste Aunty ji · Main theek / khush / busy hoon · Main thak gayi hoon · Aur aap? |
+| 4 | Understanding Their Questions | Kya kar rahi ho? Khana khaya? Chai piyogi? → Haan ji, kha liya · Abhi nahin |
+| 5 | Asking Them Back | Aunty, aap kaisi hain? · Uncle, aap kya kar rahe hain? · Sab kaisa chal raha hai? |
+| 6 | Food & Home | Khana bahut accha hai! · Mujhe dal pasand hai · Thoda aur · Bas, shukriya · Mera pet bhar gaya |
+| 7 | Today & Plans | Aaj main office ja rahi hoon · Main ghar par hoon · Kal main aaungi |
+| 8 | The Family Call | Review + a full call with Aunty and Uncle |
+
+Modules 2–8 use these stages (some skip one): Learn → Words → Quiz → Build → Transform → **Family Chat** → Challenge
+(typing practice + mastery test). The family chat is a message conversation with Aunty or Uncle where she picks or
+types her replies.
 
 ## Module 1 flow
 

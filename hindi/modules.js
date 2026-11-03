@@ -1,0 +1,667 @@
+/* =====================================================
+   Bolo! — Modules 2–8 (content only)
+   -----------------------------------------------------
+   Made for Anissa: she always speaks as herself (female forms: rahi, gayi, aaungi),
+   and uses "aap" + "ji" with Aunty, Uncle and other elders. Everyday family Hindi,
+   with the Hinglish the family really uses.
+
+   lexicon   every word that can appear in a sentence:
+             id: [roman, devanagari, English, role, [other accepted spellings]]
+             roles colour the tiles: subject, verb, aux, thing, person, other
+             (Module 1's words — main, rahi, hoon, eat, drink, … — are added automatically.)
+   Per module:
+     cards      flashcards for the Words stage
+     lesson     Learn-stage screens: explain | tip | swap | quiz | order
+     items      sentences: tokens = what she must produce (alts = other correct versions)
+     quiz       real-life multiple choice (answer = index of the right option)
+     transforms [fromItem, toItem] pairs (same length; she swaps the words that differ)
+     chat       a family conversation: them-lines and her replies (pick or type)
+     confusions [wrongWord, rightWord, explanation] for friendly corrections
+     mistakes   words she might reach for, with an explanation
+   Editing tips: keep ids stable (progress is saved by id). If you change a stage's screens a lot,
+   bump that stage's rev in stageInfo (e.g. stageInfo: { build: { rev: 2 } }).
+   ===================================================== */
+(function () {
+  const C = window.BOLO_CONTENT;
+  const RAHA_FEMALE = { words: ["raha", "rahaa", "rha"], why: "“Raha” is what a man says. You're a woman, so you say “rahi”." };
+  const NOT_TUM = { words: ["tum", "tu", "tumhara"], why: "“Tum” is for friends and kids. With Aunty, Uncle and other elders, always use “aap”." };
+
+  C.lexicon = {
+    kar: ["kar", "कर", "do", "verb", ["karr", "kr"]],
+    bana: ["bana", "बना", "make", "verb", ["banaa", "bna"]],
+    ho: ["ho", "हो", "be", "aux", []],
+    ja: ["ja", "जा", "go", "verb", ["jaa"]],
+    aa: ["aa", "आ", "come", "verb", ["aaa"]],
+    thak: ["thak", "थक", "tire", "verb", ["thakk"]],
+    bhar: ["bhar", "भर", "fill", "verb", ["bharr"]],
+    chal: ["chal", "चल", "go along", "verb", ["chall"]],
+    milte: ["milte", "मिलते", "meet", "verb", ["milty", "milt"]],
+    aaungi: ["aaungi", "आऊँगी", "I'll come (female)", "verb", ["aaongi", "aungi", "aaoongi", "aaugi", "aaoungi", "aaungee"]],
+
+    chai: ["chai", "चाय", "tea", "thing", ["chay", "chaai", "chaye", "chaay", "chae"]],
+    paani: ["paani", "पानी", "water", "thing", ["pani", "panee", "paanee"]],
+    khana: ["khana", "खाना", "food", "thing", ["khaana", "khanaa"]],
+    kitaab: ["kitaab", "किताब", "book", "thing", ["kitab", "kitaabein"]],
+    tv: ["TV", "टीवी", "TV", "thing", ["teevee", "telly"]],
+    movie: ["movie", "मूवी", "movie", "thing", ["film", "movies", "picture"]],
+    kaam: ["kaam", "काम", "work", "thing", ["kam", "kaamm"]],
+    baat: ["baat", "बात", "talk", "thing", ["bat", "baath"]],
+    shopping: ["shopping", "शॉपिंग", "shopping", "thing", ["shoping"]],
+    cooking: ["cooking", "कुकिंग", "cooking", "thing", ["kuking", "cookin"]],
+    call: ["call", "कॉल", "call", "thing", ["cal", "phone"]],
+    relax: ["relax", "रिलैक्स", "relax", "thing", ["rilax", "relaxing"]],
+    din: ["din", "दिन", "day", "thing", ["dinn"]],
+    dal: ["dal", "दाल", "dal (lentils)", "thing", ["daal", "dhal"]],
+    roti: ["roti", "रोटी", "roti (flatbread)", "thing", ["rotee", "rotti"]],
+    chawal: ["chawal", "चावल", "rice", "thing", ["chaawal", "chaval"]],
+    mithai: ["mithai", "मिठाई", "sweets", "thing", ["mitai", "meethai", "mithaai"]],
+    pet: ["pet", "पेट", "stomach", "thing", []],
+    bhookh: ["bhookh", "भूख", "hunger", "thing", ["bhook", "bhukh", "bhuk"]],
+    ghar: ["ghar", "घर", "home", "thing", ["gharr", "ghr"]],
+    office: ["office", "ऑफिस", "office", "thing", ["ofis", "offis", "ofice"]],
+    market: ["market", "मार्केट", "market", "thing", ["markit", "bazaar", "bazar"]],
+    gym: ["gym", "जिम", "gym", "thing", ["jim"]],
+
+    aunty: ["Aunty", "आंटी", "Aunty", "person", ["auntie", "aunti", "anty", "aunt", "antie"]],
+    uncle: ["Uncle", "अंकल", "Uncle", "person", ["unkle", "ankal"]],
+    aap: ["aap", "आप", "you (respectful)", "subject", ["ap", "aapp"]],
+    mujhe: ["mujhe", "मुझे", "to me", "subject", ["mujhey", "mujhay", "muje", "mujhee"]],
+
+    rahe: ["rahe", "रहे", "…-ing (for a man)", "aux", ["rahey", "rhe", "rahay"]],
+    raha: ["raha", "रहा", "…-ing (for a man / a thing)", "aux", ["rha", "rahaa"]],
+    hain: ["hain", "हैं", "are (with aap)", "aux", ["hein", "hen"]],
+    hai: ["hai", "है", "is", "aux", ["he", "hae"]],
+    gayi: ["gayi", "गई", "got (female)", "aux", ["gai", "gayee", "gyi", "gaee"]],
+    gaya: ["gaya", "गया", "got (for pet)", "aux", ["gya", "gayaa"]],
+    liya: ["liya", "लिया", "(done)", "aux", ["lia", "liyaa"]],
+    tha: ["tha", "था", "was", "aux", ["thaa"]],
+    lagi: ["lagi", "लगी", "(is felt)", "aux", ["lagee", "lgi"]],
+
+    namaste: ["Namaste", "नमस्ते", "hello", "other", ["namastey", "namaskar", "namastay", "namasthe"]],
+    ji: ["ji", "जी", "(respect)", "other", ["jee"]],
+    aur: ["aur", "और", "and / more", "other", ["or", "aurr"]],
+    theek: ["theek", "ठीक", "fine", "other", ["thik", "theik", "teek", "thek", "thiik"]],
+    khush: ["khush", "खुश", "happy", "other", ["kush", "khus"]],
+    busy: ["busy", "बिज़ी", "busy", "other", ["bizzy", "bizy", "bisy"]],
+    excited: ["excited", "एक्साइटेड", "excited", "other", ["exited", "exicted"]],
+    bore: ["bore", "बोर", "bored", "other", ["bor"]],
+    bahut: ["bahut", "बहुत", "very", "other", ["bohot", "bahot", "bhot", "bohat", "bahoot", "bht"]],
+    shukriya: ["shukriya", "शुक्रिया", "thank you", "other", ["shukria", "shukriyaa", "sukriya", "dhanyavaad", "dhanyawad", "dhanyavad", "thanks"]],
+    kya: ["kya", "क्या", "what", "other", ["kyaa", "kia"]],
+    kaise: ["kaise", "कैसे", "how (to a man)", "other", ["kese", "kaisey", "kayse", "kaisay"]],
+    kaisi: ["kaisi", "कैसी", "how (to a woman)", "other", ["kesi", "kaisee", "kaisy"]],
+    kaisa: ["kaisa", "कैसा", "how", "other", ["kesa", "kaisaa"]],
+    haan: ["haan", "हाँ", "yes", "other", ["ha", "han", "haa"]],
+    nahin: ["nahin", "नहीं", "no", "other", ["nahi", "nai", "nhi", "nahee", "nahii"]],
+    sab: ["sab", "सब", "everything", "other", ["sabb", "sub"]],
+    abhi: ["abhi", "अभी", "now", "other", ["abi", "abhii", "abhee"]],
+    please: ["please", "प्लीज़", "please", "other", ["plz", "pls", "plis"]],
+    aapka: ["aapka", "आपका", "your (respectful)", "other", ["apka", "aapkaa"]],
+    pasand: ["pasand", "पसंद", "liked", "other", ["pasant", "psand", "pasnd"]],
+    accha: ["accha", "अच्छा", "good", "other", ["acha", "achha", "achcha", "acchha", "achaa"]],
+    tasty: ["tasty", "टेस्टी", "tasty", "other", ["testy", "tasti"]],
+    thoda: ["thoda", "थोड़ा", "a little", "other", ["thora", "thodaa"]],
+    bas: ["bas", "बस", "enough", "other", ["buss", "bass"]],
+    mera: ["mera", "मेरा", "my", "other", ["meraa"]],
+    aaj: ["aaj", "आज", "today", "other", ["aj"]],
+    kal: ["kal", "कल", "tomorrow", "other", ["kall"]],
+    par: ["par", "पर", "at", "other", ["pe", "pr"]],
+    bilkul: ["bilkul", "बिल्कुल", "absolutely", "other", ["bilkull", "bilkool"]],
+    chalo: ["chalo", "चलो", "alright then", "other", ["challo", "chlo"]],
+    phir: ["phir", "फिर", "then / again", "other", ["fir", "phirr"]],
+    bye: ["bye", "बाय", "bye", "other", ["bai", "byee", "bbye"]]
+  };
+
+  const mods = [
+    /* ============================ MODULE 2 ============================ */
+    {
+      id: "m2", number: 2, icon: "🍵", title: "Chai, TV aur Kaam", tagline: "Say what you're doing — and use kar for almost anything", minutes: "15–20",
+      stages: ["learn", "words", "quiz", "build", "transform", "chat", "challenge"],
+      stageInfo: {
+        learn: { desc: "The sentence grows: add the thing you're doing — and meet kar." },
+        quiz: { icon: "🤔", title: "Kar or Not?", desc: "Pick the right action for each thing. When do you use kar?" },
+        chat: { title: "Chat with Aunty", desc: "Aunty messages you. Tell her what you're up to." }
+      },
+      formula: [["Main", "subject"], ["thing", "thing"], ["verb", "verb"], ["rahi hoon", "aux"]],
+      formulaText: "Main + thing + verb + rahi hoon",
+      mistakes: [RAHA_FEMALE],
+      confusions: [["kar", "watch", "You <i>watch</i> TV or a movie, so use <b>dekh</b> — never “TV kar”."], ["kar", "drink", "You <i>drink</i> chai and water, so use <b>pee</b>."], ["kar", "eat", "You <i>eat</i> food, so use <b>kha</b>."], ["kar", "read", "You <i>read</i> a book, so use <b>padh</b>."]],
+      cards: [
+        { id: "chai", roman: "chai", deva: "चाय", en: "tea", emoji: "🍵", sounds: "like “chai” in English — Hindi is where the word comes from!" },
+        { id: "paani", roman: "paani", deva: "पानी", en: "water", emoji: "💧", sounds: "PAA-nee" },
+        { id: "khana", roman: "khana", deva: "खाना", en: "food / a meal", emoji: "🍛", sounds: "KHAA-naa — breathy kh" },
+        { id: "kitaab", roman: "kitaab", deva: "किताब", en: "book", emoji: "📚", sounds: "ki-TAAB" },
+        { id: "kaam", roman: "kaam", deva: "काम", en: "work", emoji: "💼", sounds: "rhymes with “calm”" },
+        { id: "baat", roman: "baat", deva: "बात", en: "talk / chat", emoji: "💬", sounds: "rhymes with “thought” (soft t)" },
+        { id: "kar", roman: "kar", deva: "कर", en: "do", emoji: "🛠️", sounds: "like “cur”" }
+      ],
+      lesson: [
+        { kind: "explain", kicker: "The sentence grows", title: "Tap each block to see what it means",
+          blocks: [[["main"], "I"], [["chai"], "tea"], [["drink"], "drink"], [["rahi", "hoon"], "am …-ing"]],
+          roman: "Main chai pee rahi hoon.", deva: "मैं चाय पी रही हूँ।", en: "I am drinking chai.", emoji: "🍵",
+          note: "<b>New:</b> the thing goes <i>before</i> the action. Hindi says “I · chai · drink · am-ing”." },
+        { kind: "swap", kicker: "Things and their actions", title: "Tap each one to drop it into the sentence", options: ["chai", "kitaab", "tv", "khana"],
+          note: "Each thing has its own action: chai → <b>pee</b>, kitaab → <b>padh</b>, TV → <b>dekh</b>, khana → <b>kha</b>." },
+        { kind: "tip", kicker: "Meet kar", title: "kar = do",
+          html: "Some things aren't a single action — they're an <b>activity</b>. For those, Hindi uses <b>kar</b> (do).<ul><li><b>kaam kar</b> = do work → <i>work</i></li><li><b>baat kar</b> = do talk → <i>talk / chat</i></li></ul>",
+          examples: ["kaam", "baat"] },
+        { kind: "tip", kicker: "The Hinglish trick", title: "English activity + kar",
+          html: "Your family does this all the time: take an English activity word and add <b>kar</b>.<br>It works for shopping, cooking, a call, relaxing… hundreds of things.",
+          examples: ["shopping", "cooking", "call", "relax"] },
+        { kind: "tip", kicker: "When to use kar", title: "Three simple rules",
+          html: "<ol><li>There's a Hindi action for it? Use that — <b>chai pee</b>, <b>TV dekh</b>, <b>khana kha</b>.</li><li>It's an activity? Use <b>kar</b> — <b>kaam kar</b>, <b>baat kar</b>.</li><li>Using an English activity word? Add <b>kar</b> — <b>shopping kar</b>.</li></ol>The classic slip: it's <b>TV dekh</b>, never “TV kar”." },
+        { kind: "quiz", q: { prompt: "How do you say “I'm watching TV”?", options: ["Main TV dekh rahi hoon.", "Main TV kar rahi hoon.", "Main dekh TV rahi hoon."], answer: 0,
+          whys: ["", "You <i>watch</i> TV, so it's <b>dekh</b>. kar is for activities like kaam or shopping.", "The thing comes before the action: <b>TV dekh</b>."] } },
+        { kind: "order", item: "kaam", chunks: [["main"], ["kaam"], ["kar"], ["rahi", "hoon"]] }
+      ],
+      items: [
+        { id: "chai", en: "I am drinking chai.", roman: "Main chai pee rahi hoon.", deva: "मैं चाय पी रही हूँ।", tokens: ["main", "chai", "drink", "rahi", "hoon"], chip: "🍵 chai" },
+        { id: "paani", en: "I am drinking water.", roman: "Main paani pee rahi hoon.", deva: "मैं पानी पी रही हूँ।", tokens: ["main", "paani", "drink", "rahi", "hoon"], chip: "💧 paani" },
+        { id: "khana", en: "I am eating food.", roman: "Main khana kha rahi hoon.", deva: "मैं खाना खा रही हूँ।", tokens: ["main", "khana", "eat", "rahi", "hoon"], chip: "🍛 khana" },
+        { id: "kitaab", en: "I am reading a book.", roman: "Main kitaab padh rahi hoon.", deva: "मैं किताब पढ़ रही हूँ।", tokens: ["main", "kitaab", "read", "rahi", "hoon"], chip: "📚 kitaab" },
+        { id: "tv", en: "I am watching TV.", roman: "Main TV dekh rahi hoon.", deva: "मैं टीवी देख रही हूँ।", tokens: ["main", "tv", "watch", "rahi", "hoon"], chip: "📺 TV" },
+        { id: "movie", en: "I am watching a movie.", roman: "Main movie dekh rahi hoon.", deva: "मैं मूवी देख रही हूँ।", tokens: ["main", "movie", "watch", "rahi", "hoon"] },
+        { id: "kaam", en: "I am working.", roman: "Main kaam kar rahi hoon.", deva: "मैं काम कर रही हूँ।", tokens: ["main", "kaam", "kar", "rahi", "hoon"] },
+        { id: "baat", en: "I am chatting.", roman: "Main baat kar rahi hoon.", deva: "मैं बात कर रही हूँ।", tokens: ["main", "baat", "kar", "rahi", "hoon"] },
+        { id: "shopping", en: "I am shopping.", roman: "Main shopping kar rahi hoon.", deva: "मैं शॉपिंग कर रही हूँ।", tokens: ["main", "shopping", "kar", "rahi", "hoon"] },
+        { id: "cooking", en: "I am cooking.", roman: "Main cooking kar rahi hoon.", deva: "मैं कुकिंग कर रही हूँ।", tokens: ["main", "cooking", "kar", "rahi", "hoon"], alts: [["main", "khana", "bana", "rahi", "hoon"]] },
+        { id: "call", en: "I am on a call.", roman: "Main call kar rahi hoon.", deva: "मैं कॉल कर रही हूँ।", tokens: ["main", "call", "kar", "rahi", "hoon"] },
+        { id: "relax", en: "I am relaxing.", roman: "Main relax kar rahi hoon.", deva: "मैं रिलैक्स कर रही हूँ।", tokens: ["main", "relax", "kar", "rahi", "hoon"] }
+      ],
+      quiz: [
+        { prompt: "Which action goes with chai?", hi: "chai", options: ["pee", "kar", "dekh", "kha"], answer: 0, whys: ["", "You <i>drink</i> chai → <b>chai pee</b>.", "dekh is for watching.", "kha is for eating."] },
+        { prompt: "Which action goes with TV?", hi: "TV", options: ["dekh", "kar", "pee", "padh"], answer: 0, whys: ["", "You <i>watch</i> TV → <b>TV dekh</b>. Never “TV kar”.", "pee is for drinking.", "padh is for reading."] },
+        { prompt: "Which action goes with kaam (work)?", hi: "kaam", options: ["kar", "dekh", "kha", "padh"], answer: 0, whys: ["", "Work is an activity → <b>kaam kar</b>.", "Work is an activity → <b>kaam kar</b>.", "Work is an activity → <b>kaam kar</b>."] },
+        { prompt: "Which action goes with shopping?", hi: "shopping", options: ["kar", "dekh", "pee", "khel"], answer: 0, whys: ["", "English activity word + <b>kar</b> → shopping kar.", "English activity word + <b>kar</b> → shopping kar.", "English activity word + <b>kar</b> → shopping kar."] },
+        { prompt: "Which action goes with kitaab (book)?", hi: "kitaab", options: ["padh", "kar", "dekh", "likh"], answer: 0, whys: ["", "You <i>read</i> a book → <b>kitaab padh</b>.", "You <i>read</i> a book → <b>kitaab padh</b>.", "likh is for writing — you read a book: <b>padh</b>."] },
+        { prompt: "Which action goes with khana (food)?", hi: "khana", options: ["kha", "pee", "kar", "dekh"], answer: 0, whys: ["", "You <i>eat</i> food → <b>khana kha</b>.", "You <i>eat</i> food → <b>khana kha</b>.", "You <i>eat</i> food → <b>khana kha</b>."] },
+        { prompt: "Which action goes with baat (talk)?", hi: "baat", options: ["kar", "dekh", "kha", "so"], answer: 0, whys: ["", "Talking is an activity → <b>baat kar</b>.", "Talking is an activity → <b>baat kar</b>.", "Talking is an activity → <b>baat kar</b>."] },
+        { prompt: "Which action goes with call?", hi: "call", options: ["kar", "pee", "dekh", "padh"], answer: 0, whys: ["", "English word + <b>kar</b> → call kar.", "English word + <b>kar</b> → call kar.", "English word + <b>kar</b> → call kar."] }
+      ],
+      transforms: [["chai", "paani"], ["tv", "movie"], ["kaam", "baat"], ["chai", "khana"], ["tv", "kaam"], ["shopping", "call"]],
+      chat: {
+        who: "aunty",
+        lines: [
+          { them: "Hi Anissa! Kya kar rahi ho?", dv: "हाय अनीसा! क्या कर रही हो?", en: "Hi Anissa! What are you doing?" },
+          { pick: [{ text: "Main chai pee rahi hoon.", ok: true }, { text: "Main chai kar rahi hoon.", why: "You <i>drink</i> chai → <b>chai pee</b>." }, { text: "Main pee chai rahi hoon.", why: "The thing comes first: <b>chai pee</b>." }] },
+          { them: "Accha! Main bhi chai pee rahi hoon. 😄", dv: "अच्छा! मैं भी चाय पी रही हूँ।", en: "Oh nice! I'm drinking chai too." },
+          { them: "Aur Uncle TV dekh rahe hain.", dv: "और अंकल टीवी देख रहे हैं।", en: "And Uncle is watching TV." },
+          { type: "kaam", goal: "Tell Aunty you're working now." },
+          { them: "Theek hai beta, baad mein baat karte hain!", dv: "ठीक है बेटा, बाद में बात करते हैं!", en: "Okay dear, let's talk later!" },
+          { pick: [{ text: "Bye Aunty ji! 👋", ok: true }] }
+        ]
+      }
+    },
+
+    /* ============================ MODULE 3 ============================ */
+    {
+      id: "m3", number: 3, icon: "🙏", title: "Namaste! Kaise Hain?", tagline: "Greet the family and say how you're feeling", minutes: "15",
+      stages: ["learn", "words", "quiz", "build", "transform", "chat", "challenge"],
+      stageInfo: {
+        learn: { desc: "Greetings, respect, and Main + feeling + hoon." },
+        quiz: { icon: "🤔", title: "What Would You Say?", desc: "Real moments with the family — pick the right words." },
+        chat: { title: "Call with Uncle", desc: "Uncle calls to check in. Greet him and chat." }
+      },
+      formula: [["Main", "subject"], ["feeling", "other"], ["hoon", "aux"]],
+      formulaText: "Main + feeling + hoon",
+      mistakes: [RAHA_FEMALE, NOT_TUM, { words: ["gaya"], why: "“Gaya” is the male form. You say <b>thak gayi</b>." }],
+      confusions: [["hai", "hoon", "With <b>Main</b> (I), it's always <b>hoon</b> (am). “hai” means “is”."], ["gaya", "gayi", "You're a woman, so it's <b>gayi</b> (a man says gaya)."]],
+      cards: [
+        { id: "namaste", roman: "Namaste", deva: "नमस्ते", en: "hello", emoji: "🙏", sounds: "nuh-muh-STAY" },
+        { id: "ji", roman: "ji", deva: "जी", en: "(a word of respect)", emoji: "🌸", sounds: "like “gee”" },
+        { id: "aap", roman: "aap", deva: "आप", en: "you (respectful)", emoji: "🫶🏽", sounds: "like “up” with a long a: AAP" },
+        { id: "theek", roman: "theek", deva: "ठीक", en: "fine / okay", emoji: "👍🏽", sounds: "like “teak”" },
+        { id: "khush", roman: "khush", deva: "खुश", en: "happy", emoji: "😊", sounds: "like “push” with a breathy kh" },
+        { id: "bahut", roman: "bahut", deva: "बहुत", en: "very / a lot", emoji: "💯", sounds: "buh-HOOT (often “bohot”)" },
+        { id: "thak", roman: "thak gayi", deva: "थक गई", en: "tired (got tired)", emoji: "😩", sounds: "thuk guh-YEE" },
+        { id: "shukriya", roman: "shukriya", deva: "शुक्रिया", en: "thank you", emoji: "💐", sounds: "shook-ree-YAA" }
+      ],
+      lesson: [
+        { kind: "explain", kicker: "Saying how you are", title: "Tap each block to see what it means",
+          blocks: [[["main"], "I"], [["theek"], "fine"], [["hoon"], "am"]],
+          roman: "Main theek hoon.", deva: "मैं ठीक हूँ।", en: "I am fine.", emoji: "👍🏽",
+          note: "Same <b>hoon</b> as in <b>rahi hoon</b>! For feelings it's just <b>Main + feeling + hoon</b>." },
+        { kind: "swap", kicker: "Feelings", title: "Tap each feeling", options: ["theek", "khush", "busy", "thak"],
+          note: "“Busy” is just the English word — your family uses it all the time." },
+        { kind: "tip", kicker: "Respect", title: "aap + ji = warm and polite",
+          html: "With Aunty, Uncle and every elder:<ul><li>say <b>aap</b> for “you” (never “tum” — that's for friends)</li><li>add <b>ji</b> after their name: <b>Aunty ji</b>, <b>Uncle ji</b>, <b>haan ji</b></li></ul>It sounds warm and respectful, never stiff.",
+          examples: ["namaste_a", "namaste_u", "aur_aap"] },
+        { kind: "tip", kicker: "Girl power ✨", title: "thak gayi — the female form",
+          html: "“I'm tired” is <b>Main thak gayi hoon</b>. Just like <b>rahi</b>, the <b>-i</b> ending in <b>gayi</b> is the female form (a man says thak gaya).",
+          examples: ["thak", "bore"] },
+        { kind: "quiz", q: { prompt: "Uncle asks “Kaisi ho?” (How are you?). You're fine. What do you say?", options: ["Main theek hoon.", "Main theek hai.", "Aap theek hoon."], answer: 0,
+          whys: ["", "With <b>Main</b> it's <b>hoon</b>: Main theek hoon.", "<b>Main</b> means I — start with Main."] } },
+        { kind: "order", item: "bahut_khush", chunks: [["main"], ["bahut"], ["khush"], ["hoon"]] }
+      ],
+      items: [
+        { id: "namaste_a", en: "Hello Aunty!", roman: "Namaste Aunty ji!", deva: "नमस्ते आंटी जी!", tokens: ["namaste", "aunty", "ji"], alts: [["namaste", "aunty"]] },
+        { id: "namaste_u", en: "Hello Uncle!", roman: "Namaste Uncle ji!", deva: "नमस्ते अंकल जी!", tokens: ["namaste", "uncle", "ji"], alts: [["namaste", "uncle"]] },
+        { id: "theek", en: "I'm fine.", roman: "Main theek hoon.", deva: "मैं ठीक हूँ।", tokens: ["main", "theek", "hoon"], chip: "👍🏽 fine" },
+        { id: "khush", en: "I'm happy.", roman: "Main khush hoon.", deva: "मैं खुश हूँ।", tokens: ["main", "khush", "hoon"], chip: "😊 happy" },
+        { id: "bahut_khush", en: "I'm very happy.", roman: "Main bahut khush hoon.", deva: "मैं बहुत खुश हूँ।", tokens: ["main", "bahut", "khush", "hoon"] },
+        { id: "busy", en: "I'm busy.", roman: "Main busy hoon.", deva: "मैं बिज़ी हूँ।", tokens: ["main", "busy", "hoon"], chip: "📅 busy" },
+        { id: "thak", en: "I'm tired.", roman: "Main thak gayi hoon.", deva: "मैं थक गई हूँ।", tokens: ["main", "thak", "gayi", "hoon"], chip: "😩 tired" },
+        { id: "excited", en: "I'm really excited!", roman: "Main bahut excited hoon!", deva: "मैं बहुत एक्साइटेड हूँ!", tokens: ["main", "bahut", "excited", "hoon"] },
+        { id: "bore", en: "I'm getting bored.", roman: "Main bore ho rahi hoon.", deva: "मैं बोर हो रही हूँ।", tokens: ["main", "bore", "ho", "rahi", "hoon"] },
+        { id: "aur_aap", en: "And you?", roman: "Aur aap?", deva: "और आप?", tokens: ["aur", "aap"] },
+        { id: "shukriya", en: "Thank you!", roman: "Shukriya!", deva: "शुक्रिया!", tokens: ["shukriya"], noBuild: true }
+      ],
+      quiz: [
+        { prompt: "Aunty calls you. What do you say first?", options: ["Namaste Aunty ji!", "Kya kar rahi ho?", "Bye Aunty!"], answer: 0, whys: ["", "That's what <i>she</i> asks you! Start with a greeting.", "That's for the end of the call 😄"] },
+        { prompt: "How do you ask an elder “And you?”", options: ["Aur aap?", "Aur tum?", "Aap aur?"], answer: 0, whys: ["", "“Tum” is for friends. With elders always use <b>aap</b>.", "Order: <b>Aur aap?</b>"] },
+        { prompt: "What does “Main thak gayi hoon” mean?", hi: "Main thak gayi hoon.", dv: "मैं थक गई हूँ।", options: ["I'm tired.", "I'm busy.", "I'm happy."], answer: 0, whys: ["", "Busy is <b>busy</b> 😄", "Happy is <b>khush</b>."] },
+        { prompt: "Why is it “thak gayi” and not “thak gaya”?", options: ["-i is the female ending, like rahi", "gayi means “very”", "gaya is more polite"], answer: 0, whys: ["", "“Very” is <b>bahut</b>.", "It's about who's speaking: you're a woman, so <b>gayi</b>."] },
+        { prompt: "Add respect: “Namaste Uncle ___!”", options: ["ji", "aap", "bahut"], answer: 0, whys: ["", "<b>aap</b> means you. After a name, add <b>ji</b>.", "<b>bahut</b> means very."] },
+        { prompt: "You're very happy to see them. Say it!", options: ["Main bahut khush hoon!", "Main khush bahut hoon!", "Main bahut khush hai!"], answer: 0, whys: ["", "<b>bahut</b> (very) goes right before the feeling.", "With Main it's <b>hoon</b>."] },
+        { prompt: "What does bahut mean?", hi: "bahut", options: ["very / a lot", "happy", "and"], answer: 0, whys: ["", "Happy is <b>khush</b>.", "And is <b>aur</b>."] }
+      ],
+      transforms: [["theek", "khush"], ["khush", "busy"], ["namaste_a", "namaste_u"], ["excited", "bahut_khush"]],
+      chat: {
+        who: "uncle",
+        lines: [
+          { them: "Namaste Anissa! Kaisi ho?", dv: "नमस्ते अनीसा! कैसी हो?", en: "Hello Anissa! How are you?" },
+          { pick: [{ text: "Namaste Uncle ji! Main theek hoon.", ok: true }, { text: "Namaste Uncle! Main theek hai.", why: "With <b>Main</b> it's <b>hoon</b>: Main theek hoon." }, { text: "Kaisi ho, Uncle?", why: "That's his question to you — answer it first!" }] },
+          { type: "aur_aap", goal: "Ask him “And you?”" },
+          { them: "Main bhi theek hoon. Aaj bahut kaam hai!", dv: "मैं भी ठीक हूँ। आज बहुत काम है!", en: "I'm fine too. Lots of work today!" },
+          { type: "thak", goal: "Tell him you're tired too." },
+          { them: "Accha, aaraam karo! Khush raho, beta.", dv: "अच्छा, आराम करो! खुश रहो, बेटा।", en: "Okay, get some rest! Stay happy, dear." },
+          { type: "shukriya", goal: "Say thank you." }
+        ]
+      }
+    },
+
+    /* ============================ MODULE 4 ============================ */
+    {
+      id: "m4", number: 4, icon: "👂", title: "Understanding Their Questions", tagline: "Know what the family is asking — and answer right away", minutes: "15",
+      stages: ["learn", "words", "quiz", "build", "chat", "challenge"],
+      stageInfo: {
+        learn: { desc: "The questions you'll hear most, and polite yes / no." },
+        words: { title: "Questions You'll Hear", desc: "Flip cards for everyday family questions." },
+        quiz: { icon: "👂", title: "What Are They Asking?", desc: "Hear a question, then pick what it means — or the best reply." },
+        build: { desc: "Build your polite replies with tiles." },
+        chat: { title: "Visiting Aunty", desc: "You arrive at the house. Aunty has questions!" }
+      },
+      formula: [["Haan ji / Nahin ji", "other"], ["…", "other"]],
+      formulaText: "Haan ji / Nahin ji + your answer",
+      mistakes: [RAHA_FEMALE, NOT_TUM],
+      confusions: [],
+      cards: [
+        { id: "q_kya", roman: "Kya kar rahi ho?", deva: "क्या कर रही हो?", en: "What are you doing?", emoji: "❓", sounds: "kyaa kur ruh-HEE ho" },
+        { id: "q_kaisi", roman: "Kaisi ho?", deva: "कैसी हो?", en: "How are you?", emoji: "🙂", sounds: "KAY-see ho" },
+        { id: "q_khana", roman: "Khana khaya?", deva: "खाना खाया?", en: "Have you eaten?", emoji: "🍛", sounds: "KHAA-naa KHAA-yaa" },
+        { id: "q_chai", roman: "Chai piyogi?", deva: "चाय पियोगी?", en: "Will you have chai?", emoji: "🍵", sounds: "chai pee-YO-gee" },
+        { id: "q_sab", roman: "Sab theek hai?", deva: "सब ठीक है?", en: "Is everything okay?", emoji: "🤗", sounds: "sub teek hai" },
+        { id: "haan", roman: "haan ji", deva: "हाँ जी", en: "yes (polite)", emoji: "✅", sounds: "haan gee — nasal aa" },
+        { id: "nahin", roman: "nahin ji", deva: "नहीं जी", en: "no (polite)", emoji: "❌", sounds: "nuh-HEEN gee" },
+        { id: "abhi", roman: "abhi nahin", deva: "अभी नहीं", en: "not yet", emoji: "⏳", sounds: "uh-BHEE nuh-HEEN" }
+      ],
+      lesson: [
+        { kind: "tip", kicker: "They ask, you answer", title: "The questions you'll hear",
+          html: "Family will often ask you things in a casual way (<b>Kya kar rahi ho?</b>) or a polite way (<b>Aap kya kar rahi hain?</b>). <b>Both mean the same.</b><br>And you already know how to answer: <b>Main … rahi hoon</b>." },
+        { kind: "explain", kicker: "The most common question", title: "Tap each block to see what it means",
+          blocks: [[["kya"], "what"], [["kar"], "do"], [["rahi"], "-ing (to you, a woman)"], [["ho"], "are (you)"]],
+          roman: "Kya kar rahi ho?", deva: "क्या कर रही हो?", en: "What are you doing?", emoji: "❓",
+          note: "It's literally “What doing are you?”. Answer with what you're doing: <b>Main TV dekh rahi hoon.</b>" },
+        { kind: "tip", kicker: "Polite yes and no", title: "Add ji to sound sweet",
+          html: "<ul><li><b>Haan ji</b> = yes 😊</li><li><b>Nahin ji</b> = no</li><li><b>Abhi nahin</b> = not yet</li></ul>",
+          examples: ["haan_sab", "abhi_nahin", "nahin_shukriya"] },
+        { kind: "quiz", q: { prompt: "Aunty asks “Khana khaya?”. What does she mean?", hi: "Khana khaya?", dv: "खाना खाया?", options: ["Have you eaten?", "What are you cooking?", "Are you hungry?"], answer: 0,
+          whys: ["", "Close! It's “Have you eaten?” — khaya = ate.", "Close! It's “Have you eaten?” — khaya = ate."] } },
+        { kind: "order", item: "haan_sab", chunks: [["haan"], ["ji"], ["sab"], ["theek"], ["hai"]] }
+      ],
+      items: [
+        { id: "haan_sab", en: "Yes, everything's fine.", roman: "Haan ji, sab theek hai.", deva: "हाँ जी, सब ठीक है।", tokens: ["haan", "ji", "sab", "theek", "hai"], alts: [["haan", "sab", "theek", "hai"]] },
+        { id: "kha_liya", en: "Yes, I've eaten.", roman: "Haan ji, kha liya.", deva: "हाँ जी, खा लिया।", tokens: ["haan", "ji", "eat", "liya"], alts: [["haan", "eat", "liya"]] },
+        { id: "abhi_nahin", en: "Not yet.", roman: "Abhi nahin.", deva: "अभी नहीं।", tokens: ["abhi", "nahin"], alts: [["nahin", "abhi", "nahin"], ["nahin", "ji", "abhi", "nahin"], ["abhi", "nahin", "ji"]] },
+        { id: "haan_please", en: "Yes, please!", roman: "Haan ji, please!", deva: "हाँ जी, प्लीज़!", tokens: ["haan", "ji", "please"], alts: [["haan", "please"]] },
+        { id: "nahin_shukriya", en: "No, thank you.", roman: "Nahin ji, shukriya.", deva: "नहीं जी, शुक्रिया।", tokens: ["nahin", "ji", "shukriya"], alts: [["nahin", "shukriya"]] },
+        { id: "r_tv", en: "I'm watching TV.", roman: "Main TV dekh rahi hoon.", deva: "मैं टीवी देख रही हूँ।", tokens: ["main", "tv", "watch", "rahi", "hoon"] },
+        { id: "r_theek", en: "I'm fine.", roman: "Main theek hoon.", deva: "मैं ठीक हूँ।", tokens: ["main", "theek", "hoon"] },
+        { id: "r_kaam", en: "I'm working.", roman: "Main kaam kar rahi hoon.", deva: "मैं काम कर रही हूँ।", tokens: ["main", "kaam", "kar", "rahi", "hoon"] }
+      ],
+      quiz: [
+        { prompt: "What does this mean?", hi: "Kya kar rahi ho?", dv: "क्या कर रही हो?", options: ["What are you doing?", "How are you?", "Where are you?"], answer: 0, whys: ["", "“How are you?” is <b>Kaisi ho?</b>", "“Where are you?” is <b>Kahan ho?</b>"] },
+        { prompt: "What does this mean?", hi: "Kaisi ho?", dv: "कैसी हो?", options: ["How are you?", "What are you doing?", "Have you eaten?"], answer: 0, whys: ["", "That's <b>Kya kar rahi ho?</b>", "That's <b>Khana khaya?</b>"] },
+        { prompt: "What does this mean?", hi: "Aap kaisi hain?", dv: "आप कैसी हैं?", options: ["How are you? (polite)", "Who are you?", "Are you hungry?"], answer: 0, whys: ["", "It's the polite “How are you?” — same as Kaisi ho?", "It's the polite “How are you?” — same as Kaisi ho?"] },
+        { prompt: "Aunty asks this. Pick the best reply.", hi: "Khana khaya?", dv: "खाना खाया?", options: ["Haan ji, kha liya.", "Main theek hoon.", "Shukriya."], answer: 0, whys: ["", "That answers “How are you?”. She asked if you've eaten!", "She asked if you've eaten — say <b>Haan ji, kha liya</b> or <b>Abhi nahin</b>."] },
+        { prompt: "Uncle offers this. You'd love some. Reply:", hi: "Chai piyogi?", dv: "चाय पियोगी?", options: ["Haan ji, please!", "Main busy hoon.", "Namaste!"], answer: 0, whys: ["", "He's offering chai — say <b>Haan ji, please!</b> or <b>Nahin ji, shukriya</b>.", "You've already said hello 😄"] },
+        { prompt: "Aunty asks this. Pick the best reply.", hi: "Sab theek hai?", dv: "सब ठीक है?", options: ["Haan ji, sab theek hai.", "Main bhaag rahi hoon.", "Abhi nahin."], answer: 0, whys: ["", "She's asking if everything's okay!", "That's “not yet” — she asked if everything's okay."] },
+        { prompt: "Someone asks this. Which reply works?", hi: "Kya kar rahi ho?", dv: "क्या कर रही हो?", options: ["Main TV dekh rahi hoon.", "Haan ji, please!", "Abhi nahin."], answer: 0, whys: ["", "That's for an offer. Say what you're doing: <b>Main … rahi hoon</b>.", "Say what you're doing: <b>Main … rahi hoon</b>."] },
+        { prompt: "The polite version. Which reply works?", hi: "Aap kya kar rahi hain?", dv: "आप क्या कर रही हैं?", options: ["Main kitaab padh rahi hoon.", "Aap theek hain.", "Bye!"], answer: 0, whys: ["", "Answer about yourself: <b>Main … rahi hoon</b>.", "Answer about yourself: <b>Main … rahi hoon</b>."] }
+      ],
+      transforms: [],
+      chat: {
+        who: "aunty",
+        lines: [
+          { them: "Anissa, aao aao! Kaisi ho?", dv: "अनीसा, आओ आओ! कैसी हो?", en: "Anissa, come in! How are you?" },
+          { pick: [{ text: "Main theek hoon, Aunty ji. Aur aap?", ok: true }, { text: "Haan ji, please!", why: "She asked how you are: <b>Main theek hoon</b>." }, { text: "Main kaam kar rahi hoon.", why: "She asked how you are, not what you're doing." }] },
+          { them: "Main bhi theek hoon. Khana khaya?", dv: "मैं भी ठीक हूँ। खाना खाया?", en: "I'm fine too. Have you eaten?" },
+          { type: "abhi_nahin", goal: "Tell her: not yet." },
+          { them: "Arre! Pehle khana khao. Chai piyogi?", dv: "अरे! पहले खाना खाओ। चाय पियोगी?", en: "Oh! Eat first. Will you have chai?" },
+          { type: "haan_please", goal: "Say: yes, please!" },
+          { them: "Sab theek hai? Kaam kaisa chal raha hai?", dv: "सब ठीक है? काम कैसा चल रहा है?", en: "Everything okay? How's work going?" },
+          { pick: [{ text: "Haan ji, sab theek hai!", ok: true }, { text: "Nahin ji, shukriya.", why: "That's “no thank you” — she asked if everything's okay." }] },
+          { them: "Bahut accha! 😊", dv: "बहुत अच्छा!", en: "Very good!" }
+        ]
+      }
+    },
+
+    /* ============================ MODULE 5 ============================ */
+    {
+      id: "m5", number: 5, icon: "🫶🏽", title: "Asking Them Back", tagline: "Ask Aunty and Uncle how they are — politely", minutes: "15–20",
+      stages: ["learn", "words", "quiz", "build", "transform", "chat", "challenge"],
+      stageInfo: {
+        learn: { desc: "aap + hain, and the one tricky bit: Aunty vs Uncle." },
+        quiz: { icon: "👩🏽‍🦱", title: "Aunty or Uncle?", desc: "Pick the right form for who you're asking." },
+        chat: { title: "Call with Uncle", desc: "Ask Uncle how he is and what everyone's up to." }
+      },
+      formula: [["Aunty / Uncle", "person"], ["aap", "subject"], ["…", "other"], ["hain?", "aux"]],
+      formulaText: "Aunty / Uncle, aap + … + hain?",
+      mistakes: [NOT_TUM, { words: ["ho"], why: "“ho” goes with tum. With <b>aap</b>, use <b>hain</b>." }],
+      confusions: [["rahi", "rahe", "For Uncle (or any man) it's <b>rahe</b>. Use rahi for Aunty."], ["rahe", "rahi", "For Aunty (or any woman) it's <b>rahi</b>. Use rahe for Uncle."], ["kaisi", "kaise", "For Uncle it's <b>kaise</b>. Use kaisi for Aunty."], ["kaise", "kaisi", "For Aunty it's <b>kaisi</b>. Use kaise for Uncle."], ["hoon", "hain", "<b>hoon</b> is “I am”. With <b>aap</b>, it's <b>hain</b>."], ["hai", "hain", "With <b>aap</b>, it's <b>hain</b> (with an n)."], ["aunty", "uncle", "This one is for Uncle."], ["uncle", "aunty", "This one is for Aunty."]],
+      cards: [
+        { id: "aap", roman: "aap", deva: "आप", en: "you (respectful)", emoji: "🫶🏽", sounds: "AAP" },
+        { id: "hain", roman: "hain", deva: "हैं", en: "are (with aap)", emoji: "🟰", sounds: "like “hen” with a nasal n" },
+        { id: "kaise", roman: "kaise", deva: "कैसे", en: "how (asking a man)", emoji: "👨🏽", sounds: "KAY-say" },
+        { id: "kaisi", roman: "kaisi", deva: "कैसी", en: "how (asking a woman)", emoji: "👩🏽", sounds: "KAY-see" },
+        { id: "rahe", roman: "rahe", deva: "रहे", en: "…-ing (for Uncle)", emoji: "🔁", sounds: "ruh-HAY" },
+        { id: "din", roman: "din", deva: "दिन", en: "day", emoji: "☀️", sounds: "like “din”" },
+        { id: "aapka", roman: "aapka", deva: "आपका", en: "your (respectful)", emoji: "👉🏽", sounds: "AAP-kaa" },
+        { id: "sab", roman: "sab", deva: "सब", en: "everything / all", emoji: "🌍", sounds: "like “sub”" }
+      ],
+      lesson: [
+        { kind: "explain", kicker: "Asking politely", title: "Tap each block to see what it means",
+          blocks: [[["uncle"], "Uncle"], [["aap"], "you (respectful)"], [["kaise"], "how"], [["hain"], "are"]],
+          roman: "Uncle, aap kaise hain?", deva: "अंकल, आप कैसे हैं?", en: "Uncle, how are you?", emoji: "👨🏽",
+          note: "With <b>aap</b> it's always <b>hain</b> (not hoon — hoon is only for “I am”)." },
+        { kind: "tip", kicker: "The one tricky bit", title: "The word follows who you're asking",
+          html: "Your own sentences always use <b>rahi</b> — you're a woman. But when you ask someone else, the words follow <i>them</i>:<ul><li><b>Uncle</b> → <b>kaise</b>, <b>rahe</b></li><li><b>Aunty</b> → <b>kaisi</b>, <b>rahi</b></li></ul>",
+          examples: ["u_kaise", "a_kaisi", "u_kya", "a_kya"] },
+        { kind: "swap", kicker: "Aunty or Uncle", title: "Tap each one and spot the difference", options: ["a_kaisi", "u_kaise", "a_kya", "u_kya"],
+          note: "Only the word for <i>them</i> changes. <b>aap</b> and <b>hain</b> stay the same." },
+        { kind: "quiz", q: { prompt: "You're asking Uncle what he's doing:", options: ["Uncle, aap kya kar rahe hain?", "Uncle, aap kya kar rahi hain?", "Uncle, aap kya kar rahe hoon?"], answer: 0,
+          whys: ["", "<b>rahi</b> is for Aunty. For Uncle it's <b>rahe</b>.", "<b>hoon</b> is “I am”. With aap, it's <b>hain</b>."] } },
+        { kind: "tip", kicker: "How are things?", title: "Two easy check-ins",
+          html: "<ul><li><b>Aapka din kaisa tha?</b> = How was your day?</li><li><b>Sab kaisa chal raha hai?</b> = How's everything going?</li></ul>Here <b>raha</b> goes with <i>sab</i> (everything), not with you — so it stays <b>raha</b>.",
+          examples: ["din", "sab_kaisa"] },
+        { kind: "order", item: "a_kaisi", chunks: [["aunty"], ["aap"], ["kaisi"], ["hain"]] }
+      ],
+      items: [
+        { id: "u_kaise", en: "Uncle, how are you?", roman: "Uncle, aap kaise hain?", deva: "अंकल, आप कैसे हैं?", tokens: ["uncle", "aap", "kaise", "hain"], alts: [["uncle", "ji", "aap", "kaise", "hain"], ["aap", "kaise", "hain"], ["namaste", "uncle", "ji", "aap", "kaise", "hain"]], chip: "👨🏽 Uncle: how?" },
+        { id: "a_kaisi", en: "Aunty, how are you?", roman: "Aunty, aap kaisi hain?", deva: "आंटी, आप कैसी हैं?", tokens: ["aunty", "aap", "kaisi", "hain"], alts: [["aunty", "ji", "aap", "kaisi", "hain"], ["aap", "kaisi", "hain"], ["namaste", "aunty", "ji", "aap", "kaisi", "hain"]], chip: "👩🏽 Aunty: how?" },
+        { id: "a_kya", en: "Aunty, what are you doing?", roman: "Aunty, aap kya kar rahi hain?", deva: "आंटी, आप क्या कर रही हैं?", tokens: ["aunty", "aap", "kya", "kar", "rahi", "hain"], alts: [["aunty", "ji", "aap", "kya", "kar", "rahi", "hain"]], chip: "👩🏽 Aunty: doing?" },
+        { id: "u_kya", en: "Uncle, what are you doing?", roman: "Uncle, aap kya kar rahe hain?", deva: "अंकल, आप क्या कर रहे हैं?", tokens: ["uncle", "aap", "kya", "kar", "rahe", "hain"], alts: [["uncle", "ji", "aap", "kya", "kar", "rahe", "hain"]], chip: "👨🏽 Uncle: doing?" },
+        { id: "a_tv", en: "Aunty, are you watching TV?", roman: "Aunty, aap TV dekh rahi hain?", deva: "आंटी, आप टीवी देख रही हैं?", tokens: ["aunty", "aap", "tv", "watch", "rahi", "hain"], alts: [["aunty", "kya", "aap", "tv", "watch", "rahi", "hain"]] },
+        { id: "u_chai", en: "Uncle, are you drinking chai?", roman: "Uncle, aap chai pee rahe hain?", deva: "अंकल, आप चाय पी रहे हैं?", tokens: ["uncle", "aap", "chai", "drink", "rahe", "hain"], alts: [["uncle", "kya", "aap", "chai", "drink", "rahe", "hain"]] },
+        { id: "u_theek", en: "Uncle, are you okay?", roman: "Uncle, aap theek hain?", deva: "अंकल, आप ठीक हैं?", tokens: ["uncle", "aap", "theek", "hain"], alts: [["uncle", "kya", "aap", "theek", "hain"]] },
+        { id: "din", en: "How was your day?", roman: "Aapka din kaisa tha?", deva: "आपका दिन कैसा था?", tokens: ["aapka", "din", "kaisa", "tha"] },
+        { id: "sab_kaisa", en: "How's everything going?", roman: "Sab kaisa chal raha hai?", deva: "सब कैसा चल रहा है?", tokens: ["sab", "kaisa", "chal", "raha", "hai"] }
+      ],
+      quiz: [
+        { prompt: "Ask Aunty “How are you?”", options: ["Aunty, aap kaisi hain?", "Aunty, aap kaise hain?", "Aunty, tum kaisi ho?"], answer: 0, whys: ["", "For Aunty it's <b>kaisi</b>.", "“Tum” is too casual for elders — use <b>aap … hain</b>."] },
+        { prompt: "Asking Uncle: kaise or kaisi?", options: ["kaise", "kaisi"], answer: 0, whys: ["", "<b>kaisi</b> is for Aunty. Uncle → <b>kaise</b>."] },
+        { prompt: "Asking Aunty: rahe or rahi?", options: ["rahi", "rahe"], answer: 0, whys: ["", "<b>rahe</b> is for Uncle. Aunty → <b>rahi</b>."] },
+        { prompt: "Asking Uncle: rahe or rahi?", options: ["rahe", "rahi"], answer: 0, whys: ["", "<b>rahi</b> is for Aunty. Uncle → <b>rahe</b>."] },
+        { prompt: "What does this mean?", hi: "Aapka din kaisa tha?", dv: "आपका दिन कैसा था?", options: ["How was your day?", "What are you doing?", "Where are you?"], answer: 0, whys: ["", "That's <b>Aap kya kar rahe hain?</b>", "“din” means day — it's “How was your day?”"] },
+        { prompt: "Uncle sounds busy. Ask how everything's going:", options: ["Sab kaisa chal raha hai?", "Aap kaise ho?", "Main busy hoon."], answer: 0, whys: ["", "With aap use <b>hain</b> — and this asks “how are you”, not “how's everything”.", "That's about you!"] },
+        { prompt: "With aap, which word ends the question?", options: ["hain", "hoon", "ho"], answer: 0, whys: ["", "<b>hoon</b> is only for “I am”.", "<b>ho</b> goes with tum — with aap it's <b>hain</b>."] }
+      ],
+      transforms: [["u_kaise", "a_kaisi"], ["u_kya", "a_kya"], ["a_kya", "a_tv"], ["u_chai", "u_kya"], ["u_theek", "u_kaise"]],
+      chat: {
+        who: "uncle",
+        lines: [
+          { them: "Namaste Anissa!", dv: "नमस्ते अनीसा!", en: "Hello Anissa!" },
+          { type: "u_kaise", goal: "Ask Uncle how he is." },
+          { them: "Main theek hoon, beta. Thoda busy hoon.", dv: "मैं ठीक हूँ, बेटा। थोड़ा बिज़ी हूँ।", en: "I'm fine, dear. A little busy." },
+          { pick: [{ text: "Uncle, aap kya kar rahe hain?", ok: true }, { text: "Uncle, aap kya kar rahi hain?", why: "For Uncle it's <b>rahe</b>." }, { text: "Uncle, aap kya kar rahe hoon?", why: "With aap, end with <b>hain</b>." }] },
+          { them: "Main kaam kar raha hoon. Aunty khana bana rahi hain.", dv: "मैं काम कर रहा हूँ। आंटी खाना बना रही हैं।", en: "I'm working. Aunty is cooking. (Notice: Uncle says raha — he's a man!)" },
+          { type: "sab_kaisa", goal: "Ask: how's everything going?" },
+          { them: "Sab badhiya! Tumhara din kaisa tha?", dv: "सब बढ़िया! तुम्हारा दिन कैसा था?", en: "All great! How was your day?" },
+          { pick: [{ text: "Bahut accha tha! Main bahut khush hoon.", ok: true }, { text: "Uncle, aap kaise hain?", why: "You already asked that 😄 — tell him about your day." }] },
+          { them: "Khush raho! 😊", dv: "खुश रहो!", en: "Stay happy!" }
+        ]
+      }
+    },
+
+    /* ============================ MODULE 6 ============================ */
+    {
+      id: "m6", number: 6, icon: "🍛", title: "Food & Home", tagline: "Compliment the food, say what you like, and say when you're full", minutes: "15",
+      stages: ["learn", "words", "quiz", "build", "transform", "chat", "challenge"],
+      stageInfo: {
+        learn: { desc: "Compliments, “I like…”, and dinner-table phrases." },
+        quiz: { icon: "🍽️", title: "At the Table", desc: "Real dinner moments — pick what you'd say." },
+        chat: { title: "Dinner with Aunty", desc: "Aunty made dinner. Tell her what you think!" }
+      },
+      formula: [["Mujhe", "subject"], ["thing", "thing"], ["pasand hai", "other"]],
+      formulaText: "Mujhe + thing + pasand hai",
+      mistakes: [NOT_TUM],
+      confusions: [["hoon", "hai", "<b>hoon</b> is only “I am”. Here it's <b>hai</b> (is)."], ["main", "mujhe", "For “I like”, Hindi says <b>Mujhe</b> (to me): Mujhe … pasand hai."], ["gayi", "gaya", "Here <b>gaya</b> goes with <i>pet</i> (stomach), not with you — so it stays gaya."]],
+      cards: [
+        { id: "accha", roman: "accha", deva: "अच्छा", en: "good / nice", emoji: "👌🏽", sounds: "UTCH-chaa" },
+        { id: "mujhe", roman: "mujhe", deva: "मुझे", en: "to me (for “I like”)", emoji: "🙋🏽‍♀️", sounds: "MOO-jhay" },
+        { id: "pasand", roman: "pasand", deva: "पसंद", en: "liked", emoji: "❤️", sounds: "puh-SUND" },
+        { id: "dal", roman: "dal", deva: "दाल", en: "dal (lentils)", emoji: "🥣", sounds: "DAAL" },
+        { id: "roti", roman: "roti", deva: "रोटी", en: "roti (flatbread)", emoji: "🫓", sounds: "RO-tee" },
+        { id: "thoda", roman: "thoda aur", deva: "थोड़ा और", en: "a little more", emoji: "🤏🏽", sounds: "THO-daa or" },
+        { id: "bas", roman: "bas", deva: "बस", en: "enough / that's it", emoji: "✋🏽", sounds: "like “bus”" },
+        { id: "mithai", roman: "mithai", deva: "मिठाई", en: "sweets", emoji: "🍬", sounds: "mi-THAI" }
+      ],
+      lesson: [
+        { kind: "explain", kicker: "The best compliment", title: "Tap each block to see what it means",
+          blocks: [[["khana"], "food"], [["bahut"], "very"], [["accha"], "good"], [["hai"], "is"]],
+          roman: "Khana bahut accha hai!", deva: "खाना बहुत अच्छा है!", en: "The food is really good!", emoji: "😋",
+          note: "<b>hai</b> = is. (Remember: <b>hoon</b> is only for “I am”.) Say this at every meal 😄" },
+        { kind: "tip", kicker: "“I like…”", title: "Hindi says it the other way round",
+          html: "<b>Mujhe chai pasand hai</b> = literally “To me, chai is liked.”<br>Just swap the food in the middle: <b>Mujhe ___ pasand hai</b>.",
+          examples: ["p_chai", "p_dal", "p_roti"] },
+        { kind: "swap", kicker: "What do you like?", title: "Tap each one", options: ["p_chai", "p_dal", "p_roti", "p_chawal"],
+          note: "Only the food changes. <b>Mujhe … pasand hai</b> stays the same." },
+        { kind: "tip", kicker: "At the dinner table", title: "More, enough, full",
+          html: "<ul><li><b>Thoda aur, please</b> = a little more, please</li><li><b>Bas, shukriya</b> = that's enough, thanks</li><li><b>Mera pet bhar gaya</b> = I'm full (my stomach filled)</li></ul>In “bhar <b>gaya</b>”, gaya goes with <i>pet</i>, not with you — so it stays gaya.",
+          examples: ["thoda", "bas", "pet"] },
+        { kind: "quiz", q: { prompt: "Aunty offers more food. You're full. What do you say?", options: ["Bas, shukriya.", "Thoda aur, please.", "Mujhe bhookh lagi hai."], answer: 0,
+          whys: ["", "That asks for more! 😄", "That means “I'm hungry”."] } },
+        { kind: "order", item: "p_chai", chunks: [["mujhe"], ["chai"], ["pasand"], ["hai"]] }
+      ],
+      items: [
+        { id: "accha", en: "The food is really good!", roman: "Khana bahut accha hai!", deva: "खाना बहुत अच्छा है!", tokens: ["khana", "bahut", "accha", "hai"], alts: [["khana", "accha", "hai"], ["khana", "bahut", "tasty", "hai"]] },
+        { id: "tasty", en: "It's very tasty!", roman: "Bahut tasty hai!", deva: "बहुत टेस्टी है!", tokens: ["bahut", "tasty", "hai"] },
+        { id: "p_chai", en: "I like chai.", roman: "Mujhe chai pasand hai.", deva: "मुझे चाय पसंद है।", tokens: ["mujhe", "chai", "pasand", "hai"], chip: "🍵 chai" },
+        { id: "p_dal", en: "I like dal.", roman: "Mujhe dal pasand hai.", deva: "मुझे दाल पसंद है।", tokens: ["mujhe", "dal", "pasand", "hai"], chip: "🥣 dal" },
+        { id: "p_roti", en: "I like roti.", roman: "Mujhe roti pasand hai.", deva: "मुझे रोटी पसंद है।", tokens: ["mujhe", "roti", "pasand", "hai"], chip: "🫓 roti" },
+        { id: "p_chawal", en: "I like rice.", roman: "Mujhe chawal pasand hai.", deva: "मुझे चावल पसंद है।", tokens: ["mujhe", "chawal", "pasand", "hai"], chip: "🍚 chawal" },
+        { id: "p_mithai", en: "I really like sweets!", roman: "Mujhe mithai bahut pasand hai!", deva: "मुझे मिठाई बहुत पसंद है!", tokens: ["mujhe", "mithai", "bahut", "pasand", "hai"], alts: [["mujhe", "mithai", "pasand", "hai"]] },
+        { id: "p_dal_bahut", en: "I really like dal!", roman: "Mujhe dal bahut pasand hai!", deva: "मुझे दाल बहुत पसंद है!", tokens: ["mujhe", "dal", "bahut", "pasand", "hai"], alts: [["haan", "ji", "mujhe", "dal", "bahut", "pasand", "hai"], ["haan", "mujhe", "dal", "bahut", "pasand", "hai"], ["mujhe", "dal", "pasand", "hai"]] },
+        { id: "thoda", en: "A little more, please.", roman: "Thoda aur, please.", deva: "थोड़ा और, प्लीज़।", tokens: ["thoda", "aur", "please"], alts: [["thoda", "aur"]] },
+        { id: "bas", en: "That's enough, thank you.", roman: "Bas, shukriya.", deva: "बस, शुक्रिया।", tokens: ["bas", "shukriya"], alts: [["bas", "ji", "shukriya"]] },
+        { id: "pet", en: "I'm full.", roman: "Mera pet bhar gaya.", deva: "मेरा पेट भर गया।", tokens: ["mera", "pet", "bhar", "gaya"] },
+        { id: "bhookh", en: "I'm hungry.", roman: "Mujhe bhookh lagi hai.", deva: "मुझे भूख लगी है।", tokens: ["mujhe", "bhookh", "lagi", "hai"] }
+      ],
+      quiz: [
+        { prompt: "Say you like dal:", options: ["Mujhe dal pasand hai.", "Main dal pasand hoon.", "Mujhe pasand dal hai."], answer: 0, whys: ["", "Hindi says “to me, it is liked”: <b>Mujhe … pasand hai</b>.", "The food goes in the middle: <b>Mujhe dal pasand hai</b>."] },
+        { prompt: "Compliment Aunty's cooking:", options: ["Khana bahut accha hai!", "Khana bahut accha hoon!", "Main khana kha rahi hoon."], answer: 0, whys: ["", "<b>hoon</b> means “I am”. The food <i>is</i> good: <b>hai</b>.", "True — but it's not a compliment! 😄"] },
+        { prompt: "You'd like a bit more. Say:", options: ["Thoda aur, please.", "Bas, shukriya.", "Mera pet bhar gaya."], answer: 0, whys: ["", "That means “that's enough”.", "That means “I'm full”."] },
+        { prompt: "What does this mean?", hi: "Mera pet bhar gaya.", dv: "मेरा पेट भर गया।", options: ["I'm full.", "I'm hungry.", "I like it."], answer: 0, whys: ["", "Hungry is <b>Mujhe bhookh lagi hai</b>.", "“I like it” uses <b>pasand</b>."] },
+        { prompt: "What does this mean?", hi: "Mujhe bhookh lagi hai.", dv: "मुझे भूख लगी है।", options: ["I'm hungry.", "I'm full.", "I'm tired."], answer: 0, whys: ["", "Full is <b>Mera pet bhar gaya</b>.", "Tired is <b>Main thak gayi hoon</b>."] },
+        { prompt: "What does bas mean?", hi: "bas", options: ["enough", "more", "very"], answer: 0, whys: ["", "More is <b>aur</b>.", "Very is <b>bahut</b>."] }
+      ],
+      transforms: [["p_chai", "p_dal"], ["p_dal", "p_roti"], ["p_roti", "p_chawal"]],
+      chat: {
+        who: "aunty",
+        lines: [
+          { them: "Anissa, khana kaisa hai?", dv: "अनीसा, खाना कैसा है?", en: "Anissa, how's the food?" },
+          { type: "accha", goal: "Tell her the food is really good!" },
+          { them: "Shukriya beta! Aur logi?", dv: "शुक्रिया बेटा! और लोगी?", en: "Thank you dear! Will you have more?" },
+          { pick: [{ text: "Thoda aur, please!", ok: true }, { text: "Bas, shukriya. Mera pet bhar gaya.", ok: true }, { text: "Mujhe bhookh pasand hai.", why: "That means “I like hunger” 😄" }] },
+          { them: "Dal aur logi? Mujhe pata hai tumhe dal pasand hai! 😄", dv: "दाल और लोगी? मुझे पता है तुम्हें दाल पसंद है!", en: "More dal? I know you like dal!" },
+          { type: "p_dal_bahut", goal: "Tell her you really like dal!" },
+          { them: "Aur mithai khaogi?", dv: "और मिठाई खाओगी?", en: "Will you have some sweets?" },
+          { pick: [{ text: "Haan ji! Mujhe mithai bahut pasand hai!", ok: true }, { text: "Bas, shukriya. Mera pet bhar gaya!", ok: true }, { text: "Main mithai hoon.", why: "That means “I am sweets” 😄" }] },
+          { them: "Haha, theek hai! 😊", dv: "हाहा, ठीक है!", en: "Haha, okay!" }
+        ]
+      }
+    },
+
+    /* ============================ MODULE 7 ============================ */
+    {
+      id: "m7", number: 7, icon: "📅", title: "Today & Plans", tagline: "Say where you are, where you're going, and when you'll come", minutes: "15",
+      stages: ["learn", "words", "quiz", "build", "transform", "chat", "challenge"],
+      stageInfo: {
+        learn: { desc: "Going, coming, at home — and time words." },
+        quiz: { icon: "🗓️", title: "When & Where?", desc: "Pick the right words for plans and places." },
+        chat: { title: "Call with Uncle", desc: "Uncle wants to know your plans." }
+      },
+      formula: [["(aaj / kal)", "other"], ["Main", "subject"], ["place", "thing"], ["ja rahi hoon", "verb"]],
+      formulaText: "(aaj / kal / abhi) + Main + place + ja rahi hoon",
+      mistakes: [RAHA_FEMALE, { words: ["aaunga", "aunga"], why: "“Aaunga” is the male form. You say <b>aaungi</b>." }],
+      confusions: [["aa", "ja", "<b>aa</b> = come, <b>ja</b> = go. You're going somewhere: <b>ja</b>."], ["ja", "aa", "<b>ja</b> = go, <b>aa</b> = come. You're coming: <b>aa</b>."], ["kal", "aaj", "<b>kal</b> is tomorrow — today is <b>aaj</b>."], ["aaj", "kal", "<b>aaj</b> is today — tomorrow is <b>kal</b>."]],
+      cards: [
+        { id: "aaj", roman: "aaj", deva: "आज", en: "today", emoji: "📍", sounds: "AAJ" },
+        { id: "kal", roman: "kal", deva: "कल", en: "tomorrow (or yesterday!)", emoji: "📆", sounds: "like “cull”" },
+        { id: "abhi", roman: "abhi", deva: "अभी", en: "right now", emoji: "⏱️", sounds: "uh-BHEE" },
+        { id: "ja", roman: "ja", deva: "जा", en: "go", emoji: "🚶🏽‍♀️", sounds: "JAA" },
+        { id: "aa", roman: "aa", deva: "आ", en: "come", emoji: "🏃🏽‍♀️", sounds: "AA" },
+        { id: "ghar", roman: "ghar", deva: "घर", en: "home", emoji: "🏠", sounds: "like “gur” with a breathy gh" },
+        { id: "par", roman: "par", deva: "पर", en: "at / on (also “pe”)", emoji: "📌", sounds: "like “per”" },
+        { id: "aaungi", roman: "aaungi", deva: "आऊँगी", en: "I'll come (female)", emoji: "🗓️", sounds: "AA-oon-gee" }
+      ],
+      lesson: [
+        { kind: "explain", kicker: "Going places", title: "Tap each block to see what it means",
+          blocks: [[["main"], "I"], [["ghar"], "home"], [["ja"], "go"], [["rahi", "hoon"], "am …-ing"]],
+          roman: "Main ghar ja rahi hoon.", deva: "मैं घर जा रही हूँ।", en: "I'm going home.", emoji: "🏠",
+          note: "Same pattern as Module 2 — the <b>place</b> goes where the thing went. (No word for “to” needed!)" },
+        { kind: "tip", kicker: "Add a time", title: "aaj, kal, abhi",
+          html: "Put a time word at the start:<ul><li><b>aaj</b> = today</li><li><b>kal</b> = tomorrow (and also yesterday — context tells you!)</li><li><b>abhi</b> = right now</li></ul>",
+          examples: ["office", "abhi_kaam", "market"] },
+        { kind: "swap", kicker: "Where are you going?", title: "Tap each place", options: ["ghar_ja", "gym", "office"],
+          note: "Your family will say these English place words too: office, gym, market." },
+        { kind: "tip", kicker: "Here, coming, later", title: "Three handy lines",
+          html: "<ul><li><b>Main ghar par hoon</b> = I'm at home (you can also say “ghar <b>pe</b>”)</li><li><b>Main aa rahi hoon!</b> = I'm coming!</li><li><b>Kal main aaungi</b> = I'll come tomorrow — the <b>-i</b> ending is the female form again ✨</li></ul>",
+          examples: ["ghar_par", "aa_rahi", "kal_aaungi"] },
+        { kind: "quiz", q: { prompt: "Uncle asks “Kahan ho?” (Where are you?). You're at home.", options: ["Main ghar par hoon.", "Main ghar ja rahi hoon.", "Main ghar hoon par."], answer: 0,
+          whys: ["", "That means “I'm going home”.", "Order: <b>ghar par hoon</b>."] } },
+        { kind: "order", item: "ghar_ja", chunks: [["main"], ["ghar"], ["ja"], ["rahi", "hoon"]] }
+      ],
+      items: [
+        { id: "office", en: "Today I'm going to the office.", roman: "Aaj main office ja rahi hoon.", deva: "आज मैं ऑफिस जा रही हूँ।", tokens: ["aaj", "main", "office", "ja", "rahi", "hoon"], alts: [["main", "aaj", "office", "ja", "rahi", "hoon"]], chip: "🏢 office" },
+        { id: "ghar_ja", en: "I'm going home.", roman: "Main ghar ja rahi hoon.", deva: "मैं घर जा रही हूँ।", tokens: ["main", "ghar", "ja", "rahi", "hoon"], chip: "🏠 home" },
+        { id: "gym", en: "I'm going to the gym.", roman: "Main gym ja rahi hoon.", deva: "मैं जिम जा रही हूँ।", tokens: ["main", "gym", "ja", "rahi", "hoon"], chip: "🏋🏽‍♀️ gym" },
+        { id: "ghar_par", en: "I'm at home.", roman: "Main ghar par hoon.", deva: "मैं घर पर हूँ।", tokens: ["main", "ghar", "par", "hoon"] },
+        { id: "abhi_kaam", en: "Right now I'm working.", roman: "Abhi main kaam kar rahi hoon.", deva: "अभी मैं काम कर रही हूँ।", tokens: ["abhi", "main", "kaam", "kar", "rahi", "hoon"], alts: [["main", "abhi", "kaam", "kar", "rahi", "hoon"]] },
+        { id: "aa_rahi", en: "I'm coming!", roman: "Main aa rahi hoon!", deva: "मैं आ रही हूँ!", tokens: ["main", "aa", "rahi", "hoon"] },
+        { id: "kal_aaungi", en: "I'll come tomorrow.", roman: "Kal main aaungi.", deva: "कल मैं आऊँगी।", tokens: ["kal", "main", "aaungi"], alts: [["main", "kal", "aaungi"], ["haan", "ji", "kal", "main", "aaungi"], ["haan", "kal", "main", "aaungi"], ["haan", "ji", "main", "kal", "aaungi"]] },
+        { id: "market", en: "Tomorrow I'm going to the market.", roman: "Kal main market ja rahi hoon.", deva: "कल मैं मार्केट जा रही हूँ।", tokens: ["kal", "main", "market", "ja", "rahi", "hoon"], alts: [["main", "kal", "market", "ja", "rahi", "hoon"]] },
+        { id: "kal_ghar", en: "Tomorrow I'm going home.", roman: "Kal main ghar ja rahi hoon.", deva: "कल मैं घर जा रही हूँ।", tokens: ["kal", "main", "ghar", "ja", "rahi", "hoon"], alts: [["main", "kal", "ghar", "ja", "rahi", "hoon"]] }
+      ],
+      quiz: [
+        { prompt: "What does kal mean?", hi: "kal", options: ["tomorrow (or yesterday)", "today", "right now"], answer: 0, whys: ["", "Today is <b>aaj</b>.", "Right now is <b>abhi</b>."] },
+        { prompt: "Say “Today I'm going to the office”:", options: ["Aaj main office ja rahi hoon.", "Aaj main office aa rahi hoon.", "Kal main office ja rahi hoon."], answer: 0, whys: ["", "<b>aa</b> = come. Going is <b>ja</b>.", "<b>kal</b> = tomorrow. Today is <b>aaj</b>."] },
+        { prompt: "Aunty calls you down for dinner. You're on your way!", options: ["Main aa rahi hoon!", "Main ja rahi hoon!", "Kal main aaungi."], answer: 0, whys: ["", "<b>ja</b> = going away 😄 Coming is <b>aa</b>.", "That's “I'll come tomorrow” — dinner's now!"] },
+        { prompt: "What does this mean?", hi: "Kal main aaungi.", dv: "कल मैं आऊँगी।", options: ["I'll come tomorrow.", "I'm coming now.", "I went yesterday."], answer: 0, whys: ["", "Now would be <b>Main aa rahi hoon</b>.", "<b>aaungi</b> is the future: I <i>will</i> come."] },
+        { prompt: "What does this mean?", hi: "Kahan ho?", dv: "कहाँ हो?", options: ["Where are you?", "How are you?", "What are you doing?"], answer: 0, whys: ["", "How are you is <b>Kaisi ho?</b>", "That's <b>Kya kar rahi ho?</b>"] },
+        { prompt: "Why “aaungi” and not “aaunga”?", options: ["-i is the female ending", "aaungi is more polite", "aaunga means yesterday"], answer: 0, whys: ["", "It's about who's speaking — you're a woman: <b>aaungi</b>.", "It's about who's speaking — you're a woman: <b>aaungi</b>."] }
+      ],
+      transforms: [["ghar_ja", "gym"], ["office", "market"], ["market", "kal_ghar"]],
+      chat: {
+        who: "uncle",
+        lines: [
+          { them: "Hello Anissa! Kahan ho?", dv: "हैलो अनीसा! कहाँ हो?", en: "Hello Anissa! Where are you?" },
+          { type: "ghar_par", goal: "Tell him you're at home." },
+          { them: "Accha. Aaj kya kar rahi ho?", dv: "अच्छा। आज क्या कर रही हो?", en: "Okay. What are you doing today?" },
+          { pick: [{ text: "Aaj main market ja rahi hoon.", ok: true }, { text: "Abhi main kaam kar rahi hoon.", ok: true }, { text: "Kal main aaungi.", why: "That answers “When will you come?”" }] },
+          { them: "Kal ghar aaogi? Aunty khana bana rahi hain.", dv: "कल घर आओगी? आंटी खाना बना रही हैं।", en: "Will you come over tomorrow? Aunty is cooking." },
+          { type: "kal_aaungi", goal: "Say: yes, I'll come tomorrow!" },
+          { them: "Bahut badhiya! Phir milte hain.", dv: "बहुत बढ़िया! फिर मिलते हैं।", en: "Wonderful! See you then." },
+          { pick: [{ text: "Bye Uncle ji! 👋", ok: true }] }
+        ]
+      }
+    },
+
+    /* ============================ MODULE 8 ============================ */
+    {
+      id: "m8", number: 8, icon: "📞", title: "The Family Call", tagline: "Put it all together in a real call with Aunty and Uncle", minutes: "15–20",
+      stages: ["learn", "words", "quiz", "build", "chat", "challenge"],
+      stageInfo: {
+        learn: { desc: "Conversation glue — the little words that make chats flow." },
+        words: { title: "Conversation Glue", desc: "Bilkul, chalo, phir milte hain…" },
+        quiz: { icon: "🧠", title: "Mixed Review", desc: "A bit of everything from Modules 1–7." },
+        build: { desc: "Build sentences from every module." },
+        chat: { title: "The Family Call", desc: "A full call with Aunty, then Uncle. You've got this!" }
+      },
+      formula: [["Everything you've learned", "other"]],
+      formulaText: "everything you've learned",
+      mistakes: [RAHA_FEMALE, NOT_TUM],
+      confusions: [["rahi", "rahe", "For Uncle it's <b>rahe</b>."], ["kaisi", "kaise", "For Uncle it's <b>kaise</b>."], ["kaise", "kaisi", "For Aunty it's <b>kaisi</b>."], ["hoon", "hain", "With <b>aap</b>, it's <b>hain</b>."], ["hai", "hoon", "With <b>Main</b>, it's <b>hoon</b>."], ["kar", "watch", "You watch TV: <b>dekh</b>."], ["kar", "drink", "You drink chai: <b>pee</b>."]],
+      cards: [
+        { id: "accha2", roman: "Accha!", deva: "अच्छा!", en: "Oh, okay! / Nice!", emoji: "😮", sounds: "UTCH-chaa" },
+        { id: "bilkul", roman: "bilkul", deva: "बिल्कुल", en: "absolutely", emoji: "💯", sounds: "BIL-kool" },
+        { id: "theek_hai", roman: "theek hai", deva: "ठीक है", en: "okay / alright", emoji: "👌🏽", sounds: "teek hai" },
+        { id: "chalo", roman: "chalo", deva: "चलो", en: "alright then / let's go", emoji: "👋🏽", sounds: "CHUH-lo" },
+        { id: "phir", roman: "phir milte hain", deva: "फिर मिलते हैं", en: "see you later", emoji: "🤗", sounds: "fir MIL-tay hain" },
+        { id: "bye", roman: "bye", deva: "बाय", en: "bye", emoji: "👋🏽", sounds: "like English “bye”" }
+      ],
+      lesson: [
+        { kind: "tip", kicker: "Conversation glue", title: "Little words, big difference",
+          html: "These tiny words make you sound natural:<ul><li><b>Accha!</b> = Oh okay! / Nice!</li><li><b>Bilkul!</b> = Absolutely!</li><li><b>Theek hai</b> = Okay</li><li><b>Chalo, bye!</b> = Alright, bye!</li><li><b>Phir milte hain</b> = See you later</li></ul>",
+          examples: ["bilkul", "theek_hai", "chalo_bye", "phir"] },
+        { kind: "tip", kicker: "Your toolkit", title: "Everything you can already say",
+          html: "<ul><li><b>Main + verb + rahi hoon</b> — what you're doing</li><li><b>Main + thing + verb/kar + rahi hoon</b> — chai, TV, kaam, shopping…</li><li><b>Main + feeling + hoon</b> — theek, khush, busy, thak gayi</li><li><b>Haan ji / Nahin ji</b> — polite answers</li><li><b>Aunty, aap kaisi hain? / Uncle, aap kaise hain?</b></li><li><b>Mujhe … pasand hai</b> — what you like</li><li><b>Aaj / kal + Main + place + ja rahi hoon</b> — plans</li></ul>" },
+        { kind: "quiz", q: { prompt: "Uncle says “Kal aaogi?” (Will you come tomorrow?). Say “Absolutely! I'll come tomorrow.”", options: ["Bilkul! Kal main aaungi.", "Bilkul! Kal main aaunga.", "Bilkul! Aaj main aa rahi hoon."], answer: 0,
+          whys: ["", "<b>aaunga</b> is the male form — you say <b>aaungi</b>.", "He asked about tomorrow — <b>kal</b>."] } },
+        { kind: "order", item: "phir", chunks: [["phir"], ["milte"], ["hain"]] }
+      ],
+      items: [
+        { id: "bilkul", en: "Absolutely!", roman: "Bilkul!", deva: "बिल्कुल!", tokens: ["bilkul"], noBuild: true },
+        { id: "theek_hai", en: "Okay!", roman: "Theek hai!", deva: "ठीक है!", tokens: ["theek", "hai"], noBuild: true },
+        { id: "phir", en: "See you later!", roman: "Phir milte hain!", deva: "फिर मिलते हैं!", tokens: ["phir", "milte", "hain"] },
+        { id: "chalo_bye", en: "Alright, bye!", roman: "Chalo, bye!", deva: "चलो, बाय!", tokens: ["chalo", "bye"] },
+        { id: "r_run", en: "I am running.", roman: "Main bhaag rahi hoon.", deva: "मैं भाग रही हूँ।", tokens: ["main", "run", "rahi", "hoon"] },
+        { id: "r_chai", en: "I am drinking chai.", roman: "Main chai pee rahi hoon.", deva: "मैं चाय पी रही हूँ।", tokens: ["main", "chai", "drink", "rahi", "hoon"] },
+        { id: "r_shopping", en: "I am shopping.", roman: "Main shopping kar rahi hoon.", deva: "मैं शॉपिंग कर रही हूँ।", tokens: ["main", "shopping", "kar", "rahi", "hoon"] },
+        { id: "r_thak", en: "I'm tired.", roman: "Main thak gayi hoon.", deva: "मैं थक गई हूँ।", tokens: ["main", "thak", "gayi", "hoon"] },
+        { id: "r_sab", en: "Yes, everything's fine.", roman: "Haan ji, sab theek hai.", deva: "हाँ जी, सब ठीक है।", tokens: ["haan", "ji", "sab", "theek", "hai"], alts: [["haan", "sab", "theek", "hai"], ["sab", "theek", "hai"]] },
+        { id: "r_u_kaise", en: "Uncle, how are you?", roman: "Uncle, aap kaise hain?", deva: "अंकल, आप कैसे हैं?", tokens: ["uncle", "aap", "kaise", "hain"], alts: [["uncle", "ji", "aap", "kaise", "hain"], ["aap", "kaise", "hain"], ["namaste", "uncle", "ji", "aap", "kaise", "hain"], ["namaste", "uncle", "aap", "kaise", "hain"]] },
+        { id: "r_a_kya", en: "Aunty, what are you doing?", roman: "Aunty, aap kya kar rahi hain?", deva: "आंटी, आप क्या कर रही हैं?", tokens: ["aunty", "aap", "kya", "kar", "rahi", "hain"], alts: [["aunty", "ji", "aap", "kya", "kar", "rahi", "hain"]] },
+        { id: "r_khana", en: "The food is really good!", roman: "Khana bahut accha hai!", deva: "खाना बहुत अच्छा है!", tokens: ["khana", "bahut", "accha", "hai"], alts: [["khana", "accha", "hai"]] },
+        { id: "r_dal", en: "I really like dal!", roman: "Mujhe dal bahut pasand hai!", deva: "मुझे दाल बहुत पसंद है!", tokens: ["mujhe", "dal", "bahut", "pasand", "hai"], alts: [["mujhe", "dal", "pasand", "hai"], ["haan", "ji", "mujhe", "dal", "bahut", "pasand", "hai"], ["haan", "mujhe", "dal", "bahut", "pasand", "hai"]] },
+        { id: "r_kal", en: "I'll come tomorrow.", roman: "Kal main aaungi.", deva: "कल मैं आऊँगी।", tokens: ["kal", "main", "aaungi"], alts: [["main", "kal", "aaungi"], ["bilkul", "kal", "main", "aaungi"], ["haan", "ji", "kal", "main", "aaungi"]] },
+        { id: "r_office", en: "Today I'm going to the office.", roman: "Aaj main office ja rahi hoon.", deva: "आज मैं ऑफिस जा रही हूँ।", tokens: ["aaj", "main", "office", "ja", "rahi", "hoon"], alts: [["main", "aaj", "office", "ja", "rahi", "hoon"]] }
+      ],
+      quiz: [
+        { prompt: "Aunty asks “Kya kar rahi ho?”. You're cooking.", hi: "Kya kar rahi ho?", dv: "क्या कर रही हो?", options: ["Main cooking kar rahi hoon.", "Main cooking dekh rahi hoon.", "Main cooking hoon."], answer: 0, whys: ["", "English activity + <b>kar</b>: cooking kar.", "Add the action: <b>cooking kar rahi hoon</b>."] },
+        { prompt: "Ask Uncle what he's doing:", options: ["Uncle, aap kya kar rahe hain?", "Uncle, aap kya kar rahi hain?", "Uncle, tum kya kar rahe ho?"], answer: 0, whys: ["", "For Uncle it's <b>rahe</b>.", "With elders use <b>aap … hain</b>."] },
+        { prompt: "You're tired after work. Say it:", options: ["Main thak gayi hoon.", "Main thak gaya hoon.", "Main thak gayi hai."], answer: 0, whys: ["", "<b>gaya</b> is the male form — you say <b>gayi</b>.", "With Main, it's <b>hoon</b>."] },
+        { prompt: "Aunty offers more dal. You're full.", options: ["Bas, shukriya. Mera pet bhar gaya.", "Thoda aur, please.", "Mujhe bhookh lagi hai."], answer: 0, whys: ["", "That asks for more!", "That means “I'm hungry”."] },
+        { prompt: "Uncle asks “Khana khaya?”. You have.", hi: "Khana khaya?", dv: "खाना खाया?", options: ["Haan ji, kha liya.", "Abhi nahin.", "Main khana pasand hoon."], answer: 0, whys: ["", "That's “not yet” — but you have eaten!", "Just say <b>Haan ji, kha liya</b>."] },
+        { prompt: "End the call nicely:", options: ["Chalo, phir milte hain! Bye!", "Namaste! Kaisi ho?", "Kya kar rahi ho?"], answer: 0, whys: ["", "That's how you start a call 😄", "That's a question for someone else!"] },
+        { prompt: "Say “I like chai”:", options: ["Mujhe chai pasand hai.", "Main chai pasand hoon.", "Mujhe chai pee rahi hoon."], answer: 0, whys: ["", "Use <b>Mujhe … pasand hai</b>.", "Use <b>Mujhe … pasand hai</b>."] },
+        { prompt: "Tomorrow you're going to the market:", options: ["Kal main market ja rahi hoon.", "Aaj main market ja rahi hoon.", "Kal main market aa rahi hoon."], answer: 0, whys: ["", "<b>aaj</b> is today — tomorrow is <b>kal</b>.", "<b>aa</b> = come. Going is <b>ja</b>."] }
+      ],
+      transforms: [],
+      buildItems: ["r_run", "r_chai", "r_shopping", "r_thak", "r_sab", "r_u_kaise", "r_a_kya", "r_khana", "r_kal", "r_office"],
+      chat: {
+        who: "aunty",
+        lines: [
+          { them: "Hello Anissa beta! Kaisi ho?", dv: "हैलो अनीसा बेटा! कैसी हो?", en: "Hello Anissa dear! How are you?" },
+          { pick: [{ text: "Namaste Aunty ji! Main theek hoon. Aur aap?", ok: true }, { text: "Namaste Aunty ji! Aap kaise hain?", why: "For Aunty it's <b>kaisi</b> — and answer her first!" }] },
+          { them: "Main bhi theek hoon. Kya kar rahi ho?", dv: "मैं भी ठीक हूँ। क्या कर रही हो?", en: "I'm fine too. What are you doing?" },
+          { type: "r_chai", goal: "Tell her you're drinking chai." },
+          { them: "Accha! Khana khaya?", dv: "अच्छा! खाना खाया?", en: "Oh nice! Have you eaten?" },
+          { pick: [{ text: "Haan ji, kha liya.", ok: true }, { text: "Abhi nahin.", ok: true }, { text: "Haan ji, please!", why: "She asked if you've eaten — not offering anything yet 😄" }] },
+          { them: "Theek hai. Ruko, Uncle se baat karo!", dv: "ठीक है। रुको, अंकल से बात करो!", en: "Okay. Wait, talk to Uncle!" },
+          { them: "Namaste beta!", dv: "नमस्ते बेटा!", en: "Hello dear!", who: "uncle" },
+          { type: "r_u_kaise", goal: "Greet Uncle and ask how he is." },
+          { them: "Main bilkul theek hoon. Sab kaisa chal raha hai?", dv: "मैं बिल्कुल ठीक हूँ। सब कैसा चल रहा है?", en: "I'm totally fine. How's everything going?", who: "uncle" },
+          { type: "r_sab", goal: "Say: yes, everything's fine." },
+          { them: "Bahut accha. Kal ghar aaogi?", dv: "बहुत अच्छा। कल घर आओगी?", en: "Very good. Will you come over tomorrow?", who: "uncle" },
+          { pick: [{ text: "Bilkul! Kal main aaungi.", ok: true }, { text: "Bilkul! Kal main aaunga.", why: "<b>aaunga</b> is the male form — you say <b>aaungi</b>." }, { text: "Main ghar par hoon.", why: "He's asking about tomorrow!" }] },
+          { them: "Badhiya! Aunty tumhare liye dal bana rahi hain.", dv: "बढ़िया! आंटी तुम्हारे लिए दाल बना रही हैं।", en: "Great! Aunty is making dal for you.", who: "uncle" },
+          { type: "r_dal", goal: "Say you really like dal!" },
+          { them: "Haha! Chalo, phir milte hain.", dv: "हाहा! चलो, फिर मिलते हैं।", en: "Haha! Alright, see you then.", who: "uncle" },
+          { pick: [{ text: "Phir milte hain, Uncle ji! Bye! 👋", ok: true }] }
+        ]
+      }
+    }
+  ];
+  mods.forEach((m) => C.modules.push(m));
+})();

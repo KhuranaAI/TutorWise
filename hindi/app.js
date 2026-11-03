@@ -112,7 +112,8 @@
     try { return migrate(parsed); } catch (e) { return migrate(null); }
   }
   let S = load();
-  const P = () => S.modules[M.id]; // this module's progress
+  let CUR = C.modules[0];            // the module being played
+  const P = () => S.modules[CUR.id]; // its saved progress
   function writeLocal() {
     try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignore */ }
   }
@@ -549,7 +550,7 @@
   /* =====================================================
      Stages & runner
      ===================================================== */
-  const STAGES = [
+  const STAGES_M1 = [
     { id: "learn", rev: 1, short: "Learn", icon: "🧱", title: "Learn the Pattern", desc: "See how one simple Hindi sentence is built — and how to change its meaning.", build: buildLearn },
     { id: "words", rev: 1, short: "Words", icon: "🃏", title: "Meet 8 Verbs", desc: "Flip cards, quick quizzes and a matching game for eight everyday verbs.", build: buildWords },
     { id: "build", rev: 1, short: "Build", icon: "🧩", title: "Sentence Builder", desc: "Tap word tiles to build Hindi sentences. The helper tips fade away as you improve.", build: buildBuilder },
@@ -557,7 +558,8 @@
     { id: "challenge", rev: 1, short: "Challenge", icon: "🏆", title: "Solo Challenge", desc: "Type Hindi sentences on your own, then take a short mastery test.", build: buildChallenge }
   ];
 
-  const session = { streak: 0 };
+  let STAGES = STAGES_M1; // stages of the current module (switched by enterModule)
+  const session = { streak: 0, unlockAll: false };
   let run = null;
   let view = "start";
 
@@ -572,7 +574,7 @@
       track.append(seg);
     });
     const lbl = $("stage-label");
-    if (run) lbl.textContent = `Stage ${run.stage + 1} of ${STAGES.length} · ${STAGES[run.stage].title}`;
+    if (run) lbl.textContent = `Module ${CUR.number} · Stage ${run.stage + 1} of ${STAGES.length} · ${STAGES[run.stage].title}`;
   }
   function setFill(pct) {
     const segs = $("track").children;
@@ -609,12 +611,22 @@
 
   function snapshotRun(pos) {
     const st = STAGES[run.stage];
-    return JSON.parse(JSON.stringify({ stageId: st.id, rev: st.rev, stage: run.stage, queue: run.queue, pos, stats: run.stats, results: run.results, ctx: run.ctx, opts: run.opts }));
+    return JSON.parse(JSON.stringify({ moduleId: CUR.id, stageId: st.id, rev: st.rev, stage: run.stage, queue: run.queue, pos, stats: run.stats, results: run.results, ctx: run.ctx, opts: run.opts }));
   }
   // Can this saved step still be shown by the current version of the app?
   function validStep(st) {
     if (!st || !RENDER[st.type]) return false;
     if (st.type === "mc" && !MC_KINDS[st.mc]) return false;
+    if (st.mod) {
+      const m = MODS[st.mod];
+      if (!m) return false;
+      if ([st.item, st.from, st.to].some((id) => id && !itemOf(m, id))) return false;
+      if (st.card && !cardOf(m, st.card)) return false;
+      if (st.cards && !st.cards.every((id) => cardOf(m, id))) return false;
+      if (st.qi != null && !m.quiz[st.qi]) return false;
+      if (st.idx != null && !m.lesson[st.idx]) return false;
+      return true;
+    }
     const ids = [st.verbId, st.target, st.from].concat(st.verbIds || []).filter(Boolean);
     return ids.every((id) => VERB[id]);
   }
@@ -627,6 +639,7 @@
   // start it again from the top (everything else is kept).
   function resumeRun() {
     const r = P().run;
+    if (r && r.moduleId && r.moduleId !== CUR.id) enterModule(r.moduleId);
     const i = r ? STAGES.findIndex((x) => x.id === r.stageId) : -1;
     if (!savedRunUsable(r)) {
       P().run = null;
@@ -670,7 +683,7 @@
       session.streak = res.firstTry ? session.streak + 1 : 0;
       updateXP();
     }
-    if (step.test) run.results.push({ skill: step.skill, correct: !!res.firstTry, verbId: step.verbId || step.target });
+    if (step.test) run.results.push({ skill: step.skill, correct: !!res.firstTry, verbId: step.mod ? null : step.verbId || step.target, ref: step.mod ? step.item || step.to || null : null });
     // Only answered questions come back; lessons, flashcard intros and info screens never repeat.
     if (step.graded !== false && !res.solved && step.requeue !== false && !step.test && !step.isRetry) {
       // Bring it back later — mistakes are part of learning.
@@ -698,7 +711,7 @@
       h("div", { class: "stage-badge" }, "🎉"),
       h("div", { class: "kicker" }, `Stage ${i + 1} complete`),
       h("h1", {}, pick(["Shabash!", "Bahut badhiya!", "Wah!"])),
-      h("p", {}, STAGE_DONE_MSG[i]),
+      h("p", {}, STAGES[i].doneMsg || STAGE_DONE_MSG[i] || "Great work!"),
       h("div", { class: "stat-row" },
         h("div", { class: "stat" }, h("b", {}, "+" + run.stats.xp), h("span", {}, "XP earned")),
         run.stats.graded ? h("div", { class: "stat" }, h("b", {}, acc + "%"), h("span", {}, "First-try")) : null),
@@ -940,7 +953,7 @@
   };
 
   function rFlash(step) {
-    const v = VERB[step.verbId];
+    const v = step.mod ? cardAsWord(step) : VERB[step.verbId];
     let flipped = false;
     const card = h("div", { class: "flash", role: "button", tabindex: "0", "aria-label": "Flip card" },
       h("div", { class: "face front" },
@@ -967,12 +980,14 @@
       h("h2", { class: "prompt" }, step.index === 0 && step.batch === 0 ? "Flip the card to learn the Hindi word" : "Flip to learn the next word"),
       h("div", { class: "flash-wrap" }, card),
       h("div", { class: "dots" }, Array.from({ length: step.count }, (_, i) => h("i", { class: i <= step.index ? "on" : "" }))),
-      h("p", { class: "center small muted mt" }, "Try saying it out loud: ", h("b", {}, romanSentence(v.id))));
+      step.mod ? h("p", { class: "center small muted mt" }, "Try saying it out loud: ", h("b", {}, v.roman)) : h("p", { class: "center small muted mt" }, "Try saying it out loud: ", h("b", {}, romanSentence(v.id))));
     const [btn] = actions([{ label: step.index === step.count - 1 ? "Practice these words" : "Next word", disabled: true, onClick: () => stepDone(step, {}) }]);
   }
 
   function rMatch(step) {
-    const verbs = step.verbIds.map((id) => VERB[id]);
+    const verbs = step.mod ? step.cards.map((id) => cardAsWord({ mod: step.mod, card: id })) : step.verbIds.map((id) => VERB[id]);
+    const byId = {};
+    verbs.forEach((v) => (byId[v.id] = v));
     let sel = null, matched = 0, mistakes = 0;
     const mk = (v, side) => {
       const b = h("button", { class: "opt", "data-id": v.id, "data-side": side },
@@ -983,7 +998,7 @@
     function choose(b) {
       if (b.classList.contains("done")) return;
       Sound.play("tap");
-      if (b.dataset.side === "hi") Speech.say(VERB[b.dataset.id].deva);
+      if (b.dataset.side === "hi") Speech.say(byId[b.dataset.id].deva);
       if (!sel || sel.dataset.side === b.dataset.side) {
         if (sel) sel.classList.remove("selected");
         sel = b;
@@ -1097,9 +1112,24 @@
   function rBuild(step) {
     const v = VERB[step.verbId];
     const lvl = step.level;
-    let tiles = step.chunks ? step.chunks.slice() : [partTile("main"), verbTile(v.id), partTile("rahi"), partTile("hoon")]
+    const tiles = step.chunks ? step.chunks.slice() : [partTile("main"), verbTile(v.id), partTile("rahi"), partTile("hoon")]
       .concat(sample(VERBS.filter((x) => x.id !== v.id), lvl.distractors).map((d) => verbTile(d.id)));
-    tiles = shuffle(tiles).map((t, i) => Object.assign({}, t, { uid: i }));
+    buildUI(step, {
+      tiles, lvl,
+      prompt: "“" + english(v, step.variant) + "”",
+      check: (tokens) => diagnose(tokens, v.id, { variant: step.variant }),
+      answer: () => sentenceAnswer(v.id, step.variant),
+      say: devaSentence(v.id),
+      solution: step.chunks ? step.chunks.map((t) => t.label) : ["Main", v.roman, "rahi", "hoon"],
+      hint: lvl.hint ? h("div", { class: "pattern-hint" },
+        h("span", { class: "p subject" }, "Main"), "+", h("span", { class: "p verb" }, "verb"), "+", h("span", { class: "p aux" }, "rahi hoon")) : null
+    });
+  }
+  // Shared tile-builder screen. spec: { tiles, lvl, prompt, check(tokens), answer(), say, hint, solution }
+  function buildUI(step, spec) {
+    const lvl = spec.lvl;
+    const tiles = shuffle(spec.tiles).map((t, i) => Object.assign({}, t, { uid: i }));
+    dbg.solution = spec.solution;
     let answer = [];
     let tries = 0, locked = false;
 
@@ -1222,17 +1252,17 @@
       if (locked || !answer.length) return;
       tries++;
       const tokens = answer.flatMap((uid) => tiles[uid].tokens);
-      const r = diagnose(tokens, v.id, { variant: step.variant });
+      const r = spec.check(tokens);
       if (r.ok) {
         locked = true;
         renderAnswer();
         zone.classList.add("ok");
         Sound.play("good");
-        Speech.say(devaSentence(v.id));
+        Speech.say(spec.say);
         award(step.test ? 15 : tries === 1 ? 10 : 5, zone);
         const p = praise();
         showSheet({
-          ok: true, title: p.title, answer: sentenceAnswer(v.id, step.variant), notes: p.note ? [p.note] : [],
+          ok: true, title: p.title, answer: spec.answer(), notes: (r.notes || []).concat(p.note ? [p.note] : []),
           buttons: [{ label: "Continue", onClick: () => stepDone(step, { firstTry: tries === 1, solved: true }) }]
         });
       } else {
@@ -1243,7 +1273,7 @@
           renderAnswer();
           showSheet({
             ok: false, title: step.test ? "Not this time" : "Here's how it goes", html: r.msg,
-            answer: sentenceAnswer(v.id, step.variant),
+            answer: spec.answer(),
             notes: step.test || step.requeue === false ? [] : ["This one will come back for another go."],
             buttons: [{ label: "Got it", onClick: () => stepDone(step, { firstTry: false, solved: false }) }]
           });
@@ -1256,12 +1286,11 @@
       }
     }
 
-    const hint = lvl.hint ? h("div", { class: "pattern-hint" },
-      h("span", { class: "p subject" }, "Main"), "+", h("span", { class: "p verb" }, "verb"), "+", h("span", { class: "p aux" }, "rahi hoon")) : null;
+    const hint = spec.hint || null;
     screen(
       step.test ? h("div", {}, h("span", { class: "test-badge" }, "Mastery test")) : null,
       h("div", { class: "prompt-kicker" }, step.kicker || (lvl.hint ? "Build the sentence" : "Translate with tiles")),
-      h("h2", { class: "prompt" }, "“" + english(v, step.variant) + "”"),
+      h("h2", { class: "prompt" }, spec.prompt),
       step.helper ? h("p", { class: "small muted", style: "margin:-8px 0 12px" }, step.helper) : null,
       hint,
       zone, tip, bank,
@@ -1501,18 +1530,30 @@
       h("div", { class: "stage-badge" }, "🎯"),
       h("div", { class: "kicker" }, "Final round"),
       h("h1", {}, "Mastery test"),
-      h("p", {}, "10 questions mixing everything you've practised. No hints this time — and that's okay. If you miss one, you'll see the right answer straight away.")));
+      h("p", {}, `${run.queue.filter((x) => x.test).length} questions mixing everything you've practised. No hints this time — and that's okay. If you miss one, you'll see the right answer straight away.`)));
     actions([{ label: "Start the test", onClick: () => stepDone(step, {}) }]);
   }
 
   function rType(step) {
     const v = VERB[step.verbId];
+    typeUI(step, {
+      prompt: "“" + english(v, step.variant) + "”",
+      hints: [
+        ["Pattern", "<b>Main</b> + <b>verb</b> + <b>rahi hoon</b>"],
+        ["Verb", `“${esc(v.en)}” = <b>${esc(v.roman)}</b>`],
+        ["First letters", `<b>M___ ${esc(v.roman[0])}___ r___ h___</b>`]
+      ],
+      check: (str) => diagnose(tokenize(str), v.id, { allowDrop: true, variant: step.variant }),
+      answer: () => sentenceAnswer(v.id, step.variant),
+      say: devaSentence(v.id),
+      solution: romanSentence(v.id)
+    });
+  }
+  // Shared typing screen. spec: { prompt, hints: [[label, html]], check(str), answer(), say, solution }
+  function typeUI(step, spec) {
     let tries = 0, hintsUsed = 0, locked = false;
-    const HINTS = [
-      ["Pattern", "<b>Main</b> + <b>verb</b> + <b>rahi hoon</b>"],
-      ["Verb", `“${esc(v.en)}” = <b>${esc(v.roman)}</b>`],
-      ["First letters", `<b>M___ ${esc(v.roman[0])}___ r___ h___</b>`]
-    ];
+    const HINTS = spec.hints;
+    dbg.typed = spec.solution;
     const input = h("input", {
       class: "type-box", type: "text", autocomplete: "off", autocapitalize: "off", autocorrect: "off", spellcheck: "false",
       enterkeyhint: "done", placeholder: "Type in Hindi (Roman letters)…", "aria-label": "Your Hindi sentence"
@@ -1534,17 +1575,17 @@
     function check() {
       if (locked || !input.value.trim()) return;
       tries++;
-      const r = diagnose(tokenize(input.value), v.id, { allowDrop: true, variant: step.variant });
+      const r = spec.check(input.value);
       if (r.ok) {
         locked = true;
         input.classList.add("ok");
         input.blur();
         Sound.play("good");
-        Speech.say(devaSentence(v.id));
+        Speech.say(spec.say);
         award(step.test ? 15 : Math.max(4, (tries === 1 ? 10 : 5) - hintsUsed * 2), input);
         const p = praise();
         showSheet({
-          ok: true, title: p.title, answer: sentenceAnswer(v.id, step.variant),
+          ok: true, title: p.title, answer: spec.answer(),
           notes: (r.notes || []).concat(hintsUsed === 0 && tries === 1 && !step.test ? ["No hints needed — impressive!"] : []),
           buttons: [{ label: "Continue", onClick: () => stepDone(step, { firstTry: tries === 1 && hintsUsed === 0, solved: true }) }]
         });
@@ -1555,7 +1596,7 @@
           locked = true;
           input.blur();
           showSheet({
-            ok: false, title: step.test ? "Not this time" : "Here's the answer", html: r.msg, answer: sentenceAnswer(v.id, step.variant),
+            ok: false, title: step.test ? "Not this time" : "Here's the answer", html: r.msg, answer: spec.answer(),
             notes: step.test ? [] : ["This one will come back for another go."],
             buttons: [{ label: "Got it", onClick: () => stepDone(step, { firstTry: false, solved: false }) }]
           });
@@ -1570,8 +1611,8 @@
     }
     screen(
       step.test ? h("div", {}, h("span", { class: "test-badge" }, "Mastery test")) : null,
-      h("div", { class: "prompt-kicker" }, "Translate into Hindi"),
-      h("h2", { class: "prompt" }, "“" + english(v, step.variant) + "”"),
+      h("div", { class: "prompt-kicker" }, spec.kicker || "Translate into Hindi"),
+      h("h2", { class: "prompt" }, spec.prompt),
       input,
       h("p", { class: "small muted", style: "margin-top:8px" }, "Capitals don't matter, and small spelling slips are OK."),
       hintBtn, hintArea);
@@ -1587,7 +1628,8 @@
     ["meaning", "Understand sentences"],
     ["build", "Build sentences"],
     ["transform", "Change the verb"],
-    ["translate", "Translate on your own"]
+    ["translate", "Translate on your own"],
+    ["quiz", "Real-life replies"]
   ];
   function showResults() {
     const res = run.results;
@@ -1598,8 +1640,11 @@
     P().last = { score, total, at: Date.now() };
     if (!P().best || score > P().best.score) P().best = { score, total };
     save();
-    const missed = [...new Set(res.filter((r) => !r.correct).map((r) => r.verbId))].filter((id) => VERB[id]);
-    const headline = pct >= 0.9 ? "Bahut badhiya! You've mastered Module 1." : pct >= 0.7 ? "Great work — you can build Hindi sentences!" : "Good start! A little more practice and it'll click.";
+    const isM1 = CUR.id === "m1";
+    const missed = isM1 ? [...new Set(res.filter((r) => !r.correct).map((r) => r.verbId))].filter((id) => VERB[id]) : [];
+    const missedItems = isM1 ? [] : [...new Set(res.filter((r) => !r.correct && r.ref).map((r) => r.ref))].map((id) => itemOf(CUR, id)).filter(Boolean);
+    const nextMod = C.modules[C.modules.indexOf(CUR) + 1];
+    const headline = pct >= 0.9 ? `Bahut badhiya! You've mastered Module ${CUR.number}.` : pct >= 0.7 ? "Great work — you can build Hindi sentences!" : "Good start! A little more practice and it'll click.";
     showChrome(true);
     renderTrack(100);
     screen(
@@ -1625,17 +1670,565 @@
           const v = VERB[id];
           return h("span", { class: "chip" }, h("span", { class: "em" }, v.emoji), h("span", {}, W(v.roman, v.deva, "hi"), h("span", { class: "sub" }, v.enLabel)));
         }))) : null,
+      missedItems.length ? h("div", { class: "card mt" },
+        h("div", { class: "section-title" }, "Sentences to review"),
+        h("ul", { class: "say-list" }, missedItems.map((it) => h("li", {},
+          h("div", {}, h("div", { class: "hi" }, W(it.roman, it.deva)), h("div", { class: "en" }, it.en)), audioBtn(it.deva, true))))) : null,
       h("div", { class: "card mt" },
         h("div", { class: "section-title" }, "You can now say"),
-        h("ul", { class: "say-list" }, VERBS.map((v) => h("li", {},
+        h("ul", { class: "say-list" }, isM1 ? VERBS.map((v) => h("li", {},
           h("span", { class: "em" }, v.emoji),
           h("div", {}, h("div", { class: "hi" }, W(romanSentence(v.id), devaSentence(v.id))), h("div", { class: "en" }, english(v))),
-          audioBtn(devaSentence(v.id), true))))));
+          audioBtn(devaSentence(v.id), true))) : CUR.items.slice(0, 12).map((it) => h("li", {},
+          h("div", {}, h("div", { class: "hi" }, W(it.roman, it.deva)), h("div", { class: "en" }, it.en)),
+          audioBtn(it.deva, true))))));
     actions([
-      { label: "Retake test", cls: "ghost", onClick: () => startStage(4, { testOnly: true, skipIntro: true }) },
-      { label: "Play again", onClick: () => startStage(0) }
+      { label: "Retake test", cls: "ghost", onClick: () => startStage(STAGES.length - 1, { testOnly: true, skipIntro: true }) },
+      nextMod ? { label: `Module ${nextMod.number} →`, onClick: () => showModule(nextMod.id) } : { label: "Play again", onClick: () => startStage(0) }
     ]);
     run = null;
+  }
+
+  /* =====================================================
+     MODULES 2–8 — data-driven engine (content lives in modules.js)
+     ===================================================== */
+  const MODS = {};
+  C.modules.forEach((m) => (MODS[m.id] = m));
+  const itemOf = (m, id) => (m.items || []).find((x) => x.id === id);
+  const cardOf = (m, id) => (m.cards || []).find((x) => x.id === id);
+  function cardAsWord(step) {
+    const c = cardOf(MODS[step.mod], step.card);
+    return { id: c.id, roman: c.roman, deva: c.deva, en: c.en, enLabel: c.en, emoji: c.emoji, sounds: c.sounds };
+  }
+
+  // One vocabulary for every module (Module 1's words are included under their ids).
+  const LEXI = {};
+  M.pattern.parts.forEach((p) => (LEXI[p.id] = { roman: p.roman, deva: p.deva, en: { main: "I", rahi: "…-ing (female)", hoon: "am" }[p.id], role: p.role, accept: p.accept }));
+  VERBS.forEach((v) => (LEXI[v.id] = { roman: v.roman, deva: v.deva, en: v.en, role: "verb", accept: v.accept }));
+  Object.keys(C.lexicon || {}).forEach((id) => { const a = C.lexicon[id]; LEXI[id] = { roman: a[0], deva: a[1], en: a[2], role: a[3], accept: a[4] || [] }; });
+  const LEXG = new Map(), FUZZG = [];
+  function addG(form, id) {
+    const f = String(form || "").normalize("NFC").toLowerCase();
+    if (!f) return;
+    if (!LEXG.has(f)) LEXG.set(f, id);
+    if (/^[a-z]+$/.test(f) && f.length >= 3) FUZZG.push({ form: f, id });
+  }
+  Object.keys(LEXI).forEach((id) => { const w = LEXI[id]; [w.roman, w.deva].concat(w.accept || []).forEach((a) => addG(a, id)); });
+  const ENGG = new Map();
+  Object.keys(LEXI).forEach((id) => String(LEXI[id].en || "").toLowerCase().split(/\s*\/\s*/).forEach((e) => { if (/^[a-z]+$/.test(e) && !LEXG.has(e) && !ENGG.has(e)) ENGG.set(e, id); }));
+  VERBS.forEach((v) => v.ing.forEach((g) => { if (!ENGG.has(g)) ENGG.set(g, v.id); }));
+  const RW = (id) => (LEXI[id] ? LEXI[id].roman : id);
+  const DW = (id) => (LEXI[id] ? LEXI[id].deva : "");
+  const ENW = (id) => (LEXI[id] ? LEXI[id].en : "");
+  const roleW = (id) => (LEXI[id] ? LEXI[id].role : "other");
+
+  function lookupG(raw) {
+    const t = raw.toLowerCase();
+    if (LEXG.has(t)) return { raw, id: LEXG.get(t) };
+    if (ENGG.has(t)) return { raw, kind: "english", id: ENGG.get(t) };
+    if (/^[a-z]+$/.test(t) && t.length >= 3) {
+      const hits = FUZZG.filter((f) => Math.abs(f.form.length - t.length) <= 1 && lev(f.form, t) <= 1);
+      const ids = new Set(hits.map((x) => x.id));
+      if (ids.size === 1) return { raw, id: hits[0].id, fuzzy: true };
+    }
+    return { raw, kind: "unknown" };
+  }
+  function tokenizeG(str) {
+    const norm = String(str).normalize("NFC").toLowerCase()
+      .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, " ")
+      .replace(/[.,!?;:"“”'‘’`।|()[\]{}\-_/\\]+/g, " ").replace(/\s+/g, " ").trim();
+    if (!norm) return [];
+    const out = [];
+    norm.split(" ").forEach((w) => {
+      const tk = lookupG(w);
+      if (tk.kind === "unknown" && w.length >= 4) { // joined words, e.g. "haanji", "rahihoon"
+        for (let i = 2; i <= w.length - 2; i++) {
+          const a = LEXG.get(w.slice(0, i)), b = LEXG.get(w.slice(i));
+          if (a && b) { out.push({ raw: w.slice(0, i), id: a }, { raw: w.slice(i), id: b }); return; }
+        }
+      }
+      out.push(tk);
+    });
+    return out;
+  }
+
+  // Compare what she wrote (or built) with a sentence and explain any mistake kindly.
+  function checkItem(toks, item, mod, opts) {
+    opts = opts || {};
+    const fail = (msg) => ({ ok: false, msg });
+    if (!toks.length) return fail("Write the sentence first.");
+    const targets = [item.tokens].concat(item.alts || []);
+    const ids = toks.map((t) => t.id || "?");
+    const same = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+    const fuzzNotes = () => toks.filter((t) => t.fuzzy).map((t) => `Spelling tip: “${esc(t.raw)}” is usually written <b>${esc(RW(t.id))}</b>.`);
+    const inTargets = (id) => targets.some((T) => T.includes(id));
+    // Known slips (e.g. a male form) are explained first, even when they're one letter off a right word.
+    for (const m of mod.mistakes || []) {
+      const t = toks.find((x) => { const raw = String(x.raw || "").toLowerCase(), exact = LEXG.get(raw); return m.words.includes(raw) && !(exact && inTargets(exact)); });
+      if (t) return fail(m.why);
+    }
+    for (const T of targets) {
+      if (same(ids, T)) return { ok: true, notes: fuzzNotes() };
+      if (opts.allowDrop && T[0] === "main" && same(ids, T.slice(1))) return { ok: true, notes: [`Fun fact: Hindi speakers often drop “Main” in casual speech. The full sentence is <b>${esc(item.roman)}</b>`].concat(fuzzNotes()) };
+    }
+    const en = toks.find((t) => t.kind === "english");
+    if (en) return fail(`“${esc(en.raw)}” is English. In Hindi it's <b>${esc(RW(en.id))}</b>.`);
+    const unk = toks.find((t) => t.kind === "unknown");
+    if (unk) return fail(`Hmm, I don't recognise “${esc(unk.raw)}”. Check the spelling.`);
+    const diff = (T) => {
+      const rest = T.slice(), extra = [];
+      ids.forEach((id) => { const k = rest.indexOf(id); if (k >= 0) rest.splice(k, 1); else extra.push(id); });
+      return { missing: rest, extra };
+    };
+    let best = null;
+    targets.forEach((T) => { const d = diff(T), score = d.missing.length + d.extra.length; if (!best || score < best.score) best = { T, d, score }; });
+    const d = best.d;
+    const conf = (a, b) => (mod.confusions || []).find((c) => c[0] === a && c[1] === b);
+    const list = (xs) => xs.map((x) => "<b>" + esc(RW(x)) + "</b>").join(" + ");
+    if (!d.missing.length && !d.extra.length) {
+      const thingFirst = best.T.findIndex((x) => roleW(x) === "thing"), verbAt = best.T.findIndex((x, i) => i > thingFirst && roleW(x) === "verb");
+      if (thingFirst >= 0 && verbAt > thingFirst && ids.indexOf(best.T[verbAt]) < ids.indexOf(best.T[thingFirst])) return fail(`Right words, wrong order — the thing comes <i>before</i> the action: <b>${esc(RW(best.T[thingFirst]))} ${esc(RW(best.T[verbAt]))}</b>.`);
+      return fail(`Right words, wrong order. It goes: <b>${esc(item.roman)}</b>`);
+    }
+    if (d.missing.length === 1 && d.extra.length === 1) {
+      const a = d.extra[0], b = d.missing[0], c = conf(a, b);
+      if (c) return fail(c[2]);
+      return fail(`<b>${esc(RW(a))}</b> means “${esc(ENW(a))}”. Here you need <b>${esc(RW(b))}</b> (${esc(ENW(b))}).`);
+    }
+    for (const a of d.extra) for (const b of d.missing) { const c = conf(a, b); if (c) return fail(c[2]); }
+    if (d.missing.length && !d.extra.length) return fail(`Almost! You're missing ${list(d.missing)}.`);
+    if (!d.missing.length && d.extra.length) return fail(`${list(d.extra)} doesn't belong in this one.`);
+    return fail(`Not quite — you need ${list(d.missing)}, not ${list(d.extra)}.`);
+  }
+
+  function itemAnswer(it) {
+    return h("div", { class: "answer" },
+      h("div", { style: "display:flex;align-items:center;gap:10px;flex-wrap:wrap" }, W(it.roman, it.deva, "hi"), audioBtn(it.deva, true)),
+      h("div", { class: "small muted", style: "font-family:var(--font);font-weight:500" }, "= " + it.en));
+  }
+  const blockG = (ids, extra) => h("div", Object.assign({ class: "block " + roleW(ids[0]) }, extra || {}), W(ids.map(RW).join(" "), ids.map(DW).join(" ")));
+  const pillsOf = (mod) => h("div", { class: "pattern-hint" }, (mod.formula || []).map(([label, role], i) => [i ? "+" : null, h("span", { class: "p " + role }, label)]));
+  const tileG = (ids) => ({ label: ids.map(RW).join(" "), deva: ids.map(DW).join(" "), role: roleW(ids[0]), tokens: ids.map((id) => ({ id })) });
+  const poolOfMod = (mod) => [...new Set(mod.items.flatMap((it) => it.tokens))];
+
+  /* ---------- stages for modules 2+ ---------- */
+  const STAGE_DEFAULTS = {
+    learn: { icon: "🧱", title: "Learn the Pattern", desc: "See how the new sentences are built.", doneMsg: "You've got the pattern. Now let's learn the words." },
+    words: { icon: "🃏", title: "New Words", desc: "Flip cards, quick questions and a matching game.", doneMsg: "New words in your pocket!" },
+    quiz: { icon: "🤔", title: "Quick Quiz", desc: "Real-life moments — pick what you'd say.", doneMsg: "Great choices — that's real-life Hindi." },
+    build: { icon: "🧩", title: "Sentence Builder", desc: "Tap word tiles to build full sentences.", doneMsg: "You built every sentence!" },
+    transform: { icon: "🔄", title: "Sentence Transformer", desc: "Change a sentence by swapping just the words that change.", doneMsg: "You're changing sentences on the fly." },
+    chat: { icon: "💬", title: "Family Chat", desc: "A real conversation — reply to the messages.", doneMsg: "You just held a real conversation in Hindi! Last stop: do it on your own." },
+    challenge: { icon: "🏆", title: "Solo Challenge", desc: "Type sentences on your own, then a short mastery test." }
+  };
+  const STAGE_CACHE = {};
+  function stagesFor(mod) {
+    if (mod.id === "m1") return STAGES_M1;
+    if (!STAGE_CACHE[mod.id]) {
+      STAGE_CACHE[mod.id] = mod.stages.map((sid) => Object.assign({ id: sid, rev: 1, short: sid }, STAGE_DEFAULTS[sid], (mod.stageInfo || {})[sid], {
+        build: (opts) => buildG(mod, sid, opts || {})
+      }));
+    }
+    return STAGE_CACHE[mod.id];
+  }
+  function enterModule(id) {
+    CUR = MODS[id] || C.modules[0];
+    STAGES = stagesFor(CUR);
+    S.lastModule = CUR.id;
+  }
+  const moduleDone = (id) => stagesFor(MODS[id]).every((st) => S.modules[id] && S.modules[id].done[st.id]);
+  const moduleUnlocked = (idx) => idx === 0 || session.unlockAll || moduleDone(C.modules[idx - 1].id);
+
+  function buildG(mod, sid, opts) {
+    const m = mod.id;
+    const typeable = mod.items.filter((i) => i.tokens.length >= 2);
+    if (sid === "learn") {
+      return mod.lesson.map((l, idx) => l.kind === "quiz" ? { type: "mc", mc: "cquiz", mod: m, q: l.q, requeue: false }
+        : l.kind === "order" ? { type: "gbuild", mod: m, item: l.item, chunks: l.chunks, kicker: "Your turn", requeue: false, level: { colors: true, hint: true, distractors: 0 } }
+          : { type: { explain: "gexplain", tip: "gtip", swap: "gswap" }[l.kind], mod: m, idx, graded: false });
+    }
+    if (sid === "words") {
+      const ids = mod.cards.map((c) => c.id), batches = [];
+      for (let i = 0; i < ids.length; i += 4) batches.push(ids.slice(i, i + 4));
+      if (batches.length > 1 && batches[batches.length - 1].length < 3) batches[batches.length - 2].push(...batches.pop());
+      const steps = [];
+      batches.forEach((b, bi) => {
+        b.forEach((id, i) => steps.push({ type: "flash", mod: m, card: id, index: i, count: b.length, batch: bi, graded: false }));
+        shuffle(b).forEach((id, i) => steps.push({ type: "mc", mc: i % 2 ? "chi2en" : "cen2hi", mod: m, card: id, skill: "vocab" }));
+        if (b.length >= 2) steps.push({ type: "match", mod: m, cards: b, requeue: false });
+      });
+      return steps;
+    }
+    if (sid === "quiz") return shuffle(mod.quiz.map((q, qi) => ({ type: "mc", mc: "cquiz", mod: m, qi, skill: "quiz" })));
+    if (sid === "build") {
+      const ids = (mod.buildItems || mod.items.filter((i) => !i.noBuild).map((i) => i.id));
+      return shuffle(ids).slice(0, 8).map((id, r) => ({
+        type: "gbuild", mod: m, item: id, skill: "build", round: r,
+        level: r < 2 ? { colors: true, hint: true, distractors: 2 } : r < 5 ? { colors: true, hint: false, distractors: 3 } : { colors: false, hint: false, distractors: 4 }
+      }));
+    }
+    if (sid === "transform") {
+      const n = mod.transforms.length;
+      return mod.transforms.map(([a, b], i) => ({ type: "gtransform", mod: m, from: a, to: b, assist: i < Math.ceil(n / 2), first: i === 0, requeue: false, skill: "transform" }));
+    }
+    if (sid === "chat") return [{ type: "gchat", mod: m, requeue: false }];
+    // challenge: a little typing practice with hints, then the mastery test
+    const steps = [];
+    if (!opts.testOnly) sample(typeable, 3).forEach((it) => steps.push({ type: "gtype", mod: m, item: it.id, hints: true, skill: "translate" }));
+    steps.push({ type: "testIntro", graded: false });
+    const t = (o) => Object.assign({ test: true, requeue: false, mod: m }, o);
+    const cs = sample(mod.cards, 2);
+    if (cs[0]) steps.push(t({ type: "mc", mc: "chi2en", card: cs[0].id, skill: "vocab" }));
+    if (cs[1]) steps.push(t({ type: "mc", mc: "cen2hi", card: cs[1].id, skill: "vocab" }));
+    sample(mod.quiz.map((q, i) => i), 2).forEach((qi) => steps.push(t({ type: "mc", mc: "cquiz", qi, skill: "quiz" })));
+    const buildable = mod.buildItems || mod.items.filter((i) => !i.noBuild).map((i) => i.id);
+    const b = pick(buildable);
+    steps.push(t({ type: "gbuild", item: b, skill: "build", level: { colors: false, hint: false, distractors: 4 } }));
+    if (mod.transforms.length) { const [x, y] = pick(mod.transforms); steps.push(t({ type: "gtransform", from: x, to: y, assist: false, skill: "transform" })); }
+    sample(typeable.filter((i) => i.id !== b), 4).forEach((it) => steps.push(t({ type: "gtype", item: it.id, hints: false, skill: "translate" })));
+    return steps;
+  }
+
+  /* ---------- multiple choice for module cards & quizzes ---------- */
+  Object.assign(MC_KINDS, {
+    cen2hi: (step) => {
+      const mod = MODS[step.mod], c = cardOf(mod, step.card);
+      return {
+        kicker: "Pick the Hindi", layout: "grid2",
+        prompt: () => h("div", { class: "big-word", style: "color:var(--ink);font-size:34px" }, h("div", { style: "font-size:60px;line-height:1.1" }, c.emoji), h("div", {}, "“" + c.en + "”")),
+        opts: () => shuffle([c].concat(sample(mod.cards.filter((x) => x.id !== c.id), 3))).map((o) => ({
+          content: () => [h("span", { class: "hi" }, W(o.roman, o.deva))], correct: o.id === c.id,
+          why: `<b>${esc(o.roman)}</b> means “${esc(o.en)}”. “${esc(c.en)}” is <b>${esc(c.roman)}</b>.`
+        })),
+        rightMsg: `<b>${esc(c.roman)}</b> = ${esc(c.en)}`, say: c.deva
+      };
+    },
+    chi2en: (step) => {
+      const mod = MODS[step.mod], c = cardOf(mod, step.card);
+      return {
+        kicker: "What does this mean?", layout: "grid2",
+        prompt: () => h("div", { class: "big-word", style: "font-size:42px" }, W(c.roman, c.deva), h("div", {}, audioBtn(c.deva, true))),
+        onShow: () => Speech.say(c.deva),
+        opts: () => shuffle([c].concat(sample(mod.cards.filter((x) => x.id !== c.id), 3))).map((o) => ({
+          content: () => [h("span", { class: "em" }, o.emoji), h("span", {}, o.en)], correct: o.id === c.id,
+          why: `“${esc(o.en)}” is <b>${esc(o.roman)}</b>. <b>${esc(c.roman)}</b> means “${esc(c.en)}”.`
+        })),
+        rightMsg: `<b>${esc(c.roman)}</b> = ${esc(c.en)}`, say: c.deva
+      };
+    },
+    cquiz: (step) => {
+      const q = step.q || MODS[step.mod].quiz[step.qi];
+      return {
+        kicker: step.test ? "Real-life moment" : "What would you say?", layout: "list",
+        prompt: () => h("div", {}, h("h2", { class: "prompt" }, q.prompt),
+          q.hi ? h("div", { class: "big-sentence", style: "font-size:28px" }, W(q.hi, q.dv || ""), q.dv ? h("div", {}, audioBtn(q.dv, true)) : null) : null),
+        onShow: () => { if (q.dv) Speech.say(q.dv); },
+        opts: () => shuffle(q.options.map((text, i) => ({ content: () => [h("span", {}, text)], correct: i === q.answer, why: (q.whys || [])[i] || "" }))),
+        rightMsg: q.right || ""
+      };
+    }
+  });
+
+  /* ---------- Learn-stage screens ---------- */
+  const lessonOf = (step) => MODS[step.mod].lesson[step.idx];
+  function rGExplain(step) {
+    const l = lessonOf(step);
+    const revealed = new Set();
+    const note = h("div", { class: "note mt", hidden: true, style: "border-left-color:var(--brand)" });
+    const blocks = l.blocks.map(([ids, gloss], i) => {
+      const b = h("button", { class: "block tappable " + roleW(ids[0]), "aria-label": ids.map(RW).join(" ") },
+        W(ids.map(RW).join(" "), ids.map(DW).join(" ")), h("span", { class: "gloss" }, gloss), h("span", { class: "tap-hint" }, "?"));
+      b.addEventListener("click", () => {
+        Sound.play("tap");
+        Speech.say(ids.map(DW).join(" "));
+        b.classList.add("revealed");
+        revealed.add(i);
+        if (revealed.size === l.blocks.length && note.hidden) {
+          note.hidden = false;
+          note.innerHTML = l.note || "";
+          btn.disabled = false;
+          setTimeout(() => note.scrollIntoView({ behavior: "smooth", block: "center" }), 150);
+        }
+      });
+      return b;
+    });
+    screen(
+      h("div", { class: "prompt-kicker" }, l.kicker || "Learn"),
+      h("h2", { class: "prompt" }, l.title || "Tap each block to see what it means"),
+      h("div", { class: "scene" },
+        h("div", { class: "avatar" }, SP.avatar, l.emoji ? h("span", { class: "act" }, l.emoji) : null),
+        h("div", { class: "bubble" }, W(l.roman, l.deva), audioBtn(l.deva, true))),
+      h("div", { class: "blocks mt" }, blocks),
+      h("div", { class: "english-line" }, l.en),
+      note);
+    const [btn] = actions([{ label: "Continue", disabled: true, onClick: () => stepDone(step, {}) }]);
+  }
+  function exampleList(mod, ids) {
+    return h("ul", { class: "say-list mt" }, ids.map((id) => itemOf(mod, id)).filter(Boolean).map((it) => h("li", {},
+      h("div", {}, h("div", { class: "hi" }, W(it.roman, it.deva)), h("div", { class: "en" }, it.en)), audioBtn(it.deva, true))));
+  }
+  function rGTip(step) {
+    const mod = MODS[step.mod], l = lessonOf(step);
+    screen(
+      h("div", { class: "prompt-kicker" }, l.kicker || "Tip"),
+      h("h2", { class: "prompt" }, l.title),
+      h("div", { class: "card tip-card" }, h("div", { class: "tip-html", html: l.html || "" }), l.examples ? exampleList(mod, l.examples) : null));
+    actions([{ label: "Got it!", onClick: () => { Sound.play("tap"); stepDone(step, {}); } }]);
+  }
+  function rGSwap(step) {
+    const mod = MODS[step.mod], l = lessonOf(step);
+    const used = new Set();
+    const stage = h("div", { class: "transform-stage", style: "min-height:150px" }, h("p", { class: "center muted small" }, "👇 Tap an option below"));
+    const note = h("div", { class: "note mt", hidden: true, style: "border-left-color:var(--brand)" });
+    const chips = l.options.map((id) => {
+      const it = itemOf(mod, id);
+      const c = h("button", { class: "chip" }, h("span", {}, it.chip || it.en));
+      c.addEventListener("click", () => {
+        Sound.play("flip");
+        Speech.say(it.deva);
+        chips.forEach((x) => x.classList.remove("selected"));
+        c.classList.add("selected", "used");
+        used.add(id);
+        stage.innerHTML = "";
+        stage.append(h("div", { class: "blocks" }, it.tokens.map((t) => blockG([t], { style: "font-size:20px;padding:10px 12px;min-width:0" }))),
+          h("div", { class: "english-line", style: "font-size:20px" }, it.en));
+        stage.classList.remove("fade-in"); void stage.offsetWidth; stage.classList.add("fade-in");
+        if (used.size === l.options.length && note.hidden) {
+          note.hidden = false;
+          note.innerHTML = l.note || "";
+          btn.disabled = false;
+          setTimeout(() => note.scrollIntoView({ behavior: "smooth", block: "center" }), 150);
+        }
+      });
+      return c;
+    });
+    screen(h("div", { class: "prompt-kicker" }, l.kicker || "Try it"), h("h2", { class: "prompt" }, l.title), stage, h("div", { class: "chips mt" }, chips), note);
+    const [btn] = actions([{ label: "Continue", disabled: true, onClick: () => stepDone(step, {}) }]);
+  }
+
+  /* ---------- builder, typing and transformer for modules ---------- */
+  function rGBuild(step) {
+    const mod = MODS[step.mod], it = itemOf(mod, step.item), lvl = step.level;
+    let tiles;
+    if (step.chunks) tiles = step.chunks.map(tileG);
+    else {
+      const T = it.tokens, roles = new Set(T.map(roleW));
+      const cands = poolOfMod(mod).filter((id) => !T.includes(id));
+      const pref = shuffle(cands.filter((id) => roles.has(roleW(id)))), rest = shuffle(cands.filter((id) => !roles.has(roleW(id))));
+      tiles = T.map((id) => tileG([id])).concat(pref.concat(rest).slice(0, lvl.distractors).map((id) => tileG([id])));
+    }
+    buildUI(step, {
+      tiles, lvl,
+      prompt: "“" + it.en + "”",
+      check: (tokens) => checkItem(tokens.map((t) => ({ id: t.id, raw: RW(t.id) })), it, mod),
+      answer: () => itemAnswer(it),
+      say: it.deva,
+      solution: step.chunks ? step.chunks.map((ids) => ids.map(RW).join(" ")) : it.tokens.map(RW),
+      hint: lvl.hint ? pillsOf(mod) : null
+    });
+  }
+  function rGType(step) {
+    const mod = MODS[step.mod], it = itemOf(mod, step.item);
+    const keyWords = it.tokens.filter((id) => !["main", "rahi", "hoon", "hain", "hai", "ji"].includes(id));
+    typeUI(step, {
+      prompt: "“" + it.en + "”",
+      hints: [
+        ["Pattern", `<b>${esc(mod.formulaText || "")}</b>`],
+        ["Key words", keyWords.map((id) => `<b>${esc(RW(id))}</b> = ${esc(ENW(id))}`).join(" · ")],
+        ["First letters", "<b>" + it.tokens.map((id) => esc(RW(id).charAt(0)) + "___").join(" ") + "</b>"]
+      ],
+      check: (str) => checkItem(tokenizeG(str), it, mod, { allowDrop: true }),
+      answer: () => itemAnswer(it),
+      say: it.deva,
+      solution: it.roman
+    });
+  }
+  function rGTransform(step) {
+    const mod = MODS[step.mod], from = itemOf(mod, step.from), to = itemOf(mod, step.to);
+    const cur = from.tokens.slice(), target = to.tokens;
+    const diffs = target.map((id, i) => (id !== from.tokens[i] ? i : -1)).filter((i) => i >= 0);
+    let tries = 0, locked = false, wrongTaps = 0, openAt = -1;
+    const tipEl = h("div", { class: "drag-tip", style: "font-size:14px;min-height:22px" }, step.first ? "👆 Tap a word that needs to change." : (diffs.length > 1 ? `${diffs.length} words need to change.` : ""));
+    const picker = h("div", { class: "picker" });
+    const blockEls = cur.map((id, i) => {
+      const b = blockG([id], { class: "block tappable " + roleW(id) });
+      b.addEventListener("click", () => tap(i, b));
+      return b;
+    });
+    dbg.transform = { diffs, roman: target.map(RW) };
+    function setBlock(i) {
+      const b = blockEls[i];
+      b.className = "block tappable " + roleW(cur[i]) + (i === openAt ? " target" : "");
+      b.innerHTML = "";
+      b.append(W(RW(cur[i]), DW(cur[i])));
+      b.classList.remove("changed"); void b.offsetWidth; b.classList.add("changed");
+    }
+    function tap(i, b) {
+      if (locked) return;
+      if (!diffs.includes(i)) {
+        wrongTaps++;
+        Sound.play("bad");
+        b.classList.remove("nudge"); void b.offsetWidth; b.classList.add("nudge");
+        tipEl.innerHTML = `“${esc(RW(cur[i]))}” stays the same here. Which word needs to change?`;
+        return;
+      }
+      Sound.play("tap");
+      blockEls.forEach((x) => x.classList.remove("target"));
+      b.classList.add("target");
+      openAt = i;
+      const want = target[i], role = roleW(want);
+      const others = shuffle(poolOfMod(mod).filter((id) => id !== want && id !== from.tokens[i] && roleW(id) === role)).slice(0, 2);
+      const opts = shuffle([...new Set([want, from.tokens[i]].concat(others))]);
+      picker.innerHTML = "";
+      picker.append(h("div", { class: "picker-title" }, step.assist ? "Swap in:" : "Swap in (no English this time!):"),
+        h("div", { class: "chips" }, opts.map((id) => {
+          const c = h("button", { class: "chip" + (cur[i] === id ? " selected" : "") }, h("span", {}, W(RW(id), DW(id), "hi"), step.assist ? h("span", { class: "sub" }, ENW(id)) : null));
+          c.addEventListener("click", () => {
+            if (locked) return;
+            Sound.play("flip");
+            Speech.say(DW(id));
+            cur[i] = id;
+            picker.querySelectorAll(".chip").forEach((x) => x.classList.remove("selected"));
+            c.classList.add("selected");
+            setBlock(i);
+            const left = diffs.filter((k) => cur[k] !== target[k]).length;
+            tipEl.innerHTML = left && diffs.length > 1 ? "Now tap the next word that needs to change." : "";
+          });
+          return c;
+        })));
+      tipEl.innerHTML = "Pick the new word.";
+    }
+    function check() {
+      if (locked) return;
+      if (cur.every((id, i) => id === from.tokens[i])) { Sound.play("bad"); tipEl.innerHTML = "👆 First tap a word you want to change."; return; }
+      tries++;
+      if (cur.every((id, i) => id === target[i])) {
+        locked = true;
+        blockEls.forEach((x) => x.classList.remove("target"));
+        Sound.play("good");
+        Speech.say(to.deva);
+        award(step.test ? 15 : tries === 1 && wrongTaps === 0 ? 10 : 5, blockEls[diffs[0]]);
+        const p = praise();
+        showSheet({
+          ok: true, title: p.title, answer: itemAnswer(to),
+          notes: [`You changed ${diffs.map((k) => `<b>${esc(RW(from.tokens[k]))}</b> → <b>${esc(RW(target[k]))}</b>`).join(" and ")}. Everything else stayed the same.`],
+          buttons: [{ label: "Continue", onClick: () => stepDone(step, { firstTry: tries === 1 && wrongTaps === 0, solved: true }) }]
+        });
+        return;
+      }
+      Sound.play("bad");
+      const k = diffs.find((x) => cur[x] !== target[x]);
+      const c = (mod.confusions || []).find((cf) => cf[0] === cur[k] && cf[1] === target[k]);
+      const msg = c ? c[2] : cur[k] === from.tokens[k] ? `“${esc(RW(cur[k]))}” still needs to change.` : `<b>${esc(RW(cur[k]))}</b> means “${esc(ENW(cur[k]))}”. Here you need <b>${esc(RW(target[k]))}</b>.`;
+      if (step.test || tries >= 2) {
+        locked = true;
+        diffs.forEach((x) => { cur[x] = target[x]; setBlock(x); });
+        showSheet({ ok: false, title: step.test ? "Not this time" : "Here's the change", html: msg, answer: itemAnswer(to), buttons: [{ label: "Continue", onClick: () => stepDone(step, { firstTry: false, solved: true }) }] });
+      } else {
+        showSheet({ ok: false, title: pick(OOPS), html: msg, buttons: [{ label: "Try again", onClick: () => hideSheet() }] });
+      }
+    }
+    screen(
+      step.test ? h("div", {}, h("span", { class: "test-badge" }, "Mastery test")) : null,
+      h("div", { class: "prompt-kicker" }, "Change this sentence to"),
+      h("h2", { class: "prompt" }, "“" + to.en + "”"),
+      h("div", { class: "transform-stage" },
+        h("div", { class: "picker-title", style: "margin-bottom:6px" }, step.test ? "Current sentence" : "Now: “" + from.en + "”"),
+        h("div", { class: "blocks" }, blockEls), tipEl),
+      picker);
+    actions([{ label: "Check", onClick: check }]);
+  }
+
+  /* ---------- family chat ---------- */
+  const PEOPLE = { aunty: { name: "Aunty", avatar: "👩🏽" }, uncle: { name: "Uncle", avatar: "👨🏽" } };
+  function rGChat(step) {
+    const mod = MODS[step.mod], chat = mod.chat, host = PEOPLE[chat.who];
+    const log = h("div", { class: "chat-log", "aria-live": "polite" });
+    const reply = h("div", { class: "reply-box" });
+    let li = 0, mistakes = 0;
+    const down = () => setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 40);
+    const meMsg = (text) => { log.append(h("div", { class: "msg me" }, h("div", { class: "bub" }, text))); down(); };
+    function themMsg(line) {
+      const p = PEOPLE[line.who || chat.who];
+      log.append(h("div", { class: "msg them" }, h("div", { class: "av" }, p.avatar),
+        h("div", {}, h("div", { class: "who" }, p.name),
+          h("div", { class: "bub" }, W(line.them, line.dv || ""), audioBtn(line.dv, true), h("span", { class: "tr" }, line.en)))));
+      Speech.say(line.dv);
+      down();
+    }
+    function next() {
+      reply.innerHTML = "";
+      actions([]);
+      dbg.chat = null;
+      if (li >= chat.lines.length) return finish();
+      const line = chat.lines[li++];
+      if (line.them) {
+        const p = PEOPLE[line.who || chat.who];
+        const typing = h("div", { class: "msg them" }, h("div", { class: "av" }, p.avatar), h("div", { class: "bub typing" }, h("i", {}), h("i", {}), h("i", {})));
+        log.append(typing);
+        down();
+        setTimeout(() => { typing.remove(); themMsg(line); Sound.play("tap"); setTimeout(next, 600); }, 650);
+        return;
+      }
+      if (line.pick) {
+        const opts = shuffle(line.pick);
+        const tip = h("div", { class: "reply-tip" });
+        reply.append(h("div", { class: "reply-goal" }, "Your reply:"), h("div", { class: "options" }, opts.map((o) => {
+          const b = h("button", { class: "opt" }, o.text);
+          b.addEventListener("click", () => {
+            if (o.ok) { Sound.play("good"); award(5, b); meMsg(o.text); next(); }
+            else { mistakes++; Sound.play("bad"); b.classList.add("wrong"); b.disabled = true; tip.innerHTML = o.why || "Not quite — try another reply."; }
+          });
+          return b;
+        })), tip);
+        dbg.chat = { pick: opts.findIndex((o) => o.ok), wrong: opts.findIndex((o) => !o.ok) };
+        down();
+        return;
+      }
+      if (line.type) {
+        const it = itemOf(mod, line.type);
+        let tries = 0;
+        const input = h("input", { class: "type-box", id: "chat-input", type: "text", autocomplete: "off", autocapitalize: "off", autocorrect: "off", spellcheck: "false", enterkeyhint: "send", placeholder: "Type your reply in Hindi…", "aria-label": "Your reply" });
+        const tip = h("div", { class: "reply-tip" });
+        const send = () => {
+          const val = input.value.trim();
+          if (!val) return input.focus();
+          tries++;
+          const r = checkItem(tokenizeG(val), it, mod, { allowDrop: true });
+          if (r.ok) { Sound.play("good"); award(tries === 1 ? 10 : 5, input); meMsg(val); next(); }
+          else {
+            mistakes++;
+            Sound.play("bad");
+            input.classList.remove("no"); void input.offsetWidth; input.classList.add("no");
+            tip.innerHTML = r.msg + (tries >= 2 ? `<br>Try: <b>${esc(it.roman)}</b>` : "");
+          }
+        };
+        input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); send(); } });
+        reply.append(h("div", { class: "reply-goal" }, "✍🏽 " + line.goal), input, tip);
+        dbg.chat = { type: it.roman };
+        actions([{ label: "Send", onClick: send }]);
+        setTimeout(() => input.focus({ preventScroll: true }), 250);
+        down();
+        return;
+      }
+      next();
+    }
+    function finish() {
+      Sound.play("done");
+      confetti(40);
+      award(10);
+      showSheet({
+        ok: true, title: mistakes === 0 ? "Perfect chat! 🎉" : "Chat complete! 🎉",
+        html: `You just had a real conversation with ${host.name} in Hindi.`,
+        buttons: [{ label: "Continue", onClick: () => stepDone(step, { firstTry: mistakes === 0, solved: true }) }]
+      });
+    }
+    screen(
+      h("div", { class: "chat-head" }, h("div", { class: "avatar", style: "width:52px;height:52px;font-size:28px" }, host.avatar),
+        h("div", {}, h("div", { class: "prompt-kicker", style: "margin:0" }, "Family chat"), h("h2", { class: "title", style: "margin:0;font-size:22px" }, STAGES[run.stage].title))),
+      h("p", { class: "small muted" }, "The English is under each message for now. Reply in Hindi!"),
+      log, reply);
+    next();
   }
 
   /* =====================================================
@@ -1728,13 +2321,86 @@
     return h("div", { class: "note mt small" }, h("b", {}, "Play it like an app: "), "tap the Share button ", h("span", { "aria-hidden": "true" }, "⬆️"), " then “Add to Home Screen”.");
   }
 
+  // Play (or resume) a module: picks up its saved screen, else its first unfinished stage.
+  function playModule(id) {
+    enterModule(id);
+    const r = P().run;
+    if (r && r.queue && r.queue.length) return resumeRun();
+    const next = firstUnfinished();
+    startStage(next === -1 ? 0 : next);
+  }
+
+  // Home: all modules, unlocked in order.
+  let logoTaps = 0;
   function showStart() {
     run = null;
     view = "start";
     showChrome(false);
+    const mods = C.modules;
+    const anyProgress = S.xp > 0 || mods.some((m) => Object.keys(S.modules[m.id].done).length || S.modules[m.id].run);
+    const list = h("ul", { class: "mod-list" }, mods.map((m, idx) => {
+      const st = stagesFor(m), doneN = st.filter((x) => S.modules[m.id].done[x.id]).length;
+      const unlocked = moduleUnlocked(idx), complete = doneN === st.length;
+      const b = h("button", { class: "mod-item" + (complete ? " done" : ""), disabled: !unlocked },
+        h("span", { class: "mod-ic" }, complete ? "✅" : m.icon || "📘"),
+        h("span", { class: "mod-txt" },
+          h("span", { class: "mod-num" }, "Module " + m.number),
+          h("b", {}, m.title),
+          h("span", { class: "d" }, m.tagline),
+          unlocked && doneN ? h("span", { class: "prog" }, h("i", { style: `width:${Math.round((doneN / st.length) * 100)}%` })) : null),
+        h("span", { class: "chev" }, unlocked ? "›" : "🔒"));
+      b.addEventListener("click", () => { Sound.play("tap"); showModule(m.id); });
+      return h("li", {}, b);
+    }));
+    const logo = h("div", { class: "logo" }, "Bolo!", h("small", { lang: "hi" }, "बोलो · speak!"));
+    logo.addEventListener("click", () => { // tap 5× to unlock every module (for testing; this session only)
+      if (++logoTaps === 5) { session.unlockAll = true; Sound.play("done"); showStart(); }
+    });
+    screen(
+      h("div", { class: "hero" },
+        logo,
+        h("p", { class: "greet" }, `Namaste, ${SP.name}! 👋`),
+        h("p", { class: "subtitle" }, "Hindi for chatting with the family — one real sentence at a time.")),
+      h("div", { class: "card" }, h("div", { class: "section-title" }, "Your modules"), list,
+        S.xp ? h("p", { class: "small muted mt" }, `★ ${S.xp} XP so far`) : null),
+      session.unlockAll ? h("p", { class: "center small muted mt" }, "🔓 All modules unlocked for testing (until the app is closed).") : null,
+      h("div", { class: "settings-row" },
+        toggle("देवनागरी script", "deva", applySettings),
+        toggle("Sound effects", "sound"),
+        Speech.supported ? toggle("🔊 Hindi voice", "voice") : null),
+      cloudCard(),
+      installTip(),
+      !Speech.supported ? h("p", { class: "center small muted mt" }, "Tip: pronunciation audio appears automatically on devices with a Hindi voice installed.") : null,
+      anyProgress ? h("p", { class: "center mt" }, h("button", {
+        class: "link-btn", onclick: () => {
+          askConfirm({
+            title: "Reset progress?", html: "This clears your XP, finished modules and scores on this device (and in your cloud save).",
+            yes: "Reset", no: "Cancel",
+            onYes: () => { const st = S.settings, cl = S.cloud; S = fillDefaults(fresh()); S.settings = st; S.cloud = cl; save(); session.streak = 0; updateXP(); showStart(); }
+          });
+        }
+      }, "Reset progress")) : null);
+    // Main button: carry on where she left off.
+    const last = MODS[S.lastModule] && moduleUnlocked(mods.indexOf(MODS[S.lastModule])) ? S.lastModule : null;
+    const target = (last && (S.modules[last].run || !moduleDone(last)) ? last : null)
+      || (mods.find((m, idx) => moduleUnlocked(idx) && !moduleDone(m.id)) || {}).id || "m1";
+    const allDone = mods.every((m) => moduleDone(m.id));
+    actions([{
+      label: !anyProgress ? "Start learning" : allDone ? "Play Module 1 again" : `Continue · Module ${MODS[target].number}`,
+      onClick: () => { Sound.play("tap"); playModule(allDone ? "m1" : target); }
+    }]);
+  }
+
+  // One module: its stages and progress.
+  function showModule(id) {
+    run = null;
+    view = "start";
+    showChrome(false);
+    enterModule(id);
+    const m = CUR;
     const next = firstUnfinished();
     const allDone = next === -1;
-    const started = STAGES.some((st, i) => isDone(i)) || S.xp > 0;
+    const started = STAGES.some((st, i) => isDone(i));
     const list = h("ul", { class: "stage-list" }, STAGES.map((st, i) => {
       const unlocked = allDone || isDone(i) || i <= next;
       const b = h("button", { class: "stage-item" + (isDone(i) ? " done" : "") + (i === next ? " next" : ""), disabled: !unlocked },
@@ -1744,41 +2410,23 @@
       b.addEventListener("click", () => { Sound.play("tap"); startStage(i); });
       return h("li", {}, b);
     }));
+    const back = h("button", { class: "link-btn back-link" }, "‹ All modules");
+    back.addEventListener("click", () => { Sound.play("tap"); showStart(); });
     screen(
-      h("div", { class: "hero" },
-        h("div", { class: "logo" }, "Bolo!", h("small", { lang: "hi" }, "बोलो · speak!")),
-        h("div", { class: "hero-art", "aria-hidden": "true" }, h("span", {}, "🍛"), h("span", {}, SP.avatar), h("span", {}, "📖")),
-        h("p", { class: "greet" }, `Namaste, ${SP.name}! 👋`),
-        h("p", { class: "subtitle" }, "Hindi for chatting with the family — one real sentence at a time.")),
+      back,
       h("div", { class: "card module-card" },
-        h("span", { class: "tag" }, "Module " + M.number),
-        h("h2", {}, M.title),
-        h("p", { class: "subtitle" }, `${M.tagline}. About ${M.minutes} minutes · 8 verbs · 5 stages.`),
+        h("span", { class: "tag" }, "Module " + m.number),
+        h("h2", {}, (m.icon ? m.icon + " " : "") + m.title),
+        h("p", { class: "subtitle" }, `${m.tagline}. About ${m.minutes} minutes · ${STAGES.length} stages.`),
         list,
-        P().best ? h("p", { class: "small muted mt" }, `Best mastery score: ${P().best.score}/${P().best.total} · ${S.xp} XP`) : null),
-      h("div", { class: "settings-row" },
-        toggle("देवनागरी script", "deva", applySettings),
-        toggle("Sound effects", "sound"),
-        Speech.supported ? toggle("🔊 Hindi voice", "voice") : null),
-      cloudCard(),
-      installTip(),
-      !Speech.supported ? h("p", { class: "center small muted mt" }, "Tip: pronunciation audio appears automatically on devices with a Hindi voice installed.") : null,
-      started ? h("p", { class: "center mt" }, h("button", {
-        class: "link-btn", onclick: () => {
-          askConfirm({
-            title: "Reset progress?", html: "This clears your XP, completed stages and best score on this device.",
-            yes: "Reset", no: "Cancel",
-            onYes: () => { const st = S.settings, cl = S.cloud; S = fillDefaults(fresh()); S.settings = st; S.cloud = cl; save(); session.streak = 0; updateXP(); showStart(); }
-          });
-        }
-      }, "Reset progress")) : null);
+        P().best ? h("p", { class: "small muted mt" }, `Best mastery score: ${P().best.score}/${P().best.total}`) : null));
     const saved = P().run && P().run.queue && P().run.queue.length ? P().run : null;
     const savedIdx = saved ? STAGES.findIndex((x) => x.id === saved.stageId) : -1;
     actions([saved && savedIdx >= 0 ? {
       label: `Continue · Stage ${savedIdx + 1}`,
       onClick: () => { Sound.play("tap"); resumeRun(); }
     } : {
-      label: allDone ? "Play again" : started ? `Continue · Stage ${next + 1}` : "Start learning",
+      label: allDone ? "Play again" : started ? `Continue · Stage ${next + 1}` : "Start",
       onClick: () => { Sound.play("tap"); startStage(allDone ? 0 : next); }
     }]);
   }
@@ -1798,6 +2446,13 @@
     build: wrapR(rBuild),
     transform: wrapR(rTransform),
     tmeaning: wrapR(rTMeaning),
+    gexplain: wrapR(rGExplain),
+    gtip: wrapR(rGTip),
+    gswap: wrapR(rGSwap),
+    gbuild: wrapR(rGBuild),
+    gtype: wrapR(rGType),
+    gtransform: wrapR(rGTransform),
+    gchat: wrapR(rGChat),
     testIntro: wrapR(rTestIntro),
     type: wrapR(rType)
   });
@@ -1811,7 +2466,7 @@
     top.insertBefore(deva, $("xp-pill"));
     top.after(h("div", { class: "stage-label", id: "stage-label", hidden: true }));
     // Her place is saved on every screen, so leaving never loses anything.
-    $("home-btn").addEventListener("click", () => { Sound.play("tap"); showStart(); });
+    $("home-btn").addEventListener("click", () => { Sound.play("tap"); showModule(CUR.id); });
     applySettings();
     updateXP();
     Speech.init(() => { if (view === "start") showStart(); });
@@ -1835,7 +2490,7 @@
   }
 
   // Exposed for debugging / automated checks.
-  window.Bolo = { tokenize, diagnose, startStage, showStart, cloud: Cloud, state: () => S, step: () => curStep, mcCorrect: () => (dbg.opts || []).findIndex((o) => o.correct), ctx: () => run && run.ctx };
+  window.Bolo = { tokenize, diagnose, tokenizeG, checkItem, startStage, showStart, showModule, playModule, mods: MODS, unlockAll: () => { session.unlockAll = true; }, debug: () => dbg, cloud: Cloud, state: () => S, step: () => curStep, mcCorrect: () => (dbg.opts || []).findIndex((o) => o.correct), ctx: () => run && run.ctx };
 
   init();
 })();
