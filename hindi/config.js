@@ -6,7 +6,7 @@
    the security rules are what protect the data. */
 window.BOLO_CLOUD = window.BOLO_CLOUD || {
   firebase: {
-    projectId: "",  // e.g. "bolo-hindi-1a2b3"
-    apiKey: ""      // e.g. "AIzaSy…"
+    projectId: "hindi-app-71647",
+    apiKey: "AIzaSyB2G_5M_yLxdp1jBWyMeeEC6K_UIbtOuZY"
   }
 };
