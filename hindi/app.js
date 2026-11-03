@@ -61,6 +61,9 @@
     done: [false, false, false, false, false],
     best: null,
     last: null,
+    run: null,      // the stage in progress, so she can resume on the same screen
+    savedAt: 0,     // when this progress last changed (used to pick the newer of phone vs cloud)
+    cloud: null,    // { code, dirty, syncedAt } once cloud save is on
     settings: { deva: false, sound: true, voice: true }
   });
   function load() {
@@ -74,9 +77,121 @@
     return fresh();
   }
   let S = load();
-  function save() {
+  function writeLocal() {
     try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignore */ }
   }
+  function save() {
+    S.savedAt = Date.now();
+    writeLocal();
+    Cloud.schedule();
+  }
+
+  /* ---------------- cloud save (optional — switched on by config.js) ----------------
+     Progress is stored in a Supabase table under a private save code (e.g. CHAI-TARA-MOR-4821).
+     The table is only reachable through two functions, bolo_save and bolo_load (see supabase.sql),
+     so nobody can list other people's saves. */
+  const CLOUD_CFG = window.BOLO_CLOUD || {};
+  const SAVE_WORDS = ["CHAI", "AAM", "TARA", "PHOOL", "CHAND", "NADI", "GHAR", "DOST", "SONA", "MOTI", "BADAL", "HAWA",
+    "KELA", "PAANI", "SURAJ", "TITLI", "MOR", "SHER", "HAATHI", "MITHAI", "LADDOO", "SAMOSA", "DIYA", "RANG",
+    "KHUSHI", "PYAAR", "NAACH", "GAANA", "PATANG", "TOTA", "MACHLI", "BARFI"];
+  const Cloud = {
+    timer: null, busy: false, failed: false, onChange: null,
+    get enabled() { return !!(CLOUD_CFG.url && CLOUD_CFG.anonKey); },
+    get on() { return this.enabled && !!(S.cloud && S.cloud.code); },
+    makeCode() {
+      const r = new Uint32Array(4);
+      crypto.getRandomValues(r);
+      const words = SAVE_WORDS.slice(), picked = [];
+      for (let i = 0; i < 3; i++) picked.push(words.splice(r[i] % words.length, 1)[0]); // three different words
+      return picked.join("-") + "-" + String(r[3] % 10000).padStart(4, "0");
+    },
+    cleanCode: (c) => String(c || "").toUpperCase().trim().replace(/[^A-Z0-9]+/g, "-").replace(/^-+|-+$/g, ""),
+    async rpc(fn, body, keepalive) {
+      const res = await fetch(CLOUD_CFG.url.replace(/\/+$/, "") + "/rest/v1/rpc/" + fn, {
+        method: "POST", keepalive: !!keepalive,
+        headers: { "Content-Type": "application/json", apikey: CLOUD_CFG.anonKey, Authorization: "Bearer " + CLOUD_CFG.anonKey },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw new Error("cloud " + res.status);
+      const text = await res.text();
+      return text ? JSON.parse(text) : null;
+    },
+    payload() {
+      const d = JSON.parse(JSON.stringify(S));
+      delete d.cloud;
+      return d;
+    },
+    schedule() {
+      if (!this.on) return;
+      S.cloud.dirty = true;
+      writeLocal();
+      clearTimeout(this.timer);
+      this.timer = setTimeout(() => this.push(), 1500);
+    },
+    async push(keepalive) {
+      if (!this.on || !S.cloud.dirty || this.busy) return;
+      if (navigator.onLine === false) { this.failed = true; this.changed(); return; }
+      this.busy = true;
+      const code = S.cloud.code, stamp = S.savedAt;
+      try {
+        await this.rpc("bolo_save", { p_code: code, p_data: this.payload() }, keepalive);
+        if (S.cloud && S.cloud.code === code) {
+          if (S.savedAt === stamp) S.cloud.dirty = false; // nothing changed while uploading
+          S.cloud.syncedAt = Date.now();
+          writeLocal();
+        }
+        this.failed = false;
+      } catch (e) {
+        this.failed = true;
+      } finally {
+        this.busy = false;
+        this.changed();
+        if (S.cloud && S.cloud.dirty && !this.failed) this.schedule();
+      }
+    },
+    async load(code) {
+      const res = await this.rpc("bolo_load", { p_code: code });
+      return res && res.data ? res : null;
+    },
+    adopt(data, code) {
+      const f = fresh();
+      S = Object.assign(f, data, { settings: Object.assign(f.settings, data.settings), cloud: { code, dirty: false, syncedAt: Date.now() } });
+      writeLocal();
+    },
+    async enable() {
+      S.cloud = { code: this.makeCode(), dirty: true, syncedAt: 0 };
+      writeLocal();
+      await this.push();
+    },
+    // On launch: take the cloud copy if it is newer (e.g. played on another phone), otherwise upload pending changes.
+    async sync() {
+      if (!this.on) return;
+      try {
+        const remote = await this.load(S.cloud.code);
+        if (remote && (remote.data.savedAt || 0) > (S.savedAt || 0) + 1000) {
+          this.adopt(remote.data, S.cloud.code);
+          this.failed = false;
+          if (this.onAdopt) this.onAdopt();
+        } else if (!remote || S.cloud.dirty) {
+          S.cloud.dirty = true;
+          await this.push();
+        }
+      } catch (e) {
+        this.failed = true;
+      }
+      this.changed();
+    },
+    changed() { if (this.onChange) this.onChange(); },
+    statusText() {
+      if (!this.on) return "";
+      if (this.busy) return "Saving…";
+      if (this.failed || S.cloud.dirty) return navigator.onLine === false ? "Offline — will save when you're back online" : "Will save shortly";
+      const t = S.cloud.syncedAt;
+      if (!t) return "Not saved yet";
+      const mins = Math.round((Date.now() - t) / 60000);
+      return "Saved " + (mins < 1 ? "just now" : mins < 60 ? mins + " min ago" : new Date(t).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }));
+    }
+  };
 
   /* ---------------- sound effects (Web Audio) ---------------- */
   const Sound = {
@@ -393,7 +508,7 @@
      ===================================================== */
   const STAGES = [
     { id: "learn", short: "Learn", icon: "🧱", title: "Learn the Pattern", desc: "See how one simple Hindi sentence is built — and how to change its meaning.", build: buildLearn },
-    { id: "words", short: "Words", icon: "🃏", title: "Meet 8 Verbs", desc: "Flip cards, match pairs and quick quizzes. Every verb comes back several times.", build: buildWords },
+    { id: "words", short: "Words", icon: "🃏", title: "Meet 8 Verbs", desc: "Flip cards, quick quizzes and a matching game for eight everyday verbs.", build: buildWords },
     { id: "build", short: "Build", icon: "🧩", title: "Sentence Builder", desc: "Tap word tiles to build Hindi sentences. The helper tips fade away as you improve.", build: buildBuilder },
     { id: "transform", short: "Transform", icon: "🔄", title: "Sentence Transformer", desc: "Change a sentence's meaning by swapping just one word.", build: buildTransform },
     { id: "challenge", short: "Challenge", icon: "🏆", title: "Solo Challenge", desc: "Type Hindi sentences on your own, then take a short mastery test.", build: buildChallenge }
@@ -428,6 +543,8 @@
     view = "stage";
     const st = STAGES[i];
     run = { stage: i, queue: st.build(opts || {}), pos: 0, stats: { xp: 0, graded: 0, first: 0 }, results: [], ctx: { current: "eat" }, opts: opts || {} };
+    S.run = snapshotRun(0);
+    save();
     showChrome(true);
     renderTrack(0);
     updateXP();
@@ -445,10 +562,25 @@
     actions([{ label: "Let's go!", onClick: () => { Sound.play("tap"); nextStep(); } }]);
   }
 
+  function snapshotRun(pos) {
+    return JSON.parse(JSON.stringify({ stage: run.stage, queue: run.queue, pos, stats: run.stats, results: run.results, ctx: run.ctx, opts: run.opts }));
+  }
+  // Re-open the saved stage on the screen she was on.
+  function resumeRun() {
+    view = "stage";
+    run = JSON.parse(JSON.stringify(S.run));
+    showChrome(true);
+    renderTrack(0);
+    updateXP();
+    nextStep();
+  }
+
   function nextStep() {
     hideSheet(true);
     if (run.pos >= run.queue.length) return completeStage();
     const step = run.queue[run.pos++];
+    S.run = snapshotRun(run.pos - 1);
+    save();
     setFill(((run.pos - 1) / run.queue.length) * 100);
     actions([]);
     RENDER[step.type](step);
@@ -477,6 +609,7 @@
   function completeStage() {
     const i = run.stage;
     S.done[i] = true;
+    S.run = null;
     save();
     setFill(100);
     Sound.play("done");
@@ -510,35 +643,14 @@
     return [
       { type: "learnIntro", graded: false },
       { type: "learnSwap", graded: false },
-      {
-        type: "mc", kicker: "Quick check", requeue: false,
-        prompt: "Which block means “am …-ing” — the action is happening right now?",
-        layout: "list",
-        opts: () => shuffle([
-          { content: () => [blockMini("subject", "Main")], correct: false, why: "<b>Main</b> means “I”. It's the person doing the action." },
-          { content: () => [blockMini("verb", "kha")], correct: false, why: "<b>kha</b> is the action itself: “eat”." },
-          { content: () => [blockMini("aux", "rahi hoon")], correct: true }
-        ]),
-        rightMsg: "<b>rahi hoon</b> = am …-ing. It tells us the action is happening right now."
-      },
+      { type: "mc", mc: "learnQ1", requeue: false },
       {
         type: "build", graded: true, requeue: false, verbId: "sleep",
         kicker: "Your turn", helper: "so = sleep",
         level: { colors: true, hint: true, distractors: 0 },
         chunks: [partTile("main"), verbTile("sleep"), auxChunkTile()]
       },
-      {
-        type: "mc", kicker: "What is Meera doing?", requeue: false, layout: "list",
-        prompt: () => h("div", {},
-          h("div", { class: "scene" }, h("div", { class: "avatar" }, SP.avatar), h("div", { class: "bubble" }, W(romanSentence("drink"), devaSentence("drink")), audioBtn(devaSentence("drink"), true))),
-          h("p", { class: "center small muted mt" }, "Remember: kha = eat · pee = drink · so = sleep")),
-        opts: () => shuffle(["drink", "eat", "sleep"].map((id) => ({
-          content: () => [h("span", { class: "em" }, VERB[id].emoji), english(VERB[id])],
-          correct: id === "drink",
-          why: `“${english(VERB[id])}” would be <b>${romanSentence(id)}</b>. <b>pee</b> means drink.`
-        }))),
-        rightMsg: "<b>Main pee rahi hoon</b> = I am drinking."
-      },
+      { type: "mc", mc: "learnQ2", requeue: false },
       { type: "learnSummary", graded: false }
     ];
   }
@@ -672,60 +784,84 @@
      STAGE 2 — Vocabulary
      ===================================================== */
   function buildWords() {
+    // Two batches of four: flip cards, one quick question per verb (mixed directions), then a matching game.
     const A = VERBS.slice(0, 4), B = VERBS.slice(4, 8);
     const steps = [];
     [A, B].forEach((batch, bi) => {
-      const pool = bi === 0 ? A : VERBS;
       batch.forEach((v, i) => steps.push({ type: "flash", verbId: v.id, index: i, count: batch.length, graded: false, batch: bi }));
-      const drills = [];
-      batch.forEach((v) => drills.push(mcEn2Hi(v, pool)));
-      shuffle(batch).forEach((v) => drills.push(mcHi2En(v, pool)));
-      steps.push(...shuffle(drills.slice(0, 4)), ...shuffle(drills.slice(4)));
+      shuffle(batch).forEach((v, i) => steps.push({ type: "mc", mc: i % 2 ? "hi2en" : "en2hi", verbId: v.id, pool: bi === 0 ? "A" : "all", skill: "vocab" }));
       steps.push({ type: "match", verbIds: batch.map((v) => v.id), requeue: false });
     });
-    shuffle(VERBS).forEach((v) => steps.push({ type: "recall", verbId: v.id }));
     return steps;
   }
-  function mcEn2Hi(v, pool, extra) {
-    return Object.assign({
-      type: "mc", verbId: v.id, skill: "vocab", layout: "grid2",
-      kicker: "Pick the Hindi word",
-      prompt: () => h("div", { class: "big-word", style: "color:var(--ink)" }, h("div", { style: "font-size:64px;line-height:1.1" }, v.emoji), h("div", {}, "“" + v.enLabel + "”")),
-      opts: () => shuffle([v].concat(sample(pool.filter((x) => x.id !== v.id), 3))).map((o) => ({
-        content: () => [h("span", { class: "hi" }, W(o.roman, o.deva))],
-        correct: o.id === v.id,
-        why: `<b>${o.roman}</b> means “${o.en}”. “${v.en}” is <b>${v.roman}</b>.`
-      })),
-      rightMsg: `<b>${v.roman}</b> = ${v.enLabel}`, say: v.deva
-    }, extra);
-  }
-  function mcHi2En(v, pool, extra) {
-    return Object.assign({
-      type: "mc", verbId: v.id, skill: "vocab", layout: "grid2",
-      kicker: "What does this mean?",
-      prompt: () => h("div", { class: "big-word" }, W(v.roman, v.deva), h("div", {}, audioBtn(v.deva, true))),
-      onShow: () => Speech.say(v.deva),
-      opts: () => shuffle([v].concat(sample(pool.filter((x) => x.id !== v.id), 3))).map((o) => ({
-        content: () => [h("span", { class: "em" }, o.emoji), h("span", {}, o.enLabel)],
-        correct: o.id === v.id,
-        why: `“${o.en}” is <b>${o.roman}</b>. <b>${v.roman}</b> means “${v.enLabel}”.`
-      })),
-      rightMsg: `<b>${v.roman}</b> = ${v.enLabel}`, say: v.deva
-    }, extra);
-  }
-  function mcMeaning(v, extra) {
-    return Object.assign({
-      type: "mc", verbId: v.id, skill: "meaning", layout: "list",
-      kicker: "What does this sentence mean?",
-      prompt: () => h("div", { class: "big-sentence" }, W(romanSentence(v.id), devaSentence(v.id)), h("div", {}, audioBtn(devaSentence(v.id), true))),
-      opts: () => shuffle([v].concat(sample(VERBS.filter((x) => x.id !== v.id), 3))).map((o) => ({
-        content: () => [h("span", { class: "em" }, o.emoji), english(o)],
-        correct: o.id === v.id,
-        why: `That would be <b>${romanSentence(o.id)}</b>. <b>${v.roman}</b> means “${v.en}”.`
-      })),
-      rightMsg: `<b>${romanSentence(v.id)}</b> = ${english(v)}`, say: devaSentence(v.id)
-    }, extra);
-  }
+  const poolOf = (p) => (p === "A" ? VERBS.slice(0, 4) : VERBS);
+
+  // Multiple-choice question kinds. Steps stay plain data (so a stage can be saved and resumed);
+  // the prompt and options are built from the step when it is shown.
+  const MC_KINDS = {
+    learnQ1: () => ({
+      kicker: "Quick check", layout: "list",
+      prompt: "Which block means “am …-ing” — the action is happening right now?",
+      opts: () => shuffle([
+        { content: () => [blockMini("subject", "Main")], correct: false, why: "<b>Main</b> means “I”. It's the person doing the action." },
+        { content: () => [blockMini("verb", "kha")], correct: false, why: "<b>kha</b> is the action itself: “eat”." },
+        { content: () => [blockMini("aux", "rahi hoon")], correct: true }
+      ]),
+      rightMsg: "<b>rahi hoon</b> = am …-ing. It tells us the action is happening right now."
+    }),
+    learnQ2: () => ({
+      kicker: "What is Meera doing?", layout: "list",
+      prompt: () => h("div", {},
+        h("div", { class: "scene" }, h("div", { class: "avatar" }, SP.avatar), h("div", { class: "bubble" }, W(romanSentence("drink"), devaSentence("drink")), audioBtn(devaSentence("drink"), true))),
+        h("p", { class: "center small muted mt" }, "Remember: kha = eat · pee = drink · so = sleep")),
+      opts: () => shuffle(["drink", "eat", "sleep"].map((id) => ({
+        content: () => [h("span", { class: "em" }, VERB[id].emoji), english(VERB[id])],
+        correct: id === "drink",
+        why: `“${english(VERB[id])}” would be <b>${romanSentence(id)}</b>. <b>pee</b> means drink.`
+      }))),
+      rightMsg: "<b>Main pee rahi hoon</b> = I am drinking."
+    }),
+    en2hi: (step) => {
+      const v = VERB[step.verbId], pool = poolOf(step.pool);
+      return {
+        kicker: "Pick the Hindi word", layout: "grid2",
+        prompt: () => h("div", { class: "big-word", style: "color:var(--ink)" }, h("div", { style: "font-size:64px;line-height:1.1" }, v.emoji), h("div", {}, "“" + v.enLabel + "”")),
+        opts: () => shuffle([v].concat(sample(pool.filter((x) => x.id !== v.id), 3))).map((o) => ({
+          content: () => [h("span", { class: "hi" }, W(o.roman, o.deva))],
+          correct: o.id === v.id,
+          why: `<b>${o.roman}</b> means “${o.en}”. “${v.en}” is <b>${v.roman}</b>.`
+        })),
+        rightMsg: `<b>${v.roman}</b> = ${v.enLabel}`, say: v.deva
+      };
+    },
+    hi2en: (step) => {
+      const v = VERB[step.verbId], pool = poolOf(step.pool);
+      return {
+        kicker: "What does this mean?", layout: "grid2",
+        prompt: () => h("div", { class: "big-word" }, W(v.roman, v.deva), h("div", {}, audioBtn(v.deva, true))),
+        onShow: () => Speech.say(v.deva),
+        opts: () => shuffle([v].concat(sample(pool.filter((x) => x.id !== v.id), 3))).map((o) => ({
+          content: () => [h("span", { class: "em" }, o.emoji), h("span", {}, o.enLabel)],
+          correct: o.id === v.id,
+          why: `“${o.en}” is <b>${o.roman}</b>. <b>${v.roman}</b> means “${v.enLabel}”.`
+        })),
+        rightMsg: `<b>${v.roman}</b> = ${v.enLabel}`, say: v.deva
+      };
+    },
+    meaning: (step) => {
+      const v = VERB[step.verbId];
+      return {
+        kicker: "What does this sentence mean?", layout: "list",
+        prompt: () => h("div", { class: "big-sentence" }, W(romanSentence(v.id), devaSentence(v.id)), h("div", {}, audioBtn(devaSentence(v.id), true))),
+        opts: () => shuffle([v].concat(sample(VERBS.filter((x) => x.id !== v.id), 3))).map((o) => ({
+          content: () => [h("span", { class: "em" }, o.emoji), english(o)],
+          correct: o.id === v.id,
+          why: `That would be <b>${romanSentence(o.id)}</b>. <b>${v.roman}</b> means “${v.en}”.`
+        })),
+        rightMsg: `<b>${romanSentence(v.id)}</b> = ${english(v)}`, say: devaSentence(v.id)
+      };
+    }
+  };
 
   function rFlash(step) {
     const v = VERB[step.verbId];
@@ -757,38 +893,6 @@
       h("div", { class: "dots" }, Array.from({ length: step.count }, (_, i) => h("i", { class: i <= step.index ? "on" : "" }))),
       h("p", { class: "center small muted mt" }, "Try saying it out loud: ", h("b", {}, romanSentence(v.id))));
     const [btn] = actions([{ label: step.index === step.count - 1 ? "Practice these words" : "Next word", disabled: true, onClick: () => stepDone(step, {}) }]);
-  }
-
-  function rRecall(step) {
-    const v = VERB[step.verbId];
-    const card = h("div", { class: "flash", role: "button", tabindex: "0", "aria-label": "Reveal meaning" },
-      h("div", { class: "face front" },
-        h("div", { class: "card-kicker" }, "What does this mean?"),
-        h("div", { class: "hiword", style: "color:var(--verb)" }, W(v.roman, v.deva)),
-        audioBtn(v.deva, true),
-        h("div", { class: "flip-hint" }, "Think of the answer, then tap")),
-      h("div", { class: "face back", style: "background:linear-gradient(160deg,var(--brand),#39c2b2)" },
-        h("div", { class: "card-kicker" }, v.roman + " means"),
-        h("div", { class: "em" }, v.emoji),
-        h("div", { class: "en" }, "“" + v.enLabel + "”"),
-        h("div", { class: "sounds" }, romanSentence(v.id) + " = " + english(v))));
-    const reveal = () => {
-      if (card.classList.contains("flipped")) return;
-      card.classList.add("flipped");
-      Sound.play("flip");
-      actions([
-        { label: "😅 Not yet", cls: "ghost", onClick: () => { Sound.play("drop"); stepDone(step, { firstTry: false, solved: false }); } },
-        { label: "😎 Got it", cls: "good", onClick: (e) => { Sound.play("good"); award(5, e.currentTarget); stepDone(step, { firstTry: true, solved: true }); } }
-      ]);
-    };
-    card.addEventListener("click", reveal);
-    card.addEventListener("keydown", (e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); reveal(); } });
-    screen(
-      h("div", { class: "prompt-kicker" }, step.isRetry ? "One more time" : "Memory check"),
-      h("h2", { class: "prompt" }, "Do you remember this word?"),
-      h("div", { class: "flash-wrap" }, card),
-      h("p", { class: "center small muted mt" }, "Be honest — words you're unsure of come back later."));
-    actions([{ label: "Reveal", onClick: reveal }]);
   }
 
   function rMatch(step) {
@@ -841,12 +945,13 @@
         h("div", { class: "col" }, shuffle(verbs).map((v) => mk(v, "en")))));
   }
 
-  /* Generic multiple choice */
-  function rMC(step) {
-    const opts = step.opts();
+  /* Generic multiple choice: `step` is the saved data, `spec` the built question. */
+  function rMC(step, spec) {
+    spec = spec || MC_KINDS[step.mc](step);
+    const opts = spec.opts();
     dbg.opts = opts;
     let answered = false;
-    const promptNode = typeof step.prompt === "function" ? step.prompt() : h("h2", { class: "prompt" }, step.prompt);
+    const promptNode = typeof spec.prompt === "function" ? spec.prompt() : h("h2", { class: "prompt" }, spec.prompt);
     const btns = opts.map((o) => {
       const b = h("button", { class: "opt" }, o.content());
       b.addEventListener("click", () => choose(o, b));
@@ -857,16 +962,16 @@
       answered = true;
       btns.forEach((x) => (x.disabled = true));
       const right = btns[opts.findIndex((x) => x.correct)];
-      if (step.after) step.after();
+      if (spec.after) spec.after();
       if (o.correct) {
         b.classList.add("right");
         Sound.play("good");
-        if (step.say) Speech.say(step.say);
+        if (spec.say) Speech.say(spec.say);
         const pts = step.test ? 15 : step.isRetry ? 5 : 10;
         award(pts, b);
         const p = praise();
         showSheet({
-          ok: true, title: p.title, html: step.rightMsg || "", notes: p.note ? [p.note] : [],
+          ok: true, title: p.title, html: spec.rightMsg || "", notes: p.note ? [p.note] : [],
           buttons: [{ label: "Continue", onClick: () => stepDone(step, { firstTry: true, solved: true }) }]
         });
       } else {
@@ -882,10 +987,10 @@
     }
     screen(
       step.test ? h("div", {}, h("span", { class: "test-badge" }, "Mastery test")) : null,
-      h("div", { class: "prompt-kicker" }, step.kicker || "Choose"),
+      h("div", { class: "prompt-kicker" }, spec.kicker || "Choose"),
       promptNode,
-      h("div", { class: "options" + (step.layout === "grid2" ? " grid2" : "") }, btns));
-    if (step.onShow) step.onShow();
+      h("div", { class: "options" + (spec.layout === "grid2" ? " grid2" : "") }, btns));
+    if (spec.onShow) spec.onShow();
   }
 
   /* =====================================================
@@ -1265,7 +1370,7 @@
         class: "block " + roleOf(p.kind) + (p.kind === "verb" && highlight ? " target" : ""),
         style: "font-size:19px;padding:9px 12px;min-width:0"
       }, W(p.kind === "main" ? p.roman : p.roman.toLowerCase(), p.deva))));
-    const mcStep = Object.assign({}, step, {
+    rMC(step, {
       kicker: "What changed?",
       layout: "list",
       prompt: () => h("div", { class: "transform-stage" },
@@ -1286,8 +1391,6 @@
       say: devaSentence(tv.id),
       after: () => { run.ctx.current = tv.id; }
     });
-    rMC(mcStep);
-    // rMC calls stepDone with mcStep; it carries the same flags as step.
   }
 
   /* =====================================================
@@ -1303,9 +1406,9 @@
     const t = (o) => Object.assign({ test: true, requeue: false }, o);
     const fromFor = (target) => pick(VERBS.filter((v) => v.id !== target).map((v) => v.id));
     steps.push(
-      t(mcHi2En(VERB[vs[0]], VERBS, { test: true, requeue: false })),
-      t(mcEn2Hi(VERB[vs[1]], VERBS, { test: true, requeue: false })),
-      t(mcMeaning(VERB[vs[2]], { test: true, requeue: false })),
+      t({ type: "mc", mc: "hi2en", verbId: vs[0], pool: "all", skill: "vocab" }),
+      t({ type: "mc", mc: "en2hi", verbId: vs[1], pool: "all", skill: "vocab" }),
+      t({ type: "mc", mc: "meaning", verbId: vs[2], skill: "meaning" }),
       t({ type: "build", verbId: vs[3], skill: "build", variant: 0, level: { colors: false, hint: false, distractors: 4 } }),
       t({ type: "type", verbId: vs[4], skill: "translate", variant: 0, hints: false }),
       t({ type: "transform", target: vs[5], from: fromFor(vs[5]), mode: "pick-hi", skill: "transform" }),
@@ -1478,6 +1581,77 @@
     $("deva-btn").setAttribute("aria-pressed", String(!!S.settings.deva));
   }
 
+  /* Cloud save card on the start screen */
+  function cloudCard() {
+    if (!Cloud.enabled) return null;
+    const card = h("div", { class: "card mt cloud-card" });
+    const status = h("p", { class: "small muted", id: "cloud-status" }, Cloud.statusText());
+    Cloud.onChange = () => { const el = document.getElementById("cloud-status"); if (el) el.textContent = Cloud.statusText(); };
+    const restoreForm = () => {
+      const input = h("input", { class: "type-box code-input", id: "restore-code", type: "text", autocomplete: "off", autocapitalize: "characters", autocorrect: "off", spellcheck: "false", placeholder: "CHAI-TARA-MOR-4821", "aria-label": "Save code" });
+      const msg = h("p", { class: "small", style: "min-height:20px;color:var(--oops-dk)" });
+      const go = h("button", { class: "btn small-btn" }, "Restore");
+      const doRestore = async () => {
+        const code = Cloud.cleanCode(input.value);
+        if (code.length < 10) { msg.textContent = "That code looks too short. It's 3 words and 4 numbers."; return; }
+        go.disabled = true; msg.textContent = "Looking for your save…";
+        try {
+          const remote = await Cloud.load(code);
+          if (!remote) { msg.textContent = "No save found for that code. Check the spelling and try again."; go.disabled = false; return; }
+          Cloud.adopt(remote.data, code);
+          applySettings(); updateXP(); Sound.play("done"); confetti(40);
+          showStart();
+        } catch (e) {
+          msg.textContent = "Couldn't reach the cloud. Check your internet connection and try again.";
+          go.disabled = false;
+        }
+      };
+      go.addEventListener("click", doRestore);
+      input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); doRestore(); } });
+      return h("div", { class: "restore" },
+        h("p", { class: "small", style: "margin:10px 0 6px" }, "Type the save code from your old phone. This replaces the progress on this phone."),
+        h("div", { class: "code-row" }, input, go), msg);
+    };
+    if (Cloud.on) {
+      const code = S.cloud.code;
+      const copy = h("button", { class: "btn ghost small-btn" }, "Copy");
+      copy.addEventListener("click", () => {
+        const done = () => { copy.textContent = "Copied ✓"; setTimeout(() => (copy.textContent = "Copy"), 1600); };
+        try { navigator.clipboard.writeText(code).then(done, () => selectCode()); } catch (e) { selectCode(); }
+      });
+      const codeEl = h("span", { class: "save-code", id: "save-code" }, code);
+      const selectCode = () => { const r = document.createRange(); r.selectNodeContents(codeEl); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); };
+      card.append(
+        h("div", { class: "section-title" }, "☁️ Cloud save is on"),
+        h("p", { class: "small" }, "Your save code:"),
+        h("div", { class: "code-row" }, codeEl, copy),
+        h("p", { class: "small muted", style: "margin-top:8px" }, "Screenshot this code. If the app is deleted or you get a new phone, tap “I have a save code” and type it in."),
+        status);
+    } else {
+      const turnOn = h("button", { class: "btn small-btn" }, "Turn on cloud save");
+      turnOn.addEventListener("click", async () => {
+        turnOn.disabled = true; turnOn.textContent = "Setting up…";
+        await Cloud.enable();
+        Sound.play("good");
+        showStart();
+      });
+      const haveCode = h("button", { class: "link-btn" }, "I have a save code");
+      haveCode.addEventListener("click", () => { haveCode.replaceWith(restoreForm()); const i = document.getElementById("restore-code"); if (i) i.focus(); });
+      card.append(
+        h("div", { class: "section-title" }, "☁️ Cloud save"),
+        h("p", { class: "small muted" }, "Back up your progress so it's safe even if the app is deleted."),
+        h("div", { class: "code-row", style: "margin-top:10px" }, turnOn, haveCode));
+    }
+    return card;
+  }
+  // "Add to Home Screen" tip for iPhone Safari (hidden once installed, and inside embeds).
+  function installTip() {
+    const iOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const installed = navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+    if (!iOS || installed || !document.querySelector('link[rel="manifest"]')) return null;
+    return h("div", { class: "note mt small" }, h("b", {}, "Play it like an app: "), "tap the Share button ", h("span", { "aria-hidden": "true" }, "⬆️"), " then “Add to Home Screen”.");
+  }
+
   function showStart() {
     run = null;
     view = "start";
@@ -1509,17 +1683,23 @@
         toggle("देवनागरी script", "deva", applySettings),
         toggle("Sound effects", "sound"),
         Speech.supported ? toggle("🔊 Hindi voice", "voice") : null),
+      cloudCard(),
+      installTip(),
       !Speech.supported ? h("p", { class: "center small muted mt" }, "Tip: pronunciation audio appears automatically on devices with a Hindi voice installed.") : null,
       started ? h("p", { class: "center mt" }, h("button", {
         class: "link-btn", onclick: () => {
           askConfirm({
             title: "Reset progress?", html: "This clears your XP, completed stages and best score on this device.",
             yes: "Reset", no: "Cancel",
-            onYes: () => { const st = S.settings; S = fresh(); S.settings = st; save(); session.streak = 0; updateXP(); showStart(); }
+            onYes: () => { const st = S.settings, cl = S.cloud; S = fresh(); S.settings = st; S.cloud = cl; save(); session.streak = 0; updateXP(); showStart(); }
           });
         }
       }, "Reset progress")) : null);
-    actions([{
+    const saved = S.run && S.run.queue && S.run.queue.length ? S.run : null;
+    actions([saved ? {
+      label: `Continue · Stage ${saved.stage + 1}`,
+      onClick: () => { Sound.play("tap"); resumeRun(); }
+    } : {
       label: allDone ? "Play again" : started ? `Continue · Stage ${next + 1}` : "Start learning",
       onClick: () => { Sound.play("tap"); startStage(allDone ? 0 : next); }
     }]);
@@ -1535,7 +1715,6 @@
     learnSwap: wrapR(rLearnSwap),
     learnSummary: wrapR(rLearnSummary),
     flash: wrapR(rFlash),
-    recall: wrapR(rRecall),
     match: wrapR(rMatch),
     mc: wrapR(rMC),
     build: wrapR(rBuild),
@@ -1552,21 +1731,28 @@
     deva.addEventListener("click", () => { S.settings.deva = !S.settings.deva; save(); applySettings(); Sound.play("tap"); });
     top.insertBefore(deva, $("xp-pill"));
     top.after(h("div", { class: "stage-label", id: "stage-label", hidden: true }));
-    $("home-btn").addEventListener("click", () => {
-      if (!run) return showStart();
-      askConfirm({
-        title: "Leave this stage?", html: "Finished stages stay saved, but you'll restart this one from the beginning.",
-        yes: "Leave", no: "Keep playing", onYes: showStart
-      });
-    });
+    // Her place is saved on every screen, so leaving never loses anything.
+    $("home-btn").addEventListener("click", () => { Sound.play("tap"); showStart(); });
     applySettings();
     updateXP();
     Speech.init(() => { if (view === "start") showStart(); });
     showStart();
+    // Cloud: pull a newer copy (e.g. from another phone) on launch; save when the app is backgrounded or comes back online.
+    Cloud.onAdopt = () => { applySettings(); updateXP(); if (view === "start") showStart(); };
+    Cloud.sync();
+    window.addEventListener("online", () => Cloud.push());
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") { clearTimeout(Cloud.timer); Cloud.push(true); }
+      else if (view === "start") Cloud.sync(); // don't swap progress in the middle of a lesson
+    });
+    // Offline support + install (only on the real site, which links a manifest).
+    if ("serviceWorker" in navigator && document.querySelector('link[rel="manifest"]')) {
+      navigator.serviceWorker.register("sw.js").catch(() => { /* offline mode unavailable */ });
+    }
   }
 
   // Exposed for debugging / automated checks.
-  window.Bolo = { tokenize, diagnose, startStage, showStart, state: () => S, step: () => curStep, mcCorrect: () => (dbg.opts || []).findIndex((o) => o.correct), ctx: () => run && run.ctx };
+  window.Bolo = { tokenize, diagnose, startStage, showStart, cloud: Cloud, state: () => S, step: () => curStep, mcCorrect: () => (dbg.opts || []).findIndex((o) => o.correct), ctx: () => run && run.ctx };
 
   init();
 })();
