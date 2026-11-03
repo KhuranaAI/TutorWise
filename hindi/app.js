@@ -772,7 +772,7 @@
       return b;
     }
     screen(
-      h("div", { class: "prompt-kicker" }, `Meet ${SP.name}`),
+      h("div", { class: "prompt-kicker" }, `This is you, ${SP.name}!`),
       h("h2", { class: "prompt" }, "Tap each block to see what it means"),
       h("div", { class: "scene" },
         h("div", { class: "avatar" }, SP.avatar, h("span", { class: "act" }, v.emoji)),
@@ -886,7 +886,7 @@
       rightMsg: "<b>rahi hoon</b> = am …-ing. It tells us the action is happening right now."
     }),
     learnQ2: () => ({
-      kicker: "What is Meera doing?", layout: "list",
+      kicker: `${SP.name}, what are you doing?`, layout: "list",
       prompt: () => h("div", {},
         h("div", { class: "scene" }, h("div", { class: "avatar" }, SP.avatar), h("div", { class: "bubble" }, W(romanSentence("drink"), devaSentence("drink")), audioBtn(devaSentence("drink"), true))),
         h("p", { class: "center small muted mt" }, "Remember: kha = eat · pee = drink · so = sleep")),
@@ -1453,7 +1453,7 @@
         h("div", { class: "picker-title" }, `Before: “${english(fv)}”`),
         h("div", { style: "opacity:.55" }, mini(from, false)),
         h("div", { class: "center", style: "font-size:22px" }, "⬇️"),
-        h("div", { class: "picker-title" }, `${SP.name} changed one word. What is she doing now?`),
+        h("div", { class: "picker-title" }, "You changed one word. What are you doing now?"),
         mini(tv.id, true),
         h("div", { class: "center" }, audioBtn(devaSentence(tv.id), true))),
       opts: () => shuffle([tv, fv].concat(sample(VERBS.filter((x) => x.id !== tv.id && x.id !== fv.id), 2))).map((o) => ({
@@ -1748,7 +1748,8 @@
       h("div", { class: "hero" },
         h("div", { class: "logo" }, "Bolo!", h("small", { lang: "hi" }, "बोलो · speak!")),
         h("div", { class: "hero-art", "aria-hidden": "true" }, h("span", {}, "🍛"), h("span", {}, SP.avatar), h("span", {}, "📖")),
-        h("p", { class: "subtitle" }, "Learn Hindi by building real sentences — no experience needed.")),
+        h("p", { class: "greet" }, `Namaste, ${SP.name}! 👋`),
+        h("p", { class: "subtitle" }, "Hindi for chatting with the family — one real sentence at a time.")),
       h("div", { class: "card module-card" },
         h("span", { class: "tag" }, "Module " + M.number),
         h("h2", {}, M.title),

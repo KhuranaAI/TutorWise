@@ -20,7 +20,7 @@ window.BOLO_CONTENT = {
   version: 1,
 
   speaker: {
-    name: "Meera",
+    name: "Anissa",   // the player — the app is made for her
     avatar: "👩🏽",
     gender: "female"
   },
@@ -83,12 +83,13 @@ window.BOLO_CONTENT = {
         { id: "write", roman: "likh", deva: "लिख", en: "write", enLabel: "write",          ing: ["writing"],            emoji: "✍️", sounds: "like “lick” with a breathy end",            accept: ["likh", "lik", "lekh", "likk", "लिख"] },
         { id: "play",  roman: "khel", deva: "खेल", en: "play",  enLabel: "play",           ing: ["playing"],            emoji: "⚽", sounds: "like “kale” with a breathy k",              accept: ["khel", "khail", "kel", "khael", "kheil", "khayl", "खेल"] },
         { id: "watch", roman: "dekh", deva: "देख", en: "watch", enLabel: "watch / see",    ing: ["watching"],           emoji: "📺", sounds: "like “day” + a breathy kh",                accept: ["dekh", "dekh", "daekh", "dek", "deikh", "deckh", "देख"] },
-        { id: "run",   roman: "daud", deva: "दौड़", en: "run",   enLabel: "run",            ing: ["running"],            emoji: "🏃🏽‍♀️", sounds: "rhymes with “loud” — “dowrh”",           accept: ["daud", "daur", "daudh", "daurh", "dowd", "dour", "dawd", "dod", "dor", "दौड़", "दौड"] }
+        // Everyday family Hindi: "bhaag" (भाग) for run. "daud" is also correct, so it is still accepted when typed.
+        { id: "run",   roman: "bhaag", deva: "भाग", en: "run",   enLabel: "run",            ing: ["running"],            emoji: "🏃🏽‍♀️", sounds: "“bh” + “aag” — a breathy b, long a as in “father”", accept: ["bhaag", "bhag", "bhaagh", "bhagh", "bhaga", "भाग", "daud", "daur", "daudh", "daurh", "dowd", "dour", "dawd", "दौड़", "दौड"] }
       ],
 
       // Words learners commonly reach for. Each gets a friendly explanation.
       mistakes: [
-        { words: ["raha", "rahaa", "rha", "रहा"], why: "“Raha” is what a male speaker says. Our speaker is female, so it's “rahi”." },
+        { words: ["raha", "rahaa", "rha", "रहा"], why: "“Raha” is what a man says. You're a woman, so you say “rahi”." },
         { words: ["rahe", "rahey", "रहे"], why: "“Rahe” is for “we” or polite “you”. For “I” (female) use “rahi”." },
         { words: ["hai", "he", "hain", "hei", "है", "हैं"], why: "“Hai” means “is”. With “Main” (I) Hindi uses “hoon” (am)." },
         { words: ["mujhe", "mera", "meri", "maine"], why: "Close! For this pattern “I” is simply “Main”." },

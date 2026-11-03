@@ -569,3 +569,5 @@ button, .tile, .opt, .chip, .block, .flash { -webkit-tap-highlight-color: transp
   background: var(--brand-lt); color: var(--brand-dk); padding: 8px 12px; border-radius: 10px;
 }
 .code-input { flex: 1; min-width: 0; font-size: 18px; padding: 10px 12px; text-transform: uppercase; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+.greet { font-family: var(--font-fun); font-weight: 800; font-size: 22px; color: var(--ink); margin: 4px 0 2px; }
