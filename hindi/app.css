@@ -67,7 +67,7 @@ button:disabled { cursor: default; }
 
 /* ===== Top bar ===== */
 .topbar {
-  position: sticky; top: 0; z-index: 20;
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
   display: flex; align-items: center; gap: 10px;
   padding: 12px 16px 10px;
   background: linear-gradient(var(--bg) 70%, rgba(255, 246, 234, 0));

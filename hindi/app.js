@@ -322,6 +322,28 @@
       if (last) last.focus({ preventScroll: true });
     }, 60);
   }
+  // In-game confirmation (native confirm() dialogs are blocked in some embeds).
+  function askConfirm(o) {
+    const sheet = $("sheet"), inner = $("sheet-inner");
+    const wasOpen = sheet.classList.contains("show");
+    const prevClass = sheet.className, prevBar = $("actionbar").hidden;
+    const saved = document.createDocumentFragment();
+    while (inner.firstChild) saved.append(inner.firstChild);
+    const restore = () => {
+      inner.innerHTML = "";
+      inner.append(saved);
+      sheet.className = prevClass;
+      $("actionbar").hidden = prevBar;
+      if (!wasOpen) hideSheet();
+    };
+    showSheet({
+      ok: false, title: o.title, html: o.html,
+      buttons: [
+        { label: o.yes, cls: "ghost", onClick: () => { hideSheet(); o.onYes(); } },
+        { label: o.no, cls: "good", onClick: restore }
+      ]
+    });
+  }
   function hideSheet(keepBar) {
     $("sheet").className = "sheet";
     if (!keepBar) $("actionbar").hidden = !$("actionbar-inner").children.length;
@@ -1489,7 +1511,11 @@
       !Speech.supported ? h("p", { class: "center small muted mt" }, "Tip: pronunciation audio appears automatically on devices with a Hindi voice installed.") : null,
       started ? h("p", { class: "center mt" }, h("button", {
         class: "link-btn", onclick: () => {
-          if (confirm("Reset all progress and XP?")) { const st = S.settings; S = fresh(); S.settings = st; save(); session.streak = 0; showStart(); }
+          askConfirm({
+            title: "Reset progress?", html: "This clears your XP, completed stages and best score on this device.",
+            yes: "Reset", no: "Cancel",
+            onYes: () => { const st = S.settings; S = fresh(); S.settings = st; save(); session.streak = 0; updateXP(); showStart(); }
+          });
         }
       }, "Reset progress")) : null);
     actions([{
@@ -1526,8 +1552,11 @@
     top.insertBefore(deva, $("xp-pill"));
     top.after(h("div", { class: "stage-label", id: "stage-label", hidden: true }));
     $("home-btn").addEventListener("click", () => {
-      if (run && !confirm("Leave this stage? Progress inside the stage won't be saved.")) return;
-      showStart();
+      if (!run) return showStart();
+      askConfirm({
+        title: "Leave this stage?", html: "Finished stages stay saved, but you'll restart this one from the beginning.",
+        yes: "Leave", no: "Keep playing", onYes: showStart
+      });
     });
     applySettings();
     updateXP();
