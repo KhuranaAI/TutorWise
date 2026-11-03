@@ -463,7 +463,8 @@
       updateXP();
     }
     if (step.test) run.results.push({ skill: step.skill, correct: !!res.firstTry, verbId: step.verbId || step.target });
-    if (!res.solved && step.requeue !== false && !step.test && !step.isRetry) {
+    // Only answered questions come back; lessons, flashcard intros and info screens never repeat.
+    if (step.graded !== false && !res.solved && step.requeue !== false && !step.test && !step.isRetry) {
       // Bring it back later — mistakes are part of learning.
       const copy = Object.assign({}, step, { isRetry: true });
       const at = Math.min(run.queue.length, run.pos + 2 + Math.floor(Math.random() * 3));
