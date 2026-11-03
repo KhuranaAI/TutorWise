@@ -1,9 +1,12 @@
-/* Cloud save settings.
-   Leave both values empty to keep progress on the device only (the cloud-save card is hidden).
-   To turn cloud save on, create a free Supabase project, run supabase.sql in its SQL editor,
-   then paste the Project URL and the "anon public" API key below.
-   The anon key is designed to be public: the database only allows the two save/load functions. */
+/* Cloud save settings (Firebase).
+   Leave these empty to keep progress on the device only (the cloud-save card is hidden).
+   To turn cloud save on: create a Firebase project, create a Firestore database, paste
+   firestore.rules into its Rules tab, then copy projectId and apiKey from
+   Project settings → Your apps → Web app. The web apiKey is designed to be public;
+   the security rules are what protect the data. */
 window.BOLO_CLOUD = window.BOLO_CLOUD || {
-  url: "",      // e.g. "https://abcdefghijkl.supabase.co"
-  anonKey: ""   // the long "anon" / "public" key from Project Settings → API
+  firebase: {
+    projectId: "",  // e.g. "bolo-hindi-1a2b3"
+    apiKey: ""      // e.g. "AIzaSy…"
+  }
 };

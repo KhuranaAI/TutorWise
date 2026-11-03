@@ -53,30 +53,66 @@
     return el;
   }
 
-  /* ---------------- persistence ---------------- */
+  /* ---------------- persistence ----------------
+     RULES FOR UPDATES (so a new version never wipes a player's progress):
+     1. Never change KEY.
+     2. Changing the shape of the saved data? Bump STATE_VERSION and add a step to migrate().
+     3. Changing the steps inside a stage? Bump that stage's `rev` in STAGES. Players who are
+        mid-way through it restart just that stage; XP, finished stages and scores are kept.
+     4. Stages and modules are saved by id, so they can be added or reordered freely — but never rename an id. */
   const KEY = "bolo.m1.v1";
+  const STATE_VERSION = 2;
+  const freshModule = () => ({ done: {}, best: null, last: null, run: null });
   const fresh = () => ({
-    v: 1,
+    v: STATE_VERSION,
     xp: 0,
-    done: [false, false, false, false, false],
-    best: null,
-    last: null,
-    run: null,      // the stage in progress, so she can resume on the same screen
-    savedAt: 0,     // when this progress last changed (used to pick the newer of phone vs cloud)
-    cloud: null,    // { code, dirty, syncedAt } once cloud save is on
+    modules: {},     // per module: { done: {stageId: true}, best, last, run (the stage in progress) }
+    savedAt: 0,      // when progress last changed (used to pick the newer of phone vs cloud)
+    cloud: null,     // { code, dirty, syncedAt } once cloud save is on
     settings: { deva: false, sound: true, voice: true }
   });
+  // Upgrade any older save to the current shape. Unknown fields are kept, never dropped.
+  function migrate(raw) {
+    if (!raw || typeof raw !== "object") return fillDefaults(fresh());
+    const s = JSON.parse(JSON.stringify(raw));
+    if (!s.v || s.v < 2) {
+      // v1 (first release): one module, stage progress as an array in stage order.
+      const ids = ["learn", "words", "build", "transform", "challenge"];
+      const done = {};
+      (Array.isArray(s.done) ? s.done : []).forEach((d, i) => { if (d && ids[i]) done[ids[i]] = true; });
+      const run = s.run && typeof s.run.stage === "number" ? Object.assign({ stageId: ids[s.run.stage], rev: 1 }, s.run) : null;
+      s.modules = Object.assign({}, s.modules, { m1: { done, best: s.best || null, last: s.last || null, run } });
+      delete s.done; delete s.best; delete s.last; delete s.run;
+      s.v = 2;
+    }
+    // Future versions: if (s.v < 3) { …convert…; s.v = 3; }
+    return fillDefaults(s);
+  }
+  function fillDefaults(s) {
+    const f = fresh();
+    s.settings = Object.assign(f.settings, s.settings);
+    if (typeof s.xp !== "number" || !isFinite(s.xp)) s.xp = 0;
+    s.modules = s.modules && typeof s.modules === "object" ? s.modules : {};
+    C.modules.forEach((m) => { s.modules[m.id] = Object.assign(freshModule(), s.modules[m.id]); });
+    if (!s.savedAt) s.savedAt = 0;
+    if (s.cloud === undefined) s.cloud = null;
+    return s;
+  }
   function load() {
-    try {
-      const s = JSON.parse(localStorage.getItem(KEY));
-      if (s && s.v === 1) {
-        const f = fresh();
-        return Object.assign(f, s, { settings: Object.assign(f.settings, s.settings) });
-      }
-    } catch (e) { /* storage unavailable */ }
-    return fresh();
+    let raw = null;
+    try { raw = localStorage.getItem(KEY); } catch (e) { /* storage unavailable */ }
+    if (!raw) return migrate(null);
+    let parsed;
+    try { parsed = JSON.parse(raw); } catch (e) { parsed = null; }
+    // Keep a copy of the old save before upgrading it, just in case.
+    if (!parsed || (parsed.v || 1) < STATE_VERSION) {
+      const bk = KEY + (parsed ? ".backup-v" + (parsed.v || 1) : ".backup-unreadable");
+      try { if (!localStorage.getItem(bk)) localStorage.setItem(bk, raw); } catch (e) { /* ignore */ }
+    }
+    try { return migrate(parsed); } catch (e) { return migrate(null); }
   }
   let S = load();
+  const P = () => S.modules[M.id]; // this module's progress
   function writeLocal() {
     try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignore */ }
   }
@@ -87,16 +123,15 @@
   }
 
   /* ---------------- cloud save (optional — switched on by config.js) ----------------
-     Progress is stored in a Supabase table under a private save code (e.g. CHAI-TARA-MOR-4821).
-     The table is only reachable through two functions, bolo_save and bolo_load (see supabase.sql),
-     so nobody can list other people's saves. */
-  const CLOUD_CFG = window.BOLO_CLOUD || {};
+     Progress is stored in Firebase Firestore as saves/{SAVE-CODE}. The security rules (firestore.rules)
+     only allow opening a save by its exact code — nobody can list or browse other people's saves. */
+  const FB = (window.BOLO_CLOUD || {}).firebase || {};
   const SAVE_WORDS = ["CHAI", "AAM", "TARA", "PHOOL", "CHAND", "NADI", "GHAR", "DOST", "SONA", "MOTI", "BADAL", "HAWA",
     "KELA", "PAANI", "SURAJ", "TITLI", "MOR", "SHER", "HAATHI", "MITHAI", "LADDOO", "SAMOSA", "DIYA", "RANG",
     "KHUSHI", "PYAAR", "NAACH", "GAANA", "PATANG", "TOTA", "MACHLI", "BARFI"];
   const Cloud = {
     timer: null, busy: false, failed: false, onChange: null,
-    get enabled() { return !!(CLOUD_CFG.url && CLOUD_CFG.anonKey); },
+    get enabled() { return !!(FB.projectId && FB.apiKey); },
     get on() { return this.enabled && !!(S.cloud && S.cloud.code); },
     makeCode() {
       const r = new Uint32Array(4);
@@ -106,15 +141,18 @@
       return picked.join("-") + "-" + String(r[3] % 10000).padStart(4, "0");
     },
     cleanCode: (c) => String(c || "").toUpperCase().trim().replace(/[^A-Z0-9]+/g, "-").replace(/^-+|-+$/g, ""),
-    async rpc(fn, body, keepalive) {
-      const res = await fetch(CLOUD_CFG.url.replace(/\/+$/, "") + "/rest/v1/rpc/" + fn, {
-        method: "POST", keepalive: !!keepalive,
-        headers: { "Content-Type": "application/json", apikey: CLOUD_CFG.anonKey, Authorization: "Bearer " + CLOUD_CFG.anonKey },
-        body: JSON.stringify(body)
-      });
+    docUrl(code) {
+      const base = (FB.baseUrl || "https://firestore.googleapis.com").replace(/\/+$/, "");
+      return `${base}/v1/projects/${encodeURIComponent(FB.projectId)}/databases/(default)/documents/saves/${encodeURIComponent(code)}?key=${encodeURIComponent(FB.apiKey)}`;
+    },
+    async upload(code, data, keepalive) {
+      const body = { fields: {
+        data: { stringValue: JSON.stringify(data) },
+        savedAt: { integerValue: String(Math.floor(data.savedAt || 0)) },
+        v: { integerValue: String(data.v || 0) }
+      } };
+      const res = await fetch(this.docUrl(code), { method: "PATCH", keepalive: !!keepalive, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       if (!res.ok) throw new Error("cloud " + res.status);
-      const text = await res.text();
-      return text ? JSON.parse(text) : null;
     },
     payload() {
       const d = JSON.parse(JSON.stringify(S));
@@ -134,7 +172,7 @@
       this.busy = true;
       const code = S.cloud.code, stamp = S.savedAt;
       try {
-        await this.rpc("bolo_save", { p_code: code, p_data: this.payload() }, keepalive);
+        await this.upload(code, this.payload(), keepalive);
         if (S.cloud && S.cloud.code === code) {
           if (S.savedAt === stamp) S.cloud.dirty = false; // nothing changed while uploading
           S.cloud.syncedAt = Date.now();
@@ -150,12 +188,17 @@
       }
     },
     async load(code) {
-      const res = await this.rpc("bolo_load", { p_code: code });
-      return res && res.data ? res : null;
+      const res = await fetch(this.docUrl(code));
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error("cloud " + res.status);
+      const doc = await res.json();
+      const f = (doc && doc.fields) || {};
+      if (!f.data || typeof f.data.stringValue !== "string") return null;
+      return { data: JSON.parse(f.data.stringValue) };
     },
     adopt(data, code) {
-      const f = fresh();
-      S = Object.assign(f, data, { settings: Object.assign(f.settings, data.settings), cloud: { code, dirty: false, syncedAt: Date.now() } });
+      S = migrate(data); // a save made by an older version is upgraded, never discarded
+      S.cloud = { code, dirty: false, syncedAt: Date.now() };
       writeLocal();
     },
     async enable() {
@@ -507,28 +550,29 @@
      Stages & runner
      ===================================================== */
   const STAGES = [
-    { id: "learn", short: "Learn", icon: "🧱", title: "Learn the Pattern", desc: "See how one simple Hindi sentence is built — and how to change its meaning.", build: buildLearn },
-    { id: "words", short: "Words", icon: "🃏", title: "Meet 8 Verbs", desc: "Flip cards, quick quizzes and a matching game for eight everyday verbs.", build: buildWords },
-    { id: "build", short: "Build", icon: "🧩", title: "Sentence Builder", desc: "Tap word tiles to build Hindi sentences. The helper tips fade away as you improve.", build: buildBuilder },
-    { id: "transform", short: "Transform", icon: "🔄", title: "Sentence Transformer", desc: "Change a sentence's meaning by swapping just one word.", build: buildTransform },
-    { id: "challenge", short: "Challenge", icon: "🏆", title: "Solo Challenge", desc: "Type Hindi sentences on your own, then take a short mastery test.", build: buildChallenge }
+    { id: "learn", rev: 1, short: "Learn", icon: "🧱", title: "Learn the Pattern", desc: "See how one simple Hindi sentence is built — and how to change its meaning.", build: buildLearn },
+    { id: "words", rev: 1, short: "Words", icon: "🃏", title: "Meet 8 Verbs", desc: "Flip cards, quick quizzes and a matching game for eight everyday verbs.", build: buildWords },
+    { id: "build", rev: 1, short: "Build", icon: "🧩", title: "Sentence Builder", desc: "Tap word tiles to build Hindi sentences. The helper tips fade away as you improve.", build: buildBuilder },
+    { id: "transform", rev: 1, short: "Transform", icon: "🔄", title: "Sentence Transformer", desc: "Change a sentence's meaning by swapping just one word.", build: buildTransform },
+    { id: "challenge", rev: 1, short: "Challenge", icon: "🏆", title: "Solo Challenge", desc: "Type Hindi sentences on your own, then take a short mastery test.", build: buildChallenge }
   ];
 
   const session = { streak: 0 };
   let run = null;
   let view = "start";
 
+  const isDone = (i) => !!P().done[STAGES[i].id];
   function renderTrack(fill) {
     const track = $("track");
     track.innerHTML = "";
     STAGES.forEach((st, i) => {
       const cur = run && run.stage === i;
-      const seg = h("div", { class: "seg" + (S.done[i] && !cur ? " done" : "") + (cur ? " current" : ""), title: st.title }, h("i", {}));
+      const seg = h("div", { class: "seg" + (isDone(i) && !cur ? " done" : "") + (cur ? " current" : ""), title: st.title }, h("i", {}));
       if (cur) seg.firstChild.style.width = (fill || 0) + "%";
       track.append(seg);
     });
     const lbl = $("stage-label");
-    if (run) lbl.textContent = `Stage ${run.stage + 1} of 5 · ${STAGES[run.stage].title}`;
+    if (run) lbl.textContent = `Stage ${run.stage + 1} of ${STAGES.length} · ${STAGES[run.stage].title}`;
   }
   function setFill(pct) {
     const segs = $("track").children;
@@ -543,7 +587,7 @@
     view = "stage";
     const st = STAGES[i];
     run = { stage: i, queue: st.build(opts || {}), pos: 0, stats: { xp: 0, graded: 0, first: 0 }, results: [], ctx: { current: "eat" }, opts: opts || {} };
-    S.run = snapshotRun(0);
+    P().run = snapshotRun(0);
     save();
     showChrome(true);
     renderTrack(0);
@@ -556,34 +600,66 @@
     const st = STAGES[i];
     screen(h("div", { class: "stage-hero" },
       h("div", { class: "stage-badge" }, st.icon),
-      h("div", { class: "kicker" }, `Stage ${i + 1} of 5`),
+      h("div", { class: "kicker" }, `Stage ${i + 1} of ${STAGES.length}`),
       h("h1", {}, st.title),
-      h("p", {}, st.desc)));
+      h("p", {}, st.desc),
+      run && run.opts && run.opts.updated ? h("p", { class: "note mt small", style: "text-align:left" }, "✨ This stage got an update, so it starts from the beginning. Your XP and finished stages are all still here.") : null));
     actions([{ label: "Let's go!", onClick: () => { Sound.play("tap"); nextStep(); } }]);
   }
 
   function snapshotRun(pos) {
-    return JSON.parse(JSON.stringify({ stage: run.stage, queue: run.queue, pos, stats: run.stats, results: run.results, ctx: run.ctx, opts: run.opts }));
+    const st = STAGES[run.stage];
+    return JSON.parse(JSON.stringify({ stageId: st.id, rev: st.rev, stage: run.stage, queue: run.queue, pos, stats: run.stats, results: run.results, ctx: run.ctx, opts: run.opts }));
   }
-  // Re-open the saved stage on the screen she was on.
+  // Can this saved step still be shown by the current version of the app?
+  function validStep(st) {
+    if (!st || !RENDER[st.type]) return false;
+    if (st.type === "mc" && !MC_KINDS[st.mc]) return false;
+    const ids = [st.verbId, st.target, st.from].concat(st.verbIds || []).filter(Boolean);
+    return ids.every((id) => VERB[id]);
+  }
+  function savedRunUsable(r) {
+    if (!r || !Array.isArray(r.queue) || !r.queue.length) return false;
+    const i = STAGES.findIndex((x) => x.id === r.stageId);
+    return i >= 0 && STAGES[i].rev === r.rev && r.queue.every(validStep);
+  }
+  // Re-open the saved stage on the screen she was on. If that stage changed in an update,
+  // start it again from the top (everything else is kept).
   function resumeRun() {
+    const r = P().run;
+    const i = r ? STAGES.findIndex((x) => x.id === r.stageId) : -1;
+    if (!savedRunUsable(r)) {
+      P().run = null;
+      save();
+      return startStage(i >= 0 ? i : Math.max(0, firstUnfinished()), { updated: true });
+    }
     view = "stage";
-    run = JSON.parse(JSON.stringify(S.run));
+    run = JSON.parse(JSON.stringify(r));
+    run.stage = i;
     showChrome(true);
     renderTrack(0);
     updateXP();
     nextStep();
   }
+  const firstUnfinished = () => STAGES.findIndex((st, i) => !isDone(i));
 
   function nextStep() {
     hideSheet(true);
     if (run.pos >= run.queue.length) return completeStage();
     const step = run.queue[run.pos++];
-    S.run = snapshotRun(run.pos - 1);
+    P().run = snapshotRun(run.pos - 1);
     save();
     setFill(((run.pos - 1) / run.queue.length) * 100);
     actions([]);
-    RENDER[step.type](step);
+    try {
+      RENDER[step.type](step);
+    } catch (err) {
+      console.error(err);
+      // A screen that can't be shown is skipped rather than blocking her.
+      if (!run.errors) run.errors = 0;
+      if (++run.errors > 3) { P().run = null; save(); return showStart(); }
+      return nextStep();
+    }
   }
 
   function stepDone(step, res) {
@@ -608,8 +684,8 @@
 
   function completeStage() {
     const i = run.stage;
-    S.done[i] = true;
-    S.run = null;
+    P().done[STAGES[i].id] = true;
+    P().run = null;
     save();
     setFill(100);
     Sound.play("done");
@@ -1519,10 +1595,10 @@
     const total = res.length;
     const pct = total ? score / total : 0;
     const stars = pct >= 0.9 ? 3 : pct >= 0.7 ? 2 : 1;
-    S.last = { score, total, at: Date.now() };
-    if (!S.best || score > S.best.score) S.best = { score, total };
+    P().last = { score, total, at: Date.now() };
+    if (!P().best || score > P().best.score) P().best = { score, total };
     save();
-    const missed = [...new Set(res.filter((r) => !r.correct).map((r) => r.verbId))].filter(Boolean);
+    const missed = [...new Set(res.filter((r) => !r.correct).map((r) => r.verbId))].filter((id) => VERB[id]);
     const headline = pct >= 0.9 ? "Bahut badhiya! You've mastered Module 1." : pct >= 0.7 ? "Great work — you can build Hindi sentences!" : "Good start! A little more practice and it'll click.";
     showChrome(true);
     renderTrack(100);
@@ -1531,7 +1607,7 @@
         h("div", { class: "stars" }, [0, 1, 2].map((i) => h("span", { class: i < stars ? "on" : "" }, "⭐"))),
         h("div", { class: "score-big" }, `${score}/${total}`),
         h("h2", { class: "title" }, headline),
-        h("p", { class: "subtitle" }, `Module total: ${S.xp} XP · Best score: ${S.best.score}/${S.best.total}`)),
+        h("p", { class: "subtitle" }, `Module total: ${S.xp} XP · Best score: ${P().best.score}/${P().best.total}`)),
       h("div", { class: "card mt" },
         h("div", { class: "section-title" }, "Your skills"),
         h("div", { class: "skill-list" }, SKILLS.map(([k, label]) => {
@@ -1656,13 +1732,13 @@
     run = null;
     view = "start";
     showChrome(false);
-    const next = S.done.indexOf(false);
+    const next = firstUnfinished();
     const allDone = next === -1;
-    const started = S.done.some(Boolean);
+    const started = STAGES.some((st, i) => isDone(i)) || S.xp > 0;
     const list = h("ul", { class: "stage-list" }, STAGES.map((st, i) => {
-      const unlocked = i <= (allDone ? 4 : next);
-      const b = h("button", { class: "stage-item" + (S.done[i] ? " done" : "") + (i === next ? " next" : ""), disabled: !unlocked },
-        h("span", { class: "stage-num" }, S.done[i] ? "✓" : i + 1),
+      const unlocked = allDone || isDone(i) || i <= next;
+      const b = h("button", { class: "stage-item" + (isDone(i) ? " done" : "") + (i === next ? " next" : ""), disabled: !unlocked },
+        h("span", { class: "stage-num" }, isDone(i) ? "✓" : i + 1),
         h("span", {}, h("b", {}, st.icon + " " + st.title), h("span", { class: "d" }, st.desc.split(".")[0] + ".")),
         h("span", { class: "chev" }, unlocked ? "›" : "🔒"));
       b.addEventListener("click", () => { Sound.play("tap"); startStage(i); });
@@ -1678,7 +1754,7 @@
         h("h2", {}, M.title),
         h("p", { class: "subtitle" }, `${M.tagline}. About ${M.minutes} minutes · 8 verbs · 5 stages.`),
         list,
-        S.best ? h("p", { class: "small muted mt" }, `Best mastery score: ${S.best.score}/${S.best.total} · ${S.xp} XP`) : null),
+        P().best ? h("p", { class: "small muted mt" }, `Best mastery score: ${P().best.score}/${P().best.total} · ${S.xp} XP`) : null),
       h("div", { class: "settings-row" },
         toggle("देवनागरी script", "deva", applySettings),
         toggle("Sound effects", "sound"),
@@ -1691,13 +1767,14 @@
           askConfirm({
             title: "Reset progress?", html: "This clears your XP, completed stages and best score on this device.",
             yes: "Reset", no: "Cancel",
-            onYes: () => { const st = S.settings, cl = S.cloud; S = fresh(); S.settings = st; S.cloud = cl; save(); session.streak = 0; updateXP(); showStart(); }
+            onYes: () => { const st = S.settings, cl = S.cloud; S = fillDefaults(fresh()); S.settings = st; S.cloud = cl; save(); session.streak = 0; updateXP(); showStart(); }
           });
         }
       }, "Reset progress")) : null);
-    const saved = S.run && S.run.queue && S.run.queue.length ? S.run : null;
-    actions([saved ? {
-      label: `Continue · Stage ${saved.stage + 1}`,
+    const saved = P().run && P().run.queue && P().run.queue.length ? P().run : null;
+    const savedIdx = saved ? STAGES.findIndex((x) => x.id === saved.stageId) : -1;
+    actions([saved && savedIdx >= 0 ? {
+      label: `Continue · Stage ${savedIdx + 1}`,
       onClick: () => { Sound.play("tap"); resumeRun(); }
     } : {
       label: allDone ? "Play again" : started ? `Continue · Stage ${next + 1}` : "Start learning",
@@ -1724,6 +1801,7 @@
     type: wrapR(rType)
   });
 
+  const LOADED_AT = Date.now();
   function init() {
     // stage label + Devanagari quick toggle live in the top bar
     const top = $("topbar");
@@ -1743,7 +1821,11 @@
     window.addEventListener("online", () => Cloud.push());
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") { clearTimeout(Cloud.timer); Cloud.push(true); }
-      else if (view === "start") Cloud.sync(); // don't swap progress in the middle of a lesson
+      else if (view === "start") {
+        // Coming back to the app after a while: load any update (progress is already saved), else just sync.
+        if (Date.now() - LOADED_AT > 30 * 60 * 1000 && navigator.onLine !== false) return location.reload();
+        Cloud.sync(); // (never swap progress in the middle of a lesson)
+      }
     });
     // Offline support + install (only on the real site, which links a manifest).
     if ("serviceWorker" in navigator && document.querySelector('link[rel="manifest"]')) {
