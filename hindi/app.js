@@ -6,7 +6,7 @@
   "use strict";
 
   const C = window.BOLO_CONTENT;
-  const M = C.modules[0];
+  const M = C.modules.find((m) => m.id === "m1"); // Module 1 ("What Am I Doing?") has its own hand-built stages
   const SP = C.speaker;
   const PART = {};
   M.pattern.parts.forEach((p) => (PART[p.id] = p));
@@ -112,7 +112,7 @@
     try { return migrate(parsed); } catch (e) { return migrate(null); }
   }
   let S = load();
-  let CUR = C.modules[0];            // the module being played
+  let CUR = M;                       // the module being played
   const P = () => S.modules[CUR.id]; // its saved progress
   function writeLocal() {
     try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignore */ }
@@ -611,7 +611,7 @@
 
   function snapshotRun(pos) {
     const st = STAGES[run.stage];
-    return JSON.parse(JSON.stringify({ moduleId: CUR.id, stageId: st.id, rev: st.rev, stage: run.stage, queue: run.queue, pos, stats: run.stats, results: run.results, ctx: run.ctx, opts: run.opts }));
+    return JSON.parse(JSON.stringify({ moduleId: CUR.id, savedAt: Date.now(), stageId: st.id, rev: st.rev, stage: run.stage, queue: run.queue, pos, stats: run.stats, results: run.results, ctx: run.ctx, opts: run.opts }));
   }
   // Can this saved step still be shown by the current version of the app?
   function validStep(st) {
@@ -1706,11 +1706,12 @@
   M.pattern.parts.forEach((p) => (LEXI[p.id] = { roman: p.roman, deva: p.deva, en: { main: "I", rahi: "…-ing (female)", hoon: "am" }[p.id], role: p.role, accept: p.accept }));
   VERBS.forEach((v) => (LEXI[v.id] = { roman: v.roman, deva: v.deva, en: v.en, role: "verb", accept: v.accept }));
   Object.keys(C.lexicon || {}).forEach((id) => { const a = C.lexicon[id]; LEXI[id] = { roman: a[0], deva: a[1], en: a[2], role: a[3], accept: a[4] || [] }; });
-  const LEXG = new Map(), FUZZG = [];
+  const LEXG = new Map(), FUZZG = [], AMBIG = new Map(); // AMBIG: spellings shared by two words, e.g. "mai" = Main (I) or mei (in)
   function addG(form, id) {
     const f = String(form || "").normalize("NFC").toLowerCase();
     if (!f) return;
     if (!LEXG.has(f)) LEXG.set(f, id);
+    else if (LEXG.get(f) !== id) { const ids = AMBIG.get(f) || [LEXG.get(f)]; if (!ids.includes(id)) ids.push(id); AMBIG.set(f, ids); }
     if (/^[a-z]+$/.test(f) && f.length >= 3) FUZZG.push({ form: f, id });
   }
   Object.keys(LEXI).forEach((id) => { const w = LEXI[id]; [w.roman, w.deva].concat(w.accept || []).forEach((a) => addG(a, id)); });
@@ -1724,7 +1725,7 @@
 
   function lookupG(raw) {
     const t = raw.toLowerCase();
-    if (LEXG.has(t)) return { raw, id: LEXG.get(t) };
+    if (LEXG.has(t)) return { raw, id: LEXG.get(t), ids: AMBIG.get(t) };
     if (ENGG.has(t)) return { raw, kind: "english", id: ENGG.get(t) };
     if (/^[a-z]+$/.test(t) && t.length >= 3) {
       const hits = FUZZG.filter((f) => Math.abs(f.form.length - t.length) <= 1 && lev(f.form, t) <= 1);
@@ -1736,6 +1737,7 @@
   function tokenizeG(str) {
     const norm = String(str).normalize("NFC").toLowerCase()
       .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, " ")
+      .replace(/([a-z])-(?=[a-z])/g, "$1") // "reh-ti" → "rehti"
       .replace(/[.,!?;:"“”'‘’`।|()[\]{}\-_/\\]+/g, " ").replace(/\s+/g, " ").trim();
     if (!norm) return [];
     const out = [];
@@ -1758,7 +1760,8 @@
     const fail = (msg) => ({ ok: false, msg });
     if (!toks.length) return fail("Write the sentence first.");
     const targets = [item.tokens].concat(item.alts || []);
-    const ids = toks.map((t) => t.id || "?");
+    // A spelling shared by two words (mai = Main or mei) counts as whichever fits this sentence.
+    const resolve = (T) => toks.map((t, i) => (t.ids && t.ids.length > 1 ? (t.ids.includes(T[i]) ? T[i] : t.ids.find((x) => T.includes(x)) || t.id) : t.id || "?"));
     const same = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
     const fuzzNotes = () => toks.filter((t) => t.fuzzy).map((t) => `Spelling tip: “${esc(t.raw)}” is usually written <b>${esc(RW(t.id))}</b>.`);
     const inTargets = (id) => targets.some((T) => T.includes(id));
@@ -1768,8 +1771,15 @@
       if (t) return fail(m.why);
     }
     for (const T of targets) {
-      if (same(ids, T)) return { ok: true, notes: fuzzNotes() };
-      if (opts.allowDrop && T[0] === "main" && same(ids, T.slice(1))) return { ok: true, notes: [`Fun fact: Hindi speakers often drop “Main” in casual speech. The full sentence is <b>${esc(item.roman)}</b>`].concat(fuzzNotes()) };
+      if (same(resolve(T), T)) return { ok: true, notes: fuzzNotes() };
+      const T1 = T.slice(1);
+      if (opts.allowDrop && T[0] === "main" && same(resolve(T1), T1)) return { ok: true, notes: [`Fun fact: Hindi speakers often drop “Main” in casual speech. The full sentence is <b>${esc(item.roman)}</b>`].concat(fuzzNotes()) };
+    }
+    // Other forms that are also right (e.g. the respectful kaise for Aunty) — accepted with a note.
+    for (const T of targets) for (const [a, b, note] of mod.softSwaps || []) {
+      if (!T.includes(a)) continue;
+      const V = T.map((x) => (x === a ? b : x));
+      if (same(resolve(V), V)) return { ok: true, notes: [note].concat(fuzzNotes()) };
     }
     const en = toks.find((t) => t.kind === "english");
     if (en) return fail(`“${esc(en.raw)}” is English. In Hindi it's <b>${esc(RW(en.id))}</b>.`);
@@ -1777,15 +1787,17 @@
     if (unk) return fail(`Hmm, I don't recognise “${esc(unk.raw)}”. Check the spelling.`);
     const diff = (T) => {
       const rest = T.slice(), extra = [];
-      ids.forEach((id) => { const k = rest.indexOf(id); if (k >= 0) rest.splice(k, 1); else extra.push(id); });
+      resolve(T).forEach((id) => { const k = rest.indexOf(id); if (k >= 0) rest.splice(k, 1); else extra.push(id); });
       return { missing: rest, extra };
     };
     let best = null;
     targets.forEach((T) => { const d = diff(T), score = d.missing.length + d.extra.length; if (!best || score < best.score) best = { T, d, score }; });
-    const d = best.d;
+    const d = best.d, ids = resolve(best.T);
     const conf = (a, b) => (mod.confusions || []).find((c) => c[0] === a && c[1] === b);
     const list = (xs) => xs.map((x) => "<b>" + esc(RW(x)) + "</b>").join(" + ");
     if (!d.missing.length && !d.extra.length) {
+      const mi = best.T.indexOf("mei");
+      if (mi > 0 && ids.indexOf("mei") < ids.indexOf(best.T[mi - 1])) return fail(`Right words — but <b>mei</b> (in) comes <i>after</i> the place: <b>${esc(RW(best.T[mi - 1]))} mei</b>.`);
       const thingFirst = best.T.findIndex((x) => roleW(x) === "thing"), verbAt = best.T.findIndex((x, i) => i > thingFirst && roleW(x) === "verb");
       if (thingFirst >= 0 && verbAt > thingFirst && ids.indexOf(best.T[verbAt]) < ids.indexOf(best.T[thingFirst])) return fail(`Right words, wrong order — the thing comes <i>before</i> the action: <b>${esc(RW(best.T[thingFirst]))} ${esc(RW(best.T[verbAt]))}</b>.`);
       return fail(`Right words, wrong order. It goes: <b>${esc(item.roman)}</b>`);
@@ -1832,12 +1844,13 @@
     return STAGE_CACHE[mod.id];
   }
   function enterModule(id) {
-    CUR = MODS[id] || C.modules[0];
+    CUR = MODS[id] || M;
     STAGES = stagesFor(CUR);
     S.lastModule = CUR.id;
   }
   const moduleDone = (id) => stagesFor(MODS[id]).every((st) => S.modules[id] && S.modules[id].done[st.id]);
-  const moduleUnlocked = (idx) => idx === 0 || session.unlockAll || moduleDone(C.modules[idx - 1].id);
+  const hasProgress = (id) => !!(S.modules[id] && (Object.keys(S.modules[id].done).length || S.modules[id].run));
+  const moduleUnlocked = (idx) => idx === 0 || session.unlockAll || moduleDone(C.modules[idx - 1].id) || hasProgress(C.modules[idx].id);
 
   function buildG(mod, sid, opts) {
     const m = mod.id;
@@ -2102,7 +2115,9 @@
       if (locked) return;
       if (cur.every((id, i) => id === from.tokens[i])) { Sound.play("bad"); tipEl.innerHTML = "👆 First tap a word you want to change."; return; }
       tries++;
-      if (cur.every((id, i) => id === target[i])) {
+      const soft = (want, got) => (mod.softSwaps || []).find(([a, b]) => want === a && got === b);
+      if (cur.every((id, i) => id === target[i] || soft(target[i], id))) {
+        const softNote = cur.map((id, i) => soft(target[i], id)).find(Boolean);
         locked = true;
         blockEls.forEach((x) => x.classList.remove("target"));
         Sound.play("good");
@@ -2111,7 +2126,7 @@
         const p = praise();
         showSheet({
           ok: true, title: p.title, answer: itemAnswer(to),
-          notes: [`You changed ${diffs.map((k) => `<b>${esc(RW(from.tokens[k]))}</b> → <b>${esc(RW(target[k]))}</b>`).join(" and ")}. Everything else stayed the same.`],
+          notes: [`You changed ${diffs.filter((k) => cur[k] !== from.tokens[k]).map((k) => `<b>${esc(RW(from.tokens[k]))}</b> → <b>${esc(RW(cur[k]))}</b>`).join(" and ")}. Everything else stayed the same.`].concat(softNote ? [softNote[2]] : []),
           buttons: [{ label: "Continue", onClick: () => stepDone(step, { firstTry: tries === 1 && wrongTaps === 0, solved: true }) }]
         });
         return;
@@ -2382,12 +2397,14 @@
       }, "Reset progress")) : null);
     // Main button: carry on where she left off.
     const last = MODS[S.lastModule] && moduleUnlocked(mods.indexOf(MODS[S.lastModule])) ? S.lastModule : null;
+    const withRun = mods.filter((m) => S.modules[m.id].run).sort((x, y) => (S.modules[y.id].run.savedAt || 0) - (S.modules[x.id].run.savedAt || 0));
     const target = (last && (S.modules[last].run || !moduleDone(last)) ? last : null)
-      || (mods.find((m, idx) => moduleUnlocked(idx) && !moduleDone(m.id)) || {}).id || "m1";
+      || (withRun[0] && withRun[0].id)
+      || (mods.find((m, idx) => moduleUnlocked(idx) && !moduleDone(m.id)) || {}).id || mods[0].id;
     const allDone = mods.every((m) => moduleDone(m.id));
     actions([{
       label: !anyProgress ? "Start learning" : allDone ? "Play Module 1 again" : `Continue · Module ${MODS[target].number}`,
-      onClick: () => { Sound.play("tap"); playModule(allDone ? "m1" : target); }
+      onClick: () => { Sound.play("tap"); playModule(allDone ? mods[0].id : target); }
     }]);
   }
 

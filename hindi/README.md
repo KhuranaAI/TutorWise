@@ -20,14 +20,19 @@ order; tap the **Bolo!** logo 5 times on the home screen to unlock all of them f
 
 | # | Module | She learns to say |
 | --- | --- | --- |
-| 1 | What Am I Doing? | Main kha rahi hoon — 8 everyday verbs |
-| 2 | Chai, TV aur Kaam | Main chai pee rahi hoon · when to use **kar** · Main shopping kar rahi hoon |
-| 3 | Namaste! Kaise Hain? | Namaste Aunty ji · Main theek / khush / busy hoon · Main thak gayi hoon · Aur aap? |
-| 4 | Understanding Their Questions | Kya kar rahi ho? Khana khaya? Chai piyogi? → Haan ji, kha liya · Abhi nahin |
-| 5 | Asking Them Back | Aunty, aap kaisi hain? · Uncle, aap kya kar rahe hain? · Sab kaisa chal raha hai? |
-| 6 | Food & Home | Khana bahut accha hai! · Mujhe dal pasand hai · Thoda aur · Bas, shukriya · Mera pet bhar gaya |
-| 7 | Today & Plans | Aaj main office ja rahi hoon · Main ghar par hoon · Kal main aaungi |
-| 8 | The Family Call | Review + a full call with Aunty and Uncle |
+| 1 | Main, Aap & the 3 H Words *(from her Hindi class)* | Main Anissa hoon · Aap Canada mei hain · Main Toronto mei rehti hoon · Mumma kahan hain? · Remote kahan hai? |
+| 2 | What Am I Doing? | Main kha rahi hoon — 8 everyday verbs |
+| 3 | Chai, TV aur Kaam | Main chai pee rahi hoon · when to use **kar** · Main shopping kar rahi hoon |
+| 4 | Namaste! Kaise Hain? | Namaste Aunty ji · Main theek / khush / busy hoon · Main thak gayi hoon · Aur aap? |
+| 5 | Understanding Their Questions | Kya kar rahi ho? Khana khaya? Chai piyogi? → Haan ji, kha liya · Abhi nahin |
+| 6 | Asking Them Back | Aunty / Uncle, aap kaise hain? · aap kya kar rahe hain? · Sab kaisa chal raha hai? |
+| 7 | Food & Home | Khana bahut accha hai! · Mujhe dal pasand hai · Thoda aur · Bas, shukriya · Mera pet bhar gaya |
+| 8 | Today & Plans | Aaj main office ja rahi hoon · Main ghar par / mei hoon · Kal main aaungi |
+| 9 | The Family Call | Review + a full call with Aunty and Uncle |
+
+Module numbers follow the order in `modules.js` (ids such as `class1`, `m1`… never change, so progress is safe when
+modules are added or reordered). The class module follows her teacher: the respectful forms (kaise / rahe / rehte +
+hain) are accepted for anyone, and the -i forms (kaisi / rahi) are accepted for women too.
 
 Modules 2–8 use these stages (some skip one): Learn → Words → Quiz → Build → Transform → **Family Chat** → Challenge
 (typing practice + mastery test). The family chat is a message conversation with Aunty or Uncle where she picks or
