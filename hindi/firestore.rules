@@ -1,17 +1,25 @@
 rules_version = '2';
 // Bolo! cloud save. Paste into Firebase console → Firestore Database → Rules → Publish.
-// A save can only be opened by its exact save code; nobody can list or browse saves.
+// - users/{uid}: an account's progress — only that signed-in account can read or write it.
+// - saves/{code}: the older save-code backup — opened only by its exact code; nobody can list or browse saves.
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /saves/{code} {
-      allow get: if code.matches('^[A-Z0-9-]{10,40}$');
-      allow list, delete: if false;
-      allow create, update: if code.matches('^[A-Z0-9-]{10,40}$')
-        && request.resource.data.keys().hasOnly(['data', 'savedAt', 'v'])
+    function validSave() {
+      return request.resource.data.keys().hasOnly(['data', 'savedAt', 'v'])
         && request.resource.data.data is string
         && request.resource.data.data.size() < 200000
         && request.resource.data.savedAt is int
         && request.resource.data.v is int;
+    }
+    match /users/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid && validSave();
+      allow list, delete: if false;
+    }
+    match /saves/{code} {
+      allow get: if code.matches('^[A-Z0-9-]{10,40}$');
+      allow list, delete: if false;
+      allow create, update: if code.matches('^[A-Z0-9-]{10,40}$') && validSave();
     }
   }
 }

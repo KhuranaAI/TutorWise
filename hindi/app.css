@@ -637,3 +637,6 @@ button, .tile, .opt, .chip, .block, .flash { -webkit-tap-highlight-color: transp
 .reply-box { display: grid; gap: 8px; margin-top: 6px; }
 .reply-goal { font-size: 14px; font-weight: 700; color: var(--brand-dk); }
 .reply-tip { font-size: 14px; color: var(--oops-dk); min-height: 18px; line-height: 1.5; }
+.back-btn { font-size: 34px; line-height: 1; color: var(--ink); padding-bottom: 4px; }
+.acct-input { font-family: var(--font); font-weight: 500; font-size: 17px; padding: 12px 14px; margin-top: 8px; }
+.cloud-card .code-row .btn { flex: 1; }

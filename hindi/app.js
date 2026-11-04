@@ -68,7 +68,8 @@
     xp: 0,
     modules: {},     // per module: { done: {stageId: true}, best, last, run (the stage in progress) }
     savedAt: 0,      // when progress last changed (used to pick the newer of phone vs cloud)
-    cloud: null,     // { code, dirty, syncedAt } once cloud save is on
+    cloud: null,     // { code, dirty, syncedAt } once a save code is on
+    account: null,   // { uid, email, refresh, idToken, exp, dirty, syncedAt } once she signs in
     settings: { deva: false, sound: true, voice: true }
   });
   // Upgrade any older save to the current shape. Unknown fields are kept, never dropped.
@@ -96,6 +97,7 @@
     C.modules.forEach((m) => { s.modules[m.id] = Object.assign(freshModule(), s.modules[m.id]); });
     if (!s.savedAt) s.savedAt = 0;
     if (s.cloud === undefined) s.cloud = null;
+    if (s.account === undefined) s.account = null;
     return s;
   }
   function load() {
@@ -131,9 +133,11 @@
     "KELA", "PAANI", "SURAJ", "TITLI", "MOR", "SHER", "HAATHI", "MITHAI", "LADDOO", "SAMOSA", "DIYA", "RANG",
     "KHUSHI", "PYAAR", "NAACH", "GAANA", "PATANG", "TOTA", "MACHLI", "BARFI"];
   const Cloud = {
-    timer: null, busy: false, failed: false, onChange: null,
+    timer: null, busy: false, failed: false, onChange: null, accountsReady: null,
     get enabled() { return !!(FB.projectId && FB.apiKey); },
-    get on() { return this.enabled && !!(S.cloud && S.cloud.code); },
+    // Syncing goes to her account when she's signed in, otherwise to the save code (if she turned one on).
+    get sync_() { return S.account || S.cloud; },
+    get on() { return this.enabled && !!(S.account || (S.cloud && S.cloud.code)); },
     makeCode() {
       const r = new Uint32Array(4);
       crypto.getRandomValues(r);
@@ -142,41 +146,125 @@
       return picked.join("-") + "-" + String(r[3] % 10000).padStart(4, "0");
     },
     cleanCode: (c) => String(c || "").toUpperCase().trim().replace(/[^A-Z0-9]+/g, "-").replace(/^-+|-+$/g, ""),
-    docUrl(code) {
-      const base = (FB.baseUrl || "https://firestore.googleapis.com").replace(/\/+$/, "");
-      return `${base}/v1/projects/${encodeURIComponent(FB.projectId)}/databases/(default)/documents/saves/${encodeURIComponent(code)}?key=${encodeURIComponent(FB.apiKey)}`;
+    base: (u, d) => (u || d).replace(/\/+$/, ""),
+    docPath(path) {
+      return `${this.base(FB.baseUrl, "https://firestore.googleapis.com")}/v1/projects/${encodeURIComponent(FB.projectId)}/databases/(default)/documents/${path}?key=${encodeURIComponent(FB.apiKey)}`;
     },
-    async upload(code, data, keepalive) {
+    docUrl(code) { return this.docPath("saves/" + encodeURIComponent(code)); },
+
+    /* ----- accounts (Firebase Auth, email + password — works inside the home-screen app) ----- */
+    async authPost(path, body) {
+      const res = await fetch(`${this.base(FB.authUrl, "https://identitytoolkit.googleapis.com")}/v1/${path}?key=${encodeURIComponent(FB.apiKey)}`,
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error((j.error && j.error.message) || "AUTH_" + res.status);
+      return j;
+    },
+    async checkAccounts() {
+      if (!this.enabled) return (this.accountsReady = false);
+      try {
+        await this.authPost("accounts:createAuthUri", { identifier: "check@example.com", continueUri: location.origin + "/" });
+        this.accountsReady = true;
+      } catch (e) {
+        const m = String(e.message || "");
+        if (/CONFIGURATION_NOT_FOUND|OPERATION_NOT_ALLOWED/.test(m)) this.accountsReady = false; // not switched on in Firebase yet
+        else if (/^AUTH_|[A-Z_]{6,}/.test(m)) this.accountsReady = true;                      // Auth answered (it just disliked the probe)
+        else this.accountsReady = null;                                                         // offline: check again next time
+      }
+      return this.accountsReady;
+    },
+    setAccount(r) {
+      S.account = { uid: r.localId, email: r.email, refresh: r.refreshToken, idToken: r.idToken, exp: Date.now() + (Number(r.expiresIn || 3600) - 60) * 1000, dirty: true, syncedAt: 0 };
+      writeLocal();
+    },
+    async idToken() {
+      const a = S.account;
+      if (a.idToken && a.exp > Date.now()) return a.idToken;
+      const res = await fetch(`${this.base(FB.tokenUrl, "https://securetoken.googleapis.com")}/v1/token?key=${encodeURIComponent(FB.apiKey)}`, {
+        method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "grant_type=refresh_token&refresh_token=" + encodeURIComponent(a.refresh)
+      });
+      if (!res.ok) throw new Error("TOKEN_" + res.status);
+      const j = await res.json();
+      a.idToken = j.id_token; a.refresh = j.refresh_token || a.refresh; a.exp = Date.now() + (Number(j.expires_in || 3600) - 60) * 1000;
+      writeLocal();
+      return a.idToken;
+    },
+    // Create an account: everything already on this phone is uploaded to it.
+    async signUp(email, password) {
+      this.setAccount(await this.authPost("accounts:signUp", { email, password, returnSecureToken: true }));
+      await this.push();
+      if (this.failed) throw new Error("UPLOAD_FAILED");
+    },
+    // Sign in: keep whichever copy is newer — the account's (e.g. another phone) or this phone's.
+    async signIn(email, password) {
+      this.setAccount(await this.authPost("accounts:signInWithPassword", { email, password, returnSecureToken: true }));
+      const remote = await this.loadAccount();
+      if (remote && (remote.data.savedAt || 0) > (S.savedAt || 0)) {
+        this.adopt(remote.data);
+        if (this.onAdopt) this.onAdopt();
+      } else {
+        S.account.dirty = true;
+        await this.push();
+      }
+    },
+    resetPassword(email) { return this.authPost("accounts:sendOobCode", { requestType: "PASSWORD_RESET", email }); },
+    signOut() { S.account = null; writeLocal(); }, // progress stays on this phone
+    authError(e) {
+      const m = String((e && e.message) || "");
+      if (/EMAIL_EXISTS/.test(m)) return "That email already has an account — tap Sign in instead.";
+      if (/INVALID_LOGIN_CREDENTIALS|INVALID_PASSWORD|EMAIL_NOT_FOUND/.test(m)) return "That email and password don't match. Check them, or tap “Forgot password?”.";
+      if (/INVALID_EMAIL/.test(m)) return "That doesn't look like an email address.";
+      if (/WEAK_PASSWORD|MISSING_PASSWORD/.test(m)) return "Use a password with at least 6 characters.";
+      if (/TOO_MANY_ATTEMPTS/.test(m)) return "Too many tries — wait a few minutes, then try again.";
+      if (/CONFIGURATION_NOT_FOUND|OPERATION_NOT_ALLOWED/.test(m)) return "Accounts aren't switched on yet (Firebase → Authentication → Email/Password).";
+      if (/UPLOAD_FAILED/.test(m)) return "Your account is ready, but saving didn't finish. It will save automatically when you're online.";
+      return "Couldn't reach the internet. Check your connection and try again.";
+    },
+
+    /* ----- reading and writing the saved progress ----- */
+    async target() {
+      if (S.account) return { url: this.docPath("users/" + encodeURIComponent(S.account.uid)), headers: { Authorization: "Bearer " + (await this.idToken()) } };
+      return { url: this.docUrl(S.cloud.code), headers: {} };
+    },
+    async upload(data, keepalive) {
       const body = { fields: {
         data: { stringValue: JSON.stringify(data) },
         savedAt: { integerValue: String(Math.floor(data.savedAt || 0)) },
         v: { integerValue: String(data.v || 0) }
       } };
-      const res = await fetch(this.docUrl(code), { method: "PATCH", keepalive: !!keepalive, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const t = await this.target();
+      const res = await fetch(t.url, { method: "PATCH", keepalive: !!keepalive, headers: Object.assign({ "Content-Type": "application/json" }, t.headers), body: JSON.stringify(body) });
       if (!res.ok) throw new Error("cloud " + res.status);
+    },
+    parseDoc(doc) {
+      const f = (doc && doc.fields) || {};
+      if (!f.data || typeof f.data.stringValue !== "string") return null;
+      return { data: JSON.parse(f.data.stringValue) };
     },
     payload() {
       const d = JSON.parse(JSON.stringify(S));
       delete d.cloud;
+      delete d.account;
       return d;
     },
     schedule() {
       if (!this.on) return;
-      S.cloud.dirty = true;
+      this.sync_.dirty = true;
       writeLocal();
       clearTimeout(this.timer);
       this.timer = setTimeout(() => this.push(), 1500);
     },
     async push(keepalive) {
-      if (!this.on || !S.cloud.dirty || this.busy) return;
+      if (!this.on || !this.sync_.dirty || this.busy) return;
       if (navigator.onLine === false) { this.failed = true; this.changed(); return; }
       this.busy = true;
-      const code = S.cloud.code, stamp = S.savedAt;
+      const holder = this.sync_, stamp = S.savedAt;
       try {
-        await this.upload(code, this.payload(), keepalive);
-        if (S.cloud && S.cloud.code === code) {
-          if (S.savedAt === stamp) S.cloud.dirty = false; // nothing changed while uploading
-          S.cloud.syncedAt = Date.now();
+        await this.upload(this.payload(), keepalive);
+        if (this.sync_ === holder) {
+          if (S.savedAt === stamp) holder.dirty = false; // nothing changed while uploading
+          holder.syncedAt = Date.now();
           writeLocal();
         }
         this.failed = false;
@@ -185,21 +273,29 @@
       } finally {
         this.busy = false;
         this.changed();
-        if (S.cloud && S.cloud.dirty && !this.failed) this.schedule();
+        if (this.on && this.sync_.dirty && !this.failed) this.schedule();
       }
     },
     async load(code) {
       const res = await fetch(this.docUrl(code));
       if (res.status === 404) return null;
       if (!res.ok) throw new Error("cloud " + res.status);
-      const doc = await res.json();
-      const f = (doc && doc.fields) || {};
-      if (!f.data || typeof f.data.stringValue !== "string") return null;
-      return { data: JSON.parse(f.data.stringValue) };
+      return this.parseDoc(await res.json());
     },
+    async loadAccount() {
+      const t = await this.target();
+      const res = await fetch(t.url, { headers: t.headers });
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error("cloud " + res.status);
+      return this.parseDoc(await res.json());
+    },
+    // Use a copy from the cloud. Sign-in details on this phone are kept; old saves are upgraded, never discarded.
     adopt(data, code) {
-      S = migrate(data); // a save made by an older version is upgraded, never discarded
-      S.cloud = { code, dirty: false, syncedAt: Date.now() };
+      const account = S.account, cloud = code ? { code, dirty: false, syncedAt: Date.now() } : S.cloud;
+      S = migrate(data);
+      S.account = account;
+      S.cloud = cloud;
+      if (account) { account.dirty = false; account.syncedAt = Date.now(); }
       writeLocal();
     },
     async enable() {
@@ -211,13 +307,13 @@
     async sync() {
       if (!this.on) return;
       try {
-        const remote = await this.load(S.cloud.code);
+        const remote = S.account ? await this.loadAccount() : await this.load(S.cloud.code);
         if (remote && (remote.data.savedAt || 0) > (S.savedAt || 0) + 1000) {
-          this.adopt(remote.data, S.cloud.code);
+          this.adopt(remote.data, S.account ? null : S.cloud.code);
           this.failed = false;
           if (this.onAdopt) this.onAdopt();
-        } else if (!remote || S.cloud.dirty) {
-          S.cloud.dirty = true;
+        } else if (!remote || this.sync_.dirty) {
+          this.sync_.dirty = true;
           await this.push();
         }
       } catch (e) {
@@ -229,8 +325,8 @@
     statusText() {
       if (!this.on) return "";
       if (this.busy) return "Saving…";
-      if (this.failed || S.cloud.dirty) return navigator.onLine === false ? "Offline — will save when you're back online" : "Will save shortly";
-      const t = S.cloud.syncedAt;
+      if (this.failed || this.sync_.dirty) return navigator.onLine === false ? "Offline — will save when you're back online" : "Will save shortly";
+      const t = this.sync_.syncedAt;
       if (!t) return "Not saved yet";
       const mins = Math.round((Date.now() - t) / 60000);
       return "Saved " + (mins < 1 ? "just now" : mins < 60 ? mins + " min ago" : new Date(t).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }));
@@ -529,7 +625,7 @@
     }
   }
   function award(n, anchor) {
-    if (!n) return;
+    if (!n || (run && run.revisit)) return; // no XP twice for a screen she went back to
     S.xp += n;
     if (run) run.stats.xp += n;
     save();
@@ -598,7 +694,17 @@
     stageIntro(i);
   }
 
+  // ‹ Back: the previous screen in this stage (or the stage intro, then the module).
+  function goBack() {
+    Sound.play("tap");
+    if (!run || view === "stageDone" || view === "results") return showModule(CUR.id);
+    if (view === "intro") return showModule(CUR.id);
+    if (run.pos <= 1) { run.pos = 0; return stageIntro(run.stage); }
+    run.pos -= 2;
+    nextStep();
+  }
   function stageIntro(i) {
+    view = "intro";
     const st = STAGES[i];
     screen(h("div", { class: "stage-hero" },
       h("div", { class: "stage-badge" }, st.icon),
@@ -611,7 +717,7 @@
 
   function snapshotRun(pos) {
     const st = STAGES[run.stage];
-    return JSON.parse(JSON.stringify({ moduleId: CUR.id, savedAt: Date.now(), stageId: st.id, rev: st.rev, stage: run.stage, queue: run.queue, pos, stats: run.stats, results: run.results, ctx: run.ctx, opts: run.opts }));
+    return JSON.parse(JSON.stringify({ moduleId: CUR.id, savedAt: Date.now(), stageId: st.id, rev: st.rev, stage: run.stage, queue: run.queue, pos, stats: run.stats, results: run.results, ctx: run.ctx, opts: run.opts, furthest: run.furthest || 0 }));
   }
   // Can this saved step still be shown by the current version of the app?
   function validStep(st) {
@@ -660,6 +766,9 @@
     hideSheet(true);
     if (run.pos >= run.queue.length) return completeStage();
     const step = run.queue[run.pos++];
+    view = "stage";
+    run.revisit = run.pos < (run.furthest || 0); // she came back to this screen with ‹
+    run.furthest = Math.max(run.furthest || 0, run.pos);
     P().run = snapshotRun(run.pos - 1);
     save();
     setFill(((run.pos - 1) / run.queue.length) * 100);
@@ -677,6 +786,7 @@
 
   function stepDone(step, res) {
     res = res || {};
+    if (run.revisit) { setFill((run.pos / run.queue.length) * 100); return nextStep(); } // already scored the first time
     if (step.graded !== false) {
       run.stats.graded++;
       if (res.firstTry) run.stats.first++;
@@ -696,6 +806,7 @@
   }
 
   function completeStage() {
+    view = "stageDone";
     const i = run.stage;
     P().done[STAGES[i].id] = true;
     P().run = null;
@@ -1316,7 +1427,7 @@
   }
 
   function rTransform(step) {
-    const from = step.from || run.ctx.current;
+    const from = step.from || (step.from = run.ctx.current);
     const tv = VERB[step.target];
     const fv = VERB[from];
     let chosen = from, armed = false, tries = 0, wrongTaps = 0, locked = false;
@@ -1468,7 +1579,7 @@
   }
 
   function rTMeaning(step) {
-    const from = run.ctx.current;
+    const from = step.from || (step.from = run.ctx.current);
     const tv = VERB[step.target], fv = VERB[from];
     const mini = (id, highlight) => h("div", { class: "blocks", style: "margin:6px 0" },
       sentenceParts(id).map((p) => h("div", {
@@ -1632,6 +1743,7 @@
     ["quiz", "Real-life replies"]
   ];
   function showResults() {
+    view = "results";
     const res = run.results;
     const score = res.filter((r) => r.correct).length;
     const total = res.length;
@@ -2271,6 +2383,10 @@
     const card = h("div", { class: "card mt cloud-card" });
     const status = h("p", { class: "small muted", id: "cloud-status" }, Cloud.statusText());
     Cloud.onChange = () => { const el = document.getElementById("cloud-status"); if (el) el.textContent = Cloud.statusText(); };
+    if (S.account) return accountCard(card, status);
+    if (Cloud.accountsReady === null) {
+      Cloud.checkAccounts().then((ready) => { if (ready && view === "start" && !document.activeElement.matches("input")) showStart(); });
+    } else if (Cloud.accountsReady) return signInCard(card);
     const restoreForm = () => {
       const input = h("input", { class: "type-box code-input", id: "restore-code", type: "text", autocomplete: "off", autocapitalize: "characters", autocorrect: "off", spellcheck: "false", placeholder: "CHAI-TARA-MOR-4821", "aria-label": "Save code" });
       const msg = h("p", { class: "small", style: "min-height:20px;color:var(--oops-dk)" });
@@ -2328,6 +2444,69 @@
     }
     return card;
   }
+  // Signed in: show where her progress is saved.
+  function accountCard(card, status) {
+    const out = h("button", { class: "link-btn", style: "padding-left:0" }, "Sign out");
+    out.addEventListener("click", () => askConfirm({
+      title: "Sign out?", html: "Your progress stays on this phone. Sign in again any time to keep saving it.",
+      yes: "Sign out", no: "Stay signed in", onYes: () => { Cloud.signOut(); showStart(); }
+    }));
+    card.append(
+      h("div", { class: "section-title" }, "☁️ Your progress is saved"),
+      h("p", { class: "small" }, "Signed in as ", h("b", {}, S.account.email), ". On a new phone, just sign in with the same email and password."),
+      status, out);
+    return card;
+  }
+  // Not signed in: email + password (iPhone can remember the password).
+  function signInCard(card) {
+    const email = h("input", { class: "type-box acct-input", id: "acct-email", type: "email", inputmode: "email", autocomplete: "username", autocapitalize: "off", autocorrect: "off", spellcheck: "false", placeholder: "Email", "aria-label": "Email" });
+    const pw = h("input", { class: "type-box acct-input", id: "acct-password", type: "password", autocomplete: "current-password", placeholder: "Password (6+ characters)", "aria-label": "Password" });
+    const msg = h("p", { class: "reply-tip", id: "acct-msg" });
+    const signIn = h("button", { class: "btn small-btn" }, "Sign in");
+    const create = h("button", { class: "btn ghost small-btn" }, "Create account");
+    const forgot = h("button", { class: "link-btn", style: "padding-left:0" }, "Forgot password?");
+    const busy = (on) => { [signIn, create].forEach((b) => (b.disabled = on)); };
+    const valid = () => {
+      if (!/^\S+@\S+\.\S+$/.test(email.value.trim())) { msg.textContent = "Type your email address first."; email.focus(); return false; }
+      if (pw.value.length < 6) { msg.textContent = "Use a password with at least 6 characters."; pw.focus(); return false; }
+      return true;
+    };
+    const go = async (fn, doneText) => {
+      if (!valid()) return;
+      busy(true);
+      msg.style.color = "var(--muted)";
+      msg.textContent = "One moment…";
+      try {
+        await fn(email.value.trim(), pw.value);
+        Sound.play("good");
+        applySettings(); updateXP();
+        showStart();
+      } catch (e) {
+        msg.style.color = "";
+        msg.textContent = Cloud.authError(e);
+        busy(false);
+      }
+    };
+    signIn.addEventListener("click", () => go((e, p) => Cloud.signIn(e, p)));
+    create.addEventListener("click", () => go((e, p) => Cloud.signUp(e, p)));
+    pw.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); signIn.click(); } });
+    forgot.addEventListener("click", async () => {
+      if (!/^\S+@\S+\.\S+$/.test(email.value.trim())) { msg.textContent = "Type your email above, then tap “Forgot password?” again."; return; }
+      try { await Cloud.resetPassword(email.value.trim()); msg.style.color = "var(--good-dk)"; msg.textContent = "Check your email for a link to choose a new password."; }
+      catch (e) { msg.style.color = ""; msg.textContent = Cloud.authError(e); }
+    });
+    card.append(
+      h("div", { class: "section-title" }, "☁️ Save your progress"),
+      h("p", { class: "small muted" }, S.xp || Object.values(S.modules).some((m) => Object.keys(m.done).length || m.run)
+        ? "Sign in so your progress is safe — even if the app is deleted or you get a new phone. Everything you've done so far comes with you."
+        : "Sign in so your progress is safe — even if the app is deleted or you get a new phone."),
+      email, pw, msg,
+      h("div", { class: "code-row" }, signIn, create),
+      forgot,
+      S.cloud && S.cloud.code ? h("p", { class: "small muted", style: "margin-top:6px" }, `Your save code ${S.cloud.code} still works as a backup.`) : null);
+    return card;
+  }
+
   // "Add to Home Screen" tip for iPhone Safari (hidden once installed, and inside embeds).
   function installTip() {
     const iOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -2391,7 +2570,7 @@
           askConfirm({
             title: "Reset progress?", html: "This clears your XP, finished modules and scores on this device (and in your cloud save).",
             yes: "Reset", no: "Cancel",
-            onYes: () => { const st = S.settings, cl = S.cloud; S = fillDefaults(fresh()); S.settings = st; S.cloud = cl; save(); session.streak = 0; updateXP(); showStart(); }
+            onYes: () => { const st = S.settings, cl = S.cloud, ac = S.account; S = fillDefaults(fresh()); S.settings = st; S.cloud = cl; S.account = ac; save(); session.streak = 0; updateXP(); showStart(); }
           });
         }
       }, "Reset progress")) : null);
@@ -2484,6 +2663,9 @@
     top.after(h("div", { class: "stage-label", id: "stage-label", hidden: true }));
     // Her place is saved on every screen, so leaving never loses anything.
     $("home-btn").addEventListener("click", () => { Sound.play("tap"); showModule(CUR.id); });
+    const backBtn = h("button", { class: "icon-btn back-btn", id: "back-btn", "aria-label": "Go back", title: "Back" }, "‹");
+    backBtn.addEventListener("click", goBack);
+    top.insertBefore(backBtn, $("home-btn"));
     applySettings();
     updateXP();
     Speech.init(() => { if (view === "start") showStart(); });

@@ -70,10 +70,17 @@ App files are cached by `sw.js` and refreshed in the background, so a new versio
 
 - Progress is saved on the device after every screen: XP, finished stages, best score, and the exact screen inside the
   current stage. Leaving or closing the app never loses anything.
-- **Cloud save** (optional, Firebase): create a Firebase project and a Firestore database, paste `firestore.rules`
+- **Accounts** (Firebase Authentication, email + password): once Email/Password sign-in is enabled in the Firebase
+  console, the start screen shows "Save your progress" with Sign in / Create account. Creating an account uploads
+  everything already on the phone; signing in on a new phone brings it back. Progress lives at `users/{uid}`, readable
+  only by that account (see `firestore.rules`). Until accounts are enabled, the save-code option below is shown instead.
+- **Cloud save code** (older option, kept as a backup): create a Firebase project and a Firestore database, paste `firestore.rules`
   into Firestore → Rules → Publish, then put `projectId` and the web `apiKey` into `config.js`. A "Cloud save" card
   appears on the start screen. Turning it on gives the player a save code (e.g. `CHAI-TARA-MOR-4821`); typing it on
   another phone, or after reinstalling, restores everything. Saves can only be opened by exact code, never listed.
+
+Every lesson screen has a **‹ Back** button (top left). Going back to a screen she already answered never awards XP
+twice or changes her test score.
 
 ## Updating the app without touching anyone's progress
 
