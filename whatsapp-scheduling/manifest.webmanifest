@@ -1,0 +1,15 @@
+{
+  "name": "WhatsApp Scheduler",
+  "short_name": "WA Scheduler",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f3f5f4",
+  "theme_color": "#128C7E",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    }
+  ]
+}
