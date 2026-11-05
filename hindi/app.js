@@ -679,6 +679,7 @@
   function showChrome(on) {
     $("topbar").hidden = !on;
     $("stage-label").hidden = !on;
+    if (!on && $("jump-btn")) { $("jump-btn").hidden = true; $("fwd-btn").hidden = true; }
   }
 
   function startStage(i, opts) {
@@ -694,6 +695,22 @@
     stageIntro(i);
   }
 
+  // › Forward: after going back, step forward again — or jump straight to where she'd got to.
+  function goForward(jump) {
+    if (!run || !(view === "stage" || view === "intro")) return;
+    if (run.pos >= (run.furthest || 0)) return;
+    Sound.play("tap");
+    if (jump) run.pos = run.furthest - 1;
+    nextStep();
+  }
+  function updateNav() {
+    const f = $("fwd-btn"), j = $("jump-btn");
+    if (!f) return;
+    const inStage = !!run && (view === "stage" || view === "intro");
+    const behind = inStage ? (run.furthest || 0) - run.pos : 0;
+    f.hidden = !(behind > 0);
+    j.hidden = !(behind > 1);
+  }
   // ‹ Back: the previous screen in this stage (or the stage intro, then the module).
   function goBack() {
     Sound.play("tap");
@@ -705,6 +722,7 @@
   }
   function stageIntro(i) {
     view = "intro";
+    setTimeout(updateNav, 0);
     const st = STAGES[i];
     screen(h("div", { class: "stage-hero" },
       h("div", { class: "stage-badge" }, st.icon),
@@ -775,6 +793,7 @@
     actions([]);
     try {
       RENDER[step.type](step);
+      updateNav();
     } catch (err) {
       console.error(err);
       // A screen that can't be shown is skipped rather than blocking her.
@@ -807,6 +826,7 @@
 
   function completeStage() {
     view = "stageDone";
+    setTimeout(updateNav, 0);
     const i = run.stage;
     P().done[STAGES[i].id] = true;
     P().run = null;
@@ -2457,54 +2477,92 @@
       status, out);
     return card;
   }
-  // Not signed in: email + password (iPhone can remember the password).
+  // Not signed in: a small card on the home screen that opens the account screen.
   function signInCard(card) {
+    const create = h("button", { class: "btn small-btn" }, "Create account");
+    const signIn = h("button", { class: "btn ghost small-btn" }, "Sign in");
+    create.addEventListener("click", () => { Sound.play("tap"); showAccount("create"); });
+    signIn.addEventListener("click", () => { Sound.play("tap"); showAccount("signin"); });
+    card.append(
+      h("div", { class: "section-title" }, "☁️ Save your progress"),
+      h("p", { class: "small muted" }, "Make an account so your progress is safe — even if the app is deleted or you get a new phone."),
+      h("div", { class: "code-row", style: "margin-top:10px" }, create, signIn),
+      S.cloud && S.cloud.code ? h("p", { class: "small muted", style: "margin-top:6px" }, `Your save code ${S.cloud.code} still works as a backup.`) : null);
+    return card;
+  }
+  const hasLocalProgress = () => S.xp > 0 || Object.values(S.modules).some((m) => Object.keys(m.done).length || m.run);
+
+  // The account screen: create an account, or sign in (iPhone can save the password).
+  function showAccount(mode, opts) {
+    opts = opts || {};
+    run = null;
+    view = "account";
+    showChrome(false);
+    const creating = mode === "create";
     const email = h("input", { class: "type-box acct-input", id: "acct-email", type: "email", inputmode: "email", autocomplete: "username", autocapitalize: "off", autocorrect: "off", spellcheck: "false", placeholder: "Email", "aria-label": "Email" });
-    const pw = h("input", { class: "type-box acct-input", id: "acct-password", type: "password", autocomplete: "current-password", placeholder: "Password (6+ characters)", "aria-label": "Password" });
+    const pw = h("input", { class: "type-box acct-input", id: "acct-password", type: "password", autocomplete: creating ? "new-password" : "current-password", placeholder: creating ? "At least 6 characters" : "Password", "aria-label": "Password" });
+    const show = h("button", { class: "link-btn show-pw", type: "button" }, "Show");
+    show.addEventListener("click", () => { const vis = pw.type === "password"; pw.type = vis ? "text" : "password"; show.textContent = vis ? "Hide" : "Show"; });
     const msg = h("p", { class: "reply-tip", id: "acct-msg" });
-    const signIn = h("button", { class: "btn small-btn" }, "Sign in");
-    const create = h("button", { class: "btn ghost small-btn" }, "Create account");
-    const forgot = h("button", { class: "link-btn", style: "padding-left:0" }, "Forgot password?");
-    const busy = (on) => { [signIn, create].forEach((b) => (b.disabled = on)); };
     const valid = () => {
       if (!/^\S+@\S+\.\S+$/.test(email.value.trim())) { msg.textContent = "Type your email address first."; email.focus(); return false; }
       if (pw.value.length < 6) { msg.textContent = "Use a password with at least 6 characters."; pw.focus(); return false; }
       return true;
     };
-    const go = async (fn, doneText) => {
-      if (!valid()) return;
-      busy(true);
+    let submitting = false;
+    const submit = async () => {
+      if (submitting || !valid()) return;
+      submitting = true;
+      btn.disabled = true;
       msg.style.color = "var(--muted)";
-      msg.textContent = "One moment…";
+      msg.textContent = creating ? "Creating your account…" : "Signing in…";
       try {
-        await fn(email.value.trim(), pw.value);
-        Sound.play("good");
-        applySettings(); updateXP();
-        showStart();
+        if (creating) await Cloud.signUp(email.value.trim(), pw.value);
+        else await Cloud.signIn(email.value.trim(), pw.value);
+        Sound.play("done");
+        confetti(40);
+        applySettings();
+        updateXP();
+        showSheet({
+          ok: true, title: creating ? "Account created! 🎉" : `Welcome back, ${SP.name}! 🎉`,
+          html: (creating && hasLocalProgress() ? "Everything you've done so far is saved to your account. " : creating ? "" : "Your progress is here. ")
+            + "You'll stay signed in on this phone — no need to sign in again.",
+          buttons: [{ label: "Continue", onClick: () => showStart() }]
+        });
       } catch (e) {
         msg.style.color = "";
         msg.textContent = Cloud.authError(e);
-        busy(false);
+        submitting = false;
+        btn.disabled = false;
+        if (/EMAIL_EXISTS/.test(String(e.message))) switchTo.textContent = "Sign in instead →";
       }
     };
-    signIn.addEventListener("click", () => go((e, p) => Cloud.signIn(e, p)));
-    create.addEventListener("click", () => go((e, p) => Cloud.signUp(e, p)));
-    pw.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); signIn.click(); } });
-    forgot.addEventListener("click", async () => {
-      if (!/^\S+@\S+\.\S+$/.test(email.value.trim())) { msg.textContent = "Type your email above, then tap “Forgot password?” again."; return; }
+    [email, pw].forEach((el) => el.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); if (el === email) pw.focus(); else submit(); } }));
+    const switchTo = h("button", { class: "link-btn" }, creating ? "Already have an account? Sign in" : "New here? Create an account");
+    switchTo.addEventListener("click", () => { Sound.play("tap"); showAccount(creating ? "signin" : "create", opts); });
+    const forgot = creating ? null : h("button", { class: "link-btn" }, "Forgot password?");
+    if (forgot) forgot.addEventListener("click", async () => {
+      if (!/^\S+@\S+\.\S+$/.test(email.value.trim())) { msg.textContent = "Type your email above, then tap “Forgot password?” again."; email.focus(); return; }
       try { await Cloud.resetPassword(email.value.trim()); msg.style.color = "var(--good-dk)"; msg.textContent = "Check your email for a link to choose a new password."; }
       catch (e) { msg.style.color = ""; msg.textContent = Cloud.authError(e); }
     });
-    card.append(
-      h("div", { class: "section-title" }, "☁️ Save your progress"),
-      h("p", { class: "small muted" }, S.xp || Object.values(S.modules).some((m) => Object.keys(m.done).length || m.run)
-        ? "Sign in so your progress is safe — even if the app is deleted or you get a new phone. Everything you've done so far comes with you."
-        : "Sign in so your progress is safe — even if the app is deleted or you get a new phone."),
-      email, pw, msg,
-      h("div", { class: "code-row" }, signIn, create),
-      forgot,
-      S.cloud && S.cloud.code ? h("p", { class: "small muted", style: "margin-top:6px" }, `Your save code ${S.cloud.code} still works as a backup.`) : null);
-    return card;
+    const later = h("button", { class: "link-btn" }, opts.welcome ? "Not now" : "‹ Back");
+    later.addEventListener("click", () => { Sound.play("tap"); S.settings.accountSkipAt = Date.now(); writeLocal(); showStart(); });
+    screen(
+      h("div", { class: "acct-screen" },
+        h("div", { class: "logo", style: "font-size:44px" }, "Bolo!"),
+        h("h1", { class: "title acct-title" }, creating ? (opts.welcome ? `Namaste, ${SP.name}! 👋` : "Create your account") : "Welcome back! 👋"),
+        h("p", { class: "subtitle" }, creating
+          ? (hasLocalProgress() ? "Make an account so your progress is always safe. Everything you've done so far comes with you." : "Make an account so your progress is always safe — on any phone.")
+          : "Sign in to pick up right where you left off."),
+        h("div", { class: "card acct-card" },
+          h("label", { class: "acct-label", for: "acct-email" }, "Email"), email,
+          h("label", { class: "acct-label", for: "acct-password" }, "Password"), h("div", { class: "pw-row" }, pw, show),
+          msg, forgot),
+        h("div", { class: "acct-links" }, switchTo, later),
+        h("p", { class: "small muted center" }, "You'll stay signed in on this phone.")));
+    const [btn] = actions([{ label: creating ? "Create account" : "Sign in", onClick: submit }]);
+    setTimeout(() => email.focus({ preventScroll: true }), 300);
   }
 
   // "Add to Home Screen" tip for iPhone Safari (hidden once installed, and inside embeds).
@@ -2666,6 +2724,12 @@
     const backBtn = h("button", { class: "icon-btn back-btn", id: "back-btn", "aria-label": "Go back", title: "Back" }, "‹");
     backBtn.addEventListener("click", goBack);
     top.insertBefore(backBtn, $("home-btn"));
+    const fwdBtn = h("button", { class: "icon-btn back-btn", id: "fwd-btn", "aria-label": "Go forward", title: "Forward", hidden: true }, "›");
+    fwdBtn.addEventListener("click", () => goForward(false));
+    top.insertBefore(fwdBtn, $("home-btn"));
+    const jump = h("button", { class: "jump-pill", id: "jump-btn", hidden: true }, "Back to where I was ⏩");
+    jump.addEventListener("click", () => goForward(true));
+    $("stage-label").after(jump);
     applySettings();
     updateXP();
     Speech.init(() => { if (view === "start") showStart(); });
@@ -2673,6 +2737,13 @@
     // Cloud: pull a newer copy (e.g. from another phone) on launch; save when the app is backgrounded or comes back online.
     Cloud.onAdopt = () => { applySettings(); updateXP(); if (view === "start") showStart(); };
     Cloud.sync();
+    if (Cloud.enabled && !S.account) {
+      Cloud.checkAccounts().then((ready) => {
+        const skipped = Date.now() - (S.settings.accountSkipAt || 0) < 24 * 3600 * 1000;
+        if (ready && !S.account && !skipped && view === "start") showAccount("create", { welcome: true });
+        else if (ready && view === "start") showStart();
+      });
+    }
     window.addEventListener("online", () => Cloud.push());
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") { clearTimeout(Cloud.timer); Cloud.push(true); }

@@ -640,3 +640,21 @@ button, .tile, .opt, .chip, .block, .flash { -webkit-tap-highlight-color: transp
 .back-btn { font-size: 34px; line-height: 1; color: var(--ink); padding-bottom: 4px; }
 .acct-input { font-family: var(--font); font-weight: 500; font-size: 17px; padding: 12px 14px; margin-top: 8px; }
 .cloud-card .code-row .btn { flex: 1; }
+
+/* ===== Forward / jump ===== */
+.jump-pill {
+  display: block; margin: 0 auto 4px; padding: 6px 14px; border-radius: 99px;
+  background: var(--brand-lt); color: var(--brand-dk); font-weight: 700; font-size: 13px;
+}
+#back-btn, #fwd-btn { width: 34px; flex-basis: 34px; }
+
+/* ===== Account screen ===== */
+.acct-screen { display: flex; flex-direction: column; gap: 10px; text-align: center; padding-top: 4vh; }
+.acct-title { font-size: 28px; margin: 4px 0 0; }
+.acct-card { text-align: left; display: grid; gap: 4px; margin-top: 6px; }
+.acct-label { font-size: 13px; font-weight: 700; color: var(--muted); margin-top: 6px; }
+.acct-card .acct-input { margin-top: 2px; }
+.pw-row { position: relative; }
+.pw-row .acct-input { width: 100%; padding-right: 70px; }
+.show-pw { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
+.acct-links { display: flex; flex-direction: column; align-items: center; gap: 2px; }
