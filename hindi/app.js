@@ -98,6 +98,8 @@
     if (!s.savedAt) s.savedAt = 0;
     if (s.cloud === undefined) s.cloud = null;
     if (s.account === undefined) s.account = null;
+    s.streak = Object.assign({ count: 0, last: null, best: 0, freezes: 0 }, s.streak); // daily streak
+    s.daily = Object.assign({ date: null, xp: 0 }, s.daily);                          // today's XP toward the goal
     return s;
   }
   function load() {
@@ -359,7 +361,10 @@
           good: [[660, 0, 0.12, "sine", 0.14], [990, 0.09, 0.18, "sine", 0.14]],
           bad: [[330, 0, 0.13, "sine", 0.09], [262, 0.11, 0.2, "sine", 0.09]],
           flip: [[420, 0, 0.07, "triangle", 0.05], [600, 0.05, 0.08, "triangle", 0.045]],
-          done: [[523, 0, 0.15, "sine", 0.12], [659, 0.12, 0.15, "sine", 0.12], [784, 0.24, 0.15, "sine", 0.12], [1047, 0.36, 0.35, "sine", 0.12]]
+          done: [[523, 0, 0.15, "sine", 0.12], [659, 0.12, 0.15, "sine", 0.12], [784, 0.24, 0.15, "sine", 0.12], [1047, 0.36, 0.35, "sine", 0.12]],
+          swap: [[440, 0, 0.07, "triangle", 0.06], [660, 0.05, 0.08, "triangle", 0.07], [990, 0.1, 0.14, "sine", 0.08]],
+          combo: [[784, 0, 0.09, "square", 0.04], [988, 0.07, 0.09, "square", 0.04], [1175, 0.14, 0.09, "square", 0.04], [1568, 0.21, 0.25, "sine", 0.1]],
+          streak: [[392, 0, 0.18, "sine", 0.12], [523, 0.15, 0.18, "sine", 0.12], [659, 0.3, 0.18, "sine", 0.12], [784, 0.45, 0.2, "sine", 0.12], [1047, 0.62, 0.5, "sine", 0.14]]
         }[kind] || [];
         seq.forEach((a) => this.tone(...a));
       } catch (e) { /* audio not available */ }
@@ -616,7 +621,7 @@
   }
   function updateXP(bump) {
     $("xp-val").textContent = S.xp;
-    $("streak").textContent = session.streak >= 2 ? "🔥" + session.streak : "";
+    $("streak").textContent = (S.streak.count ? " 🔥" + S.streak.count : "") + (session.streak >= 2 ? " ⚡" + session.streak : "");
     if (bump) {
       const p = $("xp-pill");
       p.classList.remove("bump");
@@ -628,12 +633,132 @@
     if (!n || (run && run.revisit)) return; // no XP twice for a screen she went back to
     S.xp += n;
     if (run) run.stats.xp += n;
+    dailyProgress(n);
     save();
     updateXP(true);
     const r = (anchor || $("xp-pill")).getBoundingClientRect();
-    const f = h("div", { class: "xp-float", style: `left:${r.left + r.width / 2 - 26}px;top:${r.top - 6}px` }, `+${n} XP`);
+    const f = h("div", { class: "xp-float", style: `left:${r.left + r.width / 2 - 30}px;top:${r.top - 6}px` }, `+${n} XP`);
     document.body.append(f);
-    setTimeout(() => f.remove(), 1000);
+    setTimeout(() => f.remove(), 1100);
+    if (anchor && n >= 10) sparkle(anchor, 14);
+  }
+  // Little burst of colour around an element (correct answers, swapped words).
+  function sparkle(el, n) {
+    const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const colors = ["#f4b400", "#2a9d8f", "#f97316", "#8b5cf6", "#ef4f8b", "#22a35a"];
+    for (let i = 0; i < (n || 10); i++) {
+      const a = (Math.PI * 2 * i) / (n || 10) + Math.random() * 0.5, d = 40 + Math.random() * 40;
+      const s = h("i", { class: "spark", style: `left:${cx}px;top:${cy}px;background:${pick(colors)};--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d}px` });
+      document.body.append(s);
+      setTimeout(() => s.remove(), 750);
+    }
+  }
+
+  // Swap the word on a block so the change is impossible to miss: old word flies out, new word
+  // bounces in with a gold glow + sparkles, and a ✨ marks it as changed.
+  function swapWord(el, roman, deva, after) {
+    el.classList.remove("word-in", "word-out", "just-changed");
+    void el.offsetWidth;
+    el.classList.add("word-out");
+    Sound.play("swap");
+    setTimeout(() => {
+      el.innerHTML = "";
+      el.append(W(roman, deva));
+      if (after) after();
+      el.classList.remove("word-out");
+      void el.offsetWidth;
+      el.classList.add("word-in", "just-changed", "is-new");
+      sparkle(el, 10);
+      setTimeout(() => el.classList.remove("just-changed"), 1400);
+    }, 170);
+  }
+  // The live "Now: …" line under a transformer sentence flashes when the meaning changes.
+  function flashNow(el, html) {
+    el.innerHTML = html;
+    el.classList.remove("now-flash"); void el.offsetWidth; el.classList.add("now-flash");
+  }
+  // Success: the blocks do a little wave.
+  function waveBlocks(els) { els.forEach((b, i) => { b.style.animationDelay = i * 70 + "ms"; b.classList.remove("wave"); void b.offsetWidth; b.classList.add("wave"); }); }
+
+  /* ---------------- daily streak & goal ----------------
+     A day counts once she earns DAILY_GOAL XP. Every 7-day milestone earns a streak freeze (max 2),
+     which is used automatically if she misses a day. */
+  const DAILY_GOAL = 30;
+  const dayStr = (offset) => { const d = new Date(); d.setDate(d.getDate() + (offset || 0)); return d.toLocaleDateString("en-CA"); };
+  const dayDiff = (a, b) => Math.round((new Date(b + "T12:00:00") - new Date(a + "T12:00:00")) / 864e5);
+  function checkStreak() {
+    const st = S.streak;
+    if (!st.last || !st.count) return;
+    const gap = dayDiff(st.last, dayStr());
+    if (gap <= 1) return;
+    const missed = gap - 1;
+    if ((st.freezes || 0) >= missed) { st.freezes -= missed; st.last = dayStr(-1); session.notice = { kind: "froze", n: missed }; }
+    else { session.notice = { kind: "lost", n: st.count }; st.count = 0; }
+    save();
+  }
+  function dailyProgress(n) {
+    const d = dayStr();
+    if (S.daily.date !== d) S.daily = { date: d, xp: 0 };
+    const before = S.daily.xp;
+    S.daily.xp += n;
+    if (before < DAILY_GOAL && S.daily.xp >= DAILY_GOAL) goalMet(d);
+  }
+  function goalMet(d) {
+    const st = S.streak;
+    if (st.last === d) return;
+    checkStreak();
+    st.count = st.last && dayDiff(st.last, d) === 1 ? st.count + 1 : 1;
+    st.last = d;
+    st.best = Math.max(st.best || 0, st.count);
+    let freeze = false;
+    if (st.count % 7 === 0 && (st.freezes || 0) < 2) { st.freezes = (st.freezes || 0) + 1; freeze = true; }
+    session.celebrate = { count: st.count, freeze };
+  }
+  // Full-screen celebration, shown between screens so it never interrupts an answer.
+  function showStreakCelebration(c, cont) {
+    Sound.play("streak");
+    confetti(90);
+    const days = h("div", { class: "week" }, Array.from({ length: 7 }, (_, i) => {
+      const lit = i >= 7 - Math.min(c.count, 7);
+      return h("span", { class: "day" + (lit ? " lit" : "") + (i === 6 ? " today" : "") }, lit ? "🔥" : "");
+    }));
+    const num = h("span", { class: "streak-num" }, String(c.count > 1 ? c.count - 1 : c.count)); // counts up to today
+    screen(h("div", { class: "stage-hero streak-hero" },
+      h("div", { class: "flame" }, "🔥"),
+      h("div", { class: "streak-count" }, num, h("span", {}, " day streak!")),
+      h("p", {}, c.count === 1 ? "Daily goal reached — your streak starts today! Come back tomorrow to keep it going." : `Daily goal reached. ${pick(["Shabash", "Wah", "Bahut badhiya"])}, ${SP.name}! Keep it going tomorrow.`),
+      days,
+      c.freeze ? h("div", { class: "note mt", style: "text-align:left" }, "🧊 ", h("b", {}, "You earned a streak freeze!"), " If you ever miss a day, it saves your streak automatically.") : null));
+    setTimeout(() => { num.textContent = String(c.count); num.classList.add("pop"); }, 450);
+    actions([{ label: "Keep going", onClick: cont }]);
+  }
+  // Home-screen streak + today's goal.
+  function streakCard() {
+    const st = S.streak, today = S.daily.date === dayStr() ? S.daily.xp : 0;
+    const done = today >= DAILY_GOAL, pct = Math.min(100, Math.round((today / DAILY_GOAL) * 100));
+    const atRisk = st.count > 0 && !done;
+    const n = session.notice; // cleared once she starts playing
+    return h("div", { class: "card streak-card" + (done ? " done" : "") },
+      h("div", { class: "streak-top" },
+        h("div", { class: "big-flame" + (st.count ? "" : " off") }, "🔥"),
+        h("div", {},
+          h("div", { class: "streak-line" }, st.count ? `${st.count} day streak` : "Start your streak!"),
+          h("div", { class: "small muted" }, done ? "✅ Today's goal done — see you tomorrow!"
+            : atRisk ? `Earn ${DAILY_GOAL - today} more XP today to keep it going` : `Earn ${DAILY_GOAL} XP today to light the flame`)),
+        st.freezes ? h("div", { class: "freeze", title: "Streak freezes" }, "🧊×" + st.freezes) : null),
+      h("div", { class: "goal-bar" }, h("i", { style: `width:${pct}%` })),
+      h("div", { class: "goal-text" }, `Today: ${Math.min(today, DAILY_GOAL)}/${DAILY_GOAL} XP` + (st.best > 1 ? ` · Best streak: ${st.best} days` : "")),
+      n && n.kind === "froze" ? h("p", { class: "small", style: "margin-top:6px" }, `🧊 A streak freeze saved your streak while you were away!`) : null,
+      n && n.kind === "lost" ? h("p", { class: "small", style: "margin-top:6px" }, `Your ${n.n}-day streak ended — no worries, start a new one today 💪`) : null);
+  }
+  // "3 in a row!" banner + bonus.
+  function comboBanner(n) {
+    const bonus = n >= 10 ? 10 : 5;
+    Sound.play("combo");
+    const b = h("div", { class: "combo-banner" }, `⚡ ${n} in a row! +${bonus} XP`);
+    document.body.append(b);
+    setTimeout(() => b.remove(), 1700);
+    award(bonus);
   }
   const PRAISE = ["Shabash! 🎉", "Bahut badhiya! ✨", "Perfect!", "Wah! 🌟", "Nailed it!", "Ekdum sahi! ✅"];
   const PRAISE_NOTE = { "Shabash! 🎉": "“Shabash” = well done!", "Bahut badhiya! ✨": "“Bahut badhiya” = very good!", "Wah! 🌟": "“Wah!” = wow!", "Ekdum sahi! ✅": "“Ekdum sahi” = exactly right!" };
@@ -684,6 +809,7 @@
 
   function startStage(i, opts) {
     view = "stage";
+    session.notice = null;
     const st = STAGES[i];
     run = { stage: i, queue: st.build(opts || {}), pos: 0, stats: { xp: 0, graded: 0, first: 0 }, results: [], ctx: { current: "eat" }, opts: opts || {} };
     P().run = snapshotRun(0);
@@ -782,6 +908,7 @@
 
   function nextStep() {
     hideSheet(true);
+    if (session.celebrate) { const c = session.celebrate; session.celebrate = null; view = "celebrate"; return showStreakCelebration(c, () => nextStep()); }
     if (run.pos >= run.queue.length) return completeStage();
     const step = run.queue[run.pos++];
     view = "stage";
@@ -811,6 +938,7 @@
       if (res.firstTry) run.stats.first++;
       session.streak = res.firstTry ? session.streak + 1 : 0;
       updateXP();
+      if (res.firstTry && (session.streak === 3 || session.streak === 5 || session.streak % 10 === 0)) comboBanner(session.streak);
     }
     if (step.test) run.results.push({ skill: step.skill, correct: !!res.firstTry, verbId: step.mod ? null : step.verbId || step.target, ref: step.mod ? step.item || step.to || null : null });
     // Only answered questions come back; lessons, flashcard intros and info screens never repeat.
@@ -845,7 +973,10 @@
       h("p", {}, STAGES[i].doneMsg || STAGE_DONE_MSG[i] || "Great work!"),
       h("div", { class: "stat-row" },
         h("div", { class: "stat" }, h("b", {}, "+" + run.stats.xp), h("span", {}, "XP earned")),
-        run.stats.graded ? h("div", { class: "stat" }, h("b", {}, acc + "%"), h("span", {}, "First-try")) : null),
+        run.stats.graded ? h("div", { class: "stat" }, h("b", {}, acc + "%"), h("span", {}, "First-try")) : null,
+        h("div", { class: "stat" }, h("b", {}, "🔥" + S.streak.count), h("span", {}, "Day streak"))),
+      h("div", { class: "goal-bar", style: "max-width:300px;margin:18px auto 0" }, h("i", { style: `width:${Math.min(100, Math.round(((S.daily.date === dayStr() ? S.daily.xp : 0) / DAILY_GOAL) * 100))}%` })),
+      h("p", { class: "small muted", style: "margin-top:6px" }, (S.daily.date === dayStr() && S.daily.xp >= DAILY_GOAL) ? "✅ Daily goal done!" : `Today: ${S.daily.date === dayStr() ? S.daily.xp : 0}/${DAILY_GOAL} XP`),
       h("p", { class: "mt2 small" }, "Up next: ", h("b", {}, next.icon + " " + next.title))));
     actions([{ label: "Continue", onClick: () => startStage(i + 1) }]);
   }
@@ -1453,6 +1584,7 @@
     let chosen = from, armed = false, tries = 0, wrongTaps = 0, locked = false;
     const tipEl = h("div", { class: "drag-tip", style: "font-size:14px;min-height:22px" },
       step.first ? "👆 Tap the word that needs to change." : "");
+    const nowEl = h("div", { class: "picker-title now-line", style: "margin-bottom:6px" }, step.test ? "Current sentence" : "Now: “" + english(fv) + "”");
     const picker = h("div", { class: "picker" });
     const parts = sentenceParts(from);
     let verbBlock = null;
@@ -1481,10 +1613,12 @@
       tipEl.innerHTML = step.mode === "type" ? "Type the new verb." : "Now pick the new verb.";
       openPicker();
     }
-    function setVerbBlock(roman, deva) {
-      verbBlock.innerHTML = "";
-      verbBlock.append(W(roman, deva));
-      verbBlock.classList.remove("changed"); void verbBlock.offsetWidth; verbBlock.classList.add("changed");
+    function setVerbBlock(roman, deva, id) {
+      swapWord(verbBlock, roman, deva);
+      if (nowEl && id && VERB[id]) {
+        const changed = id !== from;
+        flashNow(nowEl, changed ? `Now it means: “<b>${esc(english(VERB[id]))}</b>” ✨` : "Now: “" + esc(english(fv)) + "”");
+      }
     }
     let input = null;
     function openPicker() {
@@ -1516,7 +1650,7 @@
           chosen = v.id;
           chips.forEach((x) => x.classList.remove("selected"));
           c.classList.add("selected");
-          setVerbBlock(v.roman, v.deva);
+          setVerbBlock(v.roman, v.deva, v.id);
         });
         return c;
       });
@@ -1551,6 +1685,7 @@
       tries++;
       if (id === tv.id) {
         locked = true;
+        setTimeout(() => waveBlocks(blockEls), step.mode === "type" ? 200 : 0);
         if (step.mode === "type") setVerbBlock(tv.roman, tv.deva);
         verbBlock.classList.remove("target");
         run.ctx.current = tv.id;
@@ -1591,7 +1726,7 @@
       h("div", { class: "prompt-kicker" }, "Change this sentence to"),
       h("h2", { class: "prompt" }, "“" + english(tv) + "”"),
       h("div", { class: "transform-stage" },
-        h("div", { class: "picker-title", style: "margin-bottom:6px" }, step.test ? "Current sentence" : "Now: “" + english(fv) + "”"),
+        nowEl,
         h("div", { class: "blocks" }, blockEls),
         tipEl),
       picker);
@@ -2203,11 +2338,14 @@
     dbg.transform = { diffs, roman: target.map(RW) };
     function setBlock(i) {
       const b = blockEls[i];
-      b.className = "block tappable " + roleW(cur[i]) + (i === openAt ? " target" : "");
-      b.innerHTML = "";
-      b.append(W(RW(cur[i]), DW(cur[i])));
-      b.classList.remove("changed"); void b.offsetWidth; b.classList.add("changed");
+      swapWord(b, RW(cur[i]), DW(cur[i]), () => { b.className = "block tappable " + roleW(cur[i]) + (i === openAt ? " target" : ""); });
+      if (!step.test) {
+        const match = mod.items.find((it) => it.tokens.length === cur.length && it.tokens.every((t, k) => t === cur[k]));
+        const changed = cur.some((t, k) => t !== from.tokens[k]);
+        flashNow(nowEl, !changed ? "Now: “" + esc(from.en) + "”" : match ? `Now it means: “<b>${esc(match.en)}</b>” ✨` : "Now: …keep going! ✨");
+      }
     }
+    const nowEl = h("div", { class: "picker-title now-line", style: "margin-bottom:6px" }, step.test ? "Current sentence" : "Now: “" + from.en + "”");
     function tap(i, b) {
       if (locked) return;
       if (!diffs.includes(i)) {
@@ -2251,6 +2389,7 @@
       if (cur.every((id, i) => id === target[i] || soft(target[i], id))) {
         const softNote = cur.map((id, i) => soft(target[i], id)).find(Boolean);
         locked = true;
+        waveBlocks(blockEls);
         blockEls.forEach((x) => x.classList.remove("target"));
         Sound.play("good");
         Speech.say(to.deva);
@@ -2280,7 +2419,7 @@
       h("div", { class: "prompt-kicker" }, "Change this sentence to"),
       h("h2", { class: "prompt" }, "“" + to.en + "”"),
       h("div", { class: "transform-stage" },
-        h("div", { class: "picker-title", style: "margin-bottom:6px" }, step.test ? "Current sentence" : "Now: “" + from.en + "”"),
+        nowEl,
         h("div", { class: "blocks" }, blockEls), tipEl),
       picker);
     actions([{ label: "Check", onClick: check }]);
@@ -2612,6 +2751,7 @@
       h("div", { class: "hero" },
         logo,
         h("p", { class: "greet" }, `Namaste, ${SP.name}! 👋`),
+        streakCard(),
         h("p", { class: "subtitle" }, "Hindi for chatting with the family — one real sentence at a time.")),
       h("div", { class: "card" }, h("div", { class: "section-title" }, "Your modules"), list,
         S.xp ? h("p", { class: "small muted mt" }, `★ ${S.xp} XP so far`) : null),
@@ -2730,6 +2870,7 @@
     const jump = h("button", { class: "jump-pill", id: "jump-btn", hidden: true }, "Back to where I was ⏩");
     jump.addEventListener("click", () => goForward(true));
     $("stage-label").after(jump);
+    checkStreak();
     applySettings();
     updateXP();
     Speech.init(() => { if (view === "start") showStart(); });
@@ -2748,6 +2889,7 @@
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") { clearTimeout(Cloud.timer); Cloud.push(true); }
       else if (view === "start") {
+        checkStreak();
         // Coming back to the app after a while: load any update (progress is already saved), else just sync.
         if (Date.now() - LOADED_AT > 30 * 60 * 1000 && navigator.onLine !== false) return location.reload();
         Cloud.sync(); // (never swap progress in the middle of a lesson)
@@ -2760,7 +2902,7 @@
   }
 
   // Exposed for debugging / automated checks.
-  window.Bolo = { tokenize, diagnose, tokenizeG, checkItem, startStage, showStart, showModule, playModule, mods: MODS, unlockAll: () => { session.unlockAll = true; }, debug: () => dbg, cloud: Cloud, state: () => S, step: () => curStep, mcCorrect: () => (dbg.opts || []).findIndex((o) => o.correct), ctx: () => run && run.ctx };
+  window.Bolo = { award, session: () => session, tokenize, diagnose, tokenizeG, checkItem, startStage, showStart, showModule, playModule, mods: MODS, unlockAll: () => { session.unlockAll = true; }, debug: () => dbg, cloud: Cloud, state: () => S, step: () => curStep, mcCorrect: () => (dbg.opts || []).findIndex((o) => o.correct), ctx: () => run && run.ctx };
 
   init();
 })();
