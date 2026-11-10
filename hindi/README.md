@@ -21,14 +21,15 @@ order; tap the **Bolo!** logo 5 times on the home screen to unlock all of them f
 | # | Module | She learns to say |
 | --- | --- | --- |
 | 1 | Main, Aap & the 3 H Words *(from her Hindi class)* | Main Anissa hoon · Aap Canada mei hain · Main Toronto mei rehti hoon · Mumma kahan hain? · Remote kahan hai? |
-| 2 | What Am I Doing? | Main kha rahi hoon — 8 everyday verbs |
-| 3 | Chai, TV aur Kaam | Main chai pee rahi hoon · when to use **kar** · Main shopping kar rahi hoon |
-| 4 | Namaste! Kaise Hain? | Namaste Aunty ji · Main theek / khush / busy hoon · Main thak gayi hoon · Aur aap? |
-| 5 | Understanding Their Questions | Kya kar rahi ho? Khana khaya? Chai piyogi? → Haan ji, kha liya · Abhi nahin |
-| 6 | Asking Them Back | Aunty / Uncle, aap kaise hain? · aap kya kar rahe hain? · Sab kaisa chal raha hai? |
-| 7 | Food & Home | Khana bahut accha hai! · Mujhe dal pasand hai · Thoda aur · Bas, shukriya · Mera pet bhar gaya |
-| 8 | Today & Plans | Aaj main office ja rahi hoon · Main ghar par / mei hoon · Kal main aaungi |
-| 9 | The Family Call | Review + a full call with Aunty and Uncle |
+| 2 | Voh, Kaam aur Acha *(her Nov 9 class)* | Voh Jack hai · Voh court mei kaam karti hai · Papa ache hain · Aap kahan kaam karte hain? |
+| 3 | What Am I Doing? | Main kha rahi hoon — 8 everyday verbs |
+| 4 | Chai, TV aur Kaam | Main chai pee rahi hoon · when to use **kar** · Main shopping kar rahi hoon |
+| 5 | Namaste! Kaise Hain? | Namaste Aunty ji · Main theek / khush / busy hoon · Main thak gayi hoon · Aur aap? |
+| 6 | Understanding Their Questions | Kya kar rahi ho? Khana khaya? Chai piyogi? → Haan ji, kha liya · Abhi nahin |
+| 7 | Asking Them Back | Aunty / Uncle, aap kaise hain? · aap kya kar rahe hain? · Sab kaisa chal raha hai? |
+| 8 | Food & Home | Khana bahut accha hai! · Mujhe dal pasand hai · Thoda aur · Bas, shukriya · Mera pet bhar gaya |
+| 9 | Today & Plans | Aaj main office ja rahi hoon · Main ghar par / mei hoon · Kal main aaungi |
+| 10 | The Family Call | Review + a full call with Aunty and Uncle |
 
 Module numbers follow the order in `modules.js` (ids such as `class1`, `m1`… never change, so progress is safe when
 modules are added or reordered). The class module follows her teacher: the respectful forms (kaise / rahe / rehte +
@@ -94,3 +95,13 @@ Progress is stored separately from the app files, so pushing a new version never
 4. Adding stages, modules or words is safe — progress is keyed by id, not position.
 5. Updates reach installed phones the next time the app is opened online (the service worker always fetches fresh
    files when it can, and falls back to the cached copy offline).
+
+## Speaking, review and themes
+
+- **Speak It! 🎙️** (every module except "What Am I Doing?"): she answers out loud with no tiles, typing or English sentence — Aunty
+  asks a Hindi question (`ask` on an item) or she gets a picture cue (`cue`). Where the browser supports speech
+  recognition, 🎤 listens in Hindi (hi-IN) and checks the answer; otherwise she reveals the answer and rates herself.
+- **Daily 5-minute review ⚡** (home screen): every answer updates `weak` (misses / first-try wins per sentence); the
+  review mixes her weakest sentences with others from modules she has started — mostly spoken.
+- **Daily streak 🔥**: a day counts at 30 XP; a streak freeze is earned every 7 days.
+- **Dark mode 🌙**: toggle on the home screen (`body.dark` overrides the colour tokens in `app.css`).

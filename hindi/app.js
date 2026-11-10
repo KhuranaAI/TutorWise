@@ -100,6 +100,8 @@
     if (s.account === undefined) s.account = null;
     s.streak = Object.assign({ count: 0, last: null, best: 0, freezes: 0 }, s.streak); // daily streak
     s.daily = Object.assign({ date: null, xp: 0 }, s.daily);                          // today's XP toward the goal
+    s.weak = s.weak && typeof s.weak === "object" ? s.weak : {};                       // per sentence: misses / first-try wins
+    s.modules.review = Object.assign(freshModule(), s.modules.review);
     return s;
   }
   function load() {
@@ -748,6 +750,8 @@
         st.freezes ? h("div", { class: "freeze", title: "Streak freezes" }, "🧊×" + st.freezes) : null),
       h("div", { class: "goal-bar" }, h("i", { style: `width:${pct}%` })),
       h("div", { class: "goal-text" }, `Today: ${Math.min(today, DAILY_GOAL)}/${DAILY_GOAL} XP` + (st.best > 1 ? ` · Best streak: ${st.best} days` : "")),
+      reviewPool().length ? h("button", { class: "btn small-btn review-btn", onclick: startReview }, "⚡ 5-minute review",
+        h("span", { class: "review-sub" }, (() => { const n = reviewPool().filter((k) => weakScore(k) > 0).length; return n ? ` · ${n} weak spot${n > 1 ? "s" : ""}` : " · mixed practice"; })())) : null,
       n && n.kind === "froze" ? h("p", { class: "small", style: "margin-top:6px" }, `🧊 A streak freeze saved your streak while you were away!`) : null,
       n && n.kind === "lost" ? h("p", { class: "small", style: "margin-top:6px" }, `Your ${n.n}-day streak ended — no worries, start a new one today 💪`) : null);
   }
@@ -795,7 +799,7 @@
       track.append(seg);
     });
     const lbl = $("stage-label");
-    if (run) lbl.textContent = `Module ${CUR.number} · Stage ${run.stage + 1} of ${STAGES.length} · ${STAGES[run.stage].title}`;
+    if (run) lbl.textContent = CUR.id === "review" ? "⚡ Daily review · about 5 minutes" : `Module ${CUR.number} · Stage ${run.stage + 1} of ${STAGES.length} · ${STAGES[run.stage].title}`;
   }
   function setFill(pct) {
     const segs = $("track").children;
@@ -933,6 +937,7 @@
   function stepDone(step, res) {
     res = res || {};
     if (run.revisit) { setFill((run.pos / run.queue.length) * 100); return nextStep(); } // already scored the first time
+    trackWeak(step, res);
     if (step.graded !== false) {
       run.stats.graded++;
       if (res.firstTry) run.stats.first++;
@@ -959,6 +964,7 @@
     P().done[STAGES[i].id] = true;
     P().run = null;
     save();
+    if (CUR.id === "review") return reviewDone();
     setFill(100);
     Sound.play("done");
     confetti();
@@ -1961,6 +1967,11 @@
      ===================================================== */
   const MODS = {};
   C.modules.forEach((m) => (MODS[m.id] = m));
+  if (!M.items) M.items = VERBS.map((v) => ({ id: v.id, en: english(v), roman: romanSentence(v.id), deva: devaSentence(v.id), tokens: ["main", v.id, "rahi", "hoon"], cue: `🙋🏽‍♀️ I · ${v.emoji} ${v.en}` }));
+  M.formulaText = M.formulaText || "Main + verb + rahi hoon";
+  M.formula = M.formula || [["Main", "subject"], ["verb", "verb"], ["rahi hoon", "aux"]];
+  const REVIEW = { id: "review", number: "★", icon: "⚡", title: "Daily Review", tagline: "Your weak spots, mostly out loud", minutes: "5", items: [], stages: [] };
+  MODS.review = REVIEW;
   const itemOf = (m, id) => (m.items || []).find((x) => x.id === id);
   const cardOf = (m, id) => (m.cards || []).find((x) => x.id === id);
   function cardAsWord(step) {
@@ -2097,12 +2108,14 @@
     quiz: { icon: "🤔", title: "Quick Quiz", desc: "Real-life moments — pick what you'd say.", doneMsg: "Great choices — that's real-life Hindi." },
     build: { icon: "🧩", title: "Sentence Builder", desc: "Tap word tiles to build full sentences.", doneMsg: "You built every sentence!" },
     transform: { icon: "🔄", title: "Sentence Transformer", desc: "Change a sentence by swapping just the words that change.", doneMsg: "You're changing sentences on the fly." },
-    chat: { icon: "💬", title: "Family Chat", desc: "A real conversation — reply to the messages.", doneMsg: "You just held a real conversation in Hindi! Last stop: do it on your own." },
+    chat: { icon: "💬", title: "Family Chat", desc: "A real conversation — reply to the messages.", doneMsg: "You just held a real conversation in Hindi! Next: say it all out loud." },
+    speak: { icon: "🎙️", title: "Speak It!", desc: "Answer out loud — no tiles, no typing, no English to lean on.", doneMsg: "You said it all out loud — that's exactly how real conversations feel!" },
     challenge: { icon: "🏆", title: "Solo Challenge", desc: "Type sentences on your own, then a short mastery test." }
   };
   const STAGE_CACHE = {};
   function stagesFor(mod) {
     if (mod.id === "m1") return STAGES_M1;
+    if (mod.id === "review") return [{ id: "review", rev: 1, short: "review", icon: "⚡", title: "5-Minute Review", desc: "Your weakest sentences — mostly out loud.", build: () => buildReview() }];
     if (!STAGE_CACHE[mod.id]) {
       STAGE_CACHE[mod.id] = mod.stages.map((sid) => Object.assign({ id: sid, rev: 1, short: sid }, STAGE_DEFAULTS[sid], (mod.stageInfo || {})[sid], {
         build: (opts) => buildG(mod, sid, opts || {})
@@ -2113,7 +2126,7 @@
   function enterModule(id) {
     CUR = MODS[id] || M;
     STAGES = stagesFor(CUR);
-    S.lastModule = CUR.id;
+    if (CUR.id !== "review") S.lastModule = CUR.id;
   }
   const moduleDone = (id) => stagesFor(MODS[id]).every((st) => S.modules[id] && S.modules[id].done[st.id]);
   const hasProgress = (id) => !!(S.modules[id] && (Object.keys(S.modules[id].done).length || S.modules[id].run));
@@ -2152,6 +2165,12 @@
       return mod.transforms.map(([a, b], i) => ({ type: "gtransform", mod: m, from: a, to: b, assist: i < Math.ceil(n / 2), first: i === 0, requeue: false, skill: "transform" }));
     }
     if (sid === "chat") return [{ type: "gchat", mod: m, requeue: false }];
+    if (sid === "speak") {
+      const asks = shuffle(mod.items.filter((i) => i.ask)).slice(0, 4);
+      const others = shuffle(mod.items.filter((i) => !i.ask && i.tokens.length >= 2 && !i.noBuild));
+      const cues = others.filter((i) => i.cue), plain = others.filter((i) => !i.cue);
+      return shuffle(asks.concat(cues, plain).slice(0, 8)).map((it) => ({ type: "gspeak", mod: m, item: it.id, skill: "speak" }));
+    }
     // challenge: a little typing practice with hints, then the mastery test
     const steps = [];
     if (!opts.testOnly) sample(typeable, 3).forEach((it) => steps.push({ type: "gtype", mod: m, item: it.id, hints: true, skill: "translate" }));
@@ -2425,6 +2444,145 @@
     actions([{ label: "Check", onClick: check }]);
   }
 
+  /* ---------- Speak It! — answer out loud (no tiles, no typing, no English to lean on) ---------- */
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  function rGSpeak(step) {
+    const mod = MODS[step.mod], it = itemOf(mod, step.item);
+    let done = false, heard = "";
+    const SECS = 8;
+    const timer = h("div", { class: "think-bar", title: "Think fast!" }, h("i", { style: `animation-duration:${SECS}s` }));
+    let prompt;
+    if (it.ask) {
+      const en = h("span", { class: "tr", hidden: true }, it.ask.en);
+      const showEn = h("button", { class: "link-btn", style: "font-size:13px" }, "Show the question in English");
+      showEn.addEventListener("click", () => { en.hidden = false; showEn.remove(); });
+      prompt = h("div", {},
+        h("div", { class: "msg them", style: "max-width:100%" }, h("div", { class: "av" }, "👩🏽"),
+          h("div", {}, h("div", { class: "who" }, "Aunty asks"), h("div", { class: "bub" }, W(it.ask.hi, it.ask.dv), audioBtn(it.ask.dv, true), en))),
+        it.cue ? h("div", { class: "cue-chip" }, "Hint: " + it.cue) : null, showEn);
+    } else if (it.cue) {
+      prompt = h("div", { class: "cue-card" }, h("div", { class: "cue-text" }, it.cue), h("p", { class: "small muted" }, "Say the full sentence in Hindi"));
+    } else {
+      // No picture cue: flash the English, then hide it so she answers from memory.
+      const txt = h("div", { class: "cue-text" }, "“" + it.en + "”");
+      prompt = h("div", { class: "cue-card" }, txt, h("p", { class: "small muted" }, "Remember it — it disappears in a moment!"));
+      setTimeout(() => { if (!done) { txt.textContent = "🤫 Now say it from memory!"; txt.classList.add("now-flash"); } }, 3500);
+    }
+    const status = h("p", { class: "speak-status" }, SpeechRec ? "Say it out loud — or tap 🎤 and I'll listen." : "Say it out loud, then tap Show answer.");
+    const answerBox = h("div", { class: "speak-answer", hidden: true });
+    const mic = SpeechRec ? h("button", { class: "mic-btn", "aria-label": "Speak your answer" }, "🎤") : null;
+    if (mic) mic.addEventListener("click", () => {
+      if (done) return;
+      let rec;
+      try { rec = new SpeechRec(); } catch (e) { status.textContent = "The mic isn't available here — say it, then tap Show answer."; return; }
+      rec.lang = "hi-IN"; rec.interimResults = false; rec.maxAlternatives = 5;
+      mic.classList.add("listening");
+      status.textContent = "Listening… 👂";
+      rec.onresult = (e) => {
+        const alts = Array.from(e.results[0] || []).map((a) => a.transcript);
+        heard = alts[0] || "";
+        if (alts.some((t) => checkItem(tokenizeG(t), it, mod, { allowDrop: true }).ok)) return success();
+        Sound.play("bad");
+        status.innerHTML = `I heard “<b>${esc(heard)}</b>” — try again, or tap Show answer.`;
+      };
+      rec.onerror = (e) => { status.textContent = e.error === "not-allowed" ? "The mic is switched off for this app — just say it out loud, then tap Show answer." : "I didn't catch that — tap 🎤 to try again, or Show answer."; };
+      rec.onend = () => mic.classList.remove("listening");
+      try { rec.start(); } catch (e) { mic.classList.remove("listening"); }
+    });
+    function success() {
+      if (done) return;
+      done = true;
+      Sound.play("good");
+      Speech.say(it.deva);
+      award(15, mic || status);
+      const p = praise();
+      showSheet({ ok: true, title: p.title, answer: itemAnswer(it), notes: ["🎤 You said it out loud — and it was right!"],
+        buttons: [{ label: "Continue", onClick: () => stepDone(step, { firstTry: true, solved: true }) }] });
+    }
+    function reveal() {
+      if (done) return;
+      done = true;
+      timer.remove();
+      Speech.say(it.deva);
+      answerBox.append(itemAnswer(it));
+      answerBox.hidden = false;
+      status.innerHTML = heard ? `I heard “${esc(heard)}”. Did you say it like this?` : "Did you say it like this?";
+      actions([
+        { label: "😅 Not yet", cls: "ghost", onClick: () => { Sound.play("drop"); stepDone(step, { firstTry: false, solved: false }); } },
+        { label: "😎 I said it!", cls: "good", onClick: (e) => { Sound.play("good"); award(10, e.currentTarget); stepDone(step, { firstTry: true, solved: true }); } }
+      ]);
+    }
+    dbg.speak = true;
+    screen(
+      h("div", { class: "prompt-kicker" }, CUR.id === "review" ? "⚡ Review · Speak it!" : "Speak it! 🎙️"),
+      h("h2", { class: "prompt" }, it.ask ? "Answer Aunty — out loud, in Hindi" : "Say it in Hindi — out loud"),
+      prompt, timer,
+      h("div", { class: "speak-zone" }, mic, status),
+      answerBox);
+    actions([{ label: "Show answer", cls: "ghost", onClick: reveal }]);
+    if (it.ask) setTimeout(() => Speech.say(it.ask.dv), 400);
+  }
+
+  /* ---------- weak spots + the daily 5-minute review ---------- */
+  function weakKey(step) {
+    if (step.mod && (step.item || step.to)) return step.mod + ":" + (step.item || step.to);
+    if (!step.mod && (step.verbId || step.target) && VERB[step.verbId || step.target]) return "m1:" + (step.verbId || step.target);
+    return null;
+  }
+  function trackWeak(step, res) {
+    const k = weakKey(step);
+    if (!k || step.graded === false) return;
+    const w = S.weak[k] || (S.weak[k] = { m: 0, o: 0, t: 0 });
+    if (res.firstTry) w.o++; else w.m++;
+    w.t = Date.now();
+  }
+  function reviewPool() {
+    const pool = [];
+    C.modules.filter((m) => hasProgress(m.id)).forEach((m) => (m.items || []).forEach((it) => { if (it.tokens.length >= 2 && !it.noBuild) pool.push(m.id + ":" + it.id); }));
+    return pool;
+  }
+  const weakScore = (k) => { const w = S.weak[k]; return w ? w.m * 2 - w.o : 0; };
+  function buildReview() {
+    const pool = reviewPool();
+    const weak = pool.filter((k) => weakScore(k) > 0).sort((a, b) => weakScore(b) - weakScore(a)).slice(0, 6);
+    const keys = shuffle(weak.concat(shuffle(pool.filter((k) => !weak.includes(k))).slice(0, 10 - weak.length)));
+    const kinds = ["gspeak", "gspeak", "gtype", "gspeak", "gbuild"]; // mostly out loud, like she asked
+    return keys.map((k, i) => {
+      const [mod, item] = k.split(":");
+      const base = { mod, item, skill: "review" };
+      const kind = kinds[i % kinds.length];
+      if (kind === "gbuild") return Object.assign(base, { type: "gbuild", level: { colors: false, hint: false, distractors: 3 } });
+      if (kind === "gtype") return Object.assign(base, { type: "gtype", hints: true });
+      return Object.assign(base, { type: "gspeak" });
+    });
+  }
+  function startReview() {
+    if (!reviewPool().length) return;
+    Sound.play("tap");
+    enterModule("review");
+    P().run = null;
+    startStage(0, { skipIntro: true });
+  }
+  function reviewDone() {
+    Sound.play("done");
+    confetti();
+    const today = S.daily.date === dayStr() ? S.daily.xp : 0;
+    S.lastReview = dayStr();
+    save();
+    screen(h("div", { class: "stage-hero" },
+      h("div", { class: "stage-badge" }, "⚡"),
+      h("div", { class: "kicker" }, "Daily review"),
+      h("h1", {}, pick(["Shabash!", "Bahut badhiya!", "Wah!"])),
+      h("p", {}, "Your weak spots just got stronger. The ones you missed will come back next time."),
+      h("div", { class: "stat-row" },
+        h("div", { class: "stat" }, h("b", {}, "+" + run.stats.xp), h("span", {}, "XP earned")),
+        h("div", { class: "stat" }, h("b", {}, "🔥" + S.streak.count), h("span", {}, "Day streak"))),
+      h("div", { class: "goal-bar", style: "max-width:300px;margin:18px auto 0" }, h("i", { style: `width:${Math.min(100, Math.round((today / DAILY_GOAL) * 100))}%` })),
+      h("p", { class: "small muted", style: "margin-top:6px" }, today >= DAILY_GOAL ? "✅ Daily goal done!" : `Today: ${today}/${DAILY_GOAL} XP`)));
+    run = null;
+    actions([{ label: "Back home", onClick: () => showStart() }]);
+  }
+
   /* ---------- family chat ---------- */
   const PEOPLE = { aunty: { name: "Aunty", avatar: "👩🏽" }, uncle: { name: "Uncle", avatar: "👨🏽" } };
   function rGChat(step) {
@@ -2533,6 +2691,9 @@
   }
   function applySettings() {
     document.body.classList.toggle("show-deva", !!S.settings.deva);
+    document.body.classList.toggle("dark", !!S.settings.dark);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", S.settings.dark ? "#13151d" : "#fff6ea");
     $("deva-btn").setAttribute("aria-pressed", String(!!S.settings.deva));
   }
 
@@ -2622,11 +2783,11 @@
     const signIn = h("button", { class: "btn ghost small-btn" }, "Sign in");
     create.addEventListener("click", () => { Sound.play("tap"); showAccount("create"); });
     signIn.addEventListener("click", () => { Sound.play("tap"); showAccount("signin"); });
-    card.append(
+    card.append(...[
       h("div", { class: "section-title" }, "☁️ Save your progress"),
       h("p", { class: "small muted" }, "Make an account so your progress is safe — even if the app is deleted or you get a new phone."),
       h("div", { class: "code-row", style: "margin-top:10px" }, create, signIn),
-      S.cloud && S.cloud.code ? h("p", { class: "small muted", style: "margin-top:6px" }, `Your save code ${S.cloud.code} still works as a backup.`) : null);
+      S.cloud && S.cloud.code ? h("p", { class: "small muted", style: "margin-top:6px" }, `Your save code ${S.cloud.code} still works as a backup.`) : null].filter(Boolean));
     return card;
   }
   const hasLocalProgress = () => S.xp > 0 || Object.values(S.modules).some((m) => Object.keys(m.done).length || m.run);
@@ -2759,6 +2920,7 @@
       h("div", { class: "settings-row" },
         toggle("देवनागरी script", "deva", applySettings),
         toggle("Sound effects", "sound"),
+        toggle("🌙 Dark mode", "dark", applySettings),
         Speech.supported ? toggle("🔊 Hindi voice", "voice") : null),
       cloudCard(),
       installTip(),
@@ -2847,6 +3009,7 @@
     gtype: wrapR(rGType),
     gtransform: wrapR(rGTransform),
     gchat: wrapR(rGChat),
+    gspeak: wrapR(rGSpeak),
     testIntro: wrapR(rTestIntro),
     type: wrapR(rType)
   });
@@ -2902,7 +3065,7 @@
   }
 
   // Exposed for debugging / automated checks.
-  window.Bolo = { award, session: () => session, tokenize, diagnose, tokenizeG, checkItem, startStage, showStart, showModule, playModule, mods: MODS, unlockAll: () => { session.unlockAll = true; }, debug: () => dbg, cloud: Cloud, state: () => S, step: () => curStep, mcCorrect: () => (dbg.opts || []).findIndex((o) => o.correct), ctx: () => run && run.ctx };
+  window.Bolo = { award, startReview, session: () => session, tokenize, diagnose, tokenizeG, checkItem, startStage, showStart, showModule, playModule, mods: MODS, unlockAll: () => { session.unlockAll = true; }, debug: () => dbg, cloud: Cloud, state: () => S, step: () => curStep, mcCorrect: () => (dbg.opts || []).findIndex((o) => o.correct), ctx: () => run && run.ctx };
 
   init();
 })();

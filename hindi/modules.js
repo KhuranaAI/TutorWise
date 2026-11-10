@@ -98,7 +98,7 @@
     please: ["please", "प्लीज़", "please", "other", ["plz", "pls", "plis"]],
     aapka: ["aapka", "आपका", "your (respectful)", "other", ["apka", "aapkaa"]],
     pasand: ["pasand", "पसंद", "liked", "other", ["pasant", "psand", "pasnd"]],
-    accha: ["accha", "अच्छा", "good", "other", ["acha", "achha", "achcha", "acchha", "achaa"]],
+    accha: ["accha", "अच्छा", "good", "other", ["acha", "achha", "achcha", "acchha", "achaa", "aacha"]],
     tasty: ["tasty", "टेस्टी", "tasty", "other", ["testy", "tasti"]],
     thoda: ["thoda", "थोड़ा", "a little", "other", ["thora", "thodaa"]],
     bas: ["bas", "बस", "enough", "other", ["buss", "bass"]],
@@ -137,7 +137,25 @@
     papa: ["Papa", "पापा", "Dad", "person", ["pappa", "papaji", "daddy", "dad"]],
     mumma: ["Mumma", "मम्मा", "Mom", "person", ["mummy", "mumy", "mumi", "maa", "mom", "mommy", "mum"]],
     anissa: ["Anissa", "अनीसा", "Anissa", "person", ["anisa", "anisha", "annisa"]],
-    jack: ["Jack", "जैक", "Jack", "person", ["jak", "jaik"]]
+    jack: ["Jack", "जैक", "Jack", "person", ["jak", "jaik"]],
+
+    // from her Nov 9 class
+    voh: ["voh", "वह", "he / she", "subject", ["vo", "woh", "wo", "vah", "वो"]],
+    karta: ["karta", "करता", "works / does (he)", "verb", ["kartaa", "krta"]],
+    karti: ["karti", "करती", "works / does (she)", "verb", ["kartee", "krti", "kartii"]],
+    karte: ["karte", "करते", "works / does (respectful)", "verb", ["kartey", "krte", "kartay"]],
+    achi: ["achi", "अच्छी", "good (she)", "other", ["acchi", "achhi", "aachi", "achchi", "achii"]],
+    ache: ["ache", "अच्छे", "good (respectful)", "other", ["acche", "achhe", "aache", "achche", "achey"]],
+    hospital: ["hospital", "हॉस्पिटल", "hospital", "thing", ["hospitel", "haspatal", "aspatal", "अस्पताल"]],
+    mumbai: ["Mumbai", "मुंबई", "Mumbai", "thing", ["bombay", "mumbay"]],
+    delhi: ["Delhi", "दिल्ली", "Delhi", "thing", ["dilli", "dehli"]],
+    lawyer: ["lawyer", "लॉयर", "lawyer", "other", ["layer", "loyer", "vakeel", "vakil", "वकील"]],
+    court: ["court", "कोर्ट", "court", "thing", ["cort", "kort"]],
+    apartment: ["apartment", "अपार्टमेंट", "apartment", "thing", ["appartment", "apartmnt", "flat"]],
+    university: ["university", "यूनिवर्सिटी", "university", "thing", ["univercity", "uni", "universty"]],
+    jill: ["Jill", "जिल", "Jill", "person", ["jil"]],
+    riya: ["Riya", "रिया", "Riya", "person", ["ria", "reeya"]],
+    ram: ["Ram", "राम", "Ram", "person", ["raam"]]
   };
 
   /* ===================== FROM ANISSA'S HINDI CLASS (shown first) =====================
@@ -271,6 +289,134 @@
         { them: "Accha! Aap Canada mei kahan rehti hain?", dv: "अच्छा! आप कनाडा में कहाँ रहती हैं?", en: "Oh! Where in Canada do you live?" },
         { type: "live_toronto", goal: "Tell her you live in Toronto." },
         { them: "Bahut accha! Phir milte hain. 😊", dv: "बहुत अच्छा! फिर मिलते हैं।", en: "Very good! See you soon." },
+        { pick: [{ text: "Bye Aunty ji! 👋", ok: true }] }
+      ]
+    }
+  };
+
+  /* ===================== CLASS 2 (Nov 9): Voh, Kaam aur Acha =====================
+     From her teacher's notes: Voh … hai (he / she is) · aur (and) · kaam karta / karti / karte ·
+     rehta / rehti · acha / achi / ache. Items with `ask` are answered out loud in Speak It
+     (a Hindi question, no English); `cue` is a picture hint instead of an English sentence. */
+  const classMod2 = {
+    id: "class2", icon: "👩🏽‍⚖️", title: "Voh, Kaam aur Acha", tagline: "From your Nov 9 class: he / she is, who works where, and who's good", minutes: "15–20",
+    stages: ["learn", "words", "quiz", "build", "transform", "chat", "challenge"],
+    stageInfo: {
+      learn: { desc: "Voh … hai, aur, kaam karta / karti / karte, acha / achi / ache." },
+      words: { title: "Words from Class", desc: "voh, aur, karta / karti / karte, acha / achi / ache" },
+      quiz: { icon: "⚖️", title: "He, She or Respect?", desc: "karta or karti? acha or achi? Pick the right ending." },
+      chat: { title: "Chat with Aunty", desc: "Aunty asks where you work and about your friends." }
+    },
+    formula: [["Voh / name", "subject"], ["(place) mei", "thing"], ["kaam karta / karti", "verb"], ["hai", "aux"]],
+    formulaText: "Voh … hai · Voh (place) mei kaam karta / karti hai",
+    mistakes: [NOT_TUM],
+    confusions: [
+      ["karti", "karta", "For <b>he</b> (a man) it's <b>karta</b>."],
+      ["karta", "karti", "For <b>she</b> (a woman) it's <b>karti</b>."],
+      ["karta", "karte", "With <b>aap</b> (respect) it's <b>karte hain</b>."],
+      ["karti", "karte", "With <b>aap</b> (respect) it's <b>karte hain</b>."],
+      ["rehti", "rehta", "For <b>he</b> it's <b>rehta</b>."],
+      ["rehta", "rehti", "For <b>she</b> it's <b>rehti</b>."],
+      ["accha", "achi", "For a woman or girl it's <b>achi</b>."],
+      ["achi", "accha", "For a man or boy it's <b>acha</b>."],
+      ["accha", "ache", "For Papa or aap (respect) it's <b>ache hain</b>."],
+      ["achi", "ache", "For Papa or aap (respect) it's <b>ache hain</b>."],
+      ["hai", "hain", "For Papa or aap (respect) use <b>hain</b>."],
+      ["hain", "hai", "For <b>voh</b> (one person) use <b>hai</b>."],
+      ["hoon", "hai", "<b>hoon</b> is only for Main. With <b>voh</b> it's <b>hai</b>."],
+      ["main", "voh", "<b>Main</b> = I. He / she = <b>voh</b>."],
+      ["kaise", "kahan", "<b>kaise</b> = how. Where = <b>kahan</b>."]
+    ],
+    cards: [
+      { id: "voh", roman: "voh", deva: "वह", en: "he / she", emoji: "👉🏽", sounds: "like “vo” (people often write wo / vo)" },
+      { id: "aur", roman: "aur", deva: "और", en: "and", emoji: "➕", sounds: "like English “or”" },
+      { id: "karta", roman: "kaam karta", deva: "काम करता", en: "works (he)", emoji: "👨🏽‍💼", sounds: "kaam KUR-taa" },
+      { id: "karti", roman: "kaam karti", deva: "काम करती", en: "works (she)", emoji: "👩🏽‍💼", sounds: "kaam KUR-tee" },
+      { id: "karte", roman: "kaam karte", deva: "काम करते", en: "works (respectful / aap)", emoji: "🫶🏽", sounds: "kaam KUR-tay" },
+      { id: "acha", roman: "acha", deva: "अच्छा", en: "good (he)", emoji: "👍🏽", sounds: "UTCH-chaa" },
+      { id: "achi", roman: "achi", deva: "अच्छी", en: "good (she)", emoji: "💐", sounds: "UTCH-chee" },
+      { id: "ache", roman: "ache", deva: "अच्छे", en: "good (respectful)", emoji: "🙏🏽", sounds: "UTCH-chay" }
+    ],
+    lesson: [
+      { kind: "tip", kicker: "From your Nov 9 class", title: "This module = your new notes",
+        html: "Everything here is from your teacher's lesson:<ul><li><b>Voh … hai</b> — he / she is</li><li><b>aur</b> = and</li><li><b>kaam karta / karti / karte</b> — works (he / she / respect)</li><li><b>rehta / rehti</b> — lives (he / she)</li><li><b>acha / achi / ache</b> — good (he / she / respect)</li></ul>" },
+      { kind: "explain", kicker: "Trick: Voh … hai", title: "Tap each block to see what it means",
+        blocks: [[["voh"], "he / she"], [["jack"], "Jack"], [["hai"], "is"]],
+        roman: "Voh Jack hai.", deva: "वह जैक है।", en: "He is Jack.", emoji: "👨🏽",
+        note: "<b>Voh</b> means he <i>or</i> she — the same word for both! One person → <b>hai</b>." },
+      { kind: "swap", kicker: "Voh … hai", title: "Tap each one", options: ["voh_jack", "voh_doctor", "voh_hospital", "voh_lawyer"],
+        note: "Just like Main … hoon: only the middle changes. <b>Voh</b> and <b>hai</b> stay." },
+      { kind: "explain", kicker: "Who works where", title: "Tap each block to see what it means",
+        blocks: [[["voh"], "she"], [["court"], "court"], [["mei"], "in"], [["kaam", "karti"], "works (she)"], [["hai"], "is"]],
+        roman: "Voh court mei kaam karti hai.", deva: "वह कोर्ट में काम करती है।", en: "She works in a court.", emoji: "👩🏽‍⚖️",
+        note: "Your class's structure: <b>Subject + place mei + kaam karti + hai</b>. Same pattern as <b>rehti hai</b> (lives)." },
+      { kind: "tip", kicker: "Works", title: "karta · karti · karte",
+        html: "<ul><li><b>he</b> → kaam <b>karta</b> hai</li><li><b>she</b> → kaam <b>karti</b> hai</li><li><b>aap</b> / respect → kaam <b>karte</b> hain</li></ul>Same endings as <b>rehta / rehti / rehte</b> from your first class!",
+        examples: ["jack_school_work", "jill_hospital_work", "aap_work"] },
+      { kind: "tip", kicker: "Good", title: "acha · achi · ache",
+        html: "<ul><li>a man / boy → <b>acha</b></li><li>a woman / girl → <b>achi</b></li><li>Papa, aap, respect → <b>ache</b> hain</li></ul>",
+        examples: ["voh_achi", "achi_ladki", "papa_ache"] },
+      { kind: "tip", kicker: "aur = and", title: "Join two sentences",
+        html: "Put <b>aur</b> between two sentences — and say <b>voh</b> again for he / she:",
+        examples: ["jack_doc_aur", "riya_aur", "mumbai_delhi"] },
+      { kind: "quiz", q: { prompt: "She works in a court:", options: ["Voh court mei kaam karti hai.", "Voh court mei kaam karta hai.", "Voh kaam karti court mei hai."], answer: 0,
+        whys: ["", "<b>karta</b> is for he. She → <b>karti</b>.", "The place comes first: <b>court mei</b> kaam karti hai."] } },
+      { kind: "order", item: "court_work", chunks: [["voh"], ["court"], ["mei"], ["kaam"], ["karti"], ["hai"]] }
+    ],
+    items: [
+      { id: "voh_jack", en: "He is Jack.", roman: "Voh Jack hai.", deva: "वह जैक है।", tokens: ["voh", "jack", "hai"], cue: "👨🏽 He · Jack", chip: "👨🏽 Jack" },
+      { id: "voh_ladka", en: "He is a boy.", roman: "Voh ladka hai.", deva: "वह लड़का है।", tokens: ["voh", "ladka", "hai"], cue: "👦🏽 He · boy" },
+      { id: "voh_doctor", en: "He is a doctor.", roman: "Voh doctor hai.", deva: "वह डॉक्टर है।", tokens: ["voh", "doctor", "hai"], cue: "👨🏽‍⚕️ He · doctor", chip: "🩺 doctor" },
+      { id: "voh_hospital", en: "He is in the hospital.", roman: "Voh hospital mei hai.", deva: "वह हॉस्पिटल में है।", tokens: ["voh", "hospital", "mei", "hai"], cue: "👨🏽 He · in 🏥 hospital", chip: "🏥 hospital" },
+      { id: "voh_jill", en: "She is Jill.", roman: "Voh Jill hai.", deva: "वह जिल है।", tokens: ["voh", "jill", "hai"], cue: "👩🏼 She · Jill", ask: { hi: "Voh kaun hai?", dv: "वह कौन है?", en: "Who is she?" } },
+      { id: "voh_lawyer", en: "She is a lawyer.", roman: "Voh lawyer hai.", deva: "वह लॉयर है।", tokens: ["voh", "lawyer", "hai"], cue: "👩🏽‍⚖️ She · lawyer", chip: "⚖️ lawyer" },
+      { id: "voh_indian", en: "She is Indian.", roman: "Voh Indian hai.", deva: "वह इंडियन है।", tokens: ["voh", "indian", "hai"], cue: "👩🏽 She · Indian 🇮🇳" },
+      { id: "voh_theek", en: "She is fine.", roman: "Voh theek hai.", deva: "वह ठीक है।", tokens: ["voh", "theek", "hai"], cue: "👩🏽 She · fine 👍🏽", ask: { hi: "Riya kaisi hai?", dv: "रिया कैसी है?", en: "How is Riya?" } },
+      { id: "voh_achi", en: "She is good.", roman: "Voh achi hai.", deva: "वह अच्छी है।", tokens: ["voh", "achi", "hai"], cue: "👩🏽 She · good 💐" },
+      { id: "achi_lawyer", en: "She is a good lawyer.", roman: "Voh achi lawyer hai.", deva: "वह अच्छी लॉयर है।", tokens: ["voh", "achi", "lawyer", "hai"], cue: "👩🏽‍⚖️ She · good · lawyer" },
+      { id: "achi_ladki", en: "She is a good girl.", roman: "Voh achi ladki hai.", deva: "वह अच्छी लड़की है।", tokens: ["voh", "achi", "ladki", "hai"], cue: "👧🏽 She · good · girl" },
+      { id: "achi_teacher", en: "And she is a good teacher.", roman: "Aur voh achi teacher hai.", deva: "और वह अच्छी टीचर है।", tokens: ["aur", "voh", "achi", "teacher", "hai"], alts: [["voh", "achi", "teacher", "hai"]], cue: "➕ and · 👩🏽‍🏫 she · good · teacher" },
+      { id: "papa_ache", en: "Dad is good.", roman: "Papa ache hain.", deva: "पापा अच्छे हैं।", tokens: ["papa", "ache", "hain"], cue: "👨🏽 Papa · good 👍🏽", ask: { hi: "Papa kaise hain?", dv: "पापा कैसे हैं?", en: "How is Dad?" } },
+      { id: "jack_school_work", en: "Jack works in a school.", roman: "Jack school mei kaam karta hai.", deva: "जैक स्कूल में काम करता है।", tokens: ["jack", "school", "mei", "kaam", "karta", "hai"], cue: "👨🏽 Jack · 💼 works · 🏫 school", ask: { hi: "Jack kahan kaam karta hai?", dv: "जैक कहाँ काम करता है?", en: "Where does Jack work?" } },
+      { id: "jill_hospital_work", en: "Jill works in a hospital.", roman: "Jill hospital mei kaam karti hai.", deva: "जिल हॉस्पिटल में काम करती है।", tokens: ["jill", "hospital", "mei", "kaam", "karti", "hai"], cue: "👩🏼 Jill · 💼 works · 🏥 hospital", ask: { hi: "Jill kahan kaam karti hai?", dv: "जिल कहाँ काम करती है?", en: "Where does Jill work?" } },
+      { id: "voh_hosp_work", en: "He works in a hospital.", roman: "Voh hospital mei kaam karta hai.", deva: "वह हॉस्पिटल में काम करता है।", tokens: ["voh", "hospital", "mei", "kaam", "karta", "hai"], cue: "👨🏽 He · 💼 works · 🏥 hospital" },
+      { id: "court_work", en: "She works in a court.", roman: "Voh court mei kaam karti hai.", deva: "वह कोर्ट में काम करती है।", tokens: ["voh", "court", "mei", "kaam", "karti", "hai"], cue: "👩🏽 She · 💼 works · ⚖️ court" },
+      { id: "uni_work", en: "She works at a university.", roman: "Voh university mei kaam karti hai.", deva: "वह यूनिवर्सिटी में काम करती है।", tokens: ["voh", "university", "mei", "kaam", "karti", "hai"], cue: "👩🏽 She · 💼 works · 🎓 university" },
+      { id: "delhi_live", en: "She lives in Delhi.", roman: "Voh Delhi mei rehti hai.", deva: "वह दिल्ली में रहती है।", tokens: ["voh", "delhi", "mei", "rehti", "hai"], cue: "👩🏽 She · 🏠 lives · Delhi", ask: { hi: "Riya kahan rehti hai?", dv: "रिया कहाँ रहती है?", en: "Where does Riya live?" } },
+      { id: "apt_live", en: "She lives in an apartment.", roman: "Voh apartment mei rehti hai.", deva: "वह अपार्टमेंट में रहती है।", tokens: ["voh", "apartment", "mei", "rehti", "hai"], cue: "👩🏽 She · 🏠 lives · 🏢 apartment" },
+      { id: "mumbai_live", en: "He lives in Mumbai.", roman: "Voh Mumbai mei rehta hai.", deva: "वह मुंबई में रहता है।", tokens: ["voh", "mumbai", "mei", "rehta", "hai"], cue: "👨🏽 He · 🏠 lives · Mumbai", ask: { hi: "Ram kahan rehta hai?", dv: "राम कहाँ रहता है?", en: "Where does Ram live?" } },
+      { id: "aap_work", en: "Where do you work?", roman: "Aap kahan kaam karte hain?", deva: "आप कहाँ काम करते हैं?", tokens: ["aap", "kahan", "kaam", "karte", "hain"], cue: "❓ Ask Aunty: where · 💼 work" },
+      { id: "main_work", en: "I work in Toronto.", roman: "Main Toronto mei kaam karti hoon.", deva: "मैं टोरंटो में काम करती हूँ।", tokens: ["main", "toronto", "mei", "kaam", "karti", "hoon"], cue: "🙋🏽‍♀️ I · 💼 work · Toronto", ask: { hi: "Aap kahan kaam karti hain?", dv: "आप कहाँ काम करती हैं?", en: "Where do you work?" } },
+      { id: "jack_doc_aur", en: "Jack is a doctor and he works in a hospital.", roman: "Jack doctor hai aur voh hospital mei kaam karta hai.", deva: "जैक डॉक्टर है और वह हॉस्पिटल में काम करता है।", tokens: ["jack", "doctor", "hai", "aur", "voh", "hospital", "mei", "kaam", "karta", "hai"], cue: "👨🏽‍⚕️ Jack · doctor ➕ works · 🏥" },
+      { id: "riya_aur", en: "Riya is a teacher and she works in a school.", roman: "Riya teacher hai aur voh school mei kaam karti hai.", deva: "रिया टीचर है और वह स्कूल में काम करती है।", tokens: ["riya", "teacher", "hai", "aur", "voh", "school", "mei", "kaam", "karti", "hai"], cue: "👩🏽‍🏫 Riya · teacher ➕ works · 🏫", ask: { hi: "Riya kya karti hai?", dv: "रिया क्या करती है?", en: "What does Riya do?" } },
+      { id: "mumbai_delhi", en: "He lives in Mumbai and he is in Delhi.", roman: "Voh Mumbai mei rehta hai aur voh Delhi mei hai.", deva: "वह मुंबई में रहता है और वह दिल्ली में है।", tokens: ["voh", "mumbai", "mei", "rehta", "hai", "aur", "voh", "delhi", "mei", "hai"], cue: "👨🏽 lives · Mumbai ➕ is in · Delhi" }
+    ],
+    quiz: [
+      { prompt: "He works in a school: “Voh school mei kaam ___ hai.”", options: ["karta", "karti", "karte"], answer: 0, whys: ["", "<b>karti</b> is for she. He → <b>karta</b>.", "<b>karte</b> is for aap / respect. He → <b>karta</b>."] },
+      { prompt: "She lives in Delhi: “Voh Delhi mei ___ hai.”", options: ["rehti", "rehta", "rehte"], answer: 0, whys: ["", "<b>rehta</b> is for he. She → <b>rehti</b>.", "<b>rehte</b> is for aap / respect. She → <b>rehti</b>."] },
+      { prompt: "Dad is good: “Papa ___ hain.”", options: ["ache", "acha", "achi"], answer: 0, whys: ["", "For Papa (respect) it's <b>ache hain</b>.", "<b>achi</b> is for a woman — and Papa takes respect: <b>ache</b>."] },
+      { prompt: "She is a good girl:", options: ["Voh achi ladki hai.", "Voh acha ladki hai.", "Voh achi ladki hain."], answer: 0, whys: ["", "A girl is good → <b>achi</b>.", "One person → <b>hai</b>."] },
+      { prompt: "What does voh mean?", hi: "voh", options: ["he or she", "you", "I"], answer: 0, whys: ["", "You (respectful) is <b>aap</b>.", "I is <b>Main</b>."] },
+      { prompt: "Ask Aunty “Where do you work?”", options: ["Aap kahan kaam karte hain?", "Aap kahan kaam karta hai?", "Aap kaise kaam karte hain?"], answer: 0, whys: ["", "With <b>aap</b>, use the respectful <b>karte hain</b>.", "<b>kaise</b> = how. Where = <b>kahan</b>."] },
+      { prompt: "What does aur mean?", hi: "aur", options: ["and", "or", "but"], answer: 0, whys: ["", "It <i>sounds</i> like “or” — but it means <b>and</b>!", "It means <b>and</b>."] },
+      { prompt: "Jack is a doctor and he works in a hospital:", options: ["Jack doctor hai aur voh hospital mei kaam karta hai.", "Jack doctor hai aur voh hospital mei kaam karti hai.", "Jack doctor aur hai voh hospital mei kaam karta hai."], answer: 0, whys: ["", "Jack is a man → <b>karta</b>.", "Finish the first sentence first: <b>Jack doctor hai</b> + <b>aur</b> + …"] }
+    ],
+    transforms: [["jack_school_work", "jill_hospital_work"], ["court_work", "uni_work"], ["delhi_live", "mumbai_live"], ["voh_jack", "voh_jill"], ["achi_lawyer", "achi_ladki"], ["voh_lawyer", "voh_doctor"]],
+    buildItems: ["voh_jack", "voh_hospital", "achi_lawyer", "papa_ache", "jack_school_work", "jill_hospital_work", "delhi_live", "aap_work", "riya_aur", "main_work"],
+    chat: {
+      who: "aunty",
+      lines: [
+        { them: "Namaste Anissa! Aap kahan kaam karti hain?", dv: "नमस्ते अनीसा! आप कहाँ काम करती हैं?", en: "Hello Anissa! Where do you work?" },
+        { type: "main_work", goal: "Tell her you work in Toronto." },
+        { them: "Accha! Aur Jack kaun hai?", dv: "अच्छा! और जैक कौन है?", en: "Nice! And who is Jack?" },
+        { pick: [{ text: "Voh doctor hai.", ok: true }, { text: "Voh doctor hoon.", why: "<b>hoon</b> is only for Main. With voh → <b>hai</b>." }, { text: "Main doctor hai.", why: "<b>Main</b> means I. He → <b>voh</b>." }] },
+        { them: "Voh kahan kaam karta hai?", dv: "वह कहाँ काम करता है?", en: "Where does he work?" },
+        { type: "voh_hosp_work", goal: "Say he works in a hospital." },
+        { them: "Aur Riya?", dv: "और रिया?", en: "And Riya?" },
+        { type: "riya_aur", goal: "Say Riya is a teacher and she works in a school." },
+        { them: "Wah! Aur aapke Papa kaise hain?", dv: "वाह! और आपके पापा कैसे हैं?", en: "Wow! And how is your dad?" },
+        { type: "papa_ache", goal: "Say Dad is good." },
+        { them: "Bahut accha! 😊", dv: "बहुत अच्छा!", en: "Very good!" },
         { pick: [{ text: "Bye Aunty ji! 👋", ok: true }] }
       ]
     }
@@ -830,6 +976,26 @@
     }
   ];
   mods.forEach((m) => C.modules.push(m));
-  C.modules.unshift(classMod);                       // her class comes first
+  C.modules.unshift(classMod, classMod2);            // her classes come first, in order
+
+  // Speak It! — answer out loud, no tiles or typing. Questions (ask) and picture cues for her first class:
+  const speakData = {
+    main_theek: { ask: { hi: "Aap kaise hain?", dv: "आप कैसे हैं?", en: "How are you?" }, cue: "🙋🏽‍♀️ I · fine 👍🏽" },
+    main_ghar: { ask: { hi: "Aap kahan hain?", dv: "आप कहाँ हैं?", en: "Where are you?" }, cue: "🙋🏽‍♀️ I · at 🏠 home" },
+    mumma_kitchen: { ask: { hi: "Mumma kahan hain?", dv: "मम्मा कहाँ हैं?", en: "Where is Mom?" }, cue: "👩🏽 Mom · in 🍳 kitchen" },
+    papa_live: { ask: { hi: "Papa kahan rehte hain?", dv: "पापा कहाँ रहते हैं?", en: "Where does Dad live?" }, cue: "👨🏽 Dad · lives · 🌴 California" },
+    live_toronto: { ask: { hi: "Aap kahan rehti hain?", dv: "आप कहाँ रहती हैं?", en: "Where do you live?" }, cue: "🙋🏽‍♀️ I · live · 🏙️ Toronto" },
+    remote_bahar: { ask: { hi: "Remote kahan hai?", dv: "रिमोट कहाँ है?", en: "Where is the remote?" }, cue: "📺 remote · 🌳 outside" },
+    charger_kitchen: { ask: { hi: "Charger kahan hai?", dv: "चार्जर कहाँ है?", en: "Where is the charger?" }, cue: "🔌 charger · in 🍳 kitchen" },
+    main_anissa: { cue: "🙋🏽‍♀️ I · Anissa" }, main_ladki: { cue: "🙋🏽‍♀️ I · girl" }, main_canadian: { cue: "🙋🏽‍♀️ I · Canadian 🍁" },
+    aap_doctor: { cue: "🫵🏽 You · doctor 🩺" }, aap_kitchen: { cue: "🫵🏽 You · in 🍳 kitchen" }, kahan_mumma: { cue: "❓ Where · Mom" }
+  };
+  classMod.items.forEach((it) => Object.assign(it, speakData[it.id] || {}));
+  // Every module gets a Speak It! stage before its final challenge (her request: practise out loud).
+  C.modules.forEach((m) => {
+    if (!Array.isArray(m.stages) || m.stages.includes("speak")) return;
+    const at = m.stages.indexOf("challenge");
+    m.stages.splice(at < 0 ? m.stages.length : at, 0, "speak");
+  });
   C.modules.forEach((m, i) => (m.number = i + 1));   // numbers follow the order
 })();
