@@ -381,7 +381,9 @@
       const choose = () => {
         const had = !!this.voice;
         const vs = window.speechSynthesis.getVoices();
-        this.voice = vs.find((v) => /^hi([-_]|$)/i.test(v.lang)) || null;
+        // Prefer the best Hindi voice installed (iPhone: "Lekha (Premium)" > "Lekha (Enhanced)" > basic).
+        const score = (v) => (/premium/i.test(v.name) ? 4 : 0) + (/enhanced|neural|natural/i.test(v.name) ? 3 : 0) + (/google/i.test(v.name) ? 1 : 0);
+        this.voice = vs.filter((v) => /^hi([-_]|$)/i.test(v.lang)).sort((a, b) => score(b) - score(a))[0] || null;
         if (had !== !!this.voice && onChange) onChange();
       };
       choose();
