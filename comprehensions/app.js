@@ -10,7 +10,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInAnonymously, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { renderModule, h, showError } from "./player.js";
+import { renderModule, h, showError } from "./player.js?v=1"; // bump with index.html
 
 const CFG = window.TUTORWISE_CONFIG;
 const app = document.getElementById("app");
@@ -149,10 +149,7 @@ function openModule(m) {
     const done = new Set(handedIn()); done.add(mod.module_id);
     local.set(`${DONE_STORE}:${student.studentId}`, JSON.stringify([...done]));
   };
-  topMeta.replaceChildren(
-    h("button", { type: "button", class: "btn-signout", onclick: renderList }, "← My readings"),
-    h("span", {}, student.name));
-  renderModule(null, mod);
+  renderModule(null, mod); // draws its own top bar, with "← My readings" from CFG.onBack
   window.scrollTo(0, 0);
 }
 

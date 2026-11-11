@@ -101,6 +101,8 @@ export async function renderModule(moduleRef, provided = null) {
   const fixedName = CFG.studentName || null;
   document.title = `${mod.title} · TutorWise`;
   topMeta.replaceChildren(h("span", {}, `Grade ${mod.grade} Reading Comprehension`));
+  // Answers are saved as the student types, so leaving mid-reading loses nothing.
+  if (CFG.onBack) topMeta.prepend(h("button", { type: "button", class: "btn-signout", onclick: () => CFG.onBack() }, "← My readings"));
   if (demo) topMeta.append(h("span", { class: "demo-pill", title: "Answer key is loaded in the browser" }, "Demo grading"));
 
   // Drafts are per student when the name is fixed, so a shared computer doesn't mix them up.
