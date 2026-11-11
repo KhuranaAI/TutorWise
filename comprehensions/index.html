@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Reading Comprehension | TutorWise</title>
+  <link rel="icon" href="../faviconTW.png" type="image/png" />
+  <link rel="stylesheet" href="player.css" />
+  <link rel="stylesheet" href="app.css" />
+  <script src="config.js"></script>
+  <script>
+    // Tells player.js that this page drives it (it must not boot by itself).
+    window.TUTORWISE_EMBED = true;
+    window.TUTORWISE_CONFIG = {};
+  </script>
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="TutorWise home"><img src="../TW_logo.png" alt="TutorWise" /></a>
+    <div class="topbar-meta" id="topbar-meta"></div>
+  </header>
+  <main id="app" aria-live="polite">
+    <p class="loading">Loading…</p>
+  </main>
+  <noscript><p class="error-box">This page needs JavaScript turned on.</p></noscript>
+</body>
+</html>
