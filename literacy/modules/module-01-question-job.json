@@ -1,0 +1,1514 @@
+{
+  "schemaVersion": 1,
+  "id": "m1-question-job",
+  "number": 1,
+  "title": "What is the question asking?",
+  "goal": "Before you look for an answer, say the question's job: what kind of answer, about what, and how many parts.",
+  "card": {
+    "title": "KIND – ABOUT – HOW MANY",
+    "lines": [
+      "KIND: what kind of answer does it want?",
+      "ABOUT: about what, exactly?",
+      "HOW MANY: how many parts do I need?",
+      "Flip words: NOT and EXCEPT turn the question around."
+    ]
+  },
+  "kinds": {
+    "person": "a person or a group",
+    "thing": "a thing (an object, a problem or an idea)",
+    "action": "something someone did",
+    "words": "words someone said or wrote",
+    "time": "a time",
+    "place": "a place",
+    "reason": "a reason",
+    "way": "a way of doing something",
+    "amount": "an amount",
+    "choice": "one choice from a list",
+    "sentence": "a sentence from the text",
+    "purpose": "what a part of the text is for"
+  },
+  "feedback": {
+    "kind": {
+      "person": "Who wants a person or a group.",
+      "thing": "What wants a thing: an object, a problem or an idea.",
+      "action": "'What did someone do' wants something someone did.",
+      "words": "'What did someone say' or 'text' wants the words.",
+      "time": "When wants a time.",
+      "place": "Where wants a place.",
+      "reason": "Why wants a reason. A reason starts with 'because'.",
+      "way": "How wants a way of doing something.",
+      "amount": "How much, how many and how long want an amount.",
+      "choice": "Which wants one choice from the list.",
+      "sentence": "'Which sentence' wants a sentence you can point to in the text.",
+      "purpose": "'Purpose' asks what that part of the text is for."
+    },
+    "about": {
+      "topic": "That is the topic. The target is longer. Read everything after the question word.",
+      "other": "That is about something else. Read the question again, word by word.",
+      "otherPart": "That is the other part of the question. Find the 'and', then look at this part only."
+    },
+    "parts": "Look for 'and' joining two questions. Count again.",
+    "flipMissed": "Look again. One small word flips this question.",
+    "flipNone": "No flip word here. The flip words are NOT and EXCEPT.",
+    "flipMeaning": "A flip word turns the job around. Most choices will be true. You are hunting for the one that is not."
+  },
+  "rubrics": {
+    "sentence2": {
+      "max": 2,
+      "levels": [
+        {
+          "score": 2,
+          "description": "Correct answer in a complete sentence."
+        },
+        {
+          "score": 1,
+          "description": "Correct answer, but not a complete sentence."
+        },
+        {
+          "score": 0,
+          "description": "Incorrect, or does not answer the question."
+        }
+      ]
+    },
+    "twoPart3": {
+      "max": 3,
+      "levels": [
+        {
+          "score": 3,
+          "description": "Both parts answered correctly, in complete sentences."
+        },
+        {
+          "score": 2,
+          "description": "Both parts answered correctly but not in complete sentences, or one part correct in a complete sentence."
+        },
+        {
+          "score": 1,
+          "description": "One part answered correctly, not a complete sentence."
+        },
+        {
+          "score": 0,
+          "description": "Neither part answered correctly."
+        }
+      ]
+    }
+  },
+  "passages": {
+    "last-bus": {
+      "title": "The Last Bus",
+      "format": "real-life narrative",
+      "level": "Foundation",
+      "sentences": [
+        "Priya finished her shift at the pizza place at 10:40 p.m.",
+        "The last bus left at 10:55, and the stop was a ten-minute walk away.",
+        "She pulled on her jacket, said goodnight to her manager, and walked fast.",
+        "Halfway there, her phone buzzed.",
+        "It was her little brother: \"Mom's asking where you are.\"",
+        "Priya typed \"On my way\" without slowing down.",
+        "When she turned the corner, the bus was already at the stop with its doors open.",
+        "She broke into a run, waving one arm.",
+        "The driver saw her in the mirror and waited.",
+        "Priya climbed on, breathing hard, and dropped into the first empty seat.",
+        "\"Thanks,\" she said.",
+        "The driver just nodded.",
+        "As the bus pulled away, Priya looked at the dark street behind her and let out a long breath.",
+        "She made a note on her phone: Ask for the 9 p.m. shift next week."
+      ],
+      "tutorNote": "This story is also used in the paper diagnostic. Assign Module 1 only after the diagnostic has been done."
+    },
+    "vending": {
+      "title": "The Vending Machine",
+      "format": "real-life narrative",
+      "level": "Foundation",
+      "sentences": [
+        "The vending machine outside the gym ate Daniel's two dollars on Monday.",
+        "He pressed the button for a water, the coil turned, and the bottle stuck against the glass.",
+        "He hit the side of the machine twice.",
+        "Nothing.",
+        "The next day he brought a note to the office with the machine's number on it.",
+        "On Friday, a man in a grey uniform refilled the machine and left an envelope with Daniel's name on it at the front desk."
+      ]
+    }
+  },
+  "sections": [
+    {
+      "id": "learn",
+      "title": "The trick",
+      "mode": "tutor",
+      "minutes": 8,
+      "tutorNote": "I DO. Read the explanation together, do the matching, then reveal the worked example one step at a time while thinking aloud.",
+      "steps": [
+        {
+          "id": "m1-learn-1",
+          "type": "explain",
+          "text": [
+            "Every question has a job.",
+            "Before you look for the answer, say the job in three pieces.",
+            "KIND: what kind of thing am I looking for?",
+            "ABOUT: about what, exactly?",
+            "HOW MANY: how many things do I need?",
+            "If you can say the job, you can find the answer. If you can't say the job, you're guessing."
+          ],
+          "showCard": true
+        },
+        {
+          "id": "m1-learn-2",
+          "type": "match",
+          "prompt": "Match each question word to the kind of answer it wants.",
+          "pairs": [
+            {
+              "left": "who",
+              "right": "a person or a group"
+            },
+            {
+              "left": "what",
+              "right": "a thing, something that happened, or an idea"
+            },
+            {
+              "left": "when",
+              "right": "a time"
+            },
+            {
+              "left": "where",
+              "right": "a place"
+            },
+            {
+              "left": "why",
+              "right": "a reason (the answer starts with 'because')"
+            },
+            {
+              "left": "how",
+              "right": "a way of doing something, or an amount"
+            },
+            {
+              "left": "which",
+              "right": "one choice out of several"
+            }
+          ]
+        },
+        {
+          "id": "m1-learn-3",
+          "type": "worked",
+          "title": "Watch one",
+          "reveals": [
+            {
+              "label": "Flip word?",
+              "text": "No NOT or EXCEPT. Nothing flips."
+            },
+            {
+              "label": "First question word",
+              "text": "WHY. Why wants a reason. About what? About the driver waiting."
+            },
+            {
+              "label": "Keep reading",
+              "text": "There is an AND. After it: HOW did she thank him. How wants a way of doing something. About Priya thanking him."
+            },
+            {
+              "label": "The job",
+              "text": "One reason the driver waited, and one way Priya thanked him. Two parts."
+            },
+            {
+              "label": "Now look at the story",
+              "text": "Reason: the driver saw her. Way: she said thanks. The job told me what to look for.",
+              "highlight": [
+                9,
+                11
+              ]
+            }
+          ],
+          "question": "Why did the driver wait for Priya, and how did she thank him?",
+          "passage": "last-bus"
+        }
+      ]
+    },
+    {
+      "id": "together",
+      "title": "Say the job together",
+      "mode": "tutor",
+      "minutes": 10,
+      "tutorNote": "WE DO. The student says KIND, ABOUT and HOW MANY aloud before tapping. Wait ten seconds before any prompt. After each item, say the job back correctly in one sentence.",
+      "steps": [
+        {
+          "id": "m1-t1",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Where did Priya work?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "place",
+              "kindDistractors": [
+                "person",
+                "time",
+                "reason"
+              ],
+              "about": "where Priya worked",
+              "aboutDistractors": [
+                {
+                  "text": "Priya",
+                  "why": "topic"
+                },
+                {
+                  "text": "where the bus stopped",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a place: where Priya worked. One part."
+        },
+        {
+          "id": "m1-t2",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "What did Priya's brother text her?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "words",
+              "kindDistractors": [
+                "person",
+                "reason",
+                "time"
+              ],
+              "about": "the text from Priya's brother",
+              "aboutDistractors": [
+                {
+                  "text": "Priya's brother",
+                  "why": "topic"
+                },
+                {
+                  "text": "why her brother texted",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need the words of the text Priya's brother sent. One part."
+        },
+        {
+          "id": "m1-t3",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Why did Priya make a note on her phone?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "reason",
+              "kindDistractors": [
+                "thing",
+                "words",
+                "time"
+              ],
+              "about": "Priya making a note on her phone",
+              "aboutDistractors": [
+                {
+                  "text": "Priya's phone",
+                  "why": "topic"
+                },
+                {
+                  "text": "what the note said",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a reason: why Priya made the note. One part."
+        },
+        {
+          "id": "m1-t4",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "How did Priya get the driver to notice her?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "way",
+              "kindDistractors": [
+                "amount",
+                "reason",
+                "person"
+              ],
+              "about": "getting the driver to notice her",
+              "aboutDistractors": [
+                {
+                  "text": "the driver",
+                  "why": "topic"
+                },
+                {
+                  "text": "why the driver waited",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a way: how Priya got the driver to notice her. One part."
+        },
+        {
+          "id": "m1-t5",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "What did the driver do when he saw Priya, and what did Priya say to him?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "action",
+              "kindDistractors": [
+                "reason",
+                "place",
+                "words"
+              ],
+              "about": "what the driver did when he saw Priya",
+              "aboutDistractors": [
+                {
+                  "text": "the driver",
+                  "why": "topic"
+                },
+                {
+                  "text": "what Priya said to the driver",
+                  "why": "otherPart"
+                }
+              ]
+            },
+            {
+              "kind": "words",
+              "kindDistractors": [
+                "action",
+                "reason",
+                "time"
+              ],
+              "about": "what Priya said to the driver",
+              "aboutDistractors": [
+                {
+                  "text": "Priya",
+                  "why": "topic"
+                },
+                {
+                  "text": "what the driver did when he saw Priya",
+                  "why": "otherPart"
+                }
+              ]
+            }
+          ],
+          "model": "Two parts. Part one: something the driver did when he saw Priya. Part two: the words Priya said to him."
+        },
+        {
+          "id": "m1-t6",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Which of these is NOT something Priya did on her way to the bus?",
+          "flipWord": "NOT",
+          "parts": [
+            {
+              "kind": "choice",
+              "kindDistractors": [
+                "reason",
+                "time",
+                "place"
+              ],
+              "about": "things Priya did on her way to the bus",
+              "aboutDistractors": [
+                {
+                  "text": "the bus",
+                  "why": "topic"
+                },
+                {
+                  "text": "things the driver did",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need one choice. Three choices will be things Priya did on her way. I need the one she did NOT do."
+        }
+      ]
+    },
+    {
+      "id": "own",
+      "title": "Say the job on your own",
+      "mode": "solo",
+      "minutes": 10,
+      "tutorNote": "YOU DO. No help. Eight questions with no passage. Score is first-attempt accuracy; note which type fails (two-part, NOT, why).",
+      "steps": [
+        {
+          "id": "m1-o1",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "When does the park close in winter?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "time",
+              "kindDistractors": [
+                "place",
+                "reason",
+                "amount"
+              ],
+              "about": "the park closing in winter",
+              "aboutDistractors": [
+                {
+                  "text": "the park",
+                  "why": "topic"
+                },
+                {
+                  "text": "the park opening in summer",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a time: when the park closes in winter. One part."
+        },
+        {
+          "id": "m1-o2",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Who is allowed to use the skate area?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "person",
+              "kindDistractors": [
+                "place",
+                "reason",
+                "thing"
+              ],
+              "about": "who may use the skate area",
+              "aboutDistractors": [
+                {
+                  "text": "the skate area",
+                  "why": "topic"
+                },
+                {
+                  "text": "the rules for the skate area",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a person or a group: who may use the skate area. One part."
+        },
+        {
+          "id": "m1-o3",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Why did the city build a fence around the pond?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "reason",
+              "kindDistractors": [
+                "thing",
+                "place",
+                "person"
+              ],
+              "about": "the city building a fence around the pond",
+              "aboutDistractors": [
+                {
+                  "text": "the pond",
+                  "why": "topic"
+                },
+                {
+                  "text": "who built the fence",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a reason: why the city built the fence. One part."
+        },
+        {
+          "id": "m1-o4",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "How much does a season pass cost?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "amount",
+              "kindDistractors": [
+                "way",
+                "reason",
+                "time"
+              ],
+              "about": "the cost of a season pass",
+              "aboutDistractors": [
+                {
+                  "text": "a season pass",
+                  "why": "topic"
+                },
+                {
+                  "text": "how to buy a season pass",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need an amount: the cost of a season pass. One part."
+        },
+        {
+          "id": "m1-o5",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "What problem did the new phone have, and how did the store fix it?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "thing",
+              "kindDistractors": [
+                "reason",
+                "way",
+                "person"
+              ],
+              "about": "the problem with the new phone",
+              "aboutDistractors": [
+                {
+                  "text": "the new phone",
+                  "why": "topic"
+                },
+                {
+                  "text": "how the store fixed the phone",
+                  "why": "otherPart"
+                }
+              ]
+            },
+            {
+              "kind": "way",
+              "kindDistractors": [
+                "reason",
+                "amount",
+                "thing"
+              ],
+              "about": "how the store fixed the phone",
+              "aboutDistractors": [
+                {
+                  "text": "the store",
+                  "why": "topic"
+                },
+                {
+                  "text": "the problem with the new phone",
+                  "why": "otherPart"
+                }
+              ]
+            }
+          ],
+          "model": "Two parts. Part one: a problem with the new phone. Part two: a way the store fixed it."
+        },
+        {
+          "id": "m1-o6",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Which sentence shows that Omar was nervous before his interview?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "sentence",
+              "kindDistractors": [
+                "reason",
+                "person",
+                "time"
+              ],
+              "about": "Omar being nervous before his interview",
+              "aboutDistractors": [
+                {
+                  "text": "Omar",
+                  "why": "topic"
+                },
+                {
+                  "text": "what happened in the interview",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a sentence from the text: proof that Omar was nervous before his interview. One part."
+        },
+        {
+          "id": "m1-o7",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "What is the main purpose of the second paragraph?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "purpose",
+              "kindDistractors": [
+                "sentence",
+                "person",
+                "amount"
+              ],
+              "about": "what the second paragraph is for",
+              "aboutDistractors": [
+                {
+                  "text": "what the whole text is about",
+                  "why": "other"
+                },
+                {
+                  "text": "the second sentence",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a purpose: what the second paragraph is for. One part."
+        },
+        {
+          "id": "m1-o8",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Which of the following is NOT a rule for the skate area?",
+          "flipWord": "NOT",
+          "parts": [
+            {
+              "kind": "choice",
+              "kindDistractors": [
+                "reason",
+                "place",
+                "person"
+              ],
+              "about": "rules for the skate area",
+              "aboutDistractors": [
+                {
+                  "text": "the skate area",
+                  "why": "topic"
+                },
+                {
+                  "text": "who made the rules",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need one choice. Three choices will be rules. I need the one that is NOT a rule."
+        }
+      ]
+    },
+    {
+      "id": "vending",
+      "title": "The vending machine",
+      "mode": "solo",
+      "minutes": 12,
+      "tutorNote": "YOU DO with a story. Six jobs, then three real answers so the section ends with correct answers. Question 6 has no stated answer; notice whether the student says so. It previews Module 4.",
+      "steps": [
+        {
+          "id": "m1-v0",
+          "type": "explain",
+          "text": [
+            "Read the story. For each question, say the job first. Do not answer yet."
+          ],
+          "showCard": false
+        },
+        {
+          "id": "m1-v1",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "What did Daniel try to buy?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "thing",
+              "kindDistractors": [
+                "reason",
+                "place",
+                "time"
+              ],
+              "about": "what Daniel tried to buy",
+              "aboutDistractors": [
+                {
+                  "text": "Daniel",
+                  "why": "topic"
+                },
+                {
+                  "text": "what Daniel brought to the office",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a thing: what Daniel tried to buy. One part.",
+          "passage": "vending"
+        },
+        {
+          "id": "m1-v2",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Why did Daniel bring a note to the office?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "reason",
+              "kindDistractors": [
+                "thing",
+                "words",
+                "place"
+              ],
+              "about": "Daniel bringing a note to the office",
+              "aboutDistractors": [
+                {
+                  "text": "the office",
+                  "why": "topic"
+                },
+                {
+                  "text": "what the note said",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a reason: why Daniel brought the note. One part.",
+          "passage": "vending"
+        },
+        {
+          "id": "m1-v3",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "When was the machine refilled, and what was left for Daniel?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "time",
+              "kindDistractors": [
+                "place",
+                "person",
+                "reason"
+              ],
+              "about": "the machine being refilled",
+              "aboutDistractors": [
+                {
+                  "text": "the machine",
+                  "why": "topic"
+                },
+                {
+                  "text": "what was left for Daniel",
+                  "why": "otherPart"
+                }
+              ]
+            },
+            {
+              "kind": "thing",
+              "kindDistractors": [
+                "time",
+                "person",
+                "reason"
+              ],
+              "about": "what was left for Daniel",
+              "aboutDistractors": [
+                {
+                  "text": "Daniel",
+                  "why": "topic"
+                },
+                {
+                  "text": "when the machine was refilled",
+                  "why": "otherPart"
+                }
+              ]
+            }
+          ],
+          "model": "Two parts. Part one: a time, when the machine was refilled. Part two: a thing, what was left for Daniel.",
+          "passage": "vending"
+        },
+        {
+          "id": "m1-v4",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "How did Daniel try to get the bottle out?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "way",
+              "kindDistractors": [
+                "amount",
+                "reason",
+                "time"
+              ],
+              "about": "Daniel trying to get the bottle out",
+              "aboutDistractors": [
+                {
+                  "text": "the bottle",
+                  "why": "topic"
+                },
+                {
+                  "text": "why the bottle got stuck",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a way: how Daniel tried to get the bottle out. One part.",
+          "passage": "vending"
+        },
+        {
+          "id": "m1-v5",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Which of these did Daniel NOT do?",
+          "flipWord": "NOT",
+          "parts": [
+            {
+              "kind": "choice",
+              "kindDistractors": [
+                "reason",
+                "time",
+                "way"
+              ],
+              "about": "things Daniel did",
+              "aboutDistractors": [
+                {
+                  "text": "Daniel",
+                  "why": "topic"
+                },
+                {
+                  "text": "things the machine did",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need one choice. Three choices will be things Daniel did. I need the one he did NOT do.",
+          "passage": "vending"
+        },
+        {
+          "id": "m1-v6",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "What do you think was in the envelope?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "thing",
+              "kindDistractors": [
+                "person",
+                "time",
+                "place"
+              ],
+              "about": "what was in the envelope",
+              "aboutDistractors": [
+                {
+                  "text": "the envelope",
+                  "why": "topic"
+                },
+                {
+                  "text": "who left the envelope",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a thing: what was in the envelope. One part.",
+          "passage": "vending"
+        },
+        {
+          "id": "m1-v7",
+          "type": "mcq",
+          "stem": "Which of these did Daniel NOT do?",
+          "options": [
+            {
+              "id": "a",
+              "text": "hit the machine",
+              "why": "He did this. Sentence 3."
+            },
+            {
+              "id": "b",
+              "text": "bring a note to the office",
+              "why": "He did this. Sentence 5."
+            },
+            {
+              "id": "c",
+              "text": "call his mother",
+              "why": "Right. The story never says this. It is the one he did not do.",
+              "correct": true
+            },
+            {
+              "id": "d",
+              "text": "press the button",
+              "why": "He did this. Sentence 2."
+            }
+          ],
+          "prompt": "Now answer this one.",
+          "passage": "vending",
+          "hint2": "Check each choice against the story. Three of them are in it.",
+          "hint3": "It is (b) or (c). Which one can you find in the story?"
+        },
+        {
+          "id": "m1-v8",
+          "type": "text",
+          "stem": "What did Daniel try to buy?",
+          "model": [
+            "Daniel tried to buy a water."
+          ],
+          "rubric": "sentence2",
+          "prompt": "Answer in a full sentence.",
+          "passage": "vending"
+        },
+        {
+          "id": "m1-v9",
+          "type": "text",
+          "stem": "When was the machine refilled, and what was left for Daniel?",
+          "model": [
+            "The machine was refilled on Friday, and an envelope with Daniel's name on it was left at the front desk."
+          ],
+          "rubric": "twoPart3",
+          "prompt": "Answer both parts in a full sentence.",
+          "passage": "vending"
+        }
+      ]
+    },
+    {
+      "id": "home",
+      "title": "Home practice",
+      "mode": "solo",
+      "minutes": 8,
+      "tutorNote": "Home set. Six new questions, no passage. Assign after the 'own' section is at 6 of 8 or better.",
+      "steps": [
+        {
+          "id": "m1-h1",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Where does the team practise on Thursdays?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "place",
+              "kindDistractors": [
+                "time",
+                "person",
+                "reason"
+              ],
+              "about": "where the team practises on Thursdays",
+              "aboutDistractors": [
+                {
+                  "text": "the team",
+                  "why": "topic"
+                },
+                {
+                  "text": "how long the team practises",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a place: where the team practises on Thursdays. One part."
+        },
+        {
+          "id": "m1-h2",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "What did the manager tell the new employee to bring, and why?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "thing",
+              "kindDistractors": [
+                "person",
+                "place",
+                "time"
+              ],
+              "about": "what the new employee was told to bring",
+              "aboutDistractors": [
+                {
+                  "text": "the manager",
+                  "why": "topic"
+                },
+                {
+                  "text": "why the employee should bring it",
+                  "why": "otherPart"
+                }
+              ]
+            },
+            {
+              "kind": "reason",
+              "kindDistractors": [
+                "thing",
+                "way",
+                "time"
+              ],
+              "about": "why the employee should bring it",
+              "aboutDistractors": [
+                {
+                  "text": "the new employee",
+                  "why": "topic"
+                },
+                {
+                  "text": "what the employee should bring",
+                  "why": "otherPart"
+                }
+              ]
+            }
+          ],
+          "model": "Two parts. Part one: a thing the new employee was told to bring. Part two: the reason."
+        },
+        {
+          "id": "m1-h3",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "How long does the battery last on the new model?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "amount",
+              "kindDistractors": [
+                "way",
+                "reason",
+                "place"
+              ],
+              "about": "how long the new model's battery lasts",
+              "aboutDistractors": [
+                {
+                  "text": "the new model",
+                  "why": "topic"
+                },
+                {
+                  "text": "how much the new model costs",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need an amount of time: how long the battery lasts. One part."
+        },
+        {
+          "id": "m1-h4",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Why was the concert moved indoors?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "reason",
+              "kindDistractors": [
+                "place",
+                "thing",
+                "time"
+              ],
+              "about": "the concert being moved indoors",
+              "aboutDistractors": [
+                {
+                  "text": "the concert",
+                  "why": "topic"
+                },
+                {
+                  "text": "where the concert was moved",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a reason: why the concert was moved indoors. One part."
+        },
+        {
+          "id": "m1-h5",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Which of the following is NOT something you need for the trip?",
+          "flipWord": "NOT",
+          "parts": [
+            {
+              "kind": "choice",
+              "kindDistractors": [
+                "reason",
+                "place",
+                "time"
+              ],
+              "about": "things you need for the trip",
+              "aboutDistractors": [
+                {
+                  "text": "the trip",
+                  "why": "topic"
+                },
+                {
+                  "text": "where the trip is going",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need one choice. Three choices will be things I need. I need the one I do NOT need."
+        },
+        {
+          "id": "m1-h6",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Who decides which students get the award?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "person",
+              "kindDistractors": [
+                "thing",
+                "reason",
+                "time"
+              ],
+              "about": "who decides which students get the award",
+              "aboutDistractors": [
+                {
+                  "text": "the award",
+                  "why": "topic"
+                },
+                {
+                  "text": "when the award is given",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a person or a group: who decides about the award. One part."
+        }
+      ]
+    },
+    {
+      "id": "check",
+      "title": "Check",
+      "mode": "solo",
+      "minutes": 10,
+      "tutorNote": "Mastery check, form A. Ten new questions: three two-part, one NOT. Guide threshold: nine of ten on first attempt with no hints, on two different days. A second form is needed for the second day.",
+      "steps": [
+        {
+          "id": "m1-c1",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "When does the library open on Sundays?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "time",
+              "kindDistractors": [
+                "place",
+                "reason",
+                "amount"
+              ],
+              "about": "the library opening on Sundays",
+              "aboutDistractors": [
+                {
+                  "text": "the library",
+                  "why": "topic"
+                },
+                {
+                  "text": "the library closing on Sundays",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a time: when the library opens on Sundays. One part."
+        },
+        {
+          "id": "m1-c2",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Why did Maya switch to the morning class?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "reason",
+              "kindDistractors": [
+                "thing",
+                "time",
+                "person"
+              ],
+              "about": "Maya switching to the morning class",
+              "aboutDistractors": [
+                {
+                  "text": "Maya",
+                  "why": "topic"
+                },
+                {
+                  "text": "when the morning class starts",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a reason: why Maya switched to the morning class. One part."
+        },
+        {
+          "id": "m1-c3",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Who found the missing wallet, and where was it?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "person",
+              "kindDistractors": [
+                "place",
+                "thing",
+                "reason"
+              ],
+              "about": "who found the missing wallet",
+              "aboutDistractors": [
+                {
+                  "text": "the wallet",
+                  "why": "topic"
+                },
+                {
+                  "text": "where the wallet was",
+                  "why": "otherPart"
+                }
+              ]
+            },
+            {
+              "kind": "place",
+              "kindDistractors": [
+                "person",
+                "time",
+                "reason"
+              ],
+              "about": "where the wallet was",
+              "aboutDistractors": [
+                {
+                  "text": "the wallet",
+                  "why": "topic"
+                },
+                {
+                  "text": "who found the wallet",
+                  "why": "otherPart"
+                }
+              ]
+            }
+          ],
+          "model": "Two parts. Part one: a person, who found the wallet. Part two: a place, where it was."
+        },
+        {
+          "id": "m1-c4",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "How does the new recycling program work?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "way",
+              "kindDistractors": [
+                "amount",
+                "reason",
+                "person"
+              ],
+              "about": "how the new recycling program works",
+              "aboutDistractors": [
+                {
+                  "text": "recycling",
+                  "why": "topic"
+                },
+                {
+                  "text": "who started the program",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a way: how the new recycling program works. One part."
+        },
+        {
+          "id": "m1-c5",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Which of these is NOT a reason the game was cancelled?",
+          "flipWord": "NOT",
+          "parts": [
+            {
+              "kind": "choice",
+              "kindDistractors": [
+                "time",
+                "place",
+                "person"
+              ],
+              "about": "reasons the game was cancelled",
+              "aboutDistractors": [
+                {
+                  "text": "the game",
+                  "why": "topic"
+                },
+                {
+                  "text": "when the game will be played",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need one choice. Three choices will be reasons the game was cancelled. I need the one that is NOT a reason."
+        },
+        {
+          "id": "m1-c6",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "What did the coach change after the first game, and why did she change it?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "thing",
+              "kindDistractors": [
+                "person",
+                "time",
+                "place"
+              ],
+              "about": "what the coach changed after the first game",
+              "aboutDistractors": [
+                {
+                  "text": "the coach",
+                  "why": "topic"
+                },
+                {
+                  "text": "why the coach changed it",
+                  "why": "otherPart"
+                }
+              ]
+            },
+            {
+              "kind": "reason",
+              "kindDistractors": [
+                "thing",
+                "way",
+                "time"
+              ],
+              "about": "why the coach changed it",
+              "aboutDistractors": [
+                {
+                  "text": "the first game",
+                  "why": "topic"
+                },
+                {
+                  "text": "what the coach changed",
+                  "why": "otherPart"
+                }
+              ]
+            }
+          ],
+          "model": "Two parts. Part one: a thing the coach changed. Part two: the reason she changed it."
+        },
+        {
+          "id": "m1-c7",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "How many students signed up for the trip?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "amount",
+              "kindDistractors": [
+                "way",
+                "person",
+                "reason"
+              ],
+              "about": "the number of students who signed up for the trip",
+              "aboutDistractors": [
+                {
+                  "text": "the trip",
+                  "why": "topic"
+                },
+                {
+                  "text": "how students sign up",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need an amount: how many students signed up. One part."
+        },
+        {
+          "id": "m1-c8",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Where did the fire start, and how did the firefighters put it out?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "place",
+              "kindDistractors": [
+                "time",
+                "reason",
+                "person"
+              ],
+              "about": "where the fire started",
+              "aboutDistractors": [
+                {
+                  "text": "the fire",
+                  "why": "topic"
+                },
+                {
+                  "text": "how the fire was put out",
+                  "why": "otherPart"
+                }
+              ]
+            },
+            {
+              "kind": "way",
+              "kindDistractors": [
+                "amount",
+                "reason",
+                "place"
+              ],
+              "about": "how the firefighters put out the fire",
+              "aboutDistractors": [
+                {
+                  "text": "the firefighters",
+                  "why": "topic"
+                },
+                {
+                  "text": "where the fire started",
+                  "why": "otherPart"
+                }
+              ]
+            }
+          ],
+          "model": "Two parts. Part one: a place, where the fire started. Part two: a way, how the firefighters put it out."
+        },
+        {
+          "id": "m1-c9",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Which sentence tells you that Jordan was surprised?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "sentence",
+              "kindDistractors": [
+                "reason",
+                "person",
+                "time"
+              ],
+              "about": "Jordan being surprised",
+              "aboutDistractors": [
+                {
+                  "text": "Jordan",
+                  "why": "topic"
+                },
+                {
+                  "text": "what surprised Jordan",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a sentence from the text: proof that Jordan was surprised. One part."
+        },
+        {
+          "id": "m1-c10",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Who is the article mostly written for?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "person",
+              "kindDistractors": [
+                "thing",
+                "reason",
+                "place"
+              ],
+              "about": "who the article is written for",
+              "aboutDistractors": [
+                {
+                  "text": "the article",
+                  "why": "topic"
+                },
+                {
+                  "text": "who wrote the article",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a person or a group: who the article is written for. One part."
+        }
+      ]
+    }
+  ]
+}

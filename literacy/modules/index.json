@@ -1,0 +1,7 @@
+{
+  "modules": [
+    { "id": "m1-question-job", "file": "module-01-question-job.json" },
+    { "id": "m2-find-the-proof", "file": "module-02-find-the-proof.json" },
+    { "id": "m3-own-words", "file": "module-03-own-words-gist-main-idea.json" }
+  ]
+}

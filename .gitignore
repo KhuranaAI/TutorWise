@@ -1,0 +1,9 @@
+# Confidential teaching material. Never commit.
+teaching-guide/
+**/teaching-guide/
+
+# Local Firebase admin files, keys and logs
+.firebase/
+*-debug.log
+serviceAccount*.json
+.env*
