@@ -48,3 +48,28 @@ API keys or subscriptions. Build it as **one private claude.ai Artifact page** t
 - Drive findings: no current timetable, attendance log or contact list exists. Costs through Aug 2026 are in "Financial Dashboard".
 - Not reachable: schedule.tutorwise.ca (outside the session's network allowlist; source not in the accessible repos).
 - Next: confirm the 05:47 run worked end to end; import timetable once he dictates it; payment-sync edge cases; weekly review polish.
+
+## Status after cycle 3 (2026-11-13, afternoon): voice-first rebuild
+- He opened the app on his phone, found no mic, and asked for: built-in listening, a "brain" animation, spoken replies
+  ("Understood, sir"), dark look, and for the app to adapt to his irregular wake times. He also wants to be told
+  "it's ready, use it" with almost no explanation.
+- App v5: home screen is one voice core (canvas brain: idle / listening / thinking / speaking), a greeting line,
+  a text box, and ONE next action. Other things fold into sections. Spoken replies via the `tts` capability, with the
+  browser's speechSynthesis as a fallback where `tts` is not offered. Dictation via the `dictation` capability with
+  auto-send after about 3 s of silence. Both capabilities are only offered in Chromium desktop tabs and the Claude desktop app's
+  main window; on phones (Claude mobile apps, Safari) they resolve null, so he types or uses the keyboard mic there.
+- Also: asks "When did you get up today?", plans from the real wake time, payments write to his Google Sheet through the
+  `mcp` capability (Google Sheets get_values/update_values) with a stored undo, attendance is one record per student per day,
+  task c01 shows a live unpaid total, sections keep their open state across re-renders.
+- Verified in a Playwright harness with mocked capabilities and stand-in data: full voice turn, sheet write + undo,
+  stuck-context follow-up, attendance dedupe, teach/evening modes, light theme, reduced motion. Not verified on a real phone.
+
+## Backlog for the remaining build cycles (do real work each cycle; do not idle)
+1. Fee-sheet sync inside the app: on open (once Sheets consent exists) and from a "Sync with fee sheet" button in Centre.
+   Sheet shows more paid -> update app; app shows more -> write; new month tab -> roll fees over.
+2. Check whether a fresh routine session can use ArtifactData and PushNotification. If yes, move the morning agent to a
+   fresh lean session per run (this session's context is large) and add an evening "close the day" push after teaching.
+3. Guided timetable capture: one weekday at a time by voice ("Who comes on Monday?"), offering the stale April grid
+   from Drive only as a starting point to confirm.
+4. Four-week wake-time and workout trend in "Your week", and a short spoken weekly review.
+5. Read his real dumps, marks and habits and tune prompts and layout to what he actually does.

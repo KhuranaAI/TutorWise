@@ -2,19 +2,22 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
 <style>
-/* Layout: one-column phone app. Sticky top bar, four views, fixed bottom tabs. Ink-blue ground, signal-teal accent. */
-:root{--bg:#0c141b;--card:#142029;--ink:#e6eef3;--mute:#93a5b2;--line:#25343f;--acc:#3fc1c9;--acc-ink:#04262a;--soft:#143338;
+/* Layout: voice-first phone app. A neural "core" you talk to sits on top, one next action sits under it, everything else folds away.
+   Deep ink ground, signal-cyan accent; violet appears only while it is thinking. */
+:root{--bg:#0a1118;--card:#121c25;--ink:#e6eef3;--mute:#8fa2b0;--line:#22313c;--acc:#3fc1c9;--acc-ink:#04262a;--soft:#12313a;--acc2:#c9f6f8;--think:#a99cff;
   --good:#6fd193;--warn:#f0b354;--bad:#ff8a80;--warn-bg:#3a2c10;--bad-bg:#3d1a17;--good-bg:#143524;
   --disp:"Space Grotesk",system-ui,sans-serif;--body:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;--r:14px;color-scheme:dark}
-:root[data-theme="light"]{--bg:#f2f5f7;--card:#ffffff;--ink:#12202b;--mute:#5d6e7b;--line:#d9e1e7;--acc:#0b7f86;--acc-ink:#ffffff;--soft:#e3f1f1;
+:root[data-theme="light"]{--bg:#f2f5f7;--card:#ffffff;--ink:#12202b;--mute:#5d6e7b;--line:#d9e1e7;--acc:#0b7f86;--acc-ink:#ffffff;--soft:#e3f1f1;--acc2:#065a60;--think:#5b4bd6;
   --good:#1f7a45;--warn:#a86400;--bad:#b3261e;--warn-bg:#fdf1dc;--bad-bg:#fbe6e4;--good-bg:#e2f3e8;color-scheme:light}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--body)}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
 .wrap{max-width:680px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 110px}
-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px 10px;display:flex;align-items:center;gap:10px}
-header h1{font:700 21px/1.1 var(--disp);margin:0;flex:1;letter-spacing:-.01em}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px 10px;display:flex;align-items:center;gap:8px}
+header h1{font:700 21px/1.1 var(--disp);margin:0;letter-spacing:-.01em}
 header small{display:block;font:500 12px var(--body);color:var(--mute);letter-spacing:.02em;margin-top:3px}
+header .hg{flex:1;min-width:0}
+header button{display:flex;align-items:center;justify-content:center;width:38px;height:38px;padding:0}
 h2{font:600 13px var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--mute);margin:22px 0 8px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px}
 .stack{display:flex;flex-direction:column;gap:10px}
@@ -24,73 +27,94 @@ button{font:600 14px var(--body);border-radius:10px;border:1px solid var(--line)
 button.pri{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
 button.ghost{border-color:transparent;background:transparent;color:var(--acc);padding:6px 8px}
 button.sm{padding:6px 10px;font-size:13px}
-button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 button:disabled{opacity:.5}
+
+/* the core */
+.core{display:flex;flex-direction:column;align-items:center;gap:6px;padding-block:2px 4px;background:radial-gradient(58% 46% at 50% 26%,color-mix(in srgb,var(--acc) 11%,transparent),transparent)}
+.orbBtn{background:none;border:0;padding:0;border-radius:28px;line-height:0;-webkit-tap-highlight-color:transparent}
+.orbBtn canvas{width:240px;height:190px;max-width:100%;display:block}
+.state{font:600 11px var(--body);letter-spacing:.24em;text-transform:uppercase;color:var(--acc);min-height:16px}
+.state[data-s="thinking"]{color:var(--think)}
+.say{font:500 18px/1.36 var(--disp);text-align:center;margin:2px 0 0;text-wrap:balance;max-width:34ch;min-height:49px}
+.heard{color:var(--mute);font-size:14px;text-align:center;margin:0;min-height:20px;max-width:46ch;overflow-wrap:anywhere}
+.heard i{font-style:normal;opacity:.55}
+.inrow{width:100%;flex-wrap:nowrap;align-items:flex-end;margin-top:4px}
+.inrow textarea{flex:1;min-width:0;height:44px;min-height:44px;max-height:140px;resize:none}
+.inrow button{height:44px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.chips button{flex:none;border-radius:99px;padding:6px 12px;font-size:13px}
+.chips button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chips button.ok{border-color:var(--acc);color:var(--acc)}
+.core .chips{flex-wrap:wrap;justify-content:center;overflow:visible;min-height:34px;margin-top:2px}
+.stat{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+.stat button{border-radius:99px;padding:5px 11px;font-size:13px;font-variant-numeric:tabular-nums}
+.stat .bad{color:var(--bad);border-color:var(--bad-bg);background:var(--bad-bg)}
+.stat .warn{color:var(--warn);border-color:var(--warn-bg);background:var(--warn-bg)}
+
 .pick{border-left:4px solid var(--acc)}
-.pick .n{font:700 13px var(--disp);color:var(--acc)}
-.pick h3{font:600 17px/1.25 var(--disp);margin:2px 0 6px;text-wrap:balance}
+.pick .n{font:600 12px var(--body);letter-spacing:.04em;color:var(--acc)}
+.pick h3{font:600 18px/1.25 var(--disp);margin:3px 0 6px;text-wrap:balance}
 .why{color:var(--mute);font-size:14px;margin:0 0 6px}
 .first{background:var(--soft);border-radius:9px;padding:8px 10px;font-size:14px;margin:0 0 10px}
 .pill{display:inline-block;font:600 11px var(--body);letter-spacing:.03em;padding:2px 8px;border-radius:99px;background:var(--soft);color:var(--acc);white-space:nowrap}
 .pill.warn{background:var(--warn-bg);color:var(--warn)}.pill.bad{background:var(--bad-bg);color:var(--bad)}.pill.good{background:var(--good-bg);color:var(--good)}.pill.mute{background:var(--line);color:var(--mute)}
-.shape{display:flex;gap:4px;overflow-x:auto;padding-bottom:2px}
-.shape div{flex:1 0 auto;min-width:74px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 9px;font-size:12px;color:var(--mute)}
-.shape b{display:block;color:var(--ink);font:600 13px var(--disp);font-variant-numeric:tabular-nums}
-.shape .fx{background:var(--soft);border-color:transparent}
 .item{padding:11px 0;border-bottom:1px solid var(--line)}
 .item:last-child{border-bottom:0}
+.item:first-child{padding-top:2px}
 .item .t{font-weight:500}
-.item .m{color:var(--mute);font-size:13px;margin-top:2px}
+.item .m,.m{color:var(--mute);font-size:13px}
+.item .m{margin-top:2px}
 .num{font-variant-numeric:tabular-nums}
 .big{font:700 28px var(--disp);font-variant-numeric:tabular-nums}
 textarea,input,select{font:15px var(--body);color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;width:100%}
 textarea{min-height:110px;resize:vertical}
-.mic{width:76px;height:76px;border-radius:50%;font-size:28px;background:var(--acc);color:var(--acc-ink);border:0;flex:none}
-.mic.on{background:var(--bad);animation:pulse 1.2s infinite}
-@keyframes pulse{50%{box-shadow:0 0 0 12px transparent}0%,100%{box-shadow:0 0 0 0 var(--bad-bg)}}
-@media (prefers-reduced-motion:reduce){.mic.on{animation:none}}
-.bub{border-radius:12px;padding:10px 12px;max-width:92%;white-space:pre-wrap;overflow-wrap:anywhere}
+input[type=checkbox]{width:auto}
+details.sec{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin-top:8px}
+details.sec>summary{list-style:none;cursor:pointer;padding:13px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:600}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:rotate(45deg);flex:none;margin-right:4px}
+details.sec[open]>summary::after{transform:rotate(225deg)}
+.secb{padding:0 14px 12px}
+.item details summary{cursor:pointer;color:var(--acc);font-weight:600;font-size:14px}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.week div{background:var(--bg);border-radius:8px;padding:6px 1px}
+.week .on{outline:1px solid var(--acc)}
+.week span{display:block;font-size:11px;color:var(--mute)}
+.week b{display:block;font:600 11px var(--body);margin:2px 0}
+.week i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--line)}
+.week i.y{background:var(--good)}
+.bub{border-radius:12px;padding:9px 11px;max-width:92%;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}
 .bub.me{align-self:flex-end;background:var(--soft)}
-.bub.ai{align-self:flex-start;background:var(--card);border:1px solid var(--line)}
-.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
-.chips button{flex:none;border-radius:99px;padding:6px 12px;font-size:13px}
-.chips button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.bub.ai{align-self:flex-start;background:var(--bg);border:1px solid var(--line)}
 nav{position:fixed;inset:auto 0 0 0;z-index:6;background:var(--card);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-nav button{flex:1;border:0;border-radius:0;background:none;color:var(--mute);padding:12px 2px 11px;font-size:12.5px}
+nav button{flex:1;border:0;border-radius:0;background:none;color:var(--mute);padding:13px 2px 12px;font-size:13px}
 nav button.on{color:var(--acc);box-shadow:inset 0 3px 0 var(--acc)}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:10px;z-index:9;font-size:14px;max-width:90vw}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:10px;z-index:9;font-size:14px;max-width:90vw;display:flex;gap:12px;align-items:center}
+.toast button{background:none;border:0;color:var(--bg);text-decoration:underline;padding:0;font-size:14px}
 .empty{color:var(--mute);text-align:center;padding:22px 8px}
 pre.out{white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.5 var(--body);margin:8px 0;background:var(--bg);border-radius:10px;padding:10px;max-height:340px;overflow:auto}
-details summary{cursor:pointer;color:var(--acc);font-weight:600;font-size:14px}
 label{font-size:13px;color:var(--mute);display:block;margin:10px 0 4px}
 </style>
 
 <div class="wrap">
-<header><div style="flex:1;min-width:0"><h1 id="hTitle">Today</h1><small id="hSub">Loading your day…</small></div>
-  <button class="sm" id="btnSpeak" hidden data-act="speak">🔊 Read it</button><button class="sm" data-act="settings" aria-label="Settings">⚙</button></header>
+<header><div class="hg"><h1 id="hTitle">Today</h1><small id="hSub">Loading your day…</small></div>
+  <button id="btnVoice" data-act="voice" hidden></button>
+  <button data-act="settings" aria-label="Settings"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2.2"/><circle cx="9" cy="12" r="2.2"/><circle cx="17" cy="18" r="2.2"/></svg></button></header>
 
 <section id="v-today">
-  <div class="shape" id="shape"></div>
-  <div id="agentBox"></div>
-  <div id="planBox" class="stack" style="margin-top:14px"><div class="card empty" id="planEmpty">Your three things for today will show here. Tap <b>Plan my day</b>, or just start talking in the Talk tab.</div></div>
-  <div class="row" style="margin-top:10px"><button class="pri" data-act="plan" id="btnPlan">Plan my day</button><button data-act="lost">I lost time. Replan</button></div>
-  <div id="moneyBox"></div>
-  <div id="tonightBox"></div>
-  <div id="makeBox"></div>
-  <div id="eveBox"></div>
-  <div id="askBox"></div>
-  <div id="leftBox"></div>
-</section>
-
-<section id="v-talk" hidden>
-  <div class="card stack">
-    <div class="row"><button class="mic" id="mic" data-act="mic" aria-label="Start talking">🎙</button>
-      <div class="grow"><b>Dump anything.</b><div class="why" style="margin:0">New tasks, “finished the fee notes”, “Manraj missed today”, “Dave’s mom paid 430”, “I lost the morning”. I sort it out.</div></div></div>
-    <div id="micHint" class="first" hidden style="margin:0">To talk instead of typing: tap the box below, then tap the microphone key on your phone’s keyboard.</div>
-    <textarea id="dump" placeholder="Type or talk…"></textarea>
-    <div class="row"><button class="pri grow" data-act="send" id="btnSend">Send</button><span id="partial" class="why" style="margin:0"></span></div>
+  <div class="core">
+    <button class="orbBtn" id="orbBtn" data-act="orb" aria-label="Talk to your assistant"><canvas id="orb" width="240" height="190"></canvas></button>
+    <div class="state" id="vState">Tell me anything</div>
+    <p class="say" id="vSay" aria-live="polite">Loading your day…</p>
+    <p class="heard" id="vHeard"></p>
+    <div class="row inrow"><textarea id="dump" rows="1" aria-label="Tell your assistant something" placeholder="Type or talk…"></textarea><button class="pri" data-act="send" id="btnSend">Send</button></div>
+    <div class="chips" id="quick"></div>
   </div>
-  <h2>Recent</h2><div class="stack" id="log"><div class="empty">Nothing yet. What’s on your mind?</div></div>
+  <div id="topBox" style="margin-top:10px"></div>
+  <div id="nowBox"></div>
+  <div class="stat" id="statBox"></div>
+  <div id="secBox" style="margin-top:14px"></div>
 </section>
 
 <section id="v-all" hidden>
@@ -114,9 +138,9 @@ label{font-size:13px;color:var(--mute);display:block;margin:10px 0 4px}
 </section>
 </div>
 
-<nav id="nav"><button data-v="today" class="on">Today</button><button data-v="talk">Talk</button><button data-v="all">Everything</button><button data-v="centre">Centre</button><button data-v="ai">AI help</button></nav>
+<nav id="nav"><button data-v="today" class="on">Today</button><button data-v="all">Everything</button><button data-v="centre">Centre</button><button data-v="ai">AI help</button></nav>
 
-<div id="sheet" hidden style="position:fixed;inset:0;z-index:8;background:rgba(0,0,0,.45);display:flex;align-items:flex-end">
+<div id="sheet" hidden style="position:fixed;inset:0;z-index:8;background:rgba(0,0,0,.55);display:flex;align-items:flex-end">
   <div class="card" style="width:100%;max-width:680px;margin:0 auto;border-radius:18px 18px 0 0;max-height:86%;overflow:auto;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))" id="sheetBody"></div></div>
 
 <script>
@@ -124,74 +148,102 @@ const TZ='America/Toronto';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>'$'+Math.round(n).toLocaleString('en-CA');
-const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+const today=()=>window.__HQ_DAY||new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const dow=()=>new Date(today()+'T12:00:00Z').getUTCDay();
-const nowHM=()=>new Intl.DateTimeFormat('en-CA',{timeZone:TZ,hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date());
+const nowHM=()=>window.__HQ_NOW||new Intl.DateTimeFormat('en-CA',{timeZone:TZ,hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date());
 const dayDiff=d=>Math.round((Date.parse(d+'T12:00:00Z')-Date.parse(today()+'T12:00:00Z'))/864e5);
+const toM=x=>{const[a,b]=String(x||'0:0').split(':').map(Number);return a*60+(b||0)};
+const t12=x=>{if(!/^\d\d?:\d\d$/.test(x||''))return x||'';let[h,m]=x.split(':').map(Number);const ap=h<12?'am':'pm';h=h%12||12;return m?`${h}:${String(m).padStart(2,'0')} ${ap}`:`${h} ${ap}`};
+const dur=m=>{m=Math.max(0,Math.round(m));const h=Math.floor(m/60),r=m%60;return h?`${h} hour${h>1?'s':''}${r?` ${r} minutes`:''}`:`${r} minutes`};
+const isWk=()=>[1,2,3,4,5].includes(dow());
 const AREAS={centre:'TutorWise ops',students:'Students',staff:'Hiring & staff',materials:'Teaching materials',reno:'Centre renovation',growth:'Marketing & money',party:'Christmas party',
   corona:'Corona Holdings',judah:'Judah Rise',brother:'Brother’s business',car:'Cars & dispute',home:'Home & errands',finance:'Personal finance',travel:'Trips & gifts',health:'Routine & health',tech:'Tech & ideas',planner:'This planner'};
 const STAT={ready:'To do',verify:'Check if still open',waiting:'Waiting',recurring:'Repeats',idea:'Idea',done:'Done',parked:'Parked'};
-const DEF={name:'Nimish',wake:'07:00',workout:'07:30',workStart:'09:00',teachStart:'16:00',teachEnd:'20:00',capacity:0.65,protect:'Workout'};
-const S={tasks:new Map(),students:new Map(),drafts:[],dumps:[],plan:null,settings:{...DEF},view:'today',area:'',stat:'ready',loaded:false,habits:new Map(),agent:null,stats:null,planKnown:false,autoTried:false};
-let db=null,sample=null,dict=null,tts=null,mcp=null,busy=false;
+const DEF={name:'Nimish',address:'sir',voice:'buttery',autoSend:true,wake:'07:00',workout:'07:30',workStart:'09:00',teachStart:'16:00',teachEnd:'20:00',capacity:0.65,protect:'Workout'};
+const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const ICON={on:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
+  off:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="m16 9 5 6m0-6-5 6"/></svg>'};
+const S={tasks:new Map(),students:new Map(),drafts:[],dumps:[],plan:null,settings:{...DEF},view:'today',area:'',stat:'ready',loaded:false,habits:new Map(),att:new Map(),agent:null,stats:null,
+  planKnown:false,autoTried:false,planning:false,open:new Set(),secInit:false,day:today()};
+const V={state:'idle',say:'',greeting:true,heard:'',buf:'',partial:'',lastHeard:0,finishing:false,silence:0,voiceOn:true,ttsOff:false,ctx:null,unlocked:false};
+try{V.voiceOn=localStorage.getItem('hq.voice')!=='0'}catch{}
+let db=null,sample=null,dict=null,tts=null,mcp=null;
 
-function toast(m,ms=2800){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),ms)}
+function toast(m,ms=3200,act){const t=document.createElement('div');t.className='toast';const s=document.createElement('span');s.textContent=m;t.appendChild(s);
+  if(act){const b=document.createElement('button');b.textContent=act.label;b.onclick=()=>{t.remove();act.fn()};t.appendChild(b)}
+  document.body.appendChild(t);setTimeout(()=>t.remove(),ms)}
 const open=()=>[...S.tasks.values()].filter(t=>t.s==='ready'||t.s==='waiting'||t.s==='recurring');
 const stamp=()=>new Date().toISOString();
+const sir=()=>S.settings.address||'sir';
 
 /* ---------- data ---------- */
 async function boot(){
   if(!window.claude?.use){$('hSub').textContent='Open this page inside Claude to load your data.';renderAll();return}
   const slow=setTimeout(()=>{if(!S.loaded)$('hSub').textContent='Still loading. Check your connection.'},10000);
   [db,sample,dict,tts,mcp]=await Promise.all(['db','sample','dictation','tts','mcp'].map(n=>claude.use(n).catch(()=>null)));
-  if(tts||window.speechSynthesis)$('btnSpeak').hidden=false;
-  if(!dict){$('mic').hidden=true;$('micHint').hidden=false} else wireDict();
+  if(dict)wireDict();
+  if(tts)wireTts();
   if(!db){clearTimeout(slow);$('hSub').textContent='Sign in to Claude to load your data.';renderAll();return}
   const err=e=>{console.warn(e);if(e?.code==='revoked')$('hSub').textContent='Access changed. Reload the page.'};
   db.collection('tasks').onSnapshot(q=>{S.tasks=new Map(q.docs.map(d=>[d.id,{id:d.id,...d.data()}]));S.loaded=true;clearTimeout(slow);renderAll();maybeAuto()},err);
   db.collection('students').onSnapshot(q=>{S.students=new Map(q.docs.map(d=>[d.id,{id:d.id,...d.data()}]));renderAll()},err);
-  db.collection('drafts').orderBy('at','desc').limit(20).onSnapshot(q=>{S.drafts=q.docs.map(d=>({id:d.id,...d.data()}));renderAI()},err);
-  db.collection('dumps').orderBy('at','desc').limit(12).onSnapshot(q=>{S.dumps=q.docs.map(d=>({id:d.id,...d.data()}));renderLog()},err);
+  db.collection('drafts').orderBy('at','desc').limit(20).onSnapshot(q=>{S.drafts=q.docs.map(d=>({id:d.id,...d.data()}));renderAI();renderToday()},err);
+  db.collection('dumps').orderBy('at','desc').limit(12).onSnapshot(q=>{S.dumps=q.docs.map(d=>({id:d.id,...d.data()}));renderToday()},err);
   db.doc('settings/main').onSnapshot(d=>{S.settings={...DEF,...(d.exists?d.data():{})};renderAll()},err);
   db.doc('plans/'+today()).onSnapshot(d=>{S.plan=d.exists?d.data():null;S.planKnown=true;renderToday();maybeAuto()},err);
   const d7=new Date(Date.parse(today()+'T12:00:00Z')-6*864e5).toISOString().slice(0,10);
   db.collection('habits').where('date','>=',d7).onSnapshot(q=>{S.habits=new Map(q.docs.map(d=>[d.id,d.data()]));renderToday()},err);
+  db.collection('attendance').where('date','==',today()).onSnapshot(q=>{S.att=new Map(q.docs.map(d=>[d.id,d.data()]));renderToday()},err);
   db.doc('agent/latest').onSnapshot(d=>{S.agent=d.exists?d.data():null;renderToday()},err);
   db.doc('stats/revenue').onSnapshot(d=>{S.stats=d.exists?d.data():null;renderCentre()},err);
 }
 const up=(id,patch)=>db?.doc('tasks/'+id).update({...patch,up:stamp()}).catch(e=>toast('Could not save: '+(e.message||e.code)));
 const upStu=(id,patch)=>db?.doc('students/'+id).update(patch).catch(e=>toast('Could not save: '+(e.message||e.code)));
-const findStu=name=>{const n=String(name||'').toLowerCase().trim();if(!n)return null;const all=[...S.students.values()];
-  return all.find(s=>s.name.toLowerCase()===n)||all.find(s=>s.name.toLowerCase().startsWith(n)||n.startsWith(s.name.toLowerCase().split(' ')[0]))||null};
-const owes=s=>Math.max(0,(s.fee?.due||0)-(s.fee?.paid||0));
-const colL=n=>{let r='';n++;while(n>0){r=String.fromCharCode(65+(n-1)%26)+r;n=Math.floor((n-1)/26)}return r};
 const first=x=>String(x||'').toLowerCase().trim().split(/[ (]/)[0];
-/* Writes a payment into the user's own fee spreadsheet through their Google Sheets connector. */
+const findStu=name=>{const n=String(name||'').toLowerCase().trim();if(!n)return null;const all=[...S.students.values()];
+  const byP=all.filter(s=>s.parent&&s.parent.toLowerCase()===n);
+  return all.find(s=>s.name.toLowerCase()===n)||all.find(s=>first(s.name)===first(n))||all.find(s=>s.name.toLowerCase().startsWith(n))||(byP.length===1?byP[0]:null)};
+const owes=s=>Math.max(0,(s.fee?.due||0)-(s.fee?.paid||0));
+const feeTot=()=>{const ow=[...S.students.values()].filter(owes).sort((a,b)=>owes(b)-owes(a));return{ow,n:ow.length,sum:ow.reduce((a,s)=>a+owes(s),0)}};
+/* Title of a task; a few tasks carry a live figure so the number never goes stale. */
+const T=t=>{if(t?.live!=='fees')return t?.t||'';const f=feeTot();return f.sum?`${t.t}: ${money(f.sum)} from ${f.n} student${f.n>1?'s':''}`:`${t.t}: all paid`};
+
+/* ---------- fee sheet (the user's own Google Sheet, through their Sheets connector) ---------- */
+const colL=n=>{let r='';n++;while(n>0){r=String.fromCharCode(65+(n-1)%26)+r;n=Math.floor((n-1)/26)}return r};
 async function sheetPay(s,paid,date){
-  const id=S.settings.feeSheetId;if(!mcp||!id||!s.fee?.m)return false;
+  const id=S.settings.feeSheetId;if(!mcp||!id||!s.fee?.m)return{ok:false};
   const tab=new Date(s.fee.m+'-15T12:00:00Z').toLocaleString('en-US',{month:'long',year:'numeric',timeZone:'UTC'});
   try{
     const r=await mcp.callTool('Google Sheets','get_values',{spreadsheetId:id,range:`'${tab}'!A1:Z60`},{cache:false});
     let v=r?.payload?.values||r?.structuredContent?.values;
     if(!v){const t=(r?.content||[]).find(c=>c.type==='text')?.text;try{const j=JSON.parse(t||'{}');v=j.values||j.content?.values}catch{}}
-    if(!Array.isArray(v))return false;
-    const h=v.findIndex(row=>(row||[]).some(c=>String(c).trim()==='Student'));if(h<0)return false;
+    if(!Array.isArray(v))return{ok:false};
+    const h=v.findIndex(row=>(row||[]).some(c=>String(c).trim()==='Student'));if(h<0)return{ok:false};
     const hd=v[h].map(c=>String(c).toLowerCase()),cS=hd.findIndex(c=>c.trim()==='student'),cD=hd.findIndex(c=>c.includes('date rec')),cF=hd.findIndex(c=>c.includes('fee rec'));
-    if(cS<0||cD<0||cF!==cD+1)return false;
+    if(cS<0||cD<0||cF!==cD+1)return{ok:false};
     const k=first(s.name),rows=v.map((row,i)=>i>h&&first(row?.[cS])===k?i:-1).filter(i=>i>=0);
-    if(rows.length!==1)return false;
-    await mcp.callTool('Google Sheets','update_values',{spreadsheetId:id,range:`'${tab}'!${colL(cD)}${rows[0]+1}:${colL(cF)}${rows[0]+1}`,values:[[date,paid]]});
-    return true}
-  catch(e){console.warn('sheet',e);return false}}
+    if(rows.length!==1)return{ok:false};
+    const range=`'${tab}'!${colL(cD)}${rows[0]+1}:${colL(cF)}${rows[0]+1}`,prev=[String(v[rows[0]][cD]??''),String(v[rows[0]][cF]??'')];
+    await mcp.callTool('Google Sheets','update_values',{spreadsheetId:id,range,values:[[date,paid]]});
+    return{ok:true,range,prev}}
+  catch(e){console.warn('sheet',e);return{ok:false}}}
 async function recordPaid(s,paid,date){
-  await upStu(s.id,{fee:{...(s.fee||{}),paid,paidAt:date,sheet:'pending'}});
-  const ok=await sheetPay(s,paid,date);
-  if(ok)await upStu(s.id,{fee:{...(s.fee||{}),paid,paidAt:date,sheet:'written'}});
-  return ok}
-function wokeReplan(t){if(t>S.settings.workStart)makePlan(`He got up at ${t} today. Start the day from now. Plan only what honestly fits the time left, even if that is one small thing.`)}
+  const undo={paid:s.fee?.paid||0,paidAt:s.fee?.paidAt||'',at:today()},base={...(s.fee||{}),paid,paidAt:date};
+  await upStu(s.id,{fee:{...base,sheet:'pending',undo}});
+  const r=await sheetPay(s,paid,date);
+  if(r.ok)await upStu(s.id,{fee:{...base,sheet:'written',undo:{...undo,range:r.range,cells:r.prev}}});
+  return r.ok}
+async function undoPaid(s){
+  const u=s.fee?.undo;if(!u||!db)return false;
+  if(u.range){if(!mcp||!S.settings.feeSheetId)return false;
+    try{await mcp.callTool('Google Sheets','update_values',{spreadsheetId:S.settings.feeSheetId,range:u.range,values:[u.cells]})}catch(e){return false}}
+  const {id,...rest}=s,fee={...s.fee,paid:u.paid,paidAt:u.paidAt};delete fee.undo;delete fee.sheet;
+  try{await db.doc('students/'+s.id).set({...rest,fee});return true}catch(e){return false}}
+
 function maybeAuto(){if(S.loaded&&S.planKnown&&!S.plan&&!S.autoTried&&sample&&open().length){S.autoTried=true;makePlan()}}
-const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const endH=x=>+x.e.slice(0,2)+(x.e.slice(3)>'00'?1:0);
+const tonight=()=>{const d=dow();return [...S.students.values()].filter(s=>s.active!==false&&(s.slots||[]).some(x=>x.d===d)).map(s=>({s,x:s.slots.find(x=>x.d===d)})).sort((a,b)=>a.x.s.localeCompare(b.x.s))};
+const knownSlots=()=>[...S.students.values()].filter(s=>s.active!==false&&(s.slots||[]).length&&s.slotsOk).length;
 function makeupIdeas(){
   const all=[...S.students.values()].filter(s=>s.active!==false),owed=all.filter(s=>s.owed>0);
   if(!owed.length)return null;
@@ -202,78 +254,116 @@ function makeupIdeas(){
     for(let h=16;h<20;h++){if(k===0&&h<=hr)continue;if(mine.some(x=>h>=+x.s.slice(0,2)&&h<endH(x)))continue;o.push({d,k,h,n:load[d+'-'+h]||0})}}
     o.sort((a,b)=>a.n-b.n||a.k-b.k);return{s,opts:o.slice(0,2)}})}}
 const slotTxt=o=>`${o.k===0?'today':o.k===1?'tomorrow':DN[o.d]} ${o.h>12?o.h-12:o.h}-${o.h+1>12?o.h+1-12:o.h+1} pm`;
-function makeupHtml(){const m=makeupIdeas();if(!m)return'';
-  if(!m.ready)return`<h2>Makeups to book</h2><div class="card">${m.owed.map(s=>`<div class="item"><span class="t">${esc(s.name)}</span> <span class="m num">owed ${s.owed} h</span></div>`).join('')}<div class="m" style="padding-top:8px">Say your timetable in Talk and I'll find the quietest free slot for each.</div></div>`;
-  return`<h2>Makeups to book</h2><div class="card">${m.list.map(({s,opts})=>`<div class="item"><div class="row"><div class="grow"><span class="t">${esc(s.name)}</span> <span class="m num">owed ${s.owed} h</span><div class="m">${opts.length?'Quietest: '+opts.map(o=>slotTxt(o)+' ('+o.n+' booked)').join(', '):'No free hour found this week'}</div></div>${opts.length?`<button class="sm" data-act="aiMakeup" data-id="${s.id}" data-slot="${esc(slotTxt(opts[0]))}">Draft the ask</button>`:''}</div></div>`).join('')}</div>`}
+function makeupBody(){const m=makeupIdeas();if(!m)return'';
+  if(!m.ready)return m.owed.map(s=>`<div class="item"><span class="t">${esc(s.name)}</span> <span class="m num">owed ${s.owed} h</span></div>`).join('')+`<div class="m" style="padding-top:8px">Once I have your timetable I’ll find the quietest free hour for each of them.</div>`;
+  return m.list.map(({s,opts})=>`<div class="item"><div class="row"><div class="grow"><span class="t">${esc(s.name)}</span> <span class="m num">owed ${s.owed} h</span><div class="m">${opts.length?'Quietest: '+opts.map(o=>slotTxt(o)+' ('+o.n+' booked)').join(', '):'No free hour found this week'}</div></div>${opts.length?`<button class="sm" data-act="aiMakeup" data-id="${s.id}" data-slot="${esc(slotTxt(opts[0]))}">Draft the ask</button>`:''}</div></div>`).join('')}
 
 /* ---------- planning ---------- */
-function freeMinutes(){const s=S.settings,[h,m]=nowHM().split(':').map(Number),now=h*60+m;const toM=x=>{const[a,b]=x.split(':').map(Number);return a*60+b};
-  const wk=[1,2,3,4,5].includes(dow());if(wk&&now>=toM(s.teachEnd))return Math.max(0,Math.min(120,toM('23:00')-now));
+function freeMinutes(){const s=S.settings,now=toM(nowHM()),wk=isWk();
+  if(wk&&now>=toM(s.teachEnd))return Math.max(0,Math.min(120,toM('23:00')-now));
   const end=wk?toM(s.teachStart):toM('18:00');return Math.max(0,end-Math.max(now,toM(s.workStart)))}
 function rank(t){const d=t.due?dayDiff(t.due):99;let sc=(5-(t.p||3))*10;if(t.due){sc+=d<=0?60:d<=2?40:d<=7?20:d<=14?8:0;if(t.hard)sc+=10}if(t.s==='waiting')sc-=100;return sc}
 function fallbackPlan(note){const budget=Math.floor(freeMinutes()*S.settings.capacity);let used=0;const picks=[];
-  for(const t of open().filter(t=>t.s!=='waiting').sort((a,b)=>rank(b)-rank(a))){const est=t.est||45;if(picks.length>=3)break;if(used+est>budget&&picks.length)continue;used+=est;
+  const aside=S.plan?.marks||{};
+  for(const t of open().filter(t=>t.s==='ready'&&!aside[t.id]).sort((a,b)=>rank(b)-rank(a))){const est=t.est||45;if(picks.length>=3)break;if(used+est>budget&&picks.length)continue;used+=est;
     picks.push({id:t.id,why:t.due?`Due ${t.due}${t.hard?' (fixed date)':''}.`:'High priority on your list.',first:t.next||t.t,min:est})}
-  return {headline:note||'Picked by priority and dates.',picks,leftOut:'Everything else can wait today.',by:'rules'}}
-async function makePlan(note){
-  if(busy)return;busy=true;$('btnPlan').disabled=true;$('btnPlan').textContent='Thinking…';
-  let plan;const free=freeMinutes(),budget=Math.floor(free*S.settings.capacity);
+  return {headline:'Picked by priority and dates.',picks,leftOut:'Everything else can wait today.',by:'rules'}}
+const modeNow=()=>{const s=S.settings,n=nowHM();if(isWk()&&n>=s.teachStart&&n<s.teachEnd)return'teach';if(isWk()&&n>=s.teachEnd)return'eve';return'work'};
+function openPicks(skipId){const p=S.plan,marks=p?.marks||{};return (p?.picks||[]).map(k=>({k,t:S.tasks.get(k.id)})).filter(x=>x.t&&x.t.s!=='done'&&!marks[x.k.id]&&x.k.id!==skipId)}
+async function makePlan(note,announce){
+  if(S.planning||!db)return;S.planning=true;renderToday();
+  let plan;const free=freeMinutes(),budget=Math.floor(free*S.settings.capacity),s=S.settings,marks=S.plan?.marks||{};
   try{
     if(!sample)throw 0;
-    const lines=open().sort((a,b)=>rank(b)-rank(a)).slice(0,70).map(t=>`${t.id}|${t.a}|${t.s}|P${t.p||3}|${t.due?('due '+t.due+(t.hard?' HARD':'')):'no date'}|${t.est||'?'}m|${t.t}${t.next&&t.next!==t.t?' -> next: '+t.next:''}${t.wait?' (waiting on '+t.wait+')':''}`).join('\n');
-    const owed=[...S.students.values()].filter(owes).map(s=>`${s.name} ${money(owes(s))}`).join(', ');
-    const s=S.settings;
+    const lines=open().sort((a,b)=>rank(b)-rank(a)).slice(0,70).map(t=>`${t.id}|${t.a}|${t.s}|P${t.p||3}|${t.due?('due '+t.due+(t.hard?' HARD':'')):'no date'}|${t.est||'?'}m|${T(t)}${t.next&&t.next!==t.t?' -> next: '+t.next:''}${t.wait?' (waiting on '+t.wait+')':''}`).join('\n');
+    const hb=S.habits.get(today())||{};
     plan=await sample.json(`You plan one day for ${s.name}, who runs a tutoring centre and has many other responsibilities. Be decisive, like a chief of staff.
-Today is ${today()} (${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dow()]}), time now ${nowHM()} Toronto. Wake ${s.wake}, workout ${s.workout}, focused work from ${s.workStart}, teaching ${s.teachStart}-${s.teachEnd} on weekdays. Always protect: ${s.protect}.
-Free focused minutes left before teaching: ${free}. Plan at most ${budget} minutes of it (leave slack for interruptions).
-${note?'Note from him: '+note+'\n':''}Unpaid fees this month: ${owed||'none'}.
+Today is ${today()} (${DN[dow()]}), time now ${nowHM()} Toronto.${hb.upAt?` He got up at ${hb.upAt}.`:''} Teaching is ${s.teachStart}-${s.teachEnd} on weekdays. Always protect: ${s.protect}.
+Free focused minutes left ${modeNow()==='eve'?'this evening':'before teaching'}: ${free}. Plan at most ${budget} minutes of it (leave slack for interruptions).
+${note?'Note: '+note+'\n':''}${Object.keys(marks).length?'He already set these aside today, so do not pick them again: '+Object.keys(marks).join(', ')+'.\n':''}Unpaid fees this month: ${feeTot().ow.map(x=>`${x.name} ${money(owes(x))}`).join(', ')||'none'}.
 Open items (id|area|status|priority 1=critical|date|estimate|title):
 ${lines}
-Rules: pick at most 3 items by id that fit the minutes. Prefer: things with real dates coming up (count lead time), money owed to him, things that unblock others or that someone is waiting on, then one thing that moves a long-term goal (lead generation, hiring). Never pick status "waiting". Ideas never beat commitments. Do not invent facts or dates. His wake time varies a lot from day to day and he is working toward consistency: never comment on a late start, never guilt him, just plan well from the current time. On a short day, one finished thing is a win. If little time is left, pick fewer.
+Rules: pick at most 3 items by id that fit the minutes; pick only status "ready". Prefer: things with real dates coming up (count lead time), money owed to him, things that unblock others or that someone is waiting on, then one thing that moves a long-term goal (lead generation, hiring). Ideas never beat commitments. Do not invent facts or dates. His wake time varies a lot from day to day and he is working toward consistency: never comment on a late start, never guilt him, just plan well from the current time. On a short day, one finished thing is a win. If little time is left, pick fewer.
 Return JSON only: {"headline":"one plain sentence on what today is about","picks":[{"id":"...","why":"one sentence, why today","first":"the first physical action, concrete","min":30}],"quick":["ids of up to 3 five-minute wins"],"leftOut":"one sentence naming what is deliberately waiting and why"}`,{modelTier:'default',cache:false});
-    plan.picks=(plan.picks||[]).filter(p=>S.tasks.has(p.id)).slice(0,3);plan.quick=(plan.quick||[]).filter(i=>S.tasks.has(i)).slice(0,3);plan.by='ai';
+    plan.picks=(plan.picks||[]).filter(p=>S.tasks.has(p.id)&&!marks[p.id]).slice(0,3);plan.quick=(plan.quick||[]).filter(i=>S.tasks.has(i)).slice(0,3);plan.by='ai';
     if(!plan.picks.length)throw 0;
   }catch(e){plan=fallbackPlan(note);if(e&&e.code==='not_granted')sample=null}
-  plan.at=stamp();plan.free=free;plan.budget=budget;plan.marks=S.plan?.marks||{};
-  try{await db.doc('plans/'+today()).set(plan)}catch(e){S.plan=plan;renderToday()}
-  busy=false;$('btnPlan').disabled=false;$('btnPlan').textContent='Plan my day';
+  plan.at=stamp();plan.free=free;plan.budget=budget;plan.marks=marks;
+  try{await db.doc('plans/'+today()).set(plan)}catch(e){}
+  S.plan=plan;S.planning=false;renderToday();
+  if(announce){const t=S.tasks.get(plan.picks[0]?.id);say(t?`Here’s the plan, ${sir()}. First: ${T(t)}.`:`Nothing urgent fits right now, ${sir()}.`,true,true)}
 }
 
-/* ---------- talk ---------- */
-async function sendDump(){
-  const text=$('dump').value.trim();if(!text||busy)return;
-  if(!db){toast('Not connected, so nothing is saved yet.');return}
-  busy=true;$('btnSend').disabled=true;$('btnSend').textContent='Sorting…';
-  const ref=db.collection('dumps').doc();await ref.set({text,at:stamp(),reply:''}).catch(()=>{});$('dump').value='';
-  let reply='Saved. I’ll sort it on the next pass.',applied=[];
-  try{
-    if(!sample)throw {code:'none'};
-    const lines=[...S.tasks.values()].filter(t=>t.s!=='done'&&t.s!=='parked').map(t=>`${t.id}|${t.a}|${t.s}|${t.t}`).join('\n');
-    const stu=[...S.students.values()].map(s=>s.name).join(', ');
-    const r=await sample.json(`You are the intake brain of ${S.settings.name}'s personal planner. He dictated the message below. Turn it into operations on his records.
-Today is ${today()} (${['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dow()]}), ${nowHM()} Toronto.
-Areas: ${Object.keys(AREAS).join(', ')}.
+/* ---------- what the assistant says ---------- */
+function greet(spoken){
+  const s=S.settings,a=sir(),h=+nowHM().slice(0,2),hi=`${h<12?'Good morning':h<17?'Good afternoon':'Good evening'}, ${a}.`;
+  if(!S.loaded)return hi;
+  const hb=S.habits.get(today())||{},m=modeNow(),cur=openPicks()[0];
+  if(m==='teach')return `${hi} You’re teaching until ${t12(s.teachEnd)}. I’ll hold everything else.`;
+  if(m==='eve')return `${hi} Teaching’s done. Two minutes to close the day, then you’re off.`;
+  if(!hb.up)return `${hi} When did you get up today?`;
+  const free=freeMinutes(),lead=free>0?` You have ${dur(free)} ${isWk()?'before teaching':'to work with'}.`:'';
+  if(cur)return hi+lead+(spoken||!lead?` First: ${T(cur.t)}.`:'');
+  if(S.plan)return `${hi} Today’s list is clear.`;
+  return `${hi} Give me a moment to plan your day.`}
+function briefText(){
+  const cur=openPicks()[0],f=feeTot(),parts=[greet(true)];
+  if(cur&&modeNow()==='work')parts.push(`${cur.k.why} Start by: ${cur.k.first}`);
+  if(f.sum)parts.push(`${money(f.sum)} in fees is still unpaid.`);
+  const hard=[...S.tasks.values()].filter(t=>t.hard&&t.due&&t.s!=='done'&&dayDiff(t.due)>=0).sort((x,y)=>x.due.localeCompare(y.due))[0];
+  if(hard){const d=dayDiff(hard.due);parts.push(`${hard.t} is ${d===0?'due today':d===1?'due tomorrow':'due in '+d+' days'}.`)}
+  return parts.join(' ')}
+function intakePrompt(text){
+  const s=S.settings,a=sir(),f=feeTot(),marks=S.plan?.marks||{};
+  const stu=[...S.students.values()].filter(x=>x.active!==false).map(x=>x.name+(x.parent?` (parent ${x.parent})`:'')).join('; ');
+  const mk=[...S.students.values()].filter(x=>x.owed>0).map(x=>`${x.name} ${x.owed} h`).join(', ')||'none';
+  const picks=(S.plan?.picks||[]).map((k,i)=>{const t=S.tasks.get(k.id);return t?`${i+1}. ${T(t)} [${t.s==='done'?'done':marks[k.id]==='skip'?'not today':marks[k.id]==='stuck'?'stuck':'open'}]`:''}).filter(Boolean).join(' ')||'none yet';
+  const tn=tonight().map(({s:x,x:sl})=>`${x.name} ${sl.s}-${sl.e}`).join(', ')||'not on file';
+  const lines=[...S.tasks.values()].filter(t=>t.s!=='done'&&t.s!=='parked').map(t=>`${t.id}|${t.a}|${t.s}|${T(t)}`).join('\n');
+  const ct=V.ctx?.stuck&&S.tasks.get(V.ctx.stuck);
+  return `You are ${s.name}'s personal assistant inside his planner app. He just said the message below. It came through speech-to-text, so expect mishearings, especially of names: match them to the people and items listed here (for example "man raj" or "Monraj" means Manraj). Work out what he means, turn it into operations on his records, and answer him.
+Now: ${today()} (${DN[dow()]}), ${nowHM()} Toronto.
+${ct?`Context: he just marked "${T(ct)}" (id ${ct.id}) as stuck, and this message is probably the reason. Record the reason on that item, set a smaller next step if one is obvious, or set it to waiting if he is waiting on someone.\n`:''}Areas: ${Object.keys(AREAS).join(', ')}.
 Students: ${stu}.
-Existing items (id|area|status|title):
+Unpaid fees this month: ${f.ow.map(x=>`${x.name} ${money(owes(x))}`).join(', ')||'none'}.
+Makeup hours owed to students: ${mk}.
+Today's plan: ${picks}
+Tonight's lessons: ${tn}.
+Open items (id|area|status|title):
 ${lines}
 Message: """${text}"""
 Rules:
-- If it matches an existing item, update that item; do not add a duplicate.
-- Mark done only when he clearly says it is finished. "status" may be ready, waiting, parked, idea, verify.
+- If it matches an existing item, update that item; never add a duplicate. A new commitment is kind "task". A passing thought or "maybe someday" is kind "idea".
+- Mark done only when he clearly says it is finished. "s" may be ready, waiting, parked, idea, verify.
 - Never invent a date. Use "due" only if he gave one; "hard":true only for a fixed external date.
-- A passing thought or "maybe someday" is kind "idea". A commitment is kind "task".
-- Student events: missed lesson -> attendance absent; came for a makeup -> attendance makeup; payment -> paid; a stated weekly timetable -> schedule (d: 1=Mon..5=Fri, 24h times).
-- If he says he lost time or plans changed, include {"op":"replan","note":"..."}.
-- reply: 1-3 short friendly sentences confirming exactly what you recorded, plus at most one question only if something important is unclear.
-Return JSON only: {"reply":"...","ops":[{"op":"add","title":"","area":"","kind":"task","pri":3,"due":null,"hard":false,"est":30,"next":"","ai":false,"notes":""},{"op":"update","id":"","set":{"s":"waiting","wait":"who","due":"YYYY-MM-DD","p":2,"n":"note","est":20,"next":""}},{"op":"done","id":""},{"op":"attendance","student":"","status":"absent","hours":1},{"op":"paid","student":"","amount":0,"date":"YYYY-MM-DD the money came in, worked out from what he said, else today"},{"op":"schedule","student":"","slots":[{"d":1,"s":"17:00","e":"18:00"}]},{"op":"setting","key":"wake","value":"06:30"},{"op":"woke","time":"HH:MM he got up today, 24h"},{"op":"replan","note":""}]}  (use only the ops needed)`,{modelTier:'default',cache:false});
-    reply=r.reply||'Got it.';applied=await applyOps(r.ops||[],text);
+- Student events: missed lesson -> attendance absent; came for a makeup -> attendance makeup; came as normal -> attendance present; money received -> paid; a payment recorded by mistake -> undo_paid; a stated weekly timetable -> schedule (d: 1=Mon..5=Fri, 24h times).
+- A parent's name means their child. If a payment could belong to more than one child and he did not say, ask instead of guessing.
+- If he says when he got up today, use woke. If he lost time or plans changed, use replan.
+- If he asks a question (what is next, who owes me, who is in tonight, how many makeups), answer it from the data above; no ops are needed.
+- reply: it is read aloud to him. One or two short sentences, under 35 words, plain spoken English, no lists or symbols. Open with a brief acknowledgement and address him as "${a}" once (for example "Understood, ${a}." or "Done, ${a}."). Say exactly what you did: "added to your list" for something new; if it was already on his list, say so and say what you updated. Ask at most one short question, and only if something important is unclear. Never lecture and never guilt him.
+Return JSON only: {"reply":"...","ops":[{"op":"add","title":"","area":"","kind":"task","pri":3,"due":null,"hard":false,"est":30,"next":"","ai":false,"notes":""},{"op":"update","id":"","set":{"s":"waiting","wait":"who","due":"YYYY-MM-DD","p":2,"n":"note","est":20,"next":""}},{"op":"done","id":""},{"op":"attendance","student":"","status":"absent","hours":1},{"op":"paid","student":"","amount":0,"date":"YYYY-MM-DD the money came in, worked out from what he said, else today"},{"op":"undo_paid","student":""},{"op":"schedule","student":"","slots":[{"d":1,"s":"17:00","e":"18:00"}]},{"op":"setting","key":"teachEnd","value":"20:00"},{"op":"woke","time":"HH:MM he got up today, 24h"},{"op":"replan","note":""}]}  (use only the ops needed; "ops" may be empty)`}
+
+/* ---------- talk ---------- */
+async function respond(text){
+  text=(text||'').trim();if(!text||V.state==='thinking')return;
+  if(!db){say('I’m not connected to your records right now, so I can’t save that.');return}
+  V.heard=text;setState('thinking');
+  const ref=db.collection('dumps').doc();ref.set({text,at:stamp(),reply:''}).catch(()=>{});
+  let reply,applied=[];
+  try{
+    if(!sample)throw {code:'none'};
+    const r=await sample.json(intakePrompt(text),{modelTier:'default',cache:false});
+    applied=await applyOps(Array.isArray(r?.ops)?r.ops:[],text);
+    reply=String(r?.reply||`Understood, ${sir()}.`);
+    if(applied.some(x=>x.includes('(fee sheet updated)')))reply+=' Your fee sheet is updated too.';
+    else if(applied.some(x=>x.includes('overnight')))reply+=' I’ll put it in your fee sheet overnight.';
   }catch(e){
     if(e?.code==='not_granted')sample=null;
     const id='t'+Date.now().toString(36);await db.doc('tasks/'+id).set({t:text.slice(0,140),a:'planner',s:'ready',p:3,n:text,src:'talk (unsorted)',up:stamp()}).catch(()=>{});
-    reply='Saved it as one item. I couldn’t reach the sorter just now, so it isn’t split up yet.';
+    reply=`Saved, ${sir()}. I couldn’t sort it just now, so it’s filed as one note and will be sorted overnight.`;
   }
-  await ref.update({reply,ops:applied}).catch(()=>{});
-  busy=false;$('btnSend').disabled=false;$('btnSend').textContent='Send';
+  V.ctx=null;ref.update({reply,ops:applied}).catch(()=>{});
+  setState('idle');say(reply,true);
 }
 async function applyOps(ops,src){
   const out=[];let n=0;
@@ -285,17 +375,28 @@ async function applyOps(ops,src){
       if(STAT[st.s]&&st.s!=='done')a.s=st.s;if(st.wait)a.wait=String(st.wait);if(/^\d{4}-\d\d-\d\d$/.test(st.due||''))a.due=st.due;if([1,2,3,4].includes(st.p))a.p=st.p;if(+st.est)a.est=+st.est;if(st.next)a.next=String(st.next);
       if(st.n)a.n=((S.tasks.get(o.id).n||'')+'\n'+today()+': '+st.n).trim();if(Object.keys(a).length){await up(o.id,a);out.push('updated: '+S.tasks.get(o.id).t)}}
     else if(o.op==='done'&&S.tasks.has(o.id)){await up(o.id,{s:'done',doneAt:stamp(),ev:'he said so: '+src.slice(0,80)});out.push('done: '+S.tasks.get(o.id).t)}
-    else if(o.op==='attendance'){const s=findStu(o.student);if(s){await logAtt(s,o.status==='makeup'?'makeup':o.status==='present'?'present':'absent',+o.hours||1);out.push(o.status+': '+s.name)}}
-    else if(o.op==='paid'){const s=findStu(o.student);if(s&&+o.amount>0){const ok=await recordPaid(s,(s.fee?.paid||0)+ +o.amount,/^\d{4}-\d\d-\d\d$/.test(o.date||'')?o.date:today());out.push('paid '+money(+o.amount)+': '+s.name+(ok?' (fee sheet updated)':' (fee sheet will be updated overnight)'))}}
-    else if(o.op==='schedule'){const s=findStu(o.student);const sl=(o.slots||[]).filter(x=>x.d>=0&&x.d<=6&&/^\d\d:\d\d$/.test(x.s||'')&&/^\d\d:\d\d$/.test(x.e||''));if(s&&sl.length){await upStu(s.id,{slots:sl,slotsOk:true});out.push('schedule: '+s.name)}}
+    else if(o.op==='attendance'){const s=findStu(o.student);if(s){const st=o.status==='makeup'?'makeup':o.status==='present'?'present':'absent';await logAtt(s,st,+o.hours||1);out.push(st+': '+s.name)}}
+    else if(o.op==='paid'){const s=findStu(o.student);if(s&&+o.amount>0){const ok=await recordPaid(s,(s.fee?.paid||0)+ +o.amount,/^\d{4}-\d\d-\d\d$/.test(o.date||'')?o.date:today());out.push('paid '+money(+o.amount)+': '+s.name+(ok?' (fee sheet updated)':' (fee sheet: overnight)'))}}
+    else if(o.op==='undo_paid'){const s=findStu(o.student);if(s?.fee?.undo){const ok=await undoPaid(s);out.push((ok?'payment undone: ':'could not undo: ')+s.name)}}
+    else if(o.op==='schedule'){const s=findStu(o.student);const sl=(o.slots||[]).filter(x=>x.d>=0&&x.d<=6&&/^\d\d:\d\d$/.test(x.s||'')&&/^\d\d:\d\d$/.test(x.e||''));if(s&&sl.length){await upStu(s.id,{slots:sl,slotsOk:true});out.push('timetable: '+s.name)}}
     else if(o.op==='setting'&&o.key in DEF){await db.doc('settings/main').set({...S.settings,[o.key]:o.value});out.push('setting: '+o.key)}
-    else if(o.op==='woke'&&/^\d\d:\d\d$/.test(o.time||'')){const hb=S.habits.get(today())||{};await db.doc('habits/'+today()).set({...hb,date:today(),up:true,upAt:o.time});setTimeout(()=>wokeReplan(o.time),400);out.push('up at '+o.time)}
-    else if(o.op==='replan'){setTimeout(()=>makePlan(o.note||'Plans changed.'),400);out.push('replanning')}
+    else if(o.op==='woke'&&/^\d\d:\d\d$/.test(o.time||'')){await markUp(o.time,true);out.push('up at '+o.time)}
+    else if(o.op==='replan'){setTimeout(()=>makePlan(o.note||'Plans changed.',true),300);out.push('replanning')}
   }catch(e){console.warn(e)}}
   return out}
+/* One record per student per day (and one more for a makeup), so tapping twice never double-counts. */
 async function logAtt(s,status,hours){
-  await db.collection('attendance').doc().set({sid:s.id,name:s.name,date:today(),month:today().slice(0,7),status,hours,at:stamp()});
-  const owed=(s.owed||0)+(status==='absent'?hours:status==='makeup'?-hours:0);if(status!=='present')await upStu(s.id,{owed:Math.max(0,owed)})}
+  const id=today()+'_'+s.id+(status==='makeup'?'_mk':''),prev=S.att.get(id),w=x=>!x?0:x.status==='absent'?x.hours:x.status==='makeup'?-x.hours:0;
+  const rec={sid:s.id,name:s.name,date:today(),month:today().slice(0,7),status,hours,at:stamp()};
+  S.att.set(id,rec);await db.doc('attendance/'+id).set(rec);
+  const delta=w(rec)-w(prev);if(delta)await upStu(s.id,{owed:Math.max(0,(s.owed||0)+delta)})}
+async function markUp(time,quiet){
+  const hb={...(S.habits.get(today())||{}),date:today(),up:true,upAt:time};S.habits.set(today(),hb);
+  await db?.doc('habits/'+today()).set(hb).catch(()=>{});
+  const need=openPicks().reduce((a,x)=>a+(x.k.min||x.t.est||30),0),fits=S.plan&&need<=freeMinutes()*S.settings.capacity;
+  if(modeNow()==='work'&&!fits){if(!quiet)say(`Understood, ${sir()}. Let me rebuild today from here.`,true);
+    setTimeout(()=>makePlan(`He got up at ${time} today. Plan only what honestly fits the time left, even if that is one small thing.`,true),quiet?300:0)}
+  else if(!quiet){V.greeting=true;renderToday();speak(greet(true))}}
 
 /* ---------- AI work ---------- */
 async function runJob(ask,taskId,draftId){
@@ -304,7 +405,7 @@ async function runJob(ask,taskId,draftId){
   await ref.set({title:(t?.t||ask).slice(0,120),ask,taskId:taskId||null,body:'',state:'working',at:stamp()});show('ai');
   try{const r=await sample(`You are doing a piece of work for ${S.settings.name}, owner of TutorWise, a tutoring centre in Brampton, Ontario (new unit in the same plaza; classes weekdays 4-8pm; fees by monthly subscription or hourly; e-transfers go to etransfer@tutorwise.ca). Today is ${today()}.
 Task: ${ask}
-${t?`Context from his records: ${t.t}. ${t.n||''}`:''}
+${t?`Context from his records: ${T(t)}. ${t.n||''}`:''}
 Produce the finished, usable deliverable itself (the message ready to send, the plan, the checklist, the ad). Be concrete and brief. Where a fact is missing (a date, a price, a name), do not invent it: write [ASK: what you need] in that spot and list those at the end under "Need from you". Plain text, no markdown symbols.`,{modelTier:'complex',cache:false,onText:u=>{const el=document.querySelector(`[data-d="${ref.id}"] pre`);if(el)el.textContent=u.text}});
     await ref.update({body:r.text,state:'ready',doneAt:stamp()});if(t)await up(taskId,{out:'ready',outId:ref.id});toast('Ready for you to review')}
   catch(e){await ref.update({state:'failed',body:e?.text||'',err:e?.message||e?.code||'failed'}).catch(()=>{});toast('That one failed. Try Redo.')}}
@@ -313,33 +414,70 @@ function feeNotes(){
   const rows=[...S.students.values()].filter(s=>s.active!==false&&s.rate>0).sort((a,b)=>a.name.localeCompare(b.name)).map(s=>{const sub=s.model==='sub';const lessons=sub?null:Math.round((s.perWeek||0)*4*10)/10;
     const base=sub?(s.rate||0):lessons*(s.rate||0)+10;const credit=(s.credit||0);const carry=owes(s);const total=base-credit+carry;
     return `${s.name}${s.parent?' ('+s.parent+')':''}\n  ${sub?'Monthly subscription':lessons+' lessons × $'+s.rate+' + $10 supplies'}: ${money(base)}${credit?`\n  Credit: -${money(credit)}`:''}${carry?`\n  Unpaid from this month: +${money(carry)}`:''}${s.owed?`\n  Makeup time still owed to them: ${s.owed} h`:''}\n  TOTAL ${mName}: ${money(total)}   (e-transfer: etransfer@tutorwise.ca)`});
-  sheet(`<h3 style="font:600 18px var(--disp);margin:0 0 4px">Fee notes for ${esc(mName)}</h3><p class="why">Built from each student’s lessons per week, rate, credits and anything unpaid. Lessons assume 4 weeks; tell me in Talk if a student’s count differs. Nothing is sent.</p><pre class="out" id="fnOut">${esc(rows.join('\n\n'))}</pre><div class="row"><button class="pri" data-act="copy" data-from="fnOut">Copy all</button><button data-act="close">Close</button></div>`)}
+  sheet(`<h3 style="font:600 18px var(--disp);margin:0 0 4px">Fee notes for ${esc(mName)}</h3><p class="why">Built from each student’s lessons per week, rate, credits and anything unpaid. Lessons assume 4 weeks; tell me if a student’s count differs. Nothing is sent.</p><pre class="out" id="fnOut">${esc(rows.join('\n\n'))}</pre><div class="row"><button class="pri" data-act="copy" data-from="fnOut">Copy all</button><button data-act="close">Close</button></div>`)}
 
 /* ---------- render ---------- */
-function renderAll(){renderToday();renderList();renderCentre();renderAI();renderLog()}
+function renderAll(){renderToday();renderList();renderCentre();renderAI()}
+const canSpeak=()=>(tts&&!V.ttsOff)||(!tts&&'speechSynthesis'in window);
+function renderCore(){
+  const st=V.state,live=st==='listening'||st==='starting';
+  $('vState').textContent={idle:dict?'Tap to talk':'Tell me anything',starting:'One moment',listening:'Listening',thinking:'Thinking',speaking:'Speaking'}[st];
+  $('vState').dataset.s=st;
+  if(V.greeting)V.say=greet();
+  $('vSay').textContent=V.say;
+  if(live)$('vHeard').innerHTML=(esc(V.buf)+(V.partial?` <i>${esc(V.partial)}</i>`:''))||'<i>Go ahead…</i>';
+  else $('vHeard').textContent=V.heard?`You said: ${V.heard.length>150?V.heard.slice(0,147)+'…':V.heard}`:'';
+  $('orbBtn').setAttribute('aria-label',live?'Stop and send':st==='speaking'?'Stop speaking':dict?'Start talking':'Write to your assistant');
+  const hb=S.habits.get(today())||{};
+  $('quick').innerHTML=live?'<button class="on" data-act="sendNow">Send now</button><button data-act="cancelListen">Cancel</button>'
+    :st==='speaking'?'<button data-act="stopSpeak">Stop</button>':st==='thinking'?''
+    :`${hb.up?`<button data-act="up" class="ok">Up ${esc(t12(hb.upAt||''))} ✓</button>`:modeNow()==='work'?'<button data-act="upNow">Just now</button><button data-act="up">Earlier…</button>':'<button data-act="up">I’m up</button>'}<button data-act="habit" data-h="workout" class="${hb.workout?'ok':''}">Workout${hb.workout?' ✓':''}</button>${canSpeak()?'<button data-act="brief">Brief me</button>':''}`;
+  const vb=$('btnVoice');vb.hidden=!canSpeak();vb.innerHTML=V.voiceOn?ICON.on:ICON.off;vb.setAttribute('aria-pressed',String(V.voiceOn));vb.setAttribute('aria-label',V.voiceOn?'Spoken replies are on':'Spoken replies are off');
+  orb.set(st);
+}
+const sec=(key,title,body)=>body?`<details class="sec" data-key="${key}"${S.open.has(key)?' open':''}><summary><span>${title}</span></summary><div class="secb">${body}</div></details>`:'';
+function weekBody(){const days=[];for(let k=6;k>=0;k--){const d=new Date(Date.parse(today()+'T12:00:00Z')-k*864e5).toISOString().slice(0,10);days.push({d,h:S.habits.get(d)||{},l:'SMTWTFS'[new Date(d+'T12:00:00Z').getUTCDay()]})}
+  const ups=days.map(x=>x.h.upAt).filter(Boolean).map(toM),avg=ups.length?Math.round(ups.reduce((a,b)=>a+b,0)/ups.length):null,w=days.filter(x=>x.h.workout).length;
+  return `<div class="week">${days.map(x=>`<div class="${x.d===today()?'on':''}"><span>${x.l}</span><b class="num">${x.h.upAt?esc(t12(x.h.upAt).replace(' ','')):'–'}</b><i class="${x.h.workout?'y':''}"></i></div>`).join('')}</div>
+  <div class="m" style="margin-top:8px">${avg!==null?`Average wake-up: ${t12(String(Math.floor(avg/60)).padStart(2,'0')+':'+String(avg%60).padStart(2,'0'))} over ${ups.length} day${ups.length>1?'s':''}. `:'Tell me when you get up each day and your wake times will build up here. '}Workouts: ${w} of 7 (the dot under each day).</div>`}
 function renderToday(){
-  const s=S.settings,wk=[1,2,3,4,5].includes(dow());
-  $('hSub').textContent=new Date(today()+'T12:00:00Z').toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric',timeZone:'UTC'})+(S.loaded?` · ${open().length} open`:'');
-  const hb=S.habits.get(today())||{},cnt=k=>[...S.habits.values()].filter(h=>h[k]).length;
-  $('shape').innerHTML=[[s.wake,'Up','','up'],[s.workout,'Workout','','workout'],[s.workStart,'Focused work'],wk?[s.teachStart,'Teaching','fx']:null,wk?[s.teachEnd,'Reset & log']:null].filter(Boolean).map(x=>x[3]?`<div class="${hb[x[3]]?'fx':''}" role="button" tabindex="0" data-act="habit" data-h="${x[3]}" style="cursor:pointer"><b>${hb[x[3]]?'✓ ':''}${esc(x[3]==='up'&&hb.upAt?hb.upAt:x[0])}</b>${esc(x[1])} · ${cnt(x[3])}/7</div>`:`<div class="${x[2]||''}"><b>${esc(x[0])}</b>${esc(x[1])}</div>`).join('');
-  const ag=S.agent;$('agentBox').innerHTML=ag&&ag.date===today()&&ag.brief?`<div class="card" style="margin-top:12px"><div class="row"><b class="grow">From your overnight agent</b><span class="pill mute">${ag.at?esc(new Date(ag.at).toLocaleTimeString('en-CA',{timeZone:TZ,hour:'numeric',minute:'2-digit'})):''}</span></div><div class="why" style="white-space:pre-wrap;margin:6px 0 0">${esc(ag.brief)}</div>${(ag.flags||[]).map(f=>`<div class="m" style="margin-top:6px">• ${esc(f)}</div>`).join('')}</div>`:'';
-  $('makeBox').innerHTML=makeupHtml();
-  const unm=(S.plan?.picks||[]).filter(k=>S.tasks.get(k.id)?.s!=='done'&&!(S.plan.marks||{})[k.id]).length;
-  $('eveBox').innerHTML=nowHM()>=s.teachEnd&&S.plan?`<h2>Close the day</h2><div class="card"><div class="why" style="margin:0 0 8px">${unm?unm+' of today’s picks aren’t marked yet. Tap Done or Not today above.':'Today’s picks are all marked.'} Anything else happen? Say it in one go.</div><button class="sm pri" data-act="goTalk">Tell me about today</button></div>`:'';
-  const p=S.plan;
-  if(p?.picks?.length){const m=p.marks||{};
-    $('planBox').innerHTML=`<div class="why" style="margin:0">${esc(p.headline||'')} <span class="pill mute">${p.budget||0} min planned of ${p.free||0} free</span></div>`+p.picks.map((k,i)=>{const t=S.tasks.get(k.id);if(!t)return'';const st=t.s==='done'?'done':m[k.id];
-      return `<div class="card pick"><div class="n">${i+1} · ${esc(AREAS[t.a]||t.a)} · ${k.min||t.est||'?'} min ${st?`<span class="pill ${st==='done'?'good':'warn'}">${st==='done'?'Done':st==='skip'?'Not today':'Stuck'}</span>`:''}</div><h3>${esc(t.t)}</h3><p class="why">${esc(k.why)}</p><p class="first"><b>Start:</b> ${esc(k.first||t.next||t.t)}</p>
-      <div class="row"><button class="pri sm" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="mark" data-m="skip" data-id="${t.id}">Not today</button><button class="sm" data-act="mark" data-m="stuck" data-id="${t.id}">Stuck</button>${t.ai?`<button class="sm ghost" data-act="aiTask" data-id="${t.id}">Let AI draft it</button>`:''}</div></div>`}).join('')
-      +(p.quick?.length?`<div class="card"><b>Five-minute wins</b>${p.quick.map(id=>{const t=S.tasks.get(id);return t&&t.s!=='done'?`<div class="item row"><div class="grow t">${esc(t.t)}</div><button class="sm" data-act="done" data-id="${id}">Done</button></div>`:''}).join('')}</div>`:'');
-    $('leftBox').innerHTML=p.leftOut?`<h2>Left out on purpose</h2><div class="card why" style="margin:0">${esc(p.leftOut)}</div>`:'';
-  }else{$('leftBox').innerHTML=''}
-  const ow=[...S.students.values()].filter(owes).sort((a,b)=>owes(b)-owes(a));const tot=ow.reduce((a,s)=>a+owes(s),0);
-  $('moneyBox').innerHTML=tot?`<h2>Money to collect</h2><div class="card"><div class="row"><div class="big grow">${money(tot)}</div><button class="sm" data-act="aiChase">Draft reminders</button></div>${ow.slice(0,5).map(s=>`<div class="item row"><div class="grow"><span class="t">${esc(s.name)}</span> <span class="m num">${money(owes(s))}${s.fee?.given?' · note given '+esc(s.fee.given):''}</span></div><button class="sm" data-act="paidFull" data-id="${s.id}">Paid</button></div>`).join('')}${ow.length>5?`<div class="m" style="padding-top:8px">+${ow.length-5} more in Centre</div>`:''}</div>`:'';
-  const d=dow();const tn=[...S.students.values()].filter(s=>(s.slots||[]).some(x=>x.d===d)).map(s=>({s,x:s.slots.find(x=>x.d===d)})).sort((a,b)=>a.x.s.localeCompare(b.x.s));
-  $('tonightBox').innerHTML=tn.length?`<h2>Tonight’s lessons</h2><div class="card">${tn.map(({s,x})=>`<div class="item row"><div class="grow"><span class="t">${esc(s.name)}</span> <span class="m num">${x.s}–${x.e}${s.slotsOk?'':' · time not confirmed'}</span></div><button class="sm" data-act="att" data-st="present" data-id="${s.id}">Came</button><button class="sm" data-act="att" data-st="absent" data-id="${s.id}">Missed</button></div>`).join('')}</div>`:'';
-  const ask=[...S.tasks.values()].filter(t=>t.s==='verify').sort((a,b)=>(a.p||3)-(b.p||3)).slice(0,3);const nAsk=[...S.tasks.values()].filter(t=>t.s==='verify').length;
-  $('askBox').innerHTML=ask.length?`<h2>Quick check · ${nAsk} old items to confirm</h2><div class="card">${ask.map(t=>`<div class="item"><div class="t">${esc(t.t)}</div><div class="m">${esc(AREAS[t.a]||'')}</div><div class="row" style="margin-top:6px"><button class="sm" data-act="set" data-s="ready" data-id="${t.id}">Still to do</button><button class="sm" data-act="done" data-id="${t.id}">Already done</button><button class="sm" data-act="set" data-s="parked" data-id="${t.id}">Drop it</button></div></div>`).join('')}</div>`:'';
+  const s=S.settings,m=modeNow();
+  $('hSub').textContent=new Date(today()+'T12:00:00Z').toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric',timeZone:'UTC'});
+  if(S.loaded&&!S.secInit){S.secInit=true;if(m!=='work')S.open.add('sec:tonight');if(m==='eve')S.open.add('sec:close')}
+  renderCore();
+  /* the one next action */
+  const p=S.plan,marks=p?.marks||{},all=(p?.picks||[]).map(k=>({k,t:S.tasks.get(k.id)})).filter(x=>x.t),op=openPicks(),cur=op[0];
+  const head=m==='teach'?'Between lessons':m==='eve'?'Before you switch off':'Right now';
+  let h=`<h2>${head}</h2>`;
+  if(cur){const{k,t}=cur;
+    h+=`<div class="card pick"><div class="n">${esc(AREAS[t.a]||t.a)} · ${k.min||t.est||'?'} min</div><h3>${esc(T(t))}</h3><p class="why">${esc(k.why)}</p><p class="first"><b>Start:</b> ${esc(k.first||t.next||t.t)}</p>
+      <div class="row"><button class="pri sm" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="mark" data-m="skip" data-id="${t.id}">Not now</button><button class="sm" data-act="mark" data-m="stuck" data-id="${t.id}">Stuck</button>${t.out==='ready'?`<button class="sm ghost" data-act="goAI">Open the draft</button>`:t.ai?`<button class="sm ghost" data-act="aiTask" data-id="${t.id}">Let AI draft it</button>`:''}</div></div>`;
+    const rest=m==='work'?op.slice(1):[],quick=m!=='work'?[]:(p.quick||[]).map(id=>S.tasks.get(id)).filter(t=>t&&t.s!=='done'&&!all.some(x=>x.t.id===t.id));
+    if(rest.length||quick.length)h+=`<div class="card" style="margin-top:8px">${rest.map(({k,t})=>`<div class="item row"><div class="grow"><div class="t">${esc(T(t))}</div><div class="m">Then · ${k.min||t.est||'?'} min</div></div><button class="sm" data-act="done" data-id="${t.id}">Done</button></div>`).join('')}${quick.map(t=>`<div class="item row"><div class="grow"><div class="t">${esc(T(t))}</div><div class="m">Five-minute win</div></div><button class="sm" data-act="done" data-id="${t.id}">Done</button></div>`).join('')}</div>`;
+    h+=`<div class="row" style="margin-top:6px"><button class="ghost sm" data-act="plan" ${S.planning?'disabled':''}>${S.planning?'Planning…':'Replan from now'}</button></div>`}
+  else if(all.length){const dn=all.filter(x=>x.t.s==='done').length;
+    h+=`<div class="card"><b>Today’s list is clear.</b><div class="why" style="margin:4px 0 10px">${dn} of ${all.length} done${all.length-dn?`, ${all.length-dn} set aside`:''}.</div><button class="sm" data-act="plan" ${S.planning?'disabled':''}>${S.planning?'Planning…':'Plan a bit more'}</button></div>`}
+  else h+=`<div class="card empty">${!S.loaded?'Loading your day…':S.planning?'Planning your day…':'No plan yet for today.'}${S.loaded&&!S.planning?'<div style="margin-top:10px"><button class="pri sm" data-act="plan">Plan my day</button></div>':''}</div>`;
+  $('nowBox').innerHTML=h;
+  /* status chips */
+  const f=feeTot(),mk=[...S.students.values()].reduce((a,x)=>a+(x.active!==false?(x.owed||0):0),0),ver=[...S.tasks.values()].filter(t=>t.s==='verify').sort((a,b)=>(a.p||3)-(b.p||3)),nd=S.drafts.filter(d=>d.state==='ready').length;
+  $('statBox').innerHTML=(f.sum?`<button class="bad" data-act="sec" data-key="sec:money">${money(f.sum)} unpaid</button>`:'')+(mk?`<button class="warn" data-act="sec" data-key="sec:makeups">${mk} h of makeups owed</button>`:'')
+    +(nd?`<button data-act="goAI">${nd} draft${nd>1?'s':''} ready</button>`:'')+(ver.length?`<button data-act="sec" data-key="sec:check">${ver.length} old items to confirm</button>`:'');
+  /* sections */
+  const tn=tonight(),att=x=>S.att.get(today()+'_'+x.id)?.status;
+  let tb=tn.map(({s:x,x:sl})=>`<div class="item row"><div class="grow"><span class="t">${esc(x.name)}</span> <span class="m num">${t12(sl.s)}–${t12(sl.e)}${x.slotsOk?'':' · time not confirmed'}</span></div><button class="sm ${att(x)==='present'?'pri':''}" data-act="att" data-st="present" data-id="${x.id}">Came${att(x)==='present'?' ✓':''}</button><button class="sm ${att(x)==='absent'?'pri':''}" data-act="att" data-st="absent" data-id="${x.id}">Missed${att(x)==='absent'?' ✓':''}</button></div>`).join('');
+  if(isWk()&&knownSlots()<6)tb+=`<div class="m" style="padding-top:10px">I don’t have your full timetable yet. Tell me who comes on which days and I’ll track attendance and makeups for you.</div><div style="margin-top:8px"><button class="sm" data-act="focus" data-say="Go ahead: who comes on which days, and at what times?">Tell me now</button></div>`;
+  const unm=op.length;
+  const closeB=m==='eve'?`<div class="why" style="margin:0 0 8px">${unm?unm+' of today’s items aren’t marked yet: tap Done or Not now on each.':'Today’s items are all marked.'} Anything else happen today? Say it in one go.</div><button class="sm pri" data-act="focus" data-say="How did today go, ${esc(sir())}?">Tell me about today</button>`:'';
+  const paidToday=[...S.students.values()].filter(x=>x.fee?.undo?.at===today());
+  const moneyB=f.sum||paidToday.length?`<div class="row" style="margin-bottom:4px"><div class="big grow">${money(f.sum)}</div>${f.sum?'<button class="sm" data-act="aiChase">Draft reminders</button>':''}</div>${f.ow.map(x=>`<div class="item row"><div class="grow"><span class="t">${esc(x.name)}</span> <span class="m num">${money(owes(x))}${x.fee?.given?' · note given '+esc(x.fee.given):''}</span></div><button class="sm" data-act="paidFull" data-id="${x.id}">Paid</button></div>`).join('')}${paidToday.map(x=>`<div class="item row"><div class="grow"><span class="t">${esc(x.name)}</span> <span class="m num">${money(x.fee.paid-(x.fee.undo.paid||0))} recorded today${x.fee.sheet==='written'?' · in your fee sheet':''}</span></div><button class="sm ghost" data-act="undoPay" data-id="${x.id}">Undo</button></div>`).join('')}`:'';
+  const checkB=ver.slice(0,3).map(t=>`<div class="item"><div class="t">${esc(t.t)}</div><div class="m">${esc(AREAS[t.a]||'')}</div><div class="row" style="margin-top:6px"><button class="sm" data-act="set" data-s="ready" data-id="${t.id}">Still to do</button><button class="sm" data-act="done" data-id="${t.id}">Already done</button><button class="sm" data-act="set" data-s="parked" data-id="${t.id}">Drop it</button></div></div>`).join('');
+  const ag=S.agent,repB=ag&&ag.date===today()&&ag.brief?`<div class="why" style="white-space:pre-wrap;margin:0">${esc(ag.brief)}</div>${(ag.flags||[]).map(x=>`<div class="m" style="margin-top:6px">• ${esc(x)}</div>`).join('')}`:'';
+  const histB=S.dumps.length?`<div class="stack">${S.dumps.map(d=>`<div class="bub me">${esc(d.text)}</div>${d.reply?`<div class="bub ai">${esc(d.reply)}${d.ops?.length?`<div class="m" style="margin-top:6px">${d.ops.map(esc).join(' · ')}</div>`:''}</div>`:''}`).join('')}</div>`:'';
+  const tonightS=isWk()?sec('sec:tonight',`Tonight’s lessons${tn.length?' · '+tn.length:''}`,tb):'';
+  $('topBox').innerHTML=m==='eve'?sec('sec:close','Close the day',closeB)+tonightS:m==='teach'?tonightS:'';
+  $('secBox').innerHTML=(m==='work'?tonightS:'')+sec('sec:money',`Money to collect · ${money(f.sum)}`,moneyB)+sec('sec:makeups',`Makeups to book · ${mk} h`,makeupBody())
+    +sec('sec:check',`Quick check · ${ver.length} old items`,checkB)+sec('sec:week','Your week',weekBody())+sec('sec:report','Overnight report',repB)+sec('sec:left','Left out on purpose',p?.leftOut?`<div class="why" style="margin:0">${esc(p.leftOut)}</div>`:'')+sec('sec:hist','What you’ve told me',histB);
 }
 function renderList(){
   const all=[...S.tasks.values()];const areas=[...new Set(all.map(t=>t.a))];
@@ -347,73 +485,207 @@ function renderList(){
   $('statChips').innerHTML=Object.keys(STAT).map(k=>`<button class="${S.stat===k?'on':''}" data-act="stat" data-s="${k}">${STAT[k]} <span class="num">${all.filter(t=>t.s===k&&(!S.area||t.a===S.area)).length}</span></button>`).join('');
   const list=all.filter(t=>t.s===S.stat&&(!S.area||t.a===S.area)).sort((a,b)=>rank(b)-rank(a));
   $('allList').innerHTML=list.length?list.map(t=>{const dd=t.due?dayDiff(t.due):null;
-    return `<div class="item"><div class="row"><div class="grow t">${esc(t.t)}</div>${t.p===1?'<span class="pill bad">Critical</span>':t.p===2?'<span class="pill warn">High</span>':''}${t.due?`<span class="pill ${dd<=2?'bad':dd<=7?'warn':'mute'} num">${dd<0?Math.abs(dd)+'d late':dd===0?'today':dd+'d'}</span>`:''}</div>
+    return `<div class="item"><div class="row"><div class="grow t">${esc(T(t))}</div>${t.p===1?'<span class="pill bad">Critical</span>':t.p===2?'<span class="pill warn">High</span>':''}${t.due?`<span class="pill ${dd<=2?'bad':dd<=7?'warn':'mute'} num">${dd<0?Math.abs(dd)+'d late':dd===0?'today':dd+'d'}</span>`:''}</div>
     <div class="m">${esc(AREAS[t.a]||t.a)}${t.est?' · '+t.est+' min':''}${t.wait?' · waiting on '+esc(t.wait):''}${t.out==='ready'?' · AI draft ready':''}</div>
-    <details><summary>Open</summary>${t.next?`<div class="m"><b>Next:</b> ${esc(t.next)}</div>`:''}${t.n?`<div class="m" style="white-space:pre-wrap">${esc(t.n)}</div>`:''}
+    <details data-key="t:${t.id}"${S.open.has('t:'+t.id)?' open':''}><summary>Open</summary>${t.next?`<div class="m"><b>Next:</b> ${esc(t.next)}</div>`:''}${t.n?`<div class="m" style="white-space:pre-wrap">${esc(t.n)}</div>`:''}
     <div class="row" style="margin-top:8px">${t.s!=='done'?`<button class="sm pri" data-act="done" data-id="${t.id}">Done</button>`:''}${['ready','waiting','parked','idea'].filter(x=>x!==t.s).map(x=>`<button class="sm" data-act="set" data-s="${x}" data-id="${t.id}">${STAT[x]}</button>`).join('')}<button class="sm ghost" data-act="aiTask" data-id="${t.id}">AI: help with this</button></div></details></div>`}).join(''):`<div class="empty">${S.loaded?'Nothing here.':'Loading…'}</div>`;
 }
 function renderCentre(){
   const st=[...S.students.values()].sort((a,b)=>owes(b)-owes(a)||a.name.localeCompare(b.name));
   $('owedTotal').textContent=st.length?money(st.reduce((a,s)=>a+owes(s),0)):'–';
-  $('makeBox2').innerHTML=makeupHtml();
+  const mb=makeupBody();$('makeBox2').innerHTML=mb?`<h2>Makeups to book</h2><div class="card">${mb}</div>`:'';
   const ms=S.stats?.months||[],mx=Math.max(1,...ms.map(m=>m.billed||0));
-  $('revBox').innerHTML=ms.length?`<h2>Monthly fees billed</h2><div class="card">${ms.map(m=>`<div class="row" style="margin:5px 0"><span class="m num" style="width:64px;white-space:nowrap">${esc(new Date(m.m+'-15T12:00:00Z').toLocaleString('en-CA',{month:'short',year:'2-digit',timeZone:'UTC'}))}</span><div class="grow" style="background:var(--line);border-radius:6px;height:14px"><div style="width:${Math.round((m.billed||0)/mx*100)}%;background:var(--acc);height:14px;border-radius:6px"></div></div><span class="num" style="width:62px;text-align:right">${money(m.billed||0)}</span></div>`).join('')}${S.stats.note?`<div class="m" style="margin-top:8px">${esc(S.stats.note)}</div>`:''}</div>`:'';
-  const D=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  $('revBox').innerHTML=ms.length?`<h2>Monthly fees billed</h2><div class="card">${ms.map(m=>`<div class="row" style="margin:5px 0;flex-wrap:nowrap"><span class="m num" style="width:56px;white-space:nowrap;flex:none">${esc(new Date(m.m+'-15T12:00:00Z').toLocaleString('en-CA',{month:'short',year:'2-digit',timeZone:'UTC'}))}</span><div class="grow" style="background:var(--line);border-radius:6px;height:14px"><div style="width:${Math.round((m.billed||0)/mx*100)}%;background:var(--acc);height:14px;border-radius:6px"></div></div><span class="num" style="width:62px;text-align:right;flex:none">${money(m.billed||0)}</span></div>`).join('')}${S.stats.note?`<div class="m" style="margin-top:8px">${esc(S.stats.note)}</div>`:''}</div>`:'';
   $('stuList').innerHTML=st.length?st.map(s=>`<div class="item"><div class="row"><div class="grow t">${esc(s.name)} <span class="m">${s.grade?'Gr '+esc(s.grade):''}${s.parent?' · '+esc(s.parent):''}</span></div>${owes(s)?`<span class="pill bad num">owes ${money(owes(s))}</span>`:s.fee?.due?'<span class="pill good">paid</span>':''}${s.owed?`<span class="pill warn num">${s.owed} h makeup</span>`:''}</div>
-    <div class="m num">${s.model==='sub'?money(s.rate||0)+'/mo':(s.perWeek||'?')+' lessons/wk × $'+(s.rate||'?')}${(s.slots||[]).length?' · '+s.slots.map(x=>D[x.d]+' '+x.s+'–'+x.e).join(', ')+(s.slotsOk?'':' (unconfirmed)'):' · schedule not entered'}</div>
-    <details><summary>Open</summary>${s.n?`<div class="m" style="white-space:pre-wrap">${esc(s.n)}</div>`:''}<div class="row" style="margin-top:8px"><button class="sm" data-act="att" data-st="absent" data-id="${s.id}">Missed a lesson</button><button class="sm" data-act="att" data-st="makeup" data-id="${s.id}">Did a makeup</button>${owes(s)?`<button class="sm" data-act="paidFull" data-id="${s.id}">Paid in full</button>`:''}<button class="sm ghost" data-act="aiStu" data-id="${s.id}">Draft parent message</button></div></details></div>`).join(''):`<div class="empty">${S.loaded?'No students loaded yet.':'Loading…'}</div>`;
+    <div class="m num">${s.model==='sub'?money(s.rate||0)+'/mo':(s.perWeek||'?')+' lessons/wk × $'+(s.rate||'?')}${(s.slots||[]).length?' · '+s.slots.map(x=>DN[x.d]+' '+x.s+'–'+x.e).join(', ')+(s.slotsOk?'':' (unconfirmed)'):' · timetable not entered'}</div>
+    <details data-key="s:${s.id}"${S.open.has('s:'+s.id)?' open':''}><summary>Open</summary>${s.n?`<div class="m" style="white-space:pre-wrap">${esc(s.n)}</div>`:''}<div class="row" style="margin-top:8px"><button class="sm" data-act="att" data-st="absent" data-id="${s.id}">Missed a lesson</button><button class="sm" data-act="att" data-st="makeup" data-id="${s.id}">Did a makeup</button>${owes(s)?`<button class="sm" data-act="paidFull" data-id="${s.id}">Paid in full</button>`:''}${s.fee?.undo?`<button class="sm" data-act="undoPay" data-id="${s.id}">Undo last payment</button>`:''}<button class="sm ghost" data-act="aiStu" data-id="${s.id}">Draft parent message</button></div></details></div>`).join(''):`<div class="empty">${S.loaded?'No students loaded yet.':'Loading…'}</div>`;
 }
 function renderAI(){
   $('drafts').innerHTML=S.drafts.length?S.drafts.map(d=>`<div class="card" data-d="${d.id}"><div class="row"><b class="grow">${esc(d.title)}</b><span class="pill ${d.state==='ready'?'good':d.state==='failed'?'bad':'warn'}">${d.state==='ready'?'Ready to review':d.state==='failed'?'Failed':'Working…'}</span></div><pre class="out" id="o${d.id}">${esc(d.body||'')}</pre>
     <div class="row"><button class="sm pri" data-act="copy" data-from="o${d.id}">Copy</button><button class="sm" data-act="redo" data-id="${d.id}">Redo</button><button class="sm ghost" data-act="delDraft" data-id="${d.id}">Remove</button></div></div>`).join(''):'<div class="empty">Drafts and research land here. Wrong? Hit Redo.</div>';
 }
-function renderLog(){
-  $('log').innerHTML=S.dumps.length?S.dumps.map(d=>`<div class="bub me">${esc(d.text)}</div>${d.reply?`<div class="bub ai">${esc(d.reply)}${d.ops?.length?`<div class="m" style="margin-top:6px;color:var(--mute);font-size:13px">${d.ops.map(esc).join(' · ')}</div>`:''}</div>`:'<div class="bub ai">Sorting…</div>'}`).join(''):'<div class="empty">Nothing yet. What’s on your mind?</div>';
-}
-function show(v){S.view=v;for(const k of['today','talk','all','centre','ai'])$('v-'+k).hidden=k!==v;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
-  $('hTitle').textContent={today:'Today',talk:'Talk',all:'Everything',centre:'Centre',ai:'AI help'}[v];window.scrollTo(0,0)}
+function show(v){S.view=v;for(const k of['today','all','centre','ai'])$('v-'+k).hidden=k!==v;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  $('hTitle').textContent={today:'Today',all:'Everything',centre:'Centre',ai:'AI help'}[v];window.scrollTo(0,0);orb.sync()}
 function sheet(html){$('sheetBody').innerHTML=html;$('sheet').hidden=false}
 function settingsSheet(){const s=S.settings;const f=(k,l,t='time')=>`<label for="s_${k}">${l}</label><input id="s_${k}" type="${t}" value="${esc(s[k])}">`;
-  sheet(`<h3 style="font:600 18px var(--disp);margin:0">Your day</h3>${f('wake','Wake up')}${f('workout','Workout')}${f('workStart','Focused work starts')}${f('teachStart','Teaching starts')}${f('teachEnd','Teaching ends')}${f('protect','Always protect','text')}
+  sheet(`<h3 style="font:600 18px var(--disp);margin:0">Settings</h3>${f('address','What it calls you','text')}
+  ${tts?`<label for="s_voice">Its voice</label><div class="row" style="flex-wrap:nowrap"><select id="s_voice">${['buttery','airy','glassy','rounded'].map(v=>`<option ${s.voice===v?'selected':''}>${v}</option>`).join('')}</select><button data-act="testVoice">Test</button></div>`:''}
+  ${dict?`<label style="display:flex;gap:8px;align-items:center;margin-top:14px"><input type="checkbox" id="s_autoSend" ${s.autoSend!==false?'checked':''}> Send by itself when I stop talking</label>`:''}
+  ${f('wake','Wake-up time you’re aiming for')}${f('workStart','Focused work starts')}${f('teachStart','Teaching starts')}${f('teachEnd','Teaching ends')}${f('protect','Always protect','text')}
   <label for="s_capacity">How full to plan your free time</label><select id="s_capacity">${[0.5,0.65,0.8].map(v=>`<option value="${v}" ${+s.capacity===v?'selected':''}>${Math.round(v*100)}% ${v===0.5?'(light)':v===0.65?'(realistic)':'(packed)'}</option>`).join('')}</select>
   <div class="row" style="margin-top:14px"><button class="pri" data-act="saveSettings">Save</button><button data-act="close">Cancel</button></div>`)}
+function upSheet(){const hb=S.habits.get(today())||{};
+  sheet(`<h3 style="font:600 18px var(--disp);margin:0 0 10px">When did you get up?</h3><button class="pri" data-act="upNow" style="width:100%">Just now</button>
+  <label for="upT">Or earlier, at</label><div class="row" style="flex-wrap:nowrap"><input type="time" id="upT" value="${esc(hb.upAt||nowHM())}"><button data-act="upSet">Set</button></div>
+  <div class="row" style="margin-top:14px">${hb.up?'<button class="ghost" data-act="upClear">Clear it</button>':''}<button data-act="close">Cancel</button></div>`)}
+
+/* ---------- voice ---------- */
+function setState(st){V.state=st;renderCore()}
+function say(text,speakIt,queue){V.say=text;V.greeting=false;renderCore();if(speakIt)speak(text,false,queue)}
+function pickVoice(){const vs=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang));if(!vs.length)return null;
+  const sc=v=>(/daniel/i.test(v.name)?40:0)+(/premium/i.test(v.name)?30:0)+(/enhanced/i.test(v.name)?20:0)+(/en.GB/i.test(v.lang)?8:0)+(v.default?2:0);
+  return vs.sort((a,b)=>sc(b)-sc(a))[0]}
+async function speak(text,force,queue){
+  if(!text||(!V.voiceOn&&!force))return;
+  if(tts){if(V.ttsOff)return;
+    try{await tts[queue&&tts.active()?'add':'speak'](text.slice(0,1900),{voice:S.settings.voice||'buttery',rate:1.05})}
+    catch(e){if(e?.code==='not_granted'||e?.code==='unavailable'){V.ttsOff=true;renderCore()}}
+    return}
+  if(!('speechSynthesis'in window))return;
+  try{if(!queue)speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text),v=pickVoice();if(v)u.voice=v;u.rate=1.02;
+    u.onstart=()=>{if(V.state==='idle')setState('speaking')};u.onend=u.onerror=()=>{if(V.state==='speaking'&&!speechSynthesis.pending)setState('idle')};u.onboundary=()=>orb.tick();
+    speechSynthesis.speak(u)}catch(e){}}
+function stopSpeak(){if(tts)tts.stop().catch(()=>{});else try{speechSynthesis.cancel()}catch(e){}if(V.state==='speaking')setState('idle')}
+function wireTts(){
+  tts.onState(({state})=>{if(state==='speaking'||state==='starting'){if(V.state==='idle')setState('speaking')}else if(state==='idle'&&V.state==='speaking')setState('idle')});
+  tts.onPosition(()=>orb.tick())}
+function wireDict(){
+  dict.onFinal(({text})=>{V.buf=V.buf?V.buf+text:text.trimStart();V.partial='';V.lastHeard=Date.now();orb.kick(.9);renderCore()});
+  dict.onPartial(({text})=>{V.partial=text;if(text){V.lastHeard=Date.now();orb.kick(.5)}renderCore()});
+  dict.onState(({state,reason})=>{
+    if(state==='listening'){V.lastHeard=Date.now();if(V.state==='starting')setState('listening')}
+    else if(state==='idle'&&(V.state==='listening'||V.state==='starting')&&!V.finishing){
+      clearInterval(V.silence);const text=V.buf.trim();V.buf='';V.partial='';
+      if(reason==='viewer_stopped'&&text){respond(text);return}
+      if(text){$('dump').value=text;grow()}
+      if(reason==='not_granted'||reason==='unavailable')dict=null;
+      setState('idle')}})}
+function listen(){
+  stopSpeak();V.buf='';V.partial='';V.finishing=false;V.lastHeard=Date.now();V.state='starting';
+  dict.start().catch(er=>{clearInterval(V.silence);if(V.state==='starting'||V.state==='listening')setState('idle');
+    if(er?.code==='not_granted'||er?.code==='unavailable'){dict=null;renderCore();$('dump').focus()}
+    else if(er?.code!=='stopped'&&er?.code!=='dismissed')toast('The mic isn’t available right now. Typing still works.')});
+  renderCore();
+  clearInterval(V.silence);V.silence=setInterval(()=>{if(V.state!=='listening')return;const quiet=Date.now()-V.lastHeard,has=V.buf.trim();
+    if(has&&!V.partial&&quiet>3200&&S.settings.autoSend!==false)finish(true);else if(!has&&!V.partial&&quiet>25000)finish(false)},250)}
+async function finish(send){
+  if(V.finishing||!dict)return;V.finishing=true;clearInterval(V.silence);
+  try{await dict.stop()}catch(e){}
+  const text=V.buf.trim();V.buf='';V.partial='';V.finishing=false;
+  if(send&&text){V.state='idle';respond(text)}else setState('idle')}
+function orbTap(){const st=V.state;
+  if(st==='thinking')return;
+  if(st==='listening'||st==='starting'){finish(true);return}
+  if(dict){listen();return}
+  if(st==='speaking'){stopSpeak();return}
+  const el=$('dump');el.focus();el.scrollIntoView({block:'center',behavior:'smooth'})}
+function grow(){const el=$('dump');el.style.height='44px';el.style.height=Math.min(140,el.scrollHeight+2)+'px'}
+
+/* ---------- the core: a small neural brain drawn on canvas ---------- */
+const orb=(()=>{
+  const cv=$('orb'),ctx=cv.getContext&&cv.getContext('2d');if(!ctx)return{set(){},kick(){},tick(){},sync(){}};
+  const W=240,H=190,CX=120,CY=95,reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const P=new Path2D('M52 108C36 84 44 52 78 42C104 28 146 28 170 42C196 56 200 92 184 110C190 128 168 142 150 134C148 146 140 156 130 156L126 138C110 146 78 142 68 128C58 126 52 118 52 108Z');
+  const SUL=['M70 122C96 108 124 112 150 100','M112 36C106 54 116 70 108 92','M150 134C158 122 172 116 186 110','M80 62C94 56 102 68 94 80','M142 50C154 58 150 72 164 78'].map(d=>new Path2D(d));
+  let seed=11;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+  const nodes=[],edges=[],adj=[];
+  for(let i=0;i<58;i++){let best=null,bd=-1;for(let k=0;k<14;k++){let x,y,g=0;do{x=44+rnd()*160;y=30+rnd()*130;g++}while(!ctx.isPointInPath(P,x,y)&&g<80);if(g>=80)continue;
+      let d=1e9;for(const n of nodes)d=Math.min(d,(n.x-x)**2+(n.y-y)**2);if(d>bd){bd=d;best={x,y}}}
+    if(best)nodes.push({...best,e:0,ph:rnd()*6.28,r:1.3+rnd()*1.1})}
+  nodes.forEach((n,i)=>{adj[i]=[]});
+  nodes.forEach((n,i)=>{nodes.map((m,j)=>[j,(m.x-n.x)**2+(m.y-n.y)**2]).filter(a=>a[0]!==i).sort((a,b)=>a[1]-b[1]).slice(0,3).forEach(([j,d],k)=>{
+    if(k===2&&d>700)return;const a=Math.min(i,j),b=Math.max(i,j);if(!edges.some(e=>e[0]===a&&e[1]===b)){edges.push([a,b]);adj[a].push(b);adj[b].push(a)}})});
+  let dpr=1,state='idle',energy=0,env=0,last=0,acc=0,raf=0,lastTick=0,skip=false,C={a:'63,193,201',b:'201,246,248',t:'169,156,255'};const sparks=[];
+  function colors(){const cs=getComputedStyle(document.documentElement),hx=(v,f)=>{const s=cs.getPropertyValue(v).trim();if(!/^#[0-9a-f]{6}$/i.test(s))return f;const n=parseInt(s.slice(1),16);return `${n>>16},${(n>>8)&255},${n&255}`};
+    C={a:hx('--acc',C.a),b:hx('--acc2',C.b),t:hx('--think',C.t)}}
+  function size(){dpr=Math.min(3,window.devicePixelRatio||1);cv.width=W*dpr;cv.height=H*dpr}
+  function spawn(from){if(sparks.length>64)return;let a,b;if(from!==undefined&&adj[from].length){a=from;b=adj[from][Math.floor(rnd()*adj[from].length)]}else{const e=edges[Math.floor(rnd()*edges.length)];if(rnd()<.5){a=e[0];b=e[1]}else{a=e[1];b=e[0]}}
+    sparks.push({a,b,p:0,d:320+rnd()*420})}
+  function draw(now,still){
+    const dt=still?16:Math.min(50,now-last||16);last=now;const t=now/1000,st=state==='starting'?'listening':state;
+    const K={idle:{rate:1.1,casc:.12,spd:1,hue:C.a,edge:.11},listening:{rate:3+energy*16,casc:.34,spd:1.3,hue:C.a,edge:.16},thinking:{rate:17,casc:.7,spd:2,hue:C.t,edge:.2},speaking:{rate:4+env*9,casc:.3,spd:1.2,hue:C.a,edge:.15}}[st]||{rate:1,casc:.1,spd:1,hue:C.a,edge:.11};
+    energy*=Math.exp(-dt/450);
+    env=st==='speaking'?Math.max(now-lastTick<280?.8:0,.5+.5*Math.sin(t*7.3)*Math.sin(t*2.1+1)):0;
+    if(!still){acc+=K.rate*dt/1000;while(acc>1){acc--;spawn()}}
+    ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);ctx.lineCap='round';
+    /* rings */
+    ctx.setLineDash([2,7]);ctx.lineWidth=1;ctx.strokeStyle=`rgba(${K.hue},.2)`;ctx.beginPath();ctx.arc(CX,CY,92,0,6.2832);ctx.stroke();ctx.setLineDash([]);
+    const rot=still?0:t*(st==='thinking'?1.7:st==='idle'?.22:.5);
+    for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(CX,CY,87,rot+i*2.0944,rot+i*2.0944+1.05);ctx.strokeStyle=`rgba(${K.hue},${st==='idle'?.26:.55})`;ctx.lineWidth=1.5;ctx.stroke()}
+    if(st==='listening'){ctx.beginPath();for(let i=0;i<=90;i++){const a=i/90*6.2832,amp=1.2+energy*8,r=80+Math.sin(a*5+t*6)*amp*.6+Math.sin(a*9-t*4.3)*amp*.4,x=CX+Math.cos(a)*r,y=CY+Math.sin(a)*r;i?ctx.lineTo(x,y):ctx.moveTo(x,y)}
+      ctx.closePath();ctx.strokeStyle=`rgba(${C.b},${.3+energy*.55})`;ctx.lineWidth=1.3;ctx.stroke()}
+    if(st==='speaking')for(let i=0;i<3;i++){const p=((t*.85+i/3)%1),r=34+p*52;ctx.beginPath();ctx.arc(CX,CY,r,0,6.2832);ctx.strokeStyle=`rgba(${C.b},${(1-p)*.3*(.35+env)})`;ctx.lineWidth=1.2;ctx.stroke()}
+    /* brain */
+    const sc=1+energy*.025+(st==='speaking'?env*.012:0);ctx.translate(CX,CY);ctx.scale(sc,sc);ctx.translate(-CX,-CY);
+    ctx.lineWidth=1.3;ctx.strokeStyle=`rgba(${K.hue},${st==='idle'?.34:.5})`;ctx.stroke(P);
+    ctx.lineWidth=1;ctx.strokeStyle=`rgba(${K.hue},.16)`;for(const s of SUL)ctx.stroke(s);
+    ctx.beginPath();for(const[a,b]of edges){ctx.moveTo(nodes[a].x,nodes[a].y);ctx.lineTo(nodes[b].x,nodes[b].y)}ctx.strokeStyle=`rgba(${K.hue},${K.edge})`;ctx.lineWidth=.7;ctx.stroke();
+    for(let i=sparks.length-1;i>=0;i--){const s=sparks[i];s.p+=dt/s.d*K.spd;const A=nodes[s.a],B=nodes[s.b];
+      if(s.p>=1){B.e=1;sparks.splice(i,1);if(rnd()<K.casc)spawn(s.b);continue}
+      const x=A.x+(B.x-A.x)*s.p,y=A.y+(B.y-A.y)*s.p;
+      ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(x,y);ctx.strokeStyle=`rgba(${K.hue},.45)`;ctx.lineWidth=1;ctx.stroke();
+      ctx.fillStyle=`rgba(${K.hue},.2)`;ctx.beginPath();ctx.arc(x,y,4.5,0,6.2832);ctx.fill();
+      ctx.fillStyle=`rgba(${C.b},1)`;ctx.beginPath();ctx.arc(x,y,1.5,0,6.2832);ctx.fill()}
+    for(const n of nodes){n.e*=Math.exp(-dt/520);const br=still?.6:.5+.5*Math.sin(t*1.4+n.ph),lit=still&&st!=='idle'?.6:n.e,
+        jx=st==='listening'&&!still?Math.sin(t*9+n.ph)*energy*1.4:0,jy=st==='listening'&&!still?Math.cos(t*8+n.ph)*energy*1.4:0;
+      if(lit>.12){ctx.fillStyle=`rgba(${K.hue},${.16*lit})`;ctx.beginPath();ctx.arc(n.x+jx,n.y+jy,(n.r+lit*1.6)*3,0,6.2832);ctx.fill()}
+      ctx.fillStyle=`rgba(${lit>.5?C.b:K.hue},${Math.min(1,.38+.24*br+.5*lit)})`;ctx.beginPath();ctx.arc(n.x+jx,n.y+jy,n.r+lit*1.5,0,6.2832);ctx.fill()}
+  }
+  function loop(now){raf=0;if(state==='idle'){skip=!skip;if(skip){raf=requestAnimationFrame(loop);return}}draw(now);raf=requestAnimationFrame(loop)}
+  function sync(){const want=!reduce&&document.visibilityState==='visible'&&S.view==='today'&&vis;
+    if(want&&!raf){last=performance.now();raf=requestAnimationFrame(loop)}else if(!want&&raf){cancelAnimationFrame(raf);raf=0}
+    if(reduce)draw(performance.now(),true)}
+  let vis=true;try{new IntersectionObserver(es=>{vis=es[0].isIntersecting;sync()}).observe(cv)}catch(e){}
+  try{new MutationObserver(()=>{colors();if(reduce)draw(performance.now(),true)}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']})}catch(e){}
+  addEventListener('resize',()=>{size();if(reduce)draw(performance.now(),true)});
+  colors();size();
+  return{set(s){if(s!==state){state=s;if(s==='thinking')for(let i=0;i<8;i++)spawn();if(reduce)draw(performance.now(),true)}},kick(a){energy=Math.min(1,energy+a)},tick(){lastTick=performance.now()},sync};
+})();
 
 /* ---------- events ---------- */
-function wireDict(){
-  dict.onFinal(({text})=>{const el=$('dump');el.value=(el.value?el.value:'')+(el.value?text:text.trimStart())});
-  dict.onPartial(({text})=>{$('partial').textContent=text});
-  dict.onState(({state,reason})=>{$('mic').classList.toggle('on',state!=='idle');$('mic').textContent=state==='idle'?'🎙':'■';if(state==='idle')$('partial').textContent='';if(reason==='not_granted'){$('mic').hidden=true}});
-}
+document.addEventListener('toggle',e=>{const k=e.target?.dataset?.key;if(k)e.target.open?S.open.add(k):S.open.delete(k)},true);
+document.addEventListener('pointerdown',()=>{if(V.unlocked||tts||!('speechSynthesis'in window))return;V.unlocked=true;try{const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u)}catch(e){}},{passive:true});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&today()!==S.day&&!window.__HQ_DAY){location.reload();return}orb.sync()});
+$('dump').addEventListener('input',()=>{grow();orb.kick(.35)});
+$('dump').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();const el=$('dump'),t=el.value;el.value='';grow();respond(t)}});
 document.addEventListener('click',async e=>{
   const nb=e.target.closest('nav button');if(nb){show(nb.dataset.v);return}
   if(e.target.id==='sheet'){$('sheet').hidden=true;return}
   const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,id=b.dataset.id;
-  if(a==='mic'){if(dict.active())dict.stop();else dict.start().catch(er=>{if(er.code==='not_granted'){$('mic').hidden=true;toast('Mic is off for this page. Typing still works.')}else if(er.code!=='stopped'&&er.code!=='dismissed')toast('Mic unavailable right now.')});return}
-  if(a==='send')return sendDump();
-  if(a==='plan')return makePlan();
-  if(a==='lost')return makePlan('He lost time today or plans changed. Shrink the plan to what still fits and keep earlier picks where possible.');
-  if(a==='done'){const t=S.tasks.get(id);if(t){await up(id,{s:'done',doneAt:stamp(),ev:'tapped Done'});toast('Done: '+t.t)}return}
+  if(a==='orb')return orbTap();
+  if(a==='send'){const el=$('dump'),t=el.value;el.value='';grow();return respond(t)}
+  if(a==='sendNow')return finish(true);
+  if(a==='cancelListen')return finish(false);
+  if(a==='stopSpeak')return stopSpeak();
+  if(a==='voice'){V.voiceOn=!V.voiceOn;try{localStorage.setItem('hq.voice',V.voiceOn?'1':'0')}catch(e){}if(!V.voiceOn)stopSpeak();renderCore();toast(V.voiceOn?'Spoken replies on':'Spoken replies off',1600);return}
+  if(a==='brief')return speak(briefText(),true);
+  if(a==='up')return upSheet();
+  if(a==='upNow'){$('sheet').hidden=true;return markUp(nowHM())}
+  if(a==='upSet'){const t=$('upT').value;if(/^\d\d:\d\d$/.test(t)){$('sheet').hidden=true;return markUp(t)}return}
+  if(a==='upClear'){const hb={...(S.habits.get(today())||{}),date:today(),up:false};delete hb.upAt;S.habits.set(today(),hb);await db?.doc('habits/'+today()).set(hb).catch(()=>{});$('sheet').hidden=true;V.greeting=true;renderToday();return}
+  if(a==='habit'){const hb={...(S.habits.get(today())||{}),date:today()},h=b.dataset.h;hb[h]=!hb[h];S.habits.set(today(),hb);renderToday();await db?.doc('habits/'+today()).set(hb).catch(()=>{});if(hb[h])say(`Logged, ${sir()}. Good work.`,true);return}
+  if(a==='plan')return makePlan('He asked to replan from the current time. Keep earlier picks where they still fit.',true);
+  if(a==='done'){const t=S.tasks.get(id);if(!t)return;const wasPick=(S.plan?.picks||[]).some(k=>k.id===id)&&S.view==='today',nx=openPicks(id)[0];
+    await up(id,{s:'done',doneAt:stamp(),ev:'tapped Done'});
+    if(wasPick)say(nx?`Done, ${sir()}. Next: ${T(nx.t)}.`:`Done, ${sir()}. That clears today’s list.`,true);else toast('Done: '+t.t);return}
   if(a==='set'){await up(id,{s:b.dataset.s});return}
-  if(a==='mark'){const t=S.tasks.get(id);const marks={...(S.plan?.marks||{}),[id]:b.dataset.m};await db.doc('plans/'+today()).update({marks}).catch(()=>{});if(t)await up(id,{defer:(t.defer||0)+1});toast(b.dataset.m==='stuck'?'Marked stuck. Tell me why in Talk and I’ll unblock it.':'Okay, not today.');return}
-  if(a==='habit'){const hb=S.habits.get(today())||{},h=b.dataset.h,on=!hb[h],n={...hb,date:today(),[h]:on};if(h==='up'&&on)n.upAt=nowHM();await db?.doc('habits/'+today()).set(n).catch(()=>{});if(h==='up'&&on)wokeReplan(n.upAt);return}
-  if(a==='goTalk'){show('talk');$('dump').focus();return}
+  if(a==='mark'){const t=S.tasks.get(id),mk=b.dataset.m,marks={...(S.plan?.marks||{}),[id]:mk},nx=openPicks(id)[0];
+    if(S.plan)S.plan={...S.plan,marks};await db.doc('plans/'+today()).update({marks}).catch(()=>{});if(t)await up(id,{defer:(t.defer||0)+1});
+    if(mk==='stuck'){V.ctx={stuck:id};say(`What’s in the way, ${sir()}? Tell me and I’ll sort it out.`,true);if(!dict)$('dump').focus()}
+    else say(nx?`No problem. Next: ${T(nx.t)}.`:`No problem, ${sir()}. Nothing else is queued for today.`,true);return}
+  if(a==='sec'){S.open.add(b.dataset.key);renderToday();document.querySelector(`details[data-key="${b.dataset.key}"]`)?.scrollIntoView({block:'start',behavior:'smooth'});return}
+  if(a==='focus'){show('today');say(b.dataset.say||'Go ahead.',true);if(!dict){$('dump').focus()}$('orbBtn').scrollIntoView({block:'start',behavior:'smooth'});return}
+  if(a==='goAI')return show('ai');
   if(a==='aiMakeup'){const s=S.students.get(id);if(s)runJob(`Write a short, warm WhatsApp message to ${s.parent||'the parent'} of ${s.name}: ${s.name} is owed ${s.owed} hour(s) of makeup time and there is a free spot ${b.dataset.slot}. Ask if they can come then, and offer to find another time if not.`);return}
   if(a==='area'){S.area=b.dataset.a;renderList();return}
   if(a==='stat'){S.stat=b.dataset.s;renderList();return}
-  if(a==='att'){const s=S.students.get(id);if(s){await logAtt(s,b.dataset.st,1);toast(s.name+': '+(b.dataset.st==='absent'?'missed, 1 h makeup owed':b.dataset.st==='makeup'?'makeup done':'came'))}return}
-  if(a==='paidFull'){const s=S.students.get(id);if(s){const ok=await recordPaid(s,s.fee.due,today());toast(s.name+' marked paid'+(ok?'. Fee sheet updated.':'. Fee sheet will be updated overnight.'))}return}
+  if(a==='att'){const s=S.students.get(id);if(s){await logAtt(s,b.dataset.st,1);renderToday();toast(s.name+': '+(b.dataset.st==='absent'?'missed, makeup owed':b.dataset.st==='makeup'?'makeup done':'came'),1800)}return}
+  if(a==='paidFull'){const s=S.students.get(id);if(s){const ok=await recordPaid(s,s.fee.due,today());toast(s.name+' marked paid'+(ok?', and your fee sheet is updated.':'. Your fee sheet will be updated overnight.'),7000,{label:'Undo',fn:async()=>{const cur=S.students.get(id);toast(cur&&await undoPaid(cur)?'Undone.':'Couldn’t reach your fee sheet, so nothing was undone.')}})}return}
+  if(a==='undoPay'){const s=S.students.get(id);if(s)toast(await undoPaid(s)?s.name+': payment undone.':'Couldn’t reach your fee sheet, so nothing was undone.');return}
   if(a==='feeNotes')return feeNotes();
   if(a==='aiGo'){const q=$('aiAsk').value.trim();if(q){$('aiAsk').value='';runJob(q)}return}
-  if(a==='aiTask'){const t=S.tasks.get(id);if(t)runJob('Do as much of this as can be done on paper, or draft what is needed: '+t.t+(t.next?'. Next step: '+t.next:''),id);return}
+  if(a==='aiTask'){const t=S.tasks.get(id);if(t)runJob('Do as much of this as can be done on paper, or draft what is needed: '+T(t)+(t.next?'. Next step: '+t.next:''),id);return}
   if(a==='aiStu'){const s=S.students.get(id);if(s)runJob(`Write a short, warm WhatsApp message to ${s.parent||'the parent'} of ${s.name}. ${owes(s)?'Fees of '+money(owes(s))+' for this month are unpaid (fee note given '+(s.fee?.given||'earlier')+'). ':''}${s.owed?s.name+' is owed '+s.owed+' hour(s) of makeup time; offer to book it and ask which days work. ':''}Notes: ${s.n||'none'}`);return}
-  if(a==='aiChase'){const l=[...S.students.values()].filter(owes).map(s=>`${s.name}${s.parent?' (parent '+s.parent+')':''}: ${money(owes(s))}, note given ${s.fee?.given||'?'}`).join('; ');runJob('Write one short, polite fee reminder WhatsApp message per family, ready to paste. Friendly, not pushy. Families and amounts: '+l);return}
+  if(a==='aiChase'){const l=feeTot().ow.map(s=>`${s.name}${s.parent?' (parent '+s.parent+')':''}: ${money(owes(s))}, note given ${s.fee?.given||'?'}`).join('; ');runJob('Write one short, polite fee reminder WhatsApp message per family, ready to paste. Friendly, not pushy. Combine siblings with the same parent into one message. Families and amounts: '+l);return}
   if(a==='redo'){const d=S.drafts.find(x=>x.id===id);if(d)runJob(d.ask,d.taskId,d.id);return}
   if(a==='delDraft'){db.doc('drafts/'+id).delete().catch(()=>{});return}
-  if(a==='copy'){const el=$(b.dataset.from);try{await navigator.clipboard.writeText(el.textContent);toast('Copied')}catch{const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);toast('Selected. Copy it from here.')}return}
-  if(a==='speak'){const p=S.plan;const txt=p?.picks?.length?`${p.headline||''} `+p.picks.map((k,i)=>{const t=S.tasks.get(k.id);return t?`${['First','Second','Third'][i]}: ${t.t}. ${k.why} Start by: ${k.first}.`:''}).join(' ')+(p.leftOut?' '+p.leftOut:''):'No plan yet. Tap plan my day.';if(tts)tts.speak(txt.slice(0,1900)).catch(()=>{});else try{speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(txt))}catch{toast('Reading aloud isn’t available on this device.')}return}
+  if(a==='copy'){const el=$(b.dataset.from);try{await navigator.clipboard.writeText(el.textContent);toast('Copied')}catch(e){const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);toast('Selected. Copy it from here.')}return}
   if(a==='settings')return settingsSheet();
+  if(a==='testVoice'){if(tts)tts.speak(`Good day, ${$('s_address').value||'sir'}. Everything is ready.`,{voice:$('s_voice').value,rate:1.05}).catch(()=>{});return}
   if(a==='close'){$('sheet').hidden=true;return}
-  if(a==='saveSettings'){const n={...S.settings};for(const k of['wake','workout','workStart','teachStart','teachEnd','protect'])n[k]=$('s_'+k).value||DEF[k];n.capacity=+$('s_capacity').value;await db?.doc('settings/main').set(n).catch(()=>toast('Could not save'));$('sheet').hidden=true;toast('Saved');return}
+  if(a==='saveSettings'){const n={...S.settings};for(const k of['address','wake','workStart','teachStart','teachEnd','protect'])n[k]=$('s_'+k).value||DEF[k];n.capacity=+$('s_capacity').value;
+    if($('s_voice'))n.voice=$('s_voice').value;if($('s_autoSend'))n.autoSend=$('s_autoSend').checked;
+    await db?.doc('settings/main').set(n).catch(()=>toast('Could not save'));$('sheet').hidden=true;toast('Saved',1600);return}
 });
-renderAll();boot();
+renderAll();orb.sync();boot();
 </script>
