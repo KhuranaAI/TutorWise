@@ -25,3 +25,15 @@ API keys or subscriptions. Build it as **one private claude.ai Artifact page** t
 4. Morning routine: a daily scheduled run writes the plan into the db and pushes a phone notification
    (only after the manual plan works). Weekly review.
 5. Polish from his real use; cut anything he doesn't use.
+
+## Status after cycle 1 (2026-11-13)
+- Published as a private artifact titled "Nimish HQ" (find it with the Artifact tool's list action). Source: `app/today.html`.
+  Republish that same file to update. Capabilities: db (owner-only rules), sample, dictation, tts.
+- db collections: `tasks` (t,a,s,p,due,hard,est,next,n,ai,wait,out), `students` (fee{m,due,paid,given}, slots, owed, credit),
+  `attendance`, `plans/{YYYY-MM-DD}`, `dumps`, `drafts`, `settings/main`. Seeded from his brain dump and his fee sheet in Drive.
+- Direction added by him: he wants agents for the centre's repeating work (fee notes, attendance -> makeups owed ->
+  free-slot suggestions -> parent messages, follow-ups). Data sources found: the "2026/2027 Income Calculations" sheet
+  in Drive (fees per student per month). No attendance or timetable source exists, so the app is now where those are captured.
+  WhatsApp cannot be read from here; messages are drafted for him to send.
+- Next: (2) timetable-aware makeup finder + month-end fee-note run from attendance; sync payments from the Drive sheet;
+  (3) scheduled morning plan + push; weekly centre report; (4) polish from use.
