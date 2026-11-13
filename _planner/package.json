@@ -1,0 +1,9 @@
+{
+  "name": "life-planner-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic core of the whole-life planner: records, capture, planning, reconciliation, job budgets. No dependencies.",
+  "scripts": { "test": "node --test test/*.test.js", "demo": "node src/demo.js" },
+  "engines": { "node": ">=20" }
+}
