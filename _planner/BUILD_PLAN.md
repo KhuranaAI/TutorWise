@@ -88,3 +88,19 @@ API keys or subscriptions. Build it as **one private claude.ai Artifact page** t
 - First thing next cycle: search Drive for the export sheet. If it exists, set `settings.schedSheetId`, run the
   sync logic once from here, check name matching (students carry `sched` = scheduler spelling), then build on it:
   fee notes from attended hours per billing month, makeup slot finder with teacher loads and capacities.
+
+## Cycle 4 (2026-11-13, 5:50 pm Toronto)
+- App v7: two-way fee-sheet sync inside the app (`feeSync()`: on open once Sheets access was allowed, plus
+  "Check my fee sheet now" in Centre). Sheet shows more paid -> app updates; app has a pending payment -> written to the
+  sheet; changed dues, new month tab and new students on the sheet are picked up; `stats/revenue` month is refreshed.
+  Scheduler-link errors are explained in plain words. Harness scenarios 6 and 7 cover the link and the fee sync.
+- Finding: a fresh routine session CAN use ArtifactData (read and write this artifact's db) and has PushNotification,
+  but has no Google connectors. A fresh run is about 45k tokens; a run inside this session re-reads a very large context.
+- So the morning agent moved to a fresh session per run: routine "Nimish HQ morning agent (lean)" (05:47 Toronto).
+  It works only from the database; the app keeps fees and the scheduler copy fresh on open. The old in-session routine
+  "Nimish HQ morning agent" is disabled (kept for reference; delete once the lean one has run for a few days).
+  If he ever wants the agent itself to read the sheets overnight, he has to create the routine in the claude.ai
+  Routines UI with the Google Sheets and Drive connectors attached (this tool cannot attach connectors here).
+- He offered to "program the scheduler differently". Not needed: the blocker is that its data sits behind his login,
+  not how it is built. Keep the scheduler as is; the export-sheet bridge is the link.
+- Still open: he has not run the bridge setup yet; evening "close the day" push (ask him first); 4-week trend view.

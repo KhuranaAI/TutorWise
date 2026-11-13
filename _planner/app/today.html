@@ -125,7 +125,7 @@ label{font-size:13px;color:var(--mute);display:block;margin:10px 0 4px}
 
 <section id="v-centre" hidden>
   <div class="card"><div class="row"><div class="grow"><div class="why" style="margin:0">Fees still to collect this month</div><div class="big" id="owedTotal">–</div></div>
-    <button data-act="feeNotes">Next month’s fee notes</button></div></div>
+    <button data-act="feeNotes">Next month’s fee notes</button></div><div style="margin-top:6px"><button class="ghost sm" data-act="feeSync" style="padding-left:0">Check my fee sheet now</button></div></div>
   <div class="card" id="schedCard" style="margin-top:10px"></div>
   <div id="makeBox2"></div><div id="revBox"></div>
   <h2>Students</h2><div class="card" id="stuList"><div class="empty">Students will list here with fees, makeups owed and schedule.</div></div>
@@ -409,10 +409,10 @@ async function boot(){
   if(!db){clearTimeout(slow);$('hSub').textContent='Sign in to Claude to load your data.';renderAll();return}
   const err=e=>{console.warn(e);if(e?.code==='revoked')$('hSub').textContent='Access changed. Reload the page.'};
   db.collection('tasks').onSnapshot(q=>{S.tasks=new Map(q.docs.map(d=>[d.id,{id:d.id,...d.data()}]));S.loaded=true;clearTimeout(slow);renderAll();maybeAuto()},err);
-  db.collection('students').onSnapshot(q=>{S.students=new Map(q.docs.map(d=>[d.id,{id:d.id,...d.data()}]));renderAll()},err);
+  db.collection('students').onSnapshot(q=>{S.students=new Map(q.docs.map(d=>[d.id,{id:d.id,...d.data()}]));renderAll();autoFees()},err);
   db.collection('drafts').orderBy('at','desc').limit(20).onSnapshot(q=>{S.drafts=q.docs.map(d=>({id:d.id,...d.data()}));renderAI();renderToday()},err);
   db.collection('dumps').orderBy('at','desc').limit(12).onSnapshot(q=>{S.dumps=q.docs.map(d=>({id:d.id,...d.data()}));renderToday()},err);
-  db.doc('settings/main').onSnapshot(d=>{S.settings={...DEF,...(d.exists?d.data():{})};S.setKnown=true;renderAll();autoSync()},err);
+  db.doc('settings/main').onSnapshot(d=>{S.settings={...DEF,...(d.exists?d.data():{})};S.setKnown=true;renderAll();autoSync();autoFees()},err);
   db.doc('sched/week').onSnapshot(d=>{S.sched=d.exists?d.data():null;S.schedKnown=true;renderAll();autoSync()},err);
   db.doc('plans/'+today()).onSnapshot(d=>{S.plan=d.exists?d.data():null;S.planKnown=true;renderToday();maybeAuto()},err);
   const d7=new Date(Date.parse(today()+'T12:00:00Z')-6*864e5).toISOString().slice(0,10);
@@ -479,7 +479,11 @@ async function schedSync(){
   if(S.syncing)return{ok:false,msg:'Already syncing.'};S.syncing=true;renderCentre();
   try{
     const meta=Object.fromEntries((await sheetVals(id,'Meta!A1:B12')).map(r=>[r[0],r[1]]));
-    if(meta.Status!=='ok')throw new Error(meta.Error?'The scheduler copy reported: '+String(meta.Error).slice(0,160):'That sheet has no scheduler copy in it yet.');
+    if(meta.Status!=='ok'){const t=String(meta.Error||'');throw new Error(!t?'That sheet has no scheduler copy in it yet. Did setup finish running?'
+      :/scope/i.test(t)?'Step 3 (the settings file) didn’t take. Paste it again, press Save, and run setup once more.'
+      :/has not been used|is disabled|SERVICE_DISABLED/i.test(t)?'Google blocked that way of reading your scheduler. Tell Claude “the scheduler link says disabled” and it will switch you to the backup method.'
+      :/PERMISSION_DENIED|insufficient permissions|\(403\)/i.test(t)?'Google refused the read. This usually means setup ran under a different Google account than the one that owns the scheduler’s Firebase project.'
+      :'The scheduler copy reported: '+t.slice(0,160))}
     const[st,tt,ss]=await Promise.all([sheetVals(id,'Students!A2:G400'),sheetVals(id,'Timetable!A2:E800'),sheetVals(id,'Sessions!A2:J5000')]);
     try{localStorage.setItem('hq.sheets','1')}catch(e){}
     const hq=[...S.students.values()],find=n=>hq.find(x=>x.sched&&norm(x.sched)===norm(n))||hq.find(x=>!x.sched&&norm(x.name)===norm(n))||null;
@@ -498,6 +502,8 @@ async function schedSync(){
 /* On open, refresh from the scheduler when the last copy is over 30 minutes old (only once Sheets access has been allowed before). */
 function autoSync(){if(S.syncTried||!S.setKnown||!S.schedKnown||!linked()||!mcp)return;let ok=false;try{ok=localStorage.getItem('hq.sheets')==='1'}catch(e){}
   if(!ok)return;S.syncTried=true;if(!S.sched||Date.now()-Date.parse(S.sched.at||0)>18e5||S.sched.week!==mondayOf())schedSync()}
+function autoFees(){if(S.feeTried||!S.setKnown||!S.loaded||!S.students.size||!S.settings.feeSheetId||!mcp)return;let ok=false,last=0;try{ok=localStorage.getItem('hq.sheets')==='1';last=+localStorage.getItem('hq.feeAt')||0}catch(e){}
+  if(!ok)return;S.feeTried=true;if(Date.now()-last>18e5)feeSync()}
 function linkSheet(){
   sheet(`<h3 style="font:600 18px var(--disp);margin:0 0 4px">Link your scheduler</h3><p class="why">One-time setup on a computer, about five minutes. It makes a Google Sheet that copies your scheduler every hour. It only reads your scheduler; it never changes it.</p>
   <ol style="padding-left:20px;margin:0;display:flex;flex-direction:column;gap:12px">
@@ -509,6 +515,41 @@ function linkSheet(){
   <li>A sheet called <b>TutorWise Scheduler Export</b> appears in your Google Drive. Paste its link here:<input id="schedUrl" type="url" placeholder="https://docs.google.com/spreadsheets/d/…" style="margin-top:6px"></li></ol>
   <div class="row" style="margin-top:14px"><button class="pri" data-act="schedCheck">Check the link</button><button data-act="close">Close</button></div>`);
   $('gsM').textContent=$('gsManifest').textContent.trim();$('gsC').textContent=$('gsCode').textContent.trim()}
+/* ---------- fee sheet: two-way sync, run on open and from the Centre button ---------- */
+const pm=x=>{const n=parseFloat(String(x??'').replace(/[^0-9.\-]/g,''));return isNaN(n)?0:n};
+const tabOf=m=>new Date(m+'-15T12:00:00Z').toLocaleString('en-US',{month:'long',year:'numeric',timeZone:'UTC'});
+const hasFeeRows=g=>g.some(r=>(r||[]).some(c=>String(c).trim()==='Student'));
+async function feeSync(){
+  const id=S.settings.feeSheetId;if(!mcp||!id||!db)return{ok:false,msg:'Open this in Claude with Google Sheets connected.'};
+  if(S.feeSyncing)return{ok:false,msg:'Already syncing.'};S.feeSyncing=true;
+  try{
+    let m=today().slice(0,7),v=[];
+    try{v=await sheetVals(id,`'${tabOf(m)}'!A1:Z60`)}catch(e){if(e?.code==='not_granted')throw e;v=[]}
+    if(!hasFeeRows(v)){const last=[...S.students.values()].map(x=>x.fee?.m).filter(Boolean).sort().pop();
+      if(!last||last===m)throw new Error(`I couldn’t find a “${tabOf(m)}” tab in your fee sheet.`);
+      m=last;v=await sheetVals(id,`'${tabOf(m)}'!A1:Z60`);if(!hasFeeRows(v))throw new Error(`I couldn’t find a “${tabOf(m)}” tab in your fee sheet.`)}
+    try{localStorage.setItem('hq.sheets','1');localStorage.setItem('hq.feeAt',String(Date.now()))}catch(e){}
+    const h=v.findIndex(r=>(r||[]).some(c=>String(c).trim()==='Student')),hd=v[h].map(c=>String(c).toLowerCase().trim()),col=k=>hd.findIndex(c=>c.startsWith(k));
+    const cS=hd.indexOf('student'),cDue=col('total due'),cG=col('date given'),cD=col('date rec'),cF=col('fee rec'),cL=col('lessons/week'),cR=col('hourly rate'),cGr=hd.indexOf('grade'),cSup=col('supply fee');
+    if(cS<0||cDue<0||cD<0||cF<0)throw new Error('I couldn’t find the fee columns in that tab.');
+    let billed=0,rec=0,changed=0,wrote=0,added=0;const seen=new Set();
+    for(let i=h+1;i<v.length;i++){const row=v[i]||[],name=String(row[cS]||'').trim();if(!name||/^total/i.test(name))continue;
+      const due=pm(row[cDue]),paid=pm(row[cF]),given=String(row[cG]||''),pAt=String(row[cD]||''),k=first(name);billed+=due;rec+=paid;
+      const mt=[...S.students.values()].filter(x=>first(x.name)===k);if(mt.length>1||seen.has(k))continue;seen.add(k);
+      const st=mt[0];
+      if(!st){const sub=/subscription/i.test(String(row[cSup]||''));
+        await db.doc('students/'+(norm(name)||('s'+Date.now()+i))).set({name,grade:cGr>=0?String(row[cGr]||''):'',model:sub?'sub':'hourly',perWeek:cL>=0?pm(row[cL]):0,rate:cR>=0?pm(row[cR]):0,owed:0,active:true,fee:{m,due,paid,given,paidAt:pAt},n:'Added from your fee sheet.'});added++;continue}
+      const f=st.fee||{},{id:_i,...rest}=st;
+      if(!f.m||m>f.m){await db.doc('students/'+st.id).set({...rest,active:true,fee:{m,due,paid,given,paidAt:pAt}});changed++}
+      else if(f.m===m){
+        if(paid>(f.paid||0)){const nf={...f,due,given:given||f.given||'',paid,paidAt:pAt||today(),sheet:'written'};delete nf.undo;await db.doc('students/'+st.id).set({...rest,fee:nf});changed++}
+        else if((f.paid||0)>paid&&f.sheet==='pending'){const r=await sheetPay(st,f.paid,f.paidAt||today());
+          if(r.ok){const nf={...f,due,sheet:'written'};if(f.undo)nf.undo={...f.undo,range:r.range,cells:r.prev};await upStu(st.id,{fee:nf});wrote++;rec+=f.paid-paid}}
+        else if(due!==(f.due||0)||(given&&given!==f.given)){await upStu(st.id,{fee:{...f,due,given:given||f.given||''}});changed++}}}
+    if(S.stats?.months){const ms=S.stats.months.filter(x=>x.m!==m).concat({m,billed,received:rec}).sort((a,b)=>a.m.localeCompare(b.m)),old=S.stats.months.find(x=>x.m===m);
+      if(!old||old.billed!==billed||old.received!==rec)await db.doc('stats/revenue').set({...S.stats,months:ms,asOf:today()})}
+    S.feeSyncing=false;return{ok:true,changed:changed+wrote+added,msg:`Fee sheet checked: ${money(Math.max(0,billed-rec))} still unpaid for ${tabOf(m)}${wrote?`, ${wrote} payment${wrote>1?'s':''} written to your sheet`:''}${added?`, ${added} new student${added>1?'s':''} added`:''}.`}}
+  catch(e){S.feeSyncing=false;return{ok:false,msg:e?.code==='not_granted'?'Google Sheets isn’t allowed for this page yet.':String(e?.message||e?.code||'Could not read your fee sheet.').slice(0,200)}}}
 function maybeAuto(){if(S.loaded&&S.planKnown&&!S.plan&&!S.autoTried&&sample&&open().length){S.autoTried=true;makePlan()}}
 const endH=x=>+x.e.slice(0,2)+(x.e.slice(3)>'00'?1:0);
 const tonight=()=>{const d=dow();
@@ -948,6 +989,7 @@ document.addEventListener('click',async e=>{
   if(a==='att'){const s=S.students.get(id);if(s){await logAtt(s,b.dataset.st,1);renderToday();toast(s.name+': '+(b.dataset.st==='absent'?'missed, makeup owed':b.dataset.st==='makeup'?'makeup done':'came'),1800)}return}
   if(a==='paidFull'){const s=S.students.get(id);if(s){const ok=await recordPaid(s,s.fee.due,today());toast(s.name+' marked paid'+(ok?', and your fee sheet is updated.':'. Your fee sheet will be updated overnight.'),7000,{label:'Undo',fn:async()=>{const cur=S.students.get(id);toast(cur&&await undoPaid(cur)?'Undone.':'Couldn’t reach your fee sheet, so nothing was undone.')}})}return}
   if(a==='undoPay'){const s=S.students.get(id);if(s)toast(await undoPaid(s)?s.name+': payment undone.':'Couldn’t reach your fee sheet, so nothing was undone.');return}
+  if(a==='feeSync'){b.disabled=true;const r=await feeSync();b.disabled=false;toast(r.msg,5000);if(linked())schedSync();return}
   if(a==='schedLink')return linkSheet();
   if(a==='schedSync'){const r=await schedSync();toast(r.msg,4200);return}
   if(a==='schedCheck'){const m=($('schedUrl').value||'').match(/\/d\/([A-Za-z0-9_-]{20,})/);if(!m){toast('Paste the link to the “TutorWise Scheduler Export” sheet first.');return}
