@@ -126,6 +126,7 @@ label{font-size:13px;color:var(--mute);display:block;margin:10px 0 4px}
 <section id="v-centre" hidden>
   <div class="card"><div class="row"><div class="grow"><div class="why" style="margin:0">Fees still to collect this month</div><div class="big" id="owedTotal">–</div></div>
     <button data-act="feeNotes">Next month’s fee notes</button></div></div>
+  <div class="card" id="schedCard" style="margin-top:10px"></div>
   <div id="makeBox2"></div><div id="revBox"></div>
   <h2>Students</h2><div class="card" id="stuList"><div class="empty">Students will list here with fees, makeups owed and schedule.</div></div>
 </section>
@@ -143,6 +144,228 @@ label{font-size:13px;color:var(--mute);display:block;margin:10px 0 4px}
 <div id="sheet" hidden style="position:fixed;inset:0;z-index:8;background:rgba(0,0,0,.55);display:flex;align-items:flex-end">
   <div class="card" style="width:100%;max-width:680px;margin:0 auto;border-radius:18px 18px 0 0;max-height:86%;overflow:auto;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))" id="sheetBody"></div></div>
 
+<script type="text/plain" id="gsManifest">
+{
+  "timeZone": "America/Toronto",
+  "dependencies": {},
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/datastore",
+    "https://www.googleapis.com/auth/script.external_request",
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/script.scriptapp"
+  ]
+}
+</script>
+<script type="text/plain" id="gsCode">
+/**
+ * TutorWise Scheduler -> Google Sheet bridge.
+ *
+ * Reads your scheduler's data (the "tutorwise-os" Firebase project behind schedule.tutorwise.ca)
+ * as you, READ-ONLY, and copies it into one Google Sheet that your planner reads.
+ * It never changes anything in the scheduler.
+ *
+ * To link: choose "setup" in the function menu above and press Run. Allow access when asked.
+ * After that it refreshes by itself every hour.
+ */
+var PROJECT_ID = 'tutorwise-os';
+var SHEET_TITLE = 'TutorWise Scheduler Export';
+var WEEKS_BACK = 16;
+var DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+/** Run this once. */
+function setup() {
+  var ss = sheet_();
+  exportNow();
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'exportNow') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('exportNow').timeBased().everyHours(1).create();
+  Logger.log('Linked. Your sheet: ' + ss.getUrl());
+}
+
+/** Copies the scheduler into the sheet. Runs every hour once setup() has been run. */
+function exportNow() {
+  var ss = sheet_(), started = new Date().toISOString();
+  try {
+    var data = load_();
+    var tabs = build_(data.cfg, data.weeks);
+    write_(ss, tabs);
+    meta_(ss, [['Status', 'ok'], ['Exported at', started], ['Signed in as', data.auth],
+      ['Scheduler last changed', data.cfg.updatedAt || ''], ['Weeks in scheduler', Object.keys(data.weeks).length],
+      ['This week starts', mondayKey_()], ['Students', tabs.Students.length - 1], ['Sessions exported', tabs.Sessions.length - 1]]);
+  } catch (e) {
+    meta_(ss, [['Status', 'error'], ['Exported at', started], ['Error', String((e && e.message) || e).slice(0, 1500)]]);
+    throw e;
+  }
+}
+
+/* ---------- reading the scheduler ---------- */
+function load_() {
+  var auth = token_();
+  var cfg = dec_({mapValue: get_('schedulerConfig/main', auth)});
+  var weeks = {}, tok = '';
+  do {
+    var page = get_('schedulerWeeks?pageSize=40' + (tok ? '&pageToken=' + encodeURIComponent(tok) : ''), auth);
+    (page.documents || []).forEach(function (d) { weeks[d.name.split('/').pop()] = dec_({mapValue: d}); });
+    tok = page.nextPageToken || '';
+  } while (tok);
+  return {cfg: cfg, weeks: weeks, auth: auth.mode};
+}
+function token_() {
+  var key = PropertiesService.getScriptProperties().getProperty('SA_KEY');
+  if (key) return {mode: 'service account', token: saToken_(JSON.parse(key))};
+  return {mode: 'your Google account', token: ScriptApp.getOAuthToken()};
+}
+function get_(path, auth, quota) {
+  var headers = {Authorization: 'Bearer ' + auth.token};
+  if (quota) headers['X-Goog-User-Project'] = PROJECT_ID;
+  var res = UrlFetchApp.fetch('https://firestore.googleapis.com/v1/projects/' + PROJECT_ID + '/databases/(default)/documents/' + path,
+    {headers: headers, muteHttpExceptions: true});
+  var code = res.getResponseCode(), body = res.getContentText();
+  if (code === 403 && !quota && auth.mode !== 'service account' && /has not been used|is disabled|SERVICE_DISABLED|quota project/i.test(body)) return get_(path, auth, true);
+  if (code !== 200) throw new Error('Could not read the scheduler (' + code + ') at ' + path.split('?')[0] + ': ' + body.slice(0, 700));
+  return JSON.parse(body);
+}
+function saToken_(k) {
+  var now = Math.floor(Date.now() / 1000);
+  var enc = function (o) { return Utilities.base64EncodeWebSafe(JSON.stringify(o)).replace(/=+$/, ''); };
+  var unsigned = enc({alg: 'RS256', typ: 'JWT'}) + '.' + enc({iss: k.client_email, scope: 'https://www.googleapis.com/auth/datastore',
+    aud: 'https://oauth2.googleapis.com/token', iat: now, exp: now + 3000});
+  var sig = Utilities.base64EncodeWebSafe(Utilities.computeRsaSha256Signature(unsigned, k.private_key)).replace(/=+$/, '');
+  var res = UrlFetchApp.fetch('https://oauth2.googleapis.com/token', {method: 'post', muteHttpExceptions: true,
+    payload: {grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: unsigned + '.' + sig}});
+  var j = JSON.parse(res.getContentText());
+  if (!j.access_token) throw new Error('Service account sign-in failed: ' + res.getContentText().slice(0, 300));
+  return j.access_token;
+}
+/** Firestore's typed JSON -> plain values. */
+function dec_(v) {
+  if (v == null) return null;
+  if ('stringValue' in v) return v.stringValue;
+  if ('integerValue' in v) return Number(v.integerValue);
+  if ('doubleValue' in v) return Number(v.doubleValue);
+  if ('booleanValue' in v) return v.booleanValue;
+  if ('nullValue' in v) return null;
+  if ('timestampValue' in v) return v.timestampValue;
+  if ('arrayValue' in v) return (v.arrayValue.values || []).map(dec_);
+  if ('mapValue' in v) {
+    var o = {}, f = v.mapValue.fields || {};
+    Object.keys(f).forEach(function (k) { o[k] = dec_(f[k]); });
+    return o;
+  }
+  return null;
+}
+
+/* ---------- shaping it into tables ---------- */
+function build_(cfg, weeks) {
+  var teachers = cfg.teachers || [], tName = {};
+  teachers.forEach(function (t) { tName[t.id] = t.name || t.id; });
+  var profiles = cfg.studentProfiles || {}, active = cfg.students || [], inactive = cfg.inactiveStudents || [];
+  var keys = Object.keys(weeks).filter(function (k) { return /^\d{4}-\d{2}-\d{2}$/.test(k); }).sort();
+  var cutoff = addDays_(mondayKey_(), -7 * WEEKS_BACK), out = {};
+
+  out.Students = [['Student', 'Active', 'Lessons per week', 'Weight', 'Makeup balance (h)', 'Credits earned (h)', 'Credits used (h)']];
+  active.concat(inactive.filter(function (n) { return active.indexOf(n) < 0; })).forEach(function (n) {
+    var p = profiles[n] || {}, m = makeup_(n, p, weeks);
+    out.Students.push([n, active.indexOf(n) >= 0 ? 'yes' : 'no', p.lessonsPerWeek == null ? '' : p.lessonsPerWeek, p.weight == null ? '' : p.weight,
+      p.makeupOffset || 0, m.given, m.used]);
+  });
+
+  out.Timetable = [['Student', 'Day', 'Start', 'End', 'Teacher']];
+  each_(cfg.defaultSchedule || {}, function (tid, day, s) {
+    out.Timetable.push([s.student, day, clock_(s.start), clock_(s.end), tName[tid] || tid]);
+  });
+
+  out.Sessions = [['Week of', 'Date', 'Day', 'Student', 'Teacher', 'Start', 'End', 'Hours', 'Status', 'Billing month']];
+  keys.forEach(function (k) {
+    if (k < cutoff) return;
+    var w = weeks[k] || {}, hol = w.holidays || [], rm = billMonth_(k, w);
+    each_(w.schedule || {}, function (tid, day, s) {
+      var status = hol.indexOf(day) >= 0 ? 'holiday' : (s.attended == null ? '' : String(s.attended));
+      out.Sessions.push([k, addDays_(k, DAYS.indexOf(day)), day, s.student, tName[tid] || tid, clock_(s.start), clock_(s.end),
+        Math.round((s.end - s.start) / 60 * 100) / 100, status, rm]);
+    });
+  });
+
+  out.Teachers = [['Id', 'Name', 'Capacity']].concat(teachers.map(function (t) { return [t.id, t.name || '', t.capacity == null ? '' : t.capacity]; }));
+  return out;
+}
+/** Every real student session in a schedule, in teacher / weekday / time order. Prep blocks are skipped. */
+function each_(sched, fn) {
+  Object.keys(sched).sort().forEach(function (tid) {
+    DAYS.forEach(function (day) {
+      ((sched[tid] || {})[day] || []).slice().sort(function (a, b) { return a.start - b.start; }).forEach(function (s) {
+        if (s && s.student && !s.isAdmin && typeof s.start === 'number' && typeof s.end === 'number') fn(tid, day, s);
+      });
+    });
+  });
+}
+/** Same arithmetic the scheduler uses for makeup credits (earned on "missed, credit" weeks, used on extra attended hours). */
+function makeup_(name, prof, weeks) {
+  var lpw = prof.lessonsPerWeek || 0, given = 0, used = 0;
+  Object.keys(weeks).forEach(function (k) {
+    var sch = 0, att = 0, yel = 0, cnt = 0;
+    each_((weeks[k] || {}).schedule || {}, function (tid, day, s) {
+      if (s.student !== name) return;
+      var h = (s.end - s.start) / 60; sch += h; cnt++;
+      if (s.attended === 'attended') att += h;
+      if (s.attended === 'missed_credit') yel += h;
+    });
+    if (!cnt) return;
+    var normal = lpw > 0 ? lpw * (sch / cnt) : sch;
+    given += Math.min(Math.max(0, normal - att), yel);
+    used += Math.max(0, att - normal);
+  });
+  return {given: Math.round(given * 100) / 100, used: Math.round(used * 100) / 100};
+}
+/** The month a week is billed to: the scheduler's manual choice, otherwise the month its Wednesday falls in. */
+function billMonth_(key, w) {
+  var rm = w && w.reportingMonth;
+  if (rm && typeof rm.year === 'number' && typeof rm.month === 'number') return rm.year + '-' + ('0' + (rm.month + 1)).slice(-2);
+  return addDays_(key, 2).slice(0, 7);
+}
+/** Scheduler times are minutes after noon. */
+function clock_(m) {
+  var t = 720 + m;
+  return ('0' + Math.floor(t / 60)).slice(-2) + ':' + ('0' + (t % 60)).slice(-2);
+}
+function addDays_(key, n) {
+  var p = key.split('-');
+  return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + n)).toISOString().slice(0, 10);
+}
+function mondayKey_() {
+  var now = new Date(), today = Utilities.formatDate(now, 'America/Toronto', 'yyyy-MM-dd'), dow = +Utilities.formatDate(now, 'America/Toronto', 'u');
+  return addDays_(today, 1 - dow);
+}
+
+/* ---------- writing the sheet ---------- */
+function sheet_() {
+  var props = PropertiesService.getScriptProperties(), id = props.getProperty('SHEET_ID');
+  if (id) { try { return SpreadsheetApp.openById(id); } catch (e) {} }
+  var ss = SpreadsheetApp.create(SHEET_TITLE);
+  props.setProperty('SHEET_ID', ss.getId());
+  return ss;
+}
+function tab_(ss, name) { return ss.getSheetByName(name) || ss.insertSheet(name); }
+function fill_(ss, name, rows) {
+  var sh = tab_(ss, name);
+  sh.clearContents();
+  sh.getRange(1, 1, rows.length, rows[0].length).setNumberFormat('@').setValues(rows.map(function (r) { return r.map(String); }));
+  sh.setFrozenRows(1);
+}
+function write_(ss, tabs) {
+  ['Students', 'Timetable', 'Sessions', 'Teachers'].forEach(function (n) { fill_(ss, n, tabs[n]); });
+}
+function meta_(ss, rows) {
+  var sh = tab_(ss, 'Meta');
+  sh.clearContents();
+  sh.getRange(1, 1, rows.length, 2).setNumberFormat('@').setValues(rows.map(function (r) { return [String(r[0]), String(r[1])]; }));
+  var first = ss.getSheetByName('Sheet1');
+  if (first && ss.getSheets().length > 1) ss.deleteSheet(first);
+}
+</script>
 <script>
 const TZ='America/Toronto';
 const $=id=>document.getElementById(id);
@@ -159,12 +382,12 @@ const isWk=()=>[1,2,3,4,5].includes(dow());
 const AREAS={centre:'TutorWise ops',students:'Students',staff:'Hiring & staff',materials:'Teaching materials',reno:'Centre renovation',growth:'Marketing & money',party:'Christmas party',
   corona:'Corona Holdings',judah:'Judah Rise',brother:'Brother’s business',car:'Cars & dispute',home:'Home & errands',finance:'Personal finance',travel:'Trips & gifts',health:'Routine & health',tech:'Tech & ideas',planner:'This planner'};
 const STAT={ready:'To do',verify:'Check if still open',waiting:'Waiting',recurring:'Repeats',idea:'Idea',done:'Done',parked:'Parked'};
-const DEF={name:'Nimish',address:'sir',voice:'buttery',autoSend:true,wake:'07:00',workout:'07:30',workStart:'09:00',teachStart:'16:00',teachEnd:'20:00',capacity:0.65,protect:'Workout'};
+const DEF={name:'Nimish',address:'sir',voice:'buttery',autoSend:true,wake:'07:00',workout:'07:30',workStart:'09:00',teachStart:'16:00',teachEnd:'20:00',capacity:0.65,protect:'Workout',schedSheetId:''};
 const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const ICON={on:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
   off:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="m16 9 5 6m0-6-5 6"/></svg>'};
 const S={tasks:new Map(),students:new Map(),drafts:[],dumps:[],plan:null,settings:{...DEF},view:'today',area:'',stat:'ready',loaded:false,habits:new Map(),att:new Map(),agent:null,stats:null,
-  planKnown:false,autoTried:false,planning:false,open:new Set(),secInit:false,day:today()};
+  planKnown:false,autoTried:false,planning:false,open:new Set(),secInit:false,day:today(),sched:null,syncing:false,syncTried:false};
 const V={state:'idle',say:'',greeting:true,heard:'',buf:'',partial:'',lastHeard:0,finishing:false,silence:0,voiceOn:true,ttsOff:false,ctx:null,unlocked:false};
 try{V.voiceOn=localStorage.getItem('hq.voice')!=='0'}catch{}
 let db=null,sample=null,dict=null,tts=null,mcp=null;
@@ -189,7 +412,8 @@ async function boot(){
   db.collection('students').onSnapshot(q=>{S.students=new Map(q.docs.map(d=>[d.id,{id:d.id,...d.data()}]));renderAll()},err);
   db.collection('drafts').orderBy('at','desc').limit(20).onSnapshot(q=>{S.drafts=q.docs.map(d=>({id:d.id,...d.data()}));renderAI();renderToday()},err);
   db.collection('dumps').orderBy('at','desc').limit(12).onSnapshot(q=>{S.dumps=q.docs.map(d=>({id:d.id,...d.data()}));renderToday()},err);
-  db.doc('settings/main').onSnapshot(d=>{S.settings={...DEF,...(d.exists?d.data():{})};renderAll()},err);
+  db.doc('settings/main').onSnapshot(d=>{S.settings={...DEF,...(d.exists?d.data():{})};S.setKnown=true;renderAll();autoSync()},err);
+  db.doc('sched/week').onSnapshot(d=>{S.sched=d.exists?d.data():null;S.schedKnown=true;renderAll();autoSync()},err);
   db.doc('plans/'+today()).onSnapshot(d=>{S.plan=d.exists?d.data():null;S.planKnown=true;renderToday();maybeAuto()},err);
   const d7=new Date(Date.parse(today()+'T12:00:00Z')-6*864e5).toISOString().slice(0,10);
   db.collection('habits').where('date','>=',d7).onSnapshot(q=>{S.habits=new Map(q.docs.map(d=>[d.id,d.data()]));renderToday()},err);
@@ -240,10 +464,57 @@ async function undoPaid(s){
   const {id,...rest}=s,fee={...s.fee,paid:u.paid,paidAt:u.paidAt};delete fee.undo;delete fee.sheet;
   try{await db.doc('students/'+s.id).set({...rest,fee});return true}catch(e){return false}}
 
+/* ---------- scheduler link: reads the export sheet that the bridge script keeps up to date ---------- */
+const norm=x=>String(x||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+const mondayOf=()=>{const d=new Date(today()+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+1-(d.getUTCDay()||7));return d.toISOString().slice(0,10)};
+const linked=()=>!!S.settings.schedSheetId;
+const schedLive=()=>linked()&&S.sched&&S.sched.week===mondayOf();
+async function sheetVals(id,range){
+  const r=await mcp.callTool('Google Sheets','get_values',{spreadsheetId:id,range},{cache:false});
+  let v=r?.payload?.values||r?.structuredContent?.values;
+  if(!v){const t=(r?.content||[]).find(c=>c.type==='text')?.text;try{const j=JSON.parse(t||'{}');v=j.values||j.content?.values}catch(e){}}
+  return Array.isArray(v)?v:[]}
+async function schedSync(){
+  const id=S.settings.schedSheetId;if(!mcp||!id||!db)return{ok:false,msg:'Open this in Claude with Google Sheets connected.'};
+  if(S.syncing)return{ok:false,msg:'Already syncing.'};S.syncing=true;renderCentre();
+  try{
+    const meta=Object.fromEntries((await sheetVals(id,'Meta!A1:B12')).map(r=>[r[0],r[1]]));
+    if(meta.Status!=='ok')throw new Error(meta.Error?'The scheduler copy reported: '+String(meta.Error).slice(0,160):'That sheet has no scheduler copy in it yet.');
+    const[st,tt,ss]=await Promise.all([sheetVals(id,'Students!A2:G400'),sheetVals(id,'Timetable!A2:E800'),sheetVals(id,'Sessions!A2:J5000')]);
+    try{localStorage.setItem('hq.sheets','1')}catch(e){}
+    const hq=[...S.students.values()],find=n=>hq.find(x=>x.sched&&norm(x.sched)===norm(n))||hq.find(x=>!x.sched&&norm(x.name)===norm(n))||null;
+    const D2={monday:1,tuesday:2,wednesday:3,thursday:4,friday:5};let changed=0,added=0;
+    for(const r of st){const name=r[0];if(!name)continue;const active=r[1]==='yes',cur=find(name);
+      const slots=tt.filter(x=>x[0]===name&&D2[String(x[1]).toLowerCase()]).map(x=>({d:D2[String(x[1]).toLowerCase()],s:x[2],e:x[3],t:x[4]||''}));
+      const patch={sched:name,slots,slotsOk:true,owed:Math.max(0,+r[4]||0),lpw:+r[2]||null};
+      if(cur){const same=JSON.stringify([cur.sched,cur.slots,cur.slotsOk,cur.owed||0,cur.lpw||null])===JSON.stringify([patch.sched,patch.slots,true,patch.owed,patch.lpw]);if(!same){await upStu(cur.id,patch);changed++}}
+      else if(active){await db.doc('students/'+(norm(name)||('s'+Date.now()))).set({name,active:true,fromSched:true,...patch});added++}}
+    const wk=mondayOf(),mon=today().slice(0,7),sess=ss.filter(r=>r[0]===wk).map(r=>({d:r[1],n:r[3],t:r[4],s:r[5],e:r[6],st:r[8]||''}));
+    const unmarked=ss.filter(r=>r[1]<today()&&!r[8]&&r[1]>=new Date(Date.parse(today()+'T12:00:00Z')-21*864e5).toISOString().slice(0,10)).length;
+    const month={};for(const r of ss){if(r[9]!==mon)continue;const m=month[r[3]]=month[r[3]]||{sch:0,att:0,mc:0,mn:0};const h=+r[7]||0;if(r[8]==='holiday')continue;m.sch+=h;if(r[8]==='attended')m.att+=h;if(r[8]==='missed_credit')m.mc+=h;if(r[8]==='missed_no_credit')m.mn+=h}
+    await db.doc('sched/week').set({week:wk,at:stamp(),exportedAt:meta['Exported at']||'',sessions:sess,unmarked,month:{m:mon,by:month}});
+    S.syncing=false;renderAll();return{ok:true,msg:`Scheduler synced: ${st.filter(r=>r[1]==='yes').length} students, ${sess.length} lessons this week${added?', '+added+' new student'+(added>1?'s':''):''}.`}}
+  catch(e){S.syncing=false;renderCentre();return{ok:false,msg:e?.code==='not_granted'?'Google Sheets isn’t allowed for this page yet.':String(e?.message||e?.code||'Could not read the sheet.').slice(0,200)}}}
+/* On open, refresh from the scheduler when the last copy is over 30 minutes old (only once Sheets access has been allowed before). */
+function autoSync(){if(S.syncTried||!S.setKnown||!S.schedKnown||!linked()||!mcp)return;let ok=false;try{ok=localStorage.getItem('hq.sheets')==='1'}catch(e){}
+  if(!ok)return;S.syncTried=true;if(!S.sched||Date.now()-Date.parse(S.sched.at||0)>18e5||S.sched.week!==mondayOf())schedSync()}
+function linkSheet(){
+  sheet(`<h3 style="font:600 18px var(--disp);margin:0 0 4px">Link your scheduler</h3><p class="why">One-time setup on a computer, about five minutes. It makes a Google Sheet that copies your scheduler every hour. It only reads your scheduler; it never changes it.</p>
+  <ol style="padding-left:20px;margin:0;display:flex;flex-direction:column;gap:12px">
+  <li>Open <a href="https://script.new" target="_blank" rel="noopener" style="color:var(--acc)">script.new</a>, signed in with the Google account you use for the scheduler’s Firebase.</li>
+  <li>Click the gear on the left (Project Settings) and tick <b>Show “appsscript.json” manifest file in editor</b>. Go back to the editor (the &lt; &gt; icon).</li>
+  <li>Click <b>appsscript.json</b>, delete everything in it, and paste this:<pre class="out" id="gsM" style="max-height:90px"></pre><button class="sm pri" data-act="copy" data-from="gsM">Copy settings file</button></li>
+  <li>Click <b>Code.gs</b>, delete everything in it, and paste this:<pre class="out" id="gsC" style="max-height:120px"></pre><button class="sm pri" data-act="copy" data-from="gsC">Copy code</button></li>
+  <li>Press Save, choose <b>setup</b> in the menu next to Run, and press <b>Run</b>. When Google asks: Review permissions, pick your account, Advanced, “Go to Untitled project”, Allow.</li>
+  <li>A sheet called <b>TutorWise Scheduler Export</b> appears in your Google Drive. Paste its link here:<input id="schedUrl" type="url" placeholder="https://docs.google.com/spreadsheets/d/…" style="margin-top:6px"></li></ol>
+  <div class="row" style="margin-top:14px"><button class="pri" data-act="schedCheck">Check the link</button><button data-act="close">Close</button></div>`);
+  $('gsM').textContent=$('gsManifest').textContent.trim();$('gsC').textContent=$('gsCode').textContent.trim()}
 function maybeAuto(){if(S.loaded&&S.planKnown&&!S.plan&&!S.autoTried&&sample&&open().length){S.autoTried=true;makePlan()}}
 const endH=x=>+x.e.slice(0,2)+(x.e.slice(3)>'00'?1:0);
-const tonight=()=>{const d=dow();return [...S.students.values()].filter(s=>s.active!==false&&(s.slots||[]).some(x=>x.d===d)).map(s=>({s,x:s.slots.find(x=>x.d===d)})).sort((a,b)=>a.x.s.localeCompare(b.x.s))};
-const knownSlots=()=>[...S.students.values()].filter(s=>s.active!==false&&(s.slots||[]).length&&s.slotsOk).length;
+const tonight=()=>{const d=dow();
+  if(schedLive()){const hq=[...S.students.values()];return S.sched.sessions.filter(x=>x.d===today()).map(x=>({s:hq.find(h=>h.sched&&norm(h.sched)===norm(x.n))||{id:'',name:x.n},x:{s:x.s,e:x.e},t:x.t,st:x.st,live:true})).sort((a,b)=>a.x.s.localeCompare(b.x.s))}
+  return [...S.students.values()].filter(s=>s.active!==false&&(s.slots||[]).some(x=>x.d===d)).map(s=>({s,x:s.slots.find(x=>x.d===d)})).sort((a,b)=>a.x.s.localeCompare(b.x.s))};
+const knownSlots=()=>linked()?99:[...S.students.values()].filter(s=>s.active!==false&&(s.slots||[]).length&&s.slotsOk).length;
 function makeupIdeas(){
   const all=[...S.students.values()].filter(s=>s.active!==false),owed=all.filter(s=>s.owed>0);
   if(!owed.length)return null;
@@ -462,10 +733,12 @@ function renderToday(){
   /* status chips */
   const f=feeTot(),mk=[...S.students.values()].reduce((a,x)=>a+(x.active!==false?(x.owed||0):0),0),ver=[...S.tasks.values()].filter(t=>t.s==='verify').sort((a,b)=>(a.p||3)-(b.p||3)),nd=S.drafts.filter(d=>d.state==='ready').length;
   $('statBox').innerHTML=(f.sum?`<button class="bad" data-act="sec" data-key="sec:money">${money(f.sum)} unpaid</button>`:'')+(mk?`<button class="warn" data-act="sec" data-key="sec:makeups">${mk} h of makeups owed</button>`:'')
-    +(nd?`<button data-act="goAI">${nd} draft${nd>1?'s':''} ready</button>`:'')+(ver.length?`<button data-act="sec" data-key="sec:check">${ver.length} old items to confirm</button>`:'');
+    +(nd?`<button data-act="goAI">${nd} draft${nd>1?'s':''} ready</button>`:'')+(schedLive()&&S.sched.unmarked?`<button class="warn" data-act="sec" data-key="sec:tonight">${S.sched.unmarked} lesson${S.sched.unmarked>1?'s':''} not marked in the scheduler</button>`:'')+(ver.length?`<button data-act="sec" data-key="sec:check">${ver.length} old items to confirm</button>`:'');
   /* sections */
   const tn=tonight(),att=x=>S.att.get(today()+'_'+x.id)?.status;
-  let tb=tn.map(({s:x,x:sl})=>`<div class="item row"><div class="grow"><span class="t">${esc(x.name)}</span> <span class="m num">${t12(sl.s)}–${t12(sl.e)}${x.slotsOk?'':' · time not confirmed'}</span></div><button class="sm ${att(x)==='present'?'pri':''}" data-act="att" data-st="present" data-id="${x.id}">Came${att(x)==='present'?' ✓':''}</button><button class="sm ${att(x)==='absent'?'pri':''}" data-act="att" data-st="absent" data-id="${x.id}">Missed${att(x)==='absent'?' ✓':''}</button></div>`).join('');
+  const stP={attended:['good','Came'],missed_credit:['warn','Missed · credit'],missed_no_credit:['bad','Missed'],holiday:['mute','Holiday'],cancelled:['mute','Cancelled']};
+  let tb=tn.some(x=>x.live)?tn.map(({s:x,x:sl,t,st})=>`<div class="item row"><div class="grow"><span class="t">${esc(x.name)}</span> <span class="m num">${t12(sl.s)}–${t12(sl.e)}${t?' · '+esc(t):''}</span></div><span class="pill ${(stP[st]||['mute'])[0]}">${(stP[st]||['','Not marked'])[1]}</span></div>`).join('')+`<div style="margin-top:10px"><a href="https://schedule.tutorwise.ca" target="_blank" rel="noopener" style="color:var(--acc);font-weight:600;font-size:14px">Mark attendance in your scheduler</a></div>`
+   :tn.map(({s:x,x:sl})=>`<div class="item row"><div class="grow"><span class="t">${esc(x.name)}</span> <span class="m num">${t12(sl.s)}–${t12(sl.e)}${x.slotsOk?'':' · time not confirmed'}</span></div><button class="sm ${att(x)==='present'?'pri':''}" data-act="att" data-st="present" data-id="${x.id}">Came${att(x)==='present'?' ✓':''}</button><button class="sm ${att(x)==='absent'?'pri':''}" data-act="att" data-st="absent" data-id="${x.id}">Missed${att(x)==='absent'?' ✓':''}</button></div>`).join('');
   if(isWk()&&knownSlots()<6)tb+=`<div class="m" style="padding-top:10px">I don’t have your full timetable yet. Tell me who comes on which days and I’ll track attendance and makeups for you.</div><div style="margin-top:8px"><button class="sm" data-act="focus" data-say="Go ahead: who comes on which days, and at what times?">Tell me now</button></div>`;
   const unm=op.length;
   const closeB=m==='eve'?`<div class="why" style="margin:0 0 8px">${unm?unm+' of today’s items aren’t marked yet: tap Done or Not now on each.':'Today’s items are all marked.'} Anything else happen today? Say it in one go.</div><button class="sm pri" data-act="focus" data-say="How did today go, ${esc(sir())}?">Tell me about today</button>`:'';
@@ -493,6 +766,9 @@ function renderList(){
 function renderCentre(){
   const st=[...S.students.values()].sort((a,b)=>owes(b)-owes(a)||a.name.localeCompare(b.name));
   $('owedTotal').textContent=st.length?money(st.reduce((a,s)=>a+owes(s),0)):'–';
+  const sc=S.sched,ago=sc?.at?Math.max(0,Math.round((Date.now()-Date.parse(sc.at))/6e4)):null;
+  $('schedCard').innerHTML=linked()?`<div class="row"><div class="grow"><b>Scheduler linked</b><div class="m">${S.syncing?'Syncing…':sc?`Timetable, attendance and makeup hours come from your scheduler. Last synced ${ago<1?'just now':ago<90?ago+' min ago':Math.round(ago/60)+' h ago'}.`:'Not synced yet.'}</div></div><button class="sm" data-act="schedSync" ${S.syncing?'disabled':''}>Sync now</button></div>`
+    :`<div class="row"><div class="grow"><b>Your scheduler isn’t linked yet</b><div class="m">Link it and I’ll know who comes when, who missed, and every makeup hour, without you telling me.</div></div><button class="sm pri" data-act="schedLink">Link it</button></div>`;
   const mb=makeupBody();$('makeBox2').innerHTML=mb?`<h2>Makeups to book</h2><div class="card">${mb}</div>`:'';
   const ms=S.stats?.months||[],mx=Math.max(1,...ms.map(m=>m.billed||0));
   $('revBox').innerHTML=ms.length?`<h2>Monthly fees billed</h2><div class="card">${ms.map(m=>`<div class="row" style="margin:5px 0;flex-wrap:nowrap"><span class="m num" style="width:56px;white-space:nowrap;flex:none">${esc(new Date(m.m+'-15T12:00:00Z').toLocaleString('en-CA',{month:'short',year:'2-digit',timeZone:'UTC'}))}</span><div class="grow" style="background:var(--line);border-radius:6px;height:14px"><div style="width:${Math.round((m.billed||0)/mx*100)}%;background:var(--acc);height:14px;border-radius:6px"></div></div><span class="num" style="width:62px;text-align:right;flex:none">${money(m.billed||0)}</span></div>`).join('')}${S.stats.note?`<div class="m" style="margin-top:8px">${esc(S.stats.note)}</div>`:''}</div>`:'';
@@ -672,6 +948,11 @@ document.addEventListener('click',async e=>{
   if(a==='att'){const s=S.students.get(id);if(s){await logAtt(s,b.dataset.st,1);renderToday();toast(s.name+': '+(b.dataset.st==='absent'?'missed, makeup owed':b.dataset.st==='makeup'?'makeup done':'came'),1800)}return}
   if(a==='paidFull'){const s=S.students.get(id);if(s){const ok=await recordPaid(s,s.fee.due,today());toast(s.name+' marked paid'+(ok?', and your fee sheet is updated.':'. Your fee sheet will be updated overnight.'),7000,{label:'Undo',fn:async()=>{const cur=S.students.get(id);toast(cur&&await undoPaid(cur)?'Undone.':'Couldn’t reach your fee sheet, so nothing was undone.')}})}return}
   if(a==='undoPay'){const s=S.students.get(id);if(s)toast(await undoPaid(s)?s.name+': payment undone.':'Couldn’t reach your fee sheet, so nothing was undone.');return}
+  if(a==='schedLink')return linkSheet();
+  if(a==='schedSync'){const r=await schedSync();toast(r.msg,4200);return}
+  if(a==='schedCheck'){const m=($('schedUrl').value||'').match(/\/d\/([A-Za-z0-9_-]{20,})/);if(!m){toast('Paste the link to the “TutorWise Scheduler Export” sheet first.');return}
+    await db.doc('settings/main').set({...S.settings,schedSheetId:m[1]});S.settings.schedSheetId=m[1];const r=await schedSync();
+    if(r.ok){$('sheet').hidden=true;say(`Your scheduler is linked, ${sir()}. ${r.msg}`,true)}else toast(r.msg,6000);return}
   if(a==='feeNotes')return feeNotes();
   if(a==='aiGo'){const q=$('aiAsk').value.trim();if(q){$('aiAsk').value='';runJob(q)}return}
   if(a==='aiTask'){const t=S.tasks.get(id);if(t)runJob('Do as much of this as can be done on paper, or draft what is needed: '+T(t)+(t.next?'. Next step: '+t.next:''),id);return}

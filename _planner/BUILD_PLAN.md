@@ -73,3 +73,18 @@ API keys or subscriptions. Build it as **one private claude.ai Artifact page** t
    from Drive only as a starting point to confirm.
 4. Four-week wake-time and workout trend in "Your week", and a short spoken weekly review.
 5. Read his real dumps, marks and habits and tune prompts and layout to what he actually does.
+
+## Scheduler link (2026-11-13, evening)
+- His lesson scheduler is schedule.tutorwise.ca: a single-file Firebase app (project `tutorwise-os`, Firestore
+  `schedulerConfig/main` + `schedulerWeeks/{Monday}`) with the real timetable, attendance, makeup balances and
+  billing months. No connector exists for it and the artifact page cannot reach Firestore, so the link is:
+  scheduler -> Apps Script in his Google account (`bridge/Code.gs`, `bridge/appsscript.json`, hourly, read-only)
+  -> Google Sheet "TutorWise Scheduler Export" -> app (`schedSync()` via the Google Sheets connector) and morning agent.
+- The app has the setup steps under Centre > "Link it" (the bridge code is injected into `app/today.html` as
+  text blocks; re-run the inject snippet if `bridge/` changes). The session's environment is now "TutorWise HQ"
+  with schedule.tutorwise.ca allowed.
+- Tested only against a fake Firestore built from the scheduler page's own default data. NOT yet run against the real project.
+  If the user-token read fails for him, the script falls back to a service-account key in Script Property `SA_KEY`.
+- First thing next cycle: search Drive for the export sheet. If it exists, set `settings.schedSheetId`, run the
+  sync logic once from here, check name matching (students carry `sched` = scheduler spelling), then build on it:
+  fee notes from attended hours per billing month, makeup slot finder with teacher loads and capacities.
