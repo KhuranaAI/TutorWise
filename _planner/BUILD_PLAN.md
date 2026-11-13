@@ -37,3 +37,14 @@ API keys or subscriptions. Build it as **one private claude.ai Artifact page** t
   WhatsApp cannot be read from here; messages are drafted for him to send.
 - Next: (2) timetable-aware makeup finder + month-end fee-note run from attendance; sync payments from the Drive sheet;
   (3) scheduled morning plan + push; weekly centre report; (4) polish from use.
+
+## Status after cycle 2 (2026-11-13, overnight)
+- App v2 published: makeup finder (quietest free hours from the timetable), tappable wake/workout routine with 7-day
+  counts, "From your overnight agent" card (reads `agent/latest`), close-the-day card, monthly fees chart (`stats/revenue`),
+  auto-plan on first open of the day. Checked in a local Playwright harness with mock data (light/dark, 400px, no errors).
+- Agent layer: `agent/memory` (profile, priorities, rules, sources, log) in the db. A daily routine "Nimish HQ morning agent"
+  runs at 05:47 America/Toronto inside the original build session (fresh routine sessions get no Drive connector):
+  fee-sheet sync, files unsorted dumps, hygiene flags, writes the day's plan + `agent/latest`, sends a push.
+- Drive findings: no current timetable, attendance log or contact list exists. Costs through Aug 2026 are in "Financial Dashboard".
+- Not reachable: schedule.tutorwise.ca (outside the session's network allowlist; source not in the accessible repos).
+- Next: confirm the 05:47 run worked end to end; import timetable once he dictates it; payment-sync edge cases; weekly review polish.

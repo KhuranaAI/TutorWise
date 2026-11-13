@@ -73,10 +73,13 @@ label{font-size:13px;color:var(--mute);display:block;margin:10px 0 4px}
 
 <section id="v-today">
   <div class="shape" id="shape"></div>
+  <div id="agentBox"></div>
   <div id="planBox" class="stack" style="margin-top:14px"><div class="card empty" id="planEmpty">Your three things for today will show here. Tap <b>Plan my day</b>, or just start talking in the Talk tab.</div></div>
   <div class="row" style="margin-top:10px"><button class="pri" data-act="plan" id="btnPlan">Plan my day</button><button data-act="lost">I lost time. Replan</button></div>
   <div id="moneyBox"></div>
   <div id="tonightBox"></div>
+  <div id="makeBox"></div>
+  <div id="eveBox"></div>
   <div id="askBox"></div>
   <div id="leftBox"></div>
 </section>
@@ -100,6 +103,7 @@ label{font-size:13px;color:var(--mute);display:block;margin:10px 0 4px}
 <section id="v-centre" hidden>
   <div class="card"><div class="row"><div class="grow"><div class="why" style="margin:0">Fees still to collect this month</div><div class="big" id="owedTotal">–</div></div>
     <button data-act="feeNotes">Next month’s fee notes</button></div></div>
+  <div id="makeBox2"></div><div id="revBox"></div>
   <h2>Students</h2><div class="card" id="stuList"><div class="empty">Students will list here with fees, makeups owed and schedule.</div></div>
 </section>
 
@@ -129,7 +133,7 @@ const AREAS={centre:'TutorWise ops',students:'Students',staff:'Hiring & staff',m
   corona:'Corona Holdings',judah:'Judah Rise',brother:'Brother’s business',car:'Cars & dispute',home:'Home & errands',finance:'Personal finance',travel:'Trips & gifts',health:'Routine & health',tech:'Tech & ideas',planner:'This planner'};
 const STAT={ready:'To do',verify:'Check if still open',waiting:'Waiting',recurring:'Repeats',idea:'Idea',done:'Done',parked:'Parked'};
 const DEF={name:'Nimish',wake:'07:00',workout:'07:30',workStart:'09:00',teachStart:'16:00',teachEnd:'20:00',capacity:0.65,protect:'Workout'};
-const S={tasks:new Map(),students:new Map(),drafts:[],dumps:[],plan:null,settings:{...DEF},view:'today',area:'',stat:'ready',loaded:false};
+const S={tasks:new Map(),students:new Map(),drafts:[],dumps:[],plan:null,settings:{...DEF},view:'today',area:'',stat:'ready',loaded:false,habits:new Map(),agent:null,stats:null,planKnown:false,autoTried:false};
 let db=null,sample=null,dict=null,tts=null,busy=false;
 
 function toast(m,ms=2800){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),ms)}
@@ -145,18 +149,38 @@ async function boot(){
   if(!dict)$('mic').hidden=true; else wireDict();
   if(!db){clearTimeout(slow);$('hSub').textContent='Sign in to Claude to load your data.';renderAll();return}
   const err=e=>{console.warn(e);if(e?.code==='revoked')$('hSub').textContent='Access changed. Reload the page.'};
-  db.collection('tasks').onSnapshot(q=>{S.tasks=new Map(q.docs.map(d=>[d.id,{id:d.id,...d.data()}]));S.loaded=true;clearTimeout(slow);renderAll()},err);
+  db.collection('tasks').onSnapshot(q=>{S.tasks=new Map(q.docs.map(d=>[d.id,{id:d.id,...d.data()}]));S.loaded=true;clearTimeout(slow);renderAll();maybeAuto()},err);
   db.collection('students').onSnapshot(q=>{S.students=new Map(q.docs.map(d=>[d.id,{id:d.id,...d.data()}]));renderAll()},err);
   db.collection('drafts').orderBy('at','desc').limit(20).onSnapshot(q=>{S.drafts=q.docs.map(d=>({id:d.id,...d.data()}));renderAI()},err);
   db.collection('dumps').orderBy('at','desc').limit(12).onSnapshot(q=>{S.dumps=q.docs.map(d=>({id:d.id,...d.data()}));renderLog()},err);
   db.doc('settings/main').onSnapshot(d=>{S.settings={...DEF,...(d.exists?d.data():{})};renderAll()},err);
-  db.doc('plans/'+today()).onSnapshot(d=>{S.plan=d.exists?d.data():null;renderToday()},err);
+  db.doc('plans/'+today()).onSnapshot(d=>{S.plan=d.exists?d.data():null;S.planKnown=true;renderToday();maybeAuto()},err);
+  const d7=new Date(Date.parse(today()+'T12:00:00Z')-6*864e5).toISOString().slice(0,10);
+  db.collection('habits').where('date','>=',d7).onSnapshot(q=>{S.habits=new Map(q.docs.map(d=>[d.id,d.data()]));renderToday()},err);
+  db.doc('agent/latest').onSnapshot(d=>{S.agent=d.exists?d.data():null;renderToday()},err);
+  db.doc('stats/revenue').onSnapshot(d=>{S.stats=d.exists?d.data():null;renderCentre()},err);
 }
 const up=(id,patch)=>db?.doc('tasks/'+id).update({...patch,up:stamp()}).catch(e=>toast('Could not save: '+(e.message||e.code)));
 const upStu=(id,patch)=>db?.doc('students/'+id).update(patch).catch(e=>toast('Could not save: '+(e.message||e.code)));
 const findStu=name=>{const n=String(name||'').toLowerCase().trim();if(!n)return null;const all=[...S.students.values()];
   return all.find(s=>s.name.toLowerCase()===n)||all.find(s=>s.name.toLowerCase().startsWith(n)||n.startsWith(s.name.toLowerCase().split(' ')[0]))||null};
 const owes=s=>Math.max(0,(s.fee?.due||0)-(s.fee?.paid||0));
+function maybeAuto(){if(S.loaded&&S.planKnown&&!S.plan&&!S.autoTried&&sample&&open().length){S.autoTried=true;makePlan()}}
+const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const endH=x=>+x.e.slice(0,2)+(x.e.slice(3)>'00'?1:0);
+function makeupIdeas(){
+  const all=[...S.students.values()].filter(s=>s.active!==false),owed=all.filter(s=>s.owed>0);
+  if(!owed.length)return null;
+  if(all.filter(s=>(s.slots||[]).length).length<6)return{ready:false,owed};
+  const load={};for(const s of all)for(const x of s.slots||[])for(let h=+x.s.slice(0,2);h<endH(x);h++)load[x.d+'-'+h]=(load[x.d+'-'+h]||0)+1;
+  const t=dow(),hr=+nowHM().slice(0,2);
+  return{ready:true,list:owed.map(s=>{const o=[];for(let k=0;k<7;k++){const d=(t+k)%7;if(d<1||d>5)continue;const mine=(s.slots||[]).filter(x=>x.d===d);
+    for(let h=16;h<20;h++){if(k===0&&h<=hr)continue;if(mine.some(x=>h>=+x.s.slice(0,2)&&h<endH(x)))continue;o.push({d,k,h,n:load[d+'-'+h]||0})}}
+    o.sort((a,b)=>a.n-b.n||a.k-b.k);return{s,opts:o.slice(0,2)}})}}
+const slotTxt=o=>`${o.k===0?'today':o.k===1?'tomorrow':DN[o.d]} ${o.h>12?o.h-12:o.h}-${o.h+1>12?o.h+1-12:o.h+1} pm`;
+function makeupHtml(){const m=makeupIdeas();if(!m)return'';
+  if(!m.ready)return`<h2>Makeups to book</h2><div class="card">${m.owed.map(s=>`<div class="item"><span class="t">${esc(s.name)}</span> <span class="m num">owed ${s.owed} h</span></div>`).join('')}<div class="m" style="padding-top:8px">Say your timetable in Talk and I'll find the quietest free slot for each.</div></div>`;
+  return`<h2>Makeups to book</h2><div class="card">${m.list.map(({s,opts})=>`<div class="item"><div class="row"><div class="grow"><span class="t">${esc(s.name)}</span> <span class="m num">owed ${s.owed} h</span><div class="m">${opts.length?'Quietest: '+opts.map(o=>slotTxt(o)+' ('+o.n+' booked)').join(', '):'No free hour found this week'}</div></div>${opts.length?`<button class="sm" data-act="aiMakeup" data-id="${s.id}" data-slot="${esc(slotTxt(opts[0]))}">Draft the ask</button>`:''}</div></div>`).join('')}</div>`}
 
 /* ---------- planning ---------- */
 function freeMinutes(){const s=S.settings,[h,m]=nowHM().split(':').map(Number),now=h*60+m;const toM=x=>{const[a,b]=x.split(':').map(Number);return a*60+b};
@@ -260,7 +284,7 @@ Produce the finished, usable deliverable itself (the message ready to send, the 
   catch(e){await ref.update({state:'failed',body:e?.text||'',err:e?.message||e?.code||'failed'}).catch(()=>{});toast('That one failed. Try Redo.')}}
 function feeNotes(){
   const d=new Date(today()+'T12:00:00Z');d.setUTCMonth(d.getUTCMonth()+1,1);const mName=d.toLocaleString('en-CA',{month:'long',year:'numeric',timeZone:'UTC'});
-  const rows=[...S.students.values()].filter(s=>s.active!==false).map(s=>{const sub=s.model==='sub';const lessons=sub?null:Math.round((s.perWeek||0)*4*10)/10;
+  const rows=[...S.students.values()].filter(s=>s.active!==false&&s.rate>0).sort((a,b)=>a.name.localeCompare(b.name)).map(s=>{const sub=s.model==='sub';const lessons=sub?null:Math.round((s.perWeek||0)*4*10)/10;
     const base=sub?(s.rate||0):lessons*(s.rate||0)+10;const credit=(s.credit||0);const carry=owes(s);const total=base-credit+carry;
     return `${s.name}${s.parent?' ('+s.parent+')':''}\n  ${sub?'Monthly subscription':lessons+' lessons × $'+s.rate+' + $10 supplies'}: ${money(base)}${credit?`\n  Credit: -${money(credit)}`:''}${carry?`\n  Unpaid from this month: +${money(carry)}`:''}${s.owed?`\n  Makeup time still owed to them: ${s.owed} h`:''}\n  TOTAL ${mName}: ${money(total)}   (e-transfer: etransfer@tutorwise.ca)`});
   sheet(`<h3 style="font:600 18px var(--disp);margin:0 0 4px">Fee notes for ${esc(mName)}</h3><p class="why">Built from each student’s lessons per week, rate, credits and anything unpaid. Lessons assume 4 weeks; tell me in Talk if a student’s count differs. Nothing is sent.</p><pre class="out" id="fnOut">${esc(rows.join('\n\n'))}</pre><div class="row"><button class="pri" data-act="copy" data-from="fnOut">Copy all</button><button data-act="close">Close</button></div>`)}
@@ -270,7 +294,12 @@ function renderAll(){renderToday();renderList();renderCentre();renderAI();render
 function renderToday(){
   const s=S.settings,wk=[1,2,3,4,5].includes(dow());
   $('hSub').textContent=new Date(today()+'T12:00:00Z').toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric',timeZone:'UTC'})+(S.loaded?` · ${open().length} open`:'');
-  $('shape').innerHTML=[[s.wake,'Up'],[s.workout,'Workout'],[s.workStart,'Focused work'],wk?[s.teachStart,'Teaching','fx']:null,wk?[s.teachEnd,'Reset & log']:null].filter(Boolean).map(x=>`<div class="${x[2]||''}"><b>${esc(x[0])}</b>${esc(x[1])}</div>`).join('');
+  const hb=S.habits.get(today())||{},cnt=k=>[...S.habits.values()].filter(h=>h[k]).length;
+  $('shape').innerHTML=[[s.wake,'Up','','up'],[s.workout,'Workout','','workout'],[s.workStart,'Focused work'],wk?[s.teachStart,'Teaching','fx']:null,wk?[s.teachEnd,'Reset & log']:null].filter(Boolean).map(x=>x[3]?`<div class="${hb[x[3]]?'fx':''}" role="button" tabindex="0" data-act="habit" data-h="${x[3]}" style="cursor:pointer"><b>${hb[x[3]]?'✓ ':''}${esc(x[0])}</b>${esc(x[1])} · ${cnt(x[3])}/7</div>`:`<div class="${x[2]||''}"><b>${esc(x[0])}</b>${esc(x[1])}</div>`).join('');
+  const ag=S.agent;$('agentBox').innerHTML=ag&&ag.date===today()&&ag.brief?`<div class="card" style="margin-top:12px"><div class="row"><b class="grow">From your overnight agent</b><span class="pill mute">${ag.at?esc(new Date(ag.at).toLocaleTimeString('en-CA',{timeZone:TZ,hour:'numeric',minute:'2-digit'})):''}</span></div><div class="why" style="white-space:pre-wrap;margin:6px 0 0">${esc(ag.brief)}</div>${(ag.flags||[]).map(f=>`<div class="m" style="margin-top:6px">• ${esc(f)}</div>`).join('')}</div>`:'';
+  $('makeBox').innerHTML=makeupHtml();
+  const unm=(S.plan?.picks||[]).filter(k=>S.tasks.get(k.id)?.s!=='done'&&!(S.plan.marks||{})[k.id]).length;
+  $('eveBox').innerHTML=nowHM()>=s.teachEnd&&S.plan?`<h2>Close the day</h2><div class="card"><div class="why" style="margin:0 0 8px">${unm?unm+' of today’s picks aren’t marked yet. Tap Done or Not today above.':'Today’s picks are all marked.'} Anything else happen? Say it in one go.</div><button class="sm pri" data-act="goTalk">Tell me about today</button></div>`:'';
   const p=S.plan;
   if(p?.picks?.length){const m=p.marks||{};
     $('planBox').innerHTML=`<div class="why" style="margin:0">${esc(p.headline||'')} <span class="pill mute">${p.budget||0} min planned of ${p.free||0} free</span></div>`+p.picks.map((k,i)=>{const t=S.tasks.get(k.id);if(!t)return'';const st=t.s==='done'?'done':m[k.id];
@@ -300,6 +329,9 @@ function renderList(){
 function renderCentre(){
   const st=[...S.students.values()].sort((a,b)=>owes(b)-owes(a)||a.name.localeCompare(b.name));
   $('owedTotal').textContent=st.length?money(st.reduce((a,s)=>a+owes(s),0)):'–';
+  $('makeBox2').innerHTML=makeupHtml();
+  const ms=S.stats?.months||[],mx=Math.max(1,...ms.map(m=>m.billed||0));
+  $('revBox').innerHTML=ms.length?`<h2>Monthly fees billed</h2><div class="card">${ms.map(m=>`<div class="row" style="margin:5px 0"><span class="m num" style="width:64px;white-space:nowrap">${esc(new Date(m.m+'-15T12:00:00Z').toLocaleString('en-CA',{month:'short',year:'2-digit',timeZone:'UTC'}))}</span><div class="grow" style="background:var(--line);border-radius:6px;height:14px"><div style="width:${Math.round((m.billed||0)/mx*100)}%;background:var(--acc);height:14px;border-radius:6px"></div></div><span class="num" style="width:62px;text-align:right">${money(m.billed||0)}</span></div>`).join('')}${S.stats.note?`<div class="m" style="margin-top:8px">${esc(S.stats.note)}</div>`:''}</div>`:'';
   const D=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   $('stuList').innerHTML=st.length?st.map(s=>`<div class="item"><div class="row"><div class="grow t">${esc(s.name)} <span class="m">${s.grade?'Gr '+esc(s.grade):''}${s.parent?' · '+esc(s.parent):''}</span></div>${owes(s)?`<span class="pill bad num">owes ${money(owes(s))}</span>`:s.fee?.due?'<span class="pill good">paid</span>':''}${s.owed?`<span class="pill warn num">${s.owed} h makeup</span>`:''}</div>
     <div class="m num">${s.model==='sub'?money(s.rate||0)+'/mo':(s.perWeek||'?')+' lessons/wk × $'+(s.rate||'?')}${(s.slots||[]).length?' · '+s.slots.map(x=>D[x.d]+' '+x.s+'–'+x.e).join(', ')+(s.slotsOk?'':' (unconfirmed)'):' · schedule not entered'}</div>
@@ -337,6 +369,9 @@ document.addEventListener('click',async e=>{
   if(a==='done'){const t=S.tasks.get(id);if(t){await up(id,{s:'done',doneAt:stamp(),ev:'tapped Done'});toast('Done: '+t.t)}return}
   if(a==='set'){await up(id,{s:b.dataset.s});return}
   if(a==='mark'){const t=S.tasks.get(id);const marks={...(S.plan?.marks||{}),[id]:b.dataset.m};await db.doc('plans/'+today()).update({marks}).catch(()=>{});if(t)await up(id,{defer:(t.defer||0)+1});toast(b.dataset.m==='stuck'?'Marked stuck. Tell me why in Talk and I’ll unblock it.':'Okay, not today.');return}
+  if(a==='habit'){const hb=S.habits.get(today())||{};await db?.doc('habits/'+today()).set({...hb,date:today(),[b.dataset.h]:!hb[b.dataset.h]}).catch(()=>{});return}
+  if(a==='goTalk'){show('talk');$('dump').focus();return}
+  if(a==='aiMakeup'){const s=S.students.get(id);if(s)runJob(`Write a short, warm WhatsApp message to ${s.parent||'the parent'} of ${s.name}: ${s.name} is owed ${s.owed} hour(s) of makeup time and there is a free spot ${b.dataset.slot}. Ask if they can come then, and offer to find another time if not.`);return}
   if(a==='area'){S.area=b.dataset.a;renderList();return}
   if(a==='stat'){S.stat=b.dataset.s;renderList();return}
   if(a==='att'){const s=S.students.get(id);if(s){await logAtt(s,b.dataset.st,1);toast(s.name+': '+(b.dataset.st==='absent'?'missed, 1 h makeup owed':b.dataset.st==='makeup'?'makeup done':'came'))}return}
