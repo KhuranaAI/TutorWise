@@ -1,40 +1,40 @@
-// Backend for the OSSLT prep page: Firebase Auth + Firestore (project tutorwise-literacy).
+// Backend for the literacy page: Firebase Auth + Firestore (project tutorwise-literacy).
 //
-// How sign-in works
+// One sign-in for everything under /literacy:
 // - Each student has a Firebase sign-in account made by the tutor. The PIN is that
 //   account's password, so Google's servers check it, store it hashed, never send
 //   it to the browser, and slow down repeated wrong guesses.
 // - The tutor is one Firebase account. The first person to open "Tutor sign-in"
 //   creates its password and claims the tutor role; after that it cannot be claimed again.
+// - The same session is used by the reading lessons (learn/) and their tutor view (tutor/).
 // - What each account may read or write is enforced by the Firestore security rules
 //   (kept outside this repository), not by this file.
 //
-// Data (same shapes as before, in collections prefixed osslt_):
-//   osslt_students/{id}  {name, uid, addedAt}       id = the student's name as a slug
-//   osslt_progress/{id}  the student's whole state  {ans, w, plan, chk, name, updatedAt}
+// Data:
+//   osslt_students/{id}  {name, uid, addedAt, modules[]}  id = the student's name as a slug;
+//                        modules = ids of the modules the tutor has given this student
+//   osslt_progress/{id}  the student's whole OSSLT state  {ans, w, plan, chk, name, updatedAt}
 //   osslt_grades/{id}    {items: {[writingTaskId]: {content, conventions, comment, at}}}
 //   osslt_config/tutor   {uid, createdAt}
 //   osslt_logins/{id}    {v}  which sign-in account is current for that name (changes when a PIN is reset)
+//   profiles/{uid}       {role, displayName}  lets the reading lessons recognise the student
 
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getAuth, initializeAuth, inMemoryPersistence, onAuthStateChanged,
+  initializeAuth, inMemoryPersistence, onAuthStateChanged,
   signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, setDoc, getDocs, collection, onSnapshot,
+  doc, getDoc, setDoc, deleteDoc, getDocs, collection, onSnapshot,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { FIREBASE, STUDENT_DOMAIN } from "../assets/config.js";
-
-// A separately named app keeps this page's sign-in apart from the /literacy pages.
-const app = initializeApp(FIREBASE, "osslt");
-const auth = getAuth(app);
-const db = getFirestore(app);
+import { FIREBASE, STUDENT_DOMAIN } from "./assets/config.js";
+import { auth, db } from "./assets/auth.js"; // the same Firebase app the reading lessons use
+import { loadAllModules } from "./assets/content.js";
 
 const COL = { students: "osslt_students", progress: "osslt_progress", grades: "osslt_grades", config: "osslt_config", logins: "osslt_logins" };
-// The tutor can use the same sign-in on /literacy with the username "tutor".
+// The tutor's sign-in account. No mail is ever sent to these placeholder addresses.
 const TUTOR_EMAIL = `tutor@${STUDENT_DOMAIN}`;
-const STUDENT_EMAIL_DOMAIN = "osslt.tutorwise.ca"; // placeholder addresses; no mail is ever sent
+const STUDENT_EMAIL_DOMAIN = "osslt.tutorwise.ca";
 const studentEmail = (id, v) => `${id}.${v}@${STUDENT_EMAIL_DOMAIN}`;
 const pinPassword = (pin) => `osslt:${pin}`; // Firebase needs 6+ characters; the prefix is not a secret
 
@@ -58,13 +58,35 @@ async function studentFor(user) {
   if (!m) return null;
   const s = await getDoc(ref("students/" + m[1]));
   if (!s.exists() || s.data().uid !== user.uid) return null;
-  return { id: m[1], name: s.data().name || m[1] };
+  const d = s.data();
+  return { id: m[1], name: d.name || m[1], modules: Array.isArray(d.modules) ? d.modules : null };
 }
 
 async function isTutor(user) {
   if (!user || user.email !== TUTOR_EMAIL) return false;
   const c = await getDoc(ref("config/tutor"));
   return c.exists() && c.data().uid === user.uid;
+}
+
+// The security rules read modules/{id}.sectionModes to know which reading-lesson
+// sections are tutor-led and which are solo. Keep that copy in step with the
+// module files whenever the tutor signs in.
+let readingCache = null;
+function reading() {
+  readingCache ??= loadAllModules().catch(() => []);
+  return readingCache;
+}
+async function syncReadingModes() {
+  const mods = await reading();
+  await Promise.all(mods.map((m) => setDoc(doc(db, "modules", m.id), {
+    number: m.number, title: m.title,
+    sectionModes: Object.fromEntries(m.sections.map((s) => [s.id, s.mode])),
+  })));
+}
+function tutorReady() {
+  syncReadingModes().catch((e) => console.error("reading section modes not synced", e));
+  // Make sure the reading lessons' tutor view recognises this account too.
+  if (auth.currentUser) setDoc(doc(db, "profiles", auth.currentUser.uid), { role: "tutor", displayName: "Tutor" }).catch(() => {});
 }
 
 const api = {
@@ -81,13 +103,18 @@ const api = {
     return { get: async () => { const s = await getDocs(collection(db, COL[name] || name)); return { empty: s.empty, docs: s.docs.map(wrap) }; } };
   },
 
+  /** The reading lessons, for module lists: [{id, number, title, goal}]. */
+  async readingModules() {
+    return (await reading()).map((m) => ({ id: m.id, number: m.number, title: m.title, goal: m.goal }));
+  },
+
   // ---- sign-in ----
-  /** Who is already signed in on this device: {tutor:true}, {id,name}, or null. */
+  /** Who is already signed in on this device: {tutor:true}, {id,name,modules}, or null. */
   async current() {
     const u = await firstUser();
     if (!u) return null;
     try {
-      if (await isTutor(u)) return { tutor: true };
+      if (await isTutor(u)) { tutorReady(); return { tutor: true }; }
       const st = await studentFor(u);
       if (st) return st;
     } catch { /* fall through to signed out */ }
@@ -121,6 +148,7 @@ const api = {
         user = (await signInWithEmailAndPassword(auth, TUTOR_EMAIL, password)).user; // finish a half-done first run
       }
       await setDoc(ref("config/tutor"), { uid: user.uid, createdAt: new Date().toISOString() });
+      tutorReady();
     } catch (e) { await signOut(auth).catch(() => {}); throw fail(e); }
   },
 
@@ -128,18 +156,23 @@ const api = {
     try {
       const { user } = await signInWithEmailAndPassword(auth, TUTOR_EMAIL, password);
       if (!(await isTutor(user))) { await signOut(auth).catch(() => {}); throw { code: "no-match" }; }
+      tutorReady();
     } catch (e) { throw fail(e); }
   },
 
   signOut: () => signOut(auth),
 
-  // ---- tutor: add a student, or give an existing name a new PIN ----
-  async addStudent(name, pin) {
+  // ---- tutor: students ----
+  /**
+   * Add a student, or give an existing name a new PIN.
+   * `modules` is used for a new student; an existing student keeps their modules.
+   */
+  async addStudent(name, pin, modules) {
     const id = slug(name);
     const login = await getDoc(ref("logins/" + id));
     let v = login.exists() ? Number(login.data().v) || 0 : 0;
     // A throwaway second Firebase instance creates the account, so the tutor stays signed in.
-    const side = initializeApp(FIREBASE, "osslt-add-" + Date.now());
+    const side = initializeApp(FIREBASE, "add-student-" + Date.now());
     const sideAuth = initializeAuth(side, { persistence: inMemoryPersistence });
     try {
       let user = null;
@@ -150,12 +183,30 @@ const api = {
       }
       if (!user) throw new Error("no free sign-in for that name");
       const prev = await getDoc(ref("students/" + id));
-      await setDoc(ref("students/" + id), { name, uid: user.uid, addedAt: prev.exists() ? prev.data().addedAt || new Date().toISOString() : new Date().toISOString() });
+      const old = prev.exists() ? prev.data() : null;
+      await setDoc(ref("students/" + id), {
+        name, uid: user.uid,
+        addedAt: old?.addedAt || new Date().toISOString(),
+        modules: Array.isArray(old?.modules) ? old.modules : (modules || []),
+      });
+      await setDoc(doc(db, "profiles", user.uid), { role: "student", displayName: name });
       await setDoc(ref("logins/" + id), { v });
+      if (old?.uid && old.uid !== user.uid) await deleteDoc(doc(db, "profiles", old.uid)).catch(() => {});
       await signOut(sideAuth).catch(() => {});
+      return { id, isNew: !old };
     } finally {
       await deleteApp(side).catch(() => {});
     }
+  },
+
+  /** Choose which modules a student sees. */
+  async setStudentModules(id, modules) {
+    const s = await getDoc(ref("students/" + id));
+    if (!s.exists()) throw new Error("no such student");
+    const d = s.data();
+    await setDoc(ref("students/" + id), { ...d, modules });
+    // Students added before the reading lessons were joined on have no profile yet.
+    if (d.uid) await setDoc(doc(db, "profiles", d.uid), { role: "student", displayName: d.name || id });
   },
 };
 

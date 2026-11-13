@@ -48,3 +48,6 @@ legend { font-weight: 600; padding: 0 4px; }
 .btn-danger:hover { background: var(--bad-soft); color: var(--bad); border-color: var(--bad); }
 .danger-zone { border-color: #e7b9b4; }
 details.card > summary { cursor: pointer; font-weight: 600; color: var(--heading); }
+
+.pick select { font: inherit; padding: 6px 10px; border: 2px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--ink); min-height: 40px; }
+a.btn { text-decoration: none; }

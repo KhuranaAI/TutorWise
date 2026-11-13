@@ -1,4 +1,4 @@
-// Tutor view: overview, item detail, review queue, assigning, card settings,
+// Tutor view for the reading lessons: overview, item detail, review queue, assigning, card settings,
 // notes, weekly tracker, export and delete.
 // Routes: #/  #/section/<module>/<section>  #/review  #/data
 import {
@@ -6,8 +6,7 @@ import {
   serverTimestamp, deleteField,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { loadAllModules } from "./content.js";
-import { db, requireRole, signOutAndLeave, el } from "./auth.js";
-import { addStudentCard } from "./tutor-add.js";
+import { db, requireRole, signOutAndLeave, urls, el } from "./auth.js";
 import { PassageView } from "./passage.js";
 import {
   ERROR_CODES, ms, itemSummaries, readiness, sectionOverview, sectionItems,
@@ -17,6 +16,7 @@ import {
 await requireRole("tutor");
 
 document.getElementById("meta").append(
+  el("a", { class: "btn btn-small", href: urls.signIn }, "Gradebook"),
   el("span", {}, "Tutor"),
   el("button", { class: "btn btn-small", type: "button", onclick: signOutAndLeave }, "Sign out"),
 );
@@ -54,10 +54,18 @@ async function syncSectionModes() {
 const rowsOf = (name, sid) => getDocs(query(collection(db, name), where("studentId", "==", sid)))
   .then((s) => s.docs.map((d) => ({ id: d.id, ...d.data() })));
 
+// Students are added in the gradebook on the main page. Only those who have
+// been given at least one reading module are listed here.
+let students = [];
 async function loadStudent() {
-  const snap = await getDocs(query(collection(db, "profiles"), where("role", "==", "student")));
-  const list = snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
-  return list[0] || null; // one student in the pilot
+  const ids = new Set(modules.map((m) => m.id));
+  const snap = await getDocs(collection(db, "osslt_students"));
+  students = snap.docs.map((d) => d.data())
+    .filter((s) => s.uid && Array.isArray(s.modules) && s.modules.some((id) => ids.has(id)))
+    .map((s) => ({ uid: s.uid, displayName: s.name, given: s.modules }))
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+  const want = new URLSearchParams(location.search).get("s") || sessionStorage.getItem("tutor-student");
+  return students.find((s) => s.uid === want) || students[0] || null;
 }
 
 async function loadData(sid) {
@@ -75,7 +83,10 @@ async function route(reload) {
   try {
     if (reload || !student) student = await loadStudent();
     if (!student) {
-      app.replaceChildren(el("h1", {}, "Tutor view"), addStudentCard(() => route(true)));
+      app.replaceChildren(el("h1", {}, "Reading lessons"),
+        el("div", { class: "card" },
+          el("p", {}, "No student has been given a reading module yet. In the gradebook, open a student and tick a Reading skills module."),
+          el("a", { class: "btn", href: urls.signIn }, "Go to the gradebook")));
       return;
     }
     if (reload || !data) await refresh();
@@ -103,9 +114,17 @@ function nav(active) {
 }
 
 function page(active, title, ...body) {
+  const pick = el("select", { id: "pick-student", "aria-label": "Student" },
+    students.map((s) => el("option", { value: s.uid, selected: s.uid === student.uid }, s.displayName)));
+  pick.addEventListener("change", () => {
+    sessionStorage.setItem("tutor-student", pick.value);
+    history.replaceState(null, "", location.pathname + location.hash); // drop any ?s= so the picker wins
+    data = null; student = null; route(true);
+  });
   app.replaceChildren(
-    el("div", { class: "row tutor-head" }, el("h1", {}, title), el("span", { class: "muted" }, `Student: ${student.displayName}`)),
-    nav(active), ...body);
+    el("div", { class: "row tutor-head" }, el("h1", {}, title),
+      el("label", { class: "pick muted", for: "pick-student" }, "Student ", pick)),
+    nav(active), ...body.filter(Boolean));
   app.querySelector("h1").setAttribute("tabindex", "-1");
 }
 
@@ -113,7 +132,7 @@ const findModule = (id) => modules.find((x) => x.id === id);
 
 // ---------------------------------------------------------------- overview
 function renderOverview() {
-  const cards = modules.map((mod) => {
+  const cards = modules.filter((mod) => student.given.includes(mod.id)).map((mod) => {
     const setting = data.settings.find((s) => s.moduleId === mod.id);
     const cardHidden = !!setting?.cardHidden;
     const cardBtn = el("button", { class: "btn btn-small", type: "button", "aria-pressed": String(!cardHidden) },
@@ -162,7 +181,7 @@ function renderOverview() {
           el("tbody", {}, rows))),
       notesBox(mod));
   });
-  page("overview", "Tutor view",
+  page("overview", "Reading lessons",
     el("p", { class: "muted small" }, "First-try accuracy counts scored items only. Hint levels: 0 none, 1 read the question again, 2 where to look, 3 narrowed down, 4 modelled by tutor."),
     ...cards);
 }

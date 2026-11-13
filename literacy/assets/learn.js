@@ -1,6 +1,7 @@
 // Student pages: home (modules and sections) and the section player.
 // Routes: #/  and  #/s/<moduleId>/<sectionId>
-import { requireRole, signOutAndLeave, el } from "./auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { db, requireRole, signOutAndLeave, urls, el } from "./auth.js";
 import { loadAllModules, sectionItems } from "./content.js";
 import { loadStudentState, markFeedbackSeen } from "./store.js";
 import { openSection } from "./player.js";
@@ -10,6 +11,7 @@ const uid = user.uid;
 const app = document.getElementById("app");
 
 document.getElementById("meta").append(
+  el("a", { class: "btn btn-small", href: urls.signIn }, "All my modules"),
   el("span", {}, profile.displayName),
   el("button", { class: "btn btn-small", type: "button", onclick: signOutAndLeave }, "Sign out"),
 );
@@ -17,6 +19,17 @@ document.getElementById("meta").append(
 let modules = [];
 try { modules = await loadAllModules(); }
 catch (e) { console.error(e); app.replaceChildren(el("p", { class: "msg msg-bad" }, "The lessons could not load. Check the internet connection, then reload the page.")); throw e; }
+
+// Show only the reading modules the tutor has given this student
+// (the list lives in osslt_students/{name-slug}.modules).
+try {
+  const m = (user.email || "").match(/^(.+)\.\d+@osslt\.tutorwise\.ca$/);
+  if (m) {
+    const s = await getDoc(doc(db, "osslt_students", m[1]));
+    const given = s.exists() && Array.isArray(s.data().modules) ? s.data().modules : [];
+    modules = modules.filter((x) => given.includes(x.id));
+  }
+} catch (e) { console.error(e); modules = []; }
 
 let player = null;
 let flash = "";
@@ -89,6 +102,11 @@ function renderHome(state) {
     for (const w of fresh) if (!w.seenAt && !seenThisVisit.has(w.id)) { seenThisVisit.add(w.id); markFeedbackSeen(w.id).catch(() => {}); }
   }
 
+  if (!modules.length) {
+    out.push(el("div", { class: "card" },
+      el("p", {}, "Your tutor has not given you any reading lessons yet."),
+      el("a", { class: "btn", href: urls.signIn }, "Go to all my modules")));
+  }
   for (const mod of modules) {
     const done = mod.sections.filter((s) => statusOf(state, mod, s) === "done").length;
     out.push(el("section", { class: "card module-card", "aria-labelledby": "mh-" + mod.id },

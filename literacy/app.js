@@ -445,6 +445,11 @@ const KEY = "osslt-prep-v1";
 const blank=()=>({ans:{}, w:{}, plan:{}, chk:{}});
 let S = blank();
 let ME=null, TUTOR=false, DB=null, dbReady=false, GRADES={}, unsubGrades=null;
+// MINE: ids of the modules the tutor has given the signed-in student (null = no list saved yet: all OSSLT modules).
+// READING: the reading-skills lesson modules, which open in their own player under learn/.
+let MINE=null, READING=[];
+const myMods=()=>MODULES.filter(m=>!MINE||MINE.includes(m.id));
+const myReading=()=>READING.filter(r=>MINE&&MINE.includes(r.id));
 let saveT; const SV={busy:false,dirty:false};
 function save(){ clearTimeout(saveT); setSaveNote("Saving…"); saveT=setTimeout(flush, 800); }
 async function flush(){
@@ -698,8 +703,10 @@ function updateNav(){
   if(!ME){ $("#overall").textContent=""; return; }
   const home=h("li"); const ha=h("a",{href:"#home"},`<span class="n">★</span><span class="t">Start here<small>Overview and progress</small></span>`); if(cur==="home") ha.setAttribute("aria-current","page"); home.append(ha); nav.append(home);
   let td=0,tt=0;
-  MODULES.forEach((m,i)=>{ const p=modProgress(m); td+=p.done; tt+=p.total; const cls=p.done===0?"":p.done>=p.total?"done":"part"; const li=h("li"); const a=h("a",{href:"#"+m.id},`<span class="n ${cls}">${p.done>=p.total?"✓":i+1}</span><span class="t">${esc(m.title)}<small>${p.done}/${p.total} done</small></span>`); if(cur===m.id) a.setAttribute("aria-current","page"); li.append(a); nav.append(li); });
-  $("#overall").textContent=`Overall: ${td} of ${tt} activities done`;
+  myMods().forEach((m,i)=>{ const p=modProgress(m); td+=p.done; tt+=p.total; const cls=p.done===0?"":p.done>=p.total?"done":"part"; const li=h("li"); const a=h("a",{href:"#"+m.id},`<span class="n ${cls}">${p.done>=p.total?"✓":i+1}</span><span class="t">${esc(m.title)}<small>${p.done}/${p.total} done</small></span>`); if(cur===m.id) a.setAttribute("aria-current","page"); li.append(a); nav.append(li); });
+  const rd=myReading();
+  if(rd.length){ const li=h("li"); li.append(h("a",{href:"learn/"},`<span class="n">R</span><span class="t">Reading skills<small>${rd.length} lesson module${rd.length===1?"":"s"}</small></span>`)); nav.append(li); }
+  $("#overall").textContent=tt?`Overall: ${td} of ${tt} activities done`:"";
 }
 
 function scaleSVG(){
@@ -716,22 +723,30 @@ function scaleSVG(){
 
 function renderHome(){
   const wrap=h("div",{class:"wrap"});
+  const mods=myMods(), rd=myReading();
   const hero=h("header",{class:"hero"});
-  hero.append(h("div",{},`<p class="mono" style="color:var(--accent)">Grade 10 · Ontario Secondary School Literacy Test</p><h1 style="margin-top:8px">Get ready for the <span>literacy test</span>.</h1><p>Six modules that walk you through every reading form, question type and writing task on the OSSLT, with instant feedback as you go. Work through them in order, or jump to what you need.</p>`));
+  hero.append(h("div",{},`<p class="mono" style="color:var(--accent)">Grade 10 · Ontario Secondary School Literacy Test</p><h1 style="margin-top:8px">Get ready for the <span>literacy test</span>.</h1>${mods.length?`<p>${mods.length===6?"Six modules":"Modules"} that walk you through every reading form, question type and writing task on the OSSLT, with instant feedback as you go. Work through them in order, or jump to what you need.</p>`:`<p>Your tutor has chosen these lessons for you. Start with the first one.</p>`}`));
   hero.append(h("div",{class:"scale"},`${scaleSVG()}<p class="muted" style="font-size:.9rem">The fall 2026 test window runs <b>November 3–30</b>. The spring window is <b>March 30 – April 19, 2027</b>.</p>`));
   wrap.append(hero);
   const grid=h("div",{class:"mods"});
-  MODULES.forEach((m,i)=>{ const p=modProgress(m); const pct=p.total?Math.round(p.done/p.total*100):0;
+  mods.forEach((m,i)=>{ const p=modProgress(m); const pct=p.total?Math.round(p.done/p.total*100):0;
     grid.append(h("a",{class:"mod",href:"#"+m.id},`<div class="row"><span class="num">MODULE ${i+1}</span><span class="chip">${esc(m.time)}</span></div><h3>${esc(m.title)}</h3><p>${esc(m.blurb)}</p><div class="bar"><i style="width:${pct}%"></i></div><span class="prog">${p.done} of ${p.total} activities${p.qn?` · ${p.correct}/${p.qn} correct`:""}</span>`)); });
-  wrap.append(h("div",{class:"section-label"},`<span class="mono">Modules</span>`)); wrap.append(grid);
+  if(mods.length){ wrap.append(h("div",{class:"section-label"},`<span class="mono">Modules</span>`)); wrap.append(grid); }
+  if(rd.length){
+    const rg=h("div",{class:"mods"});
+    rd.forEach(r=>rg.append(h("a",{class:"mod",href:"learn/"},`<div class="row"><span class="num">READING SKILLS ${esc(r.number)}</span><span class="chip">Lessons</span></div><h3>${esc(r.title)}</h3><p>${esc(r.goal||"")}</p><span class="prog">Opens the reading lessons</span>`)));
+    wrap.append(h("div",{class:"section-label"},`<span class="mono">Reading skills</span>`)); wrap.append(rg);
+  }
+  if(!mods.length&&!rd.length) wrap.append(h("div",{class:"lesson"},`<p>Your tutor hasn’t given you any modules yet. Check back after your next lesson.</p>`));
   wrap.append(h("div",{class:"lesson"},`<h2>How this works</h2><ul><li><b>Learn</b> the skill in a short lesson.</li><li><b>Practise</b> with OSSLT-style questions. Press Check to see if you’re right and why.</li><li><b>Write</b> real responses, check them against a checklist and a model, and get feedback from your tutor.</li><li><b>Test yourself</b> with the practice test in Module 6 and get a breakdown by skill.</li></ul><p class="muted" style="font-size:.9rem">All passages on this site are original practice texts. The news stories take place in fictional towns. Your work saves automatically while you’re signed in.</p>`));
   return wrap;
 }
 
 function renderModule(m, idx){
+  const MY=myMods();
   const wrap=h("div",{class:"wrap"});
   const head=h("header",{class:"mod-head"});
-  head.append(h("span",{class:"mono eyebrow"},`Module ${idx+1} of ${MODULES.length}`), h("h1",{},esc(m.title)), h("p",{},esc(m.blurb)));
+  head.append(h("span",{class:"mono eyebrow"},`Module ${idx+1} of ${MY.length}`), h("h1",{},esc(m.title)), h("p",{},esc(m.blurb)));
   const forms=[...new Set(m.blocks.filter(b=>b.k==="set").map(b=>P[b.passage].form))];
   head.append(h("div",{class:"meta"},`<span class="chip">${esc(m.time)}</span>`+forms.map(f=>`<span class="chip form">${esc(f)}</span>`).join("")));
   wrap.append(head);
@@ -745,8 +760,8 @@ function renderModule(m, idx){
     else if(b.k==="results"){ wrap.append(renderResults(m)); }
   });
   const pg=h("nav",{class:"pager","aria-label":"Module navigation"});
-  pg.append(h("a",{href: idx>0?"#"+MODULES[idx-1].id:"#home"},"← "+(idx>0?esc(MODULES[idx-1].title):"Overview")));
-  pg.append(h("a",{href: idx<MODULES.length-1?"#"+MODULES[idx+1].id:"#home"},(idx<MODULES.length-1?esc(MODULES[idx+1].title):"Back to overview")+" →"));
+  pg.append(h("a",{href: idx>0?"#"+MY[idx-1].id:"#home"},"← "+(idx>0?esc(MY[idx-1].title):"Overview")));
+  pg.append(h("a",{href: idx<MY.length-1?"#"+MY[idx+1].id:"#home"},(idx<MY.length-1?esc(MY[idx+1].title):"Back to overview")+" →"));
   wrap.append(pg);
   return wrap;
 }
@@ -758,7 +773,7 @@ function route(){
   if(!dbReady){ main.append(h("div",{class:"wrap narrow"},'<p class="muted">Connecting…</p>')); }
   else if(TUTOR){ main.append(id.startsWith("student-")?renderStudent(id.slice(8)):renderGradebook()); }
   else if(!ME){ main.append(renderLogin()); }
-  else { const idx=MODULES.findIndex(m=>m.id===id); main.append(idx>=0?renderModule(MODULES[idx],idx):renderHome()); paintGrades(); }
+  else { const mm=myMods(); const idx=mm.findIndex(m=>m.id===id); main.append(idx>=0?renderModule(mm[idx],idx):renderHome()); paintGrades(); }
   updateNav();
   $("#rail").classList.remove("open"); $("#menuBtn").setAttribute("aria-expanded","false");
   window.scrollTo(0,0);
@@ -779,7 +794,7 @@ function signInProblem(e){ const c=(e&&e.code)||""; return c==="too-many-tries"?
 async function enterAs(who){
   const d=await DB.doc("progress/"+who.id).get();
   S=d.exists?Object.assign(blank(),JSON.parse(JSON.stringify(d.data()))):blank(); delete S.name; delete S.updatedAt;
-  ME={id:who.id,name:who.name}; setSaveNote(""); watchGrades();
+  ME={id:who.id,name:who.name}; MINE=Array.isArray(who.modules)?who.modules:null; setSaveNote(""); watchGrades();
 }
 
 function renderLogin(){
@@ -850,7 +865,7 @@ function skillRow(label, c, t){ const row=h("div",{class:"skillrow"}); row.appen
 function renderGradebook(){
   const wrap=h("div",{class:"wrap"});
   wrap.append(h("header",{class:"mod-head"},`<span class="mono eyebrow">Tutor view</span><h1>Gradebook</h1><p>Selected-response questions mark themselves. Open a student to read their writing and give it a grade.</p>`));
-  const bar=h("div",{class:"q-actions"}); const rf=h("button",{class:"btn ghost",type:"button"},"Refresh"); bar.append(rf); wrap.append(bar);
+  const bar=h("div",{class:"q-actions"}); const rf=h("button",{class:"btn ghost",type:"button"},"Refresh"); bar.append(rf, h("a",{class:"btn ghost",href:"tutor/"},"Reading lessons: tracking and marking")); wrap.append(bar);
   const tbl=h("div",{class:"tablewrap"},'<p class="muted">Loading…</p>'); wrap.append(tbl);
   const loadTable=async()=>{
     try{
@@ -858,7 +873,8 @@ function renderGradebook(){
       const PR={}; pr.docs.forEach(d=>PR[d.id]=d.data());
       if(st.empty){ tbl.innerHTML='<p class="muted">No students yet. Add one below.</p>'; return; }
       const rows=st.docs.map(d=>{ const s=d.data()||{}, x=Object.assign(blank(),PR[d.id]||{});
-        const cells=MODULES.map(m=>{ const p=modProgress(m,x); return `<td class="num">${p.qn?`${p.correct}/${p.qn}`:"—"}<small>${p.done}/${p.total} done</small></td>`; }).join("");
+        const mine=Array.isArray(s.modules)?s.modules:null;
+        const cells=MODULES.map(m=>{ if(mine&&!mine.includes(m.id)) return `<td class="num"><small>not given</small></td>`; const p=modProgress(m,x); return `<td class="num">${p.qn?`${p.correct}/${p.qn}`:"—"}<small>${p.done}/${p.total} done</small></td>`; }).join("");
         return `<tr><td><a href="#student-${esc(d.id)}"><b>${esc(s.name||d.id)}</b></a></td>${cells}<td><small>${x.updatedAt?esc(when(x.updatedAt)):"Not started"}</small></td></tr>`; }).join("");
       tbl.innerHTML=`<table class="facts gb"><tr><th>Student</th>${MODULES.map((m,i)=>`<th title="${esc(m.title)}">M${i+1}</th>`).join("")}<th>Last active</th></tr>${rows}</table><p class="muted" style="font-size:.85rem;margin-top:8px">Each cell shows correct answers, then activities done. M1 Know the Test · M2 Narratives &amp; Dialogues · M3 Information &amp; News · M4 Conventions · M5 Opinion Essay · M6 Practice Test.</p>`;
     }catch(e){ tbl.innerHTML='<p class="muted">Couldn’t load the gradebook. Check your connection, then press Refresh.</p>'; }
@@ -867,8 +883,8 @@ function renderGradebook(){
   const add=h("section",{class:"lesson"}); add.append(h("h2",{},"Add a student"));
   add.append(h("div",{class:"planner"},`<label for="nsName">First name<input id="nsName" type="text" autocomplete="off"></label><label for="nsPin">PIN (4 to 8 digits)<input id="nsPin" type="text" inputmode="numeric" maxlength="8" autocomplete="off"></label>`));
   const ab=h("button",{class:"btn",type:"button"},"Add student"); const am=h("span",{class:"muted",role:"status"}); const ar=h("div",{class:"q-actions"}); ar.append(ab,am); add.append(ar);
-  add.append(h("p",{class:"muted",style:"font-size:.88rem"},"Adding a name that already exists gives that student a new PIN and keeps their work. PINs can’t be looked up later, so note them down."));
-  ab.onclick=async()=>{ const n=$("#nsName").value.trim(), p=$("#nsPin").value.trim(); if(!n||!/^\d{4,8}$/.test(p)){ am.textContent="Enter a name and a PIN of 4 to 8 digits."; return; } ab.disabled=true; try{ await DB.addStudent(n,p); am.textContent=`Added ${n}. They can sign in now.`; $("#nsName").value=""; $("#nsPin").value=""; loadTable(); }catch(e){ am.textContent="Couldn’t add the student. Try again."; } ab.disabled=false; };
+  add.append(h("p",{class:"muted",style:"font-size:.88rem"},"Adding a name that already exists gives that student a new PIN and keeps their work. PINs can’t be looked up later, so note them down. A new student starts with all six OSSLT modules; open the student to change which modules they get. Work in the reading lessons is tied to the PIN it was done under and does not carry over to a new PIN."));
+  ab.onclick=async()=>{ const n=$("#nsName").value.trim(), p=$("#nsPin").value.trim(); if(!n||!/^\d{4,8}$/.test(p)){ am.textContent="Enter a name and a PIN of 4 to 8 digits."; return; } ab.disabled=true; try{ await DB.addStudent(n,p,MODULES.map(m=>m.id)); am.textContent=`Added ${n}. They can sign in now.`; $("#nsName").value=""; $("#nsPin").value=""; loadTable(); }catch(e){ am.textContent="Couldn’t add the student. Try again."; } ab.disabled=false; };
   wrap.append(add);
   loadTable();
   return wrap;
@@ -881,6 +897,19 @@ function renderStudent(sid){
     body.innerHTML="";
     const name=s.exists?((s.data()||{}).name||sid):sid; const X=Object.assign(blank(), p.exists?JSON.parse(JSON.stringify(p.data())):{}); const G=(g.exists&&(g.data()||{}).items)||{};
     body.append(h("header",{class:"mod-head"},`<span class="mono eyebrow">Student</span><h1>${esc(name)}</h1><p>${X.updatedAt?"Last active "+esc(when(X.updatedAt)):"Hasn’t started yet."}</p>`));
+    const sd=s.exists?(s.data()||{}):{};
+    const given=new Set(Array.isArray(sd.modules)?sd.modules:MODULES.map(m=>m.id));
+    const as=h("section",{class:"lesson"}); as.append(h("h2",{},"Modules for this student"), h("p",{class:"muted"},"Tick the modules "+esc(name)+" should see when signed in."));
+    const aul=h("ul",{class:"checklist"});
+    const opt=(id,label)=>{ const cid="as-"+id; const li=h("li"); const lab=h("label",{for:cid}); const cb=h("input",{type:"checkbox",id:cid,value:id}); cb.checked=given.has(id); lab.append(cb,h("span",{},esc(label))); li.append(lab); aul.append(li); };
+    MODULES.forEach((m,i)=>opt(m.id,`OSSLT M${i+1} · ${m.title}`));
+    READING.forEach(r=>opt(r.id,`Reading skills ${r.number} · ${r.title}`));
+    as.append(aul);
+    const asv=h("button",{class:"btn",type:"button"},"Save modules"); const asm=h("span",{class:"muted",role:"status"}); const asr=h("div",{class:"q-actions"}); asr.append(asv,asm);
+    if(READING.some(r=>given.has(r.id))&&sd.uid) asr.append(h("a",{class:"btn ghost",href:"tutor/?s="+encodeURIComponent(sd.uid)},"Reading lessons tracking"));
+    as.append(asr);
+    asv.onclick=async()=>{ asv.disabled=true; asm.textContent="Saving…"; try{ await DB.setStudentModules(sid,[...aul.querySelectorAll("input:checked")].map(c=>c.value)); asm.textContent="Saved. "+name+" sees these modules at their next sign-in."; }catch(e){ asm.textContent="Couldn’t save. Try again."; } asv.disabled=false; };
+    body.append(as);
     const ms=h("section",{class:"lesson"}); ms.append(h("h2",{},"Selected-response results"));
     MODULES.forEach((m,i)=>{ const pr=modProgress(m,X); if(pr.qn) ms.append(skillRow(`M${i+1} · ${m.title}`, pr.correct, pr.qn)); });
     const by={}; MODULES.forEach(m=>questionsOf(m).forEach(q=>{ const a=X.ans[q.id]; if(!a||!a.checked) return; const k=by[q.skill]||(by[q.skill]={c:0,t:0}); k.t++; if(a.ok) k.c++; }));
@@ -916,13 +945,14 @@ $("#signOut").onclick=async()=>{
   if(ME) await flush();
   if(unsubGrades){ unsubGrades(); unsubGrades=null; }
   if(DB&&DB.signOut){ try{ await DB.signOut(); }catch(e){} }
-  ME=null; TUTOR=false; S=blank(); GRADES={}; setSaveNote(""); go("home");
+  ME=null; MINE=null; TUTOR=false; S=blank(); GRADES={}; setSaveNote(""); go("home");
 };
 window.addEventListener("pagehide",()=>{ if(ME) flush(); });
 
 (async function initApp(){
   route(); DB=await dbP;
   // Still signed in on this device from last time? Go straight in.
+  if(DB&&DB.readingModules){ try{ READING=await DB.readingModules(); }catch(e){} }
   if(DB){ try{ const who=await DB.current(); if(who&&who.tutor) TUTOR=true; else if(who) await enterAs(who); }catch(e){} }
   dbReady=true; route();
 })();
