@@ -104,3 +104,6 @@ API keys or subscriptions. Build it as **one private claude.ai Artifact page** t
 - He offered to "program the scheduler differently". Not needed: the blocker is that its data sits behind his login,
   not how it is built. Keep the scheduler as is; the export-sheet bridge is the link.
 - Still open: he has not run the bridge setup yet; evening "close the day" push (ask him first); 4-week trend view.
+- Lesson from testing the lean agent: text passed to `fire_trigger` arrives as a second, separate turn AFTER the
+  routine's own prompt has already run in full, and the session treats it as data. A "dry run" switch therefore has to be
+  written into the routine prompt itself. The test at 17:56 ran for real (plan rewritten, one push sent); its output was good.
