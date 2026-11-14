@@ -466,6 +466,7 @@ async function undoPaid(s){
 
 /* ---------- scheduler link: reads the export sheet that the bridge script keeps up to date ---------- */
 const norm=x=>String(x||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+const newStuId=(name,used)=>{const b=norm(name)||'s';let id=b,i=2;while(S.students.has(id)||used.has(id))id=b+'-'+(i++);used.add(id);return id};
 const mondayOf=()=>{const d=new Date(today()+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+1-(d.getUTCDay()||7));return d.toISOString().slice(0,10)};
 const linked=()=>!!S.settings.schedSheetId;
 const schedLive=()=>linked()&&S.sched&&S.sched.week===mondayOf();
@@ -487,12 +488,12 @@ async function schedSync(){
     const[st,tt,ss]=await Promise.all([sheetVals(id,'Students!A2:G400'),sheetVals(id,'Timetable!A2:E800'),sheetVals(id,'Sessions!A2:J5000')]);
     try{localStorage.setItem('hq.sheets','1')}catch(e){}
     const hq=[...S.students.values()],find=n=>hq.find(x=>x.sched&&norm(x.sched)===norm(n))||hq.find(x=>!x.sched&&norm(x.name)===norm(n))||null;
-    const D2={monday:1,tuesday:2,wednesday:3,thursday:4,friday:5};let changed=0,added=0;
+    const D2={monday:1,tuesday:2,wednesday:3,thursday:4,friday:5},used=new Set();let changed=0,added=0;
     for(const r of st){const name=r[0];if(!name)continue;const active=r[1]==='yes',cur=find(name);
       const slots=tt.filter(x=>x[0]===name&&D2[String(x[1]).toLowerCase()]).map(x=>({d:D2[String(x[1]).toLowerCase()],s:x[2],e:x[3],t:x[4]||''}));
       const patch={sched:name,slots,slotsOk:true,owed:Math.max(0,+r[4]||0),lpw:+r[2]||null};
       if(cur){const same=JSON.stringify([cur.sched,cur.slots,cur.slotsOk,cur.owed||0,cur.lpw||null])===JSON.stringify([patch.sched,patch.slots,true,patch.owed,patch.lpw]);if(!same){await upStu(cur.id,patch);changed++}}
-      else if(active){await db.doc('students/'+(norm(name)||('s'+Date.now()))).set({name,active:true,fromSched:true,...patch});added++}}
+      else if(active){await db.doc('students/'+newStuId(name,used)).set({name,active:true,fromSched:true,...patch});added++}}
     const wk=mondayOf(),mon=today().slice(0,7),sess=ss.filter(r=>r[0]===wk).map(r=>({d:r[1],n:r[3],t:r[4],s:r[5],e:r[6],st:r[8]||''}));
     const unmarked=ss.filter(r=>r[1]<today()&&!r[8]&&r[1]>=new Date(Date.parse(today()+'T12:00:00Z')-21*864e5).toISOString().slice(0,10)).length;
     const month={};for(const r of ss){if(r[9]!==mon)continue;const m=month[r[3]]=month[r[3]]||{sch:0,att:0,mc:0,mn:0};const h=+r[7]||0;if(r[8]==='holiday')continue;m.sch+=h;if(r[8]==='attended')m.att+=h;if(r[8]==='missed_credit')m.mc+=h;if(r[8]==='missed_no_credit')m.mn+=h}
@@ -532,13 +533,13 @@ async function feeSync(){
     const h=v.findIndex(r=>(r||[]).some(c=>String(c).trim()==='Student')),hd=v[h].map(c=>String(c).toLowerCase().trim()),col=k=>hd.findIndex(c=>c.startsWith(k));
     const cS=hd.indexOf('student'),cDue=col('total due'),cG=col('date given'),cD=col('date rec'),cF=col('fee rec'),cL=col('lessons/week'),cR=col('hourly rate'),cGr=hd.indexOf('grade'),cSup=col('supply fee');
     if(cS<0||cDue<0||cD<0||cF<0)throw new Error('I couldn’t find the fee columns in that tab.');
-    let billed=0,rec=0,changed=0,wrote=0,added=0;const seen=new Set();
+    let billed=0,rec=0,changed=0,wrote=0,added=0;const seen=new Set(),used=new Set();
     for(let i=h+1;i<v.length;i++){const row=v[i]||[],name=String(row[cS]||'').trim();if(!name||/^total/i.test(name))continue;
       const due=pm(row[cDue]),paid=pm(row[cF]),given=String(row[cG]||''),pAt=String(row[cD]||''),k=first(name);billed+=due;rec+=paid;
       const mt=[...S.students.values()].filter(x=>first(x.name)===k);if(mt.length>1||seen.has(k))continue;seen.add(k);
       const st=mt[0];
       if(!st){const sub=/subscription/i.test(String(row[cSup]||''));
-        await db.doc('students/'+(norm(name)||('s'+Date.now()+i))).set({name,grade:cGr>=0?String(row[cGr]||''):'',model:sub?'sub':'hourly',perWeek:cL>=0?pm(row[cL]):0,rate:cR>=0?pm(row[cR]):0,owed:0,active:true,fee:{m,due,paid,given,paidAt:pAt},n:'Added from your fee sheet.'});added++;continue}
+        await db.doc('students/'+newStuId(name,used)).set({name,grade:cGr>=0?String(row[cGr]||''):'',model:sub?'sub':'hourly',perWeek:cL>=0?pm(row[cL]):0,rate:cR>=0?pm(row[cR]):0,owed:0,active:true,fee:{m,due,paid,given,paidAt:pAt},n:'Added from your fee sheet.'});added++;continue}
       const f=st.fee||{},{id:_i,...rest}=st;
       if(!f.m||m>f.m){await db.doc('students/'+st.id).set({...rest,active:true,fee:{m,due,paid,given,paidAt:pAt}});changed++}
       else if(f.m===m){
@@ -547,7 +548,7 @@ async function feeSync(){
           if(r.ok){const nf={...f,due,sheet:'written'};if(f.undo)nf.undo={...f.undo,range:r.range,cells:r.prev};await upStu(st.id,{fee:nf});wrote++;rec+=f.paid-paid}}
         else if(due!==(f.due||0)||(given&&given!==f.given)){await upStu(st.id,{fee:{...f,due,given:given||f.given||''}});changed++}}}
     if(S.stats?.months){const ms=S.stats.months.filter(x=>x.m!==m).concat({m,billed,received:rec}).sort((a,b)=>a.m.localeCompare(b.m)),old=S.stats.months.find(x=>x.m===m);
-      if(!old||old.billed!==billed||old.received!==rec)await db.doc('stats/revenue').set({...S.stats,months:ms,asOf:today()})}
+      if(!old||old.billed!==billed||old.received!==rec||S.stats.asOf!==today())await db.doc('stats/revenue').set({...S.stats,months:ms,asOf:today()})}
     S.feeSyncing=false;return{ok:true,changed:changed+wrote+added,msg:`Fee sheet checked: ${money(Math.max(0,billed-rec))} still unpaid for ${tabOf(m)}${wrote?`, ${wrote} payment${wrote>1?'s':''} written to your sheet`:''}${added?`, ${added} new student${added>1?'s':''} added`:''}.`}}
   catch(e){S.feeSyncing=false;return{ok:false,msg:e?.code==='not_granted'?'Google Sheets isn’t allowed for this page yet.':String(e?.message||e?.code||'Could not read your fee sheet.').slice(0,200)}}}
 function maybeAuto(){if(S.loaded&&S.planKnown&&!S.plan&&!S.autoTried&&sample&&open().length){S.autoTried=true;makePlan()}}
@@ -784,14 +785,15 @@ function renderToday(){
   const unm=op.length;
   const closeB=m==='eve'?`<div class="why" style="margin:0 0 8px">${unm?unm+' of today’s items aren’t marked yet: tap Done or Not now on each.':'Today’s items are all marked.'} Anything else happen today? Say it in one go.</div><button class="sm pri" data-act="focus" data-say="How did today go, ${esc(sir())}?">Tell me about today</button>`:'';
   const paidToday=[...S.students.values()].filter(x=>x.fee?.undo?.at===today());
-  const moneyB=f.sum||paidToday.length?`<div class="row" style="margin-bottom:4px"><div class="big grow">${money(f.sum)}</div>${f.sum?'<button class="sm" data-act="aiChase">Draft reminders</button>':''}</div>${f.ow.map(x=>`<div class="item row"><div class="grow"><span class="t">${esc(x.name)}</span> <span class="m num">${money(owes(x))}${x.fee?.given?' · note given '+esc(x.fee.given):''}</span></div><button class="sm" data-act="paidFull" data-id="${x.id}">Paid</button></div>`).join('')}${paidToday.map(x=>`<div class="item row"><div class="grow"><span class="t">${esc(x.name)}</span> <span class="m num">${money(x.fee.paid-(x.fee.undo.paid||0))} recorded today${x.fee.sheet==='written'?' · in your fee sheet':''}</span></div><button class="sm ghost" data-act="undoPay" data-id="${x.id}">Undo</button></div>`).join('')}`:'';
+  const moneyB=f.sum||paidToday.length?`<div class="row" style="margin-bottom:4px"><div class="big grow">${money(f.sum)}</div>${f.sum?'<button class="sm" data-act="aiChase">Draft reminders</button>':''}</div>${f.ow.map(x=>`<div class="item row"><div class="grow"><span class="t">${esc(x.name)}</span> <span class="m num">${money(owes(x))}${x.fee?.given?' · note given '+esc(x.fee.given):''}</span></div><button class="sm" data-act="paidFull" data-id="${x.id}">Paid</button></div>`).join('')}${paidToday.map(x=>`<div class="item row"><div class="grow"><span class="t">${esc(x.name)}</span> <span class="m num">${money(x.fee.paid-(x.fee.undo.paid||0))} recorded today${x.fee.sheet==='written'?' · in your fee sheet':''}</span></div><button class="sm ghost" data-act="undoPay" data-id="${x.id}">Undo</button></div>`).join('')}<div class="row" style="padding-top:10px"><span class="m grow">From your fee sheet${S.stats?.asOf?', last checked '+esc(new Date(S.stats.asOf+'T12:00:00Z').toLocaleDateString('en-CA',{month:'short',day:'numeric',timeZone:'UTC'})):''}.</span><button class="ghost sm" data-act="feeSync">Check now</button></div>`:'';
   const checkB=ver.slice(0,3).map(t=>`<div class="item"><div class="t">${esc(t.t)}</div><div class="m">${esc(AREAS[t.a]||'')}</div><div class="row" style="margin-top:6px"><button class="sm" data-act="set" data-s="ready" data-id="${t.id}">Still to do</button><button class="sm" data-act="done" data-id="${t.id}">Already done</button><button class="sm" data-act="set" data-s="parked" data-id="${t.id}">Drop it</button></div></div>`).join('');
   const ag=S.agent,repB=ag&&ag.date===today()&&ag.brief?`<div class="why" style="white-space:pre-wrap;margin:0">${esc(ag.brief)}</div>${(ag.flags||[]).map(x=>`<div class="m" style="margin-top:6px">• ${esc(x)}</div>`).join('')}`:'';
   const histB=S.dumps.length?`<div class="stack">${S.dumps.map(d=>`<div class="bub me">${esc(d.text)}</div>${d.reply?`<div class="bub ai">${esc(d.reply)}${d.ops?.length?`<div class="m" style="margin-top:6px">${d.ops.map(esc).join(' · ')}</div>`:''}</div>`:''}`).join('')}</div>`:'';
   const tonightS=isWk()?sec('sec:tonight',`Tonight’s lessons${tn.length?' · '+tn.length:''}`,tb):'';
   $('topBox').innerHTML=m==='eve'?sec('sec:close','Close the day',closeB)+tonightS:m==='teach'?tonightS:'';
   $('secBox').innerHTML=(m==='work'?tonightS:'')+sec('sec:money',`Money to collect · ${money(f.sum)}`,moneyB)+sec('sec:makeups',`Makeups to book · ${mk} h`,makeupBody())
-    +sec('sec:check',`Quick check · ${ver.length} old items`,checkB)+sec('sec:week','Your week',weekBody())+sec('sec:report','Overnight report',repB)+sec('sec:left','Left out on purpose',p?.leftOut?`<div class="why" style="margin:0">${esc(p.leftOut)}</div>`:'')+sec('sec:hist','What you’ve told me',histB);
+    +sec('sec:check',`Quick check · ${ver.length} old items`,checkB)+sec('sec:week','Your week',weekBody())+sec('sec:report','Overnight report',repB)+sec('sec:left','Left out on purpose',p?.leftOut?`<div class="why" style="margin:0">${esc(p.leftOut)}</div>`:'')+sec('sec:hist','What you’ve told me',histB)
+    +sec('sec:help','How to use this',`<div class="m" style="display:flex;flex-direction:column;gap:8px;font-size:14px"><div><b>Tell it anything.</b> Type in the box at the top (on a computer, tap the brain and talk). New tasks, things you finished, who paid, who missed.</div><div><b>Do the one thing under “Right now”.</b> Then tap Done, Not now, or Stuck.</div><div><b>Tell it when you get up, and tap Workout.</b> It plans from your real day and tracks your week.</div><div><b>Money, tonight’s lessons and makeups</b> are in the sections on this page. Every student is in Centre.</div><div><b>AI help</b> holds finished drafts. Copy them, or hit Redo if they’re off.</div></div>`);
 }
 function renderList(){
   const all=[...S.tasks.values()];const areas=[...new Set(all.map(t=>t.a))];

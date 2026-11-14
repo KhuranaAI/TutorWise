@@ -107,3 +107,16 @@ API keys or subscriptions. Build it as **one private claude.ai Artifact page** t
 - Lesson from testing the lean agent: text passed to `fire_trigger` arrives as a second, separate turn AFTER the
   routine's own prompt has already run in full, and the session treats it as data. A "dry run" switch therefore has to be
   written into the routine prompt itself. The test at 17:56 ran for real (plan rewritten, one push sent); its output was good.
+
+## Cycle 5, the last scheduled one (2026-11-13, 10:50 pm Toronto)
+- His use so far: he opened the app twice on his phone (tapped Up and Workout on and off), has not typed anything,
+  marked nothing, has not run the scheduler bridge. His fee sheet has not changed since Nov 10 (checked from here tonight).
+- App v8: a sync can no longer reuse an existing student's document id when it adds a student (the scheduler has a
+  second "Jasreet" that would have overwritten the fee-paying one); the Money section shows when the fee sheet was last
+  checked, with a "Check now" button; a short "How to use this" section sits at the bottom of Today.
+- Routines now: "Nimish HQ morning agent (lean)" daily at 05:47 Toronto (fresh session, database only). The older
+  "Nimish HQ morning agent" stays DISABLED and must not be deleted from another session without care: it is bound to the
+  build session, and deleting a routine deletes the sessions it started. No more build cycles are scheduled.
+- Open items for whenever he comes back: (1) he runs Centre > Link it on a computer, then check name matching with the
+  real export; (2) confirm phone pushes arrive; (3) fee notes from attended hours per billing month and a makeup finder
+  that uses teacher loads, once real scheduler data flows; (4) evening "close the day" push if he wants one.
