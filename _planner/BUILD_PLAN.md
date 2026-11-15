@@ -120,3 +120,36 @@ API keys or subscriptions. Build it as **one private claude.ai Artifact page** t
 - Open items for whenever he comes back: (1) he runs Centre > Link it on a computer, then check name matching with the
   real export; (2) confirm phone pushes arrive; (3) fee notes from attended hours per billing month and a makeup finder
   that uses teacher loads, once real scheduler data flows; (4) evening "close the day" push if he wants one.
+
+## 2026-11-15: first real use, and why it failed (app v9 and v10)
+- He typed two messages on his phone: he had just got up, had a personal block that afternoon, wanted his WEEK planned,
+  and said what the rest of the day was for. The app ignored the block, gave an ordinary day plan and no week. Causes:
+  (1) no notion of blocked time; (2) the "woke" op started its own replan, and the guard in `makePlan` then dropped
+  the replan that carried his note; (3) no week plan existed; (4) nothing he said was kept beyond the last 12 messages.
+  He then said the app is "a long way from usable": it must learn him, remember what he does and says, and refer back
+  by day of the week. He also said phone audio does not work (he uses an iPhone).
+- Now in the app:
+  - `days/{date}`: one record per day, written through a single queue (`dayWrite`): `ev` (said, did, skip, stuck, up,
+    workout, paid, att, busy, open, week), `busy:[{s,e,x}]` blocked time, `sum` (written by the overnight agent).
+  - `mem`: learned facts `{x, k: you|pref|pattern|person, d: weekday or null, src, at, on}`. The intake prompt returns
+    `remember` / `forget`; the Memory tab lists facts (Forget, Add) and the last days.
+  - `recallText()` goes into the intake, day-plan and week-plan prompts: learned facts (today's weekday first),
+    earlier days with the same weekday, the last few days. The day plan also gets what he said today (outranks the
+    usual preferences), today's blocked time, and today's entry from the week.
+  - Ops added: `busy`, `free`, `plan_week`. One replan per message (`re`), and `makePlan` queues a second request
+    instead of dropping it. `freeMinutes()` subtracts blocked time; weekends run to 22:00, capped at 300 minutes.
+  - `weeks/current`: 7-day layout (`makeWeek()`, "This week" section, "Plan my week"). Uses the "complex" tier, falls
+    back to "default".
+  - Weekday recall on the home screen: "Last <weekday>: ..." and a one-tap chip that repeats last week's block.
+  - Recurring tasks can be planned on their day; Done on one marks the plan, not the task.
+  - Sound: on iOS the speaker controls stay hidden unless a silent test utterance actually starts; elsewhere a failed
+    attempt hides them. In-app listening and voice still exist only where the platform offers them (desktop).
+- Overnight agent prompt now: closes yesterday (`sum`), learns weekday patterns into `mem` (seen twice before it is a
+  pattern), keeps `weeks/current` rolling, plans from the week and the weekday's real history, and refers back to the
+  same weekday in the brief and the push.
+- Checked: harness scenarios 1-9 with mocked capabilities; the six real-style messages run through the new intake
+  prompt on a Sonnet-class model gave the right operations; rendering checked against a copy of the real records.
+  Not checked on his phone.
+- Removed a real first name that had been used as an example inside the intake prompt.
+- Open: he has not run Centre > Link it; whether phone pushes arrive is still unconfirmed; on the phone, voice means
+  talking to Claude in the chat (this session files what he says there into `days` and `mem`).
