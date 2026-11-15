@@ -577,7 +577,8 @@ const busyTxt=(d,nice)=>busyOn(d).map(b=>nice?`${b.x||'busy'} ${t12(b.s)}–${t1
 async function addBusy(o){const d=isDate(o.date)?o.date:today();if(!hm(o.from)||!hm(o.to)||o.to<=o.from)return false;
   await dayWrite(d,cur=>({...cur,busy:[...(cur.busy||[]).filter(b=>!(b.s<o.to&&b.e>o.from)),{s:o.from,e:o.to,x:String(o.what||'busy').slice(0,40)}]}));return true}
 const saidToday=()=>((S.days.get(today())||{}).ev||[]).filter(e=>e.k==='said').slice(-6).map(e=>`${e.t} "${e.x}"`).join('\n');
-const sameBusy=()=>{const d=pastDays(true,1)[0];return d&&!busyOn(today()).length?busyOn(d.date).filter(b=>b.e>nowHM()):[]};
+const sameBusy=()=>{const d=pastDays(true,1)[0];return d&&!busyOn(today()).length&&!(S.days.get(today())||{}).noSame?busyOn(d.date).filter(b=>b.e>nowHM()):[]};
+const lastLbl=d=>{const n=-dayDiff(d.date);return n<=7?'Last '+DNL[d.dow]:Math.round(n/7)+' '+DNL[d.dow]+'s ago'};
 async function finishTask(id,ev){const t=S.tasks.get(id);if(!t)return;
   if(t.s==='recurring'){const marks={...(S.plan?.marks||{}),[id]:'done'};if(S.plan)S.plan={...S.plan,marks};await db.doc('plans/'+today()).update({marks}).catch(()=>{});await up(id,{last:today()})}
   else await up(id,{s:'done',doneAt:stamp(),ev});
@@ -594,7 +595,7 @@ const recallText=()=>{const m=[...S.mem].sort((a,b)=>(b.d===dow())-(a.d===dow())
   return `What you have learned about him (id|fact):\n${m||'nothing yet'}\nEarlier ${DNL[dow()]}s:\n${sw||'no record yet'}\nThe last few days:\n${rc||'no record yet'}`};
 function lastSame(){const d=pastDays(true,1)[0];if(!d)return'';const e=d.ev||[],up=e.find(v=>v.k==='up'),n=e.filter(v=>v.k==='did').length;
   const parts=[up?'up at '+t12(up.x):'',busyTxt(d.date,true),n?n+' thing'+(n>1?'s':'')+' finished':''].filter(Boolean);
-  return parts.length?`${dayDiff(d.date)>=-7?'Last '+DNL[d.dow]:DN[d.dow]+' '+d.date.slice(5)}: ${parts.join(', ')}.`:''}
+  return parts.length?`${lastLbl(d)}: ${parts.join(', ')}.`:''}
 async function saveMem(list,src){for(const r of (Array.isArray(list)?list:[]).slice(0,4)){const x=String(r?.x||'').trim();if(x.length<6||S.mem.some(m=>norm(m.x)===norm(x)))continue;
   await db.collection('mem').doc().set({x:x.slice(0,240),k:['you','pref','pattern','person'].includes(r.k)?r.k:'you',d:hasD(r)?r.d:null,src,at:today(),on:true}).catch(()=>{})}}
 function renderMem(){const el=$('memList');if(!el)return;const K={you:'About you',pref:'How you like things',pattern:'Patterns I’ve noticed',person:'People'};
@@ -708,6 +709,7 @@ function greet(spoken){
   if(m==='teach')return `${hi} You’re teaching until ${t12(s.teachEnd)}. I’ll hold everything else.`;
   if(m==='eve')return `${hi} Teaching’s done. Two minutes to close the day, then you’re off.`;
   if(!hb.up)return `${hi} When did you get up today?`;
+  const sb=sameBusy();if(sb.length)return `${hi} ${lastLbl(pastDays(true,1)[0])} you had ${sb.map(b=>`${b.x||'something on'} ${t12(b.s)} to ${t12(b.e)}`).join(' and ')}. Same today?`;
   const free=freeMinutes(),lead=free>0?` You have ${dur(free)} ${isWk()?'before teaching':'to work with'}.`:'';
   if(nb){const gap=toM(nb.s)-toM(nowHM()),nm=nb.x&&nb.x!=='busy'?nb.x:'your next thing';
     if(gap<45)return `${hi} ${nm[0].toUpperCase()+nm.slice(1)} is at ${t12(nb.s)}. Nothing else is expected before then.`;
@@ -864,7 +866,7 @@ function renderCore(){
   const hb=S.habits.get(today())||{};
   $('quick').innerHTML=live?'<button class="on" data-act="sendNow">Send now</button><button data-act="cancelListen">Cancel</button>'
     :st==='speaking'?'<button data-act="stopSpeak">Stop</button>':st==='thinking'?''
-    :`${hb.up?`<button data-act="up" class="ok">Up ${esc(t12(hb.upAt||''))} ✓</button>`:modeNow()==='work'?'<button data-act="upNow">Just now</button><button data-act="up">Earlier…</button>':'<button data-act="up">I’m up</button>'}<button data-act="habit" data-h="workout" class="${hb.workout?'ok':''}">Workout${hb.workout?' ✓':''}</button>${sameBusy().length?`<button data-act="sameBusy">${esc(sameBusy().map(b=>{const x=b.x||'busy';return x[0].toUpperCase()+x.slice(1)}).join(', '))} again today?</button>`:''}${canSpeak()?'<button data-act="brief">Brief me</button>':''}`;
+    :`${hb.up?`<button data-act="up" class="ok">Up ${esc(t12(hb.upAt||''))} ✓</button>`:modeNow()==='work'?'<button data-act="upNow">Just now</button><button data-act="up">Earlier…</button>':'<button data-act="up">I’m up</button>'}<button data-act="habit" data-h="workout" class="${hb.workout?'ok':''}">Workout${hb.workout?' ✓':''}</button>${sameBusy().length?`<button data-act="sameBusy">${esc(sameBusy().map(b=>{const x=b.x||'busy';return x[0].toUpperCase()+x.slice(1)}).join(', '))} again today</button><button data-act="sameNo">Not today</button>`:''}${canSpeak()?'<button data-act="brief">Brief me</button>':''}`;
   const vb=$('btnVoice');vb.hidden=!canSpeak();vb.innerHTML=V.voiceOn?ICON.on:ICON.off;vb.setAttribute('aria-pressed',String(V.voiceOn));vb.setAttribute('aria-label',V.voiceOn?'Spoken replies are on':'Spoken replies are off');
   orb.set(st);
 }
@@ -876,7 +878,7 @@ function weekBody(){const days=[];for(let k=6;k>=0;k--){const d=new Date(Date.pa
 function renderToday(){
   const s=S.settings,m=modeNow();
   $('hSub').textContent=new Date(today()+'T12:00:00Z').toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric',timeZone:'UTC'});
-  if(S.loaded&&!S.secInit){S.secInit=true;if(m!=='work')S.open.add('sec:tonight');if(m==='eve')S.open.add('sec:close')}
+  if(S.loaded&&!S.secInit){S.secInit=true;S.open.add('sec:wk7');if(m!=='work')S.open.add('sec:tonight');if(m==='eve')S.open.add('sec:close')}
   renderCore();
   /* the one next action */
   const p=S.plan,marks=p?.marks||{},all=(p?.picks||[]).map(k=>({k,t:S.tasks.get(k.id)})).filter(x=>x.t),op=openPicks(),cur=op[0];
@@ -1128,6 +1130,7 @@ document.addEventListener('click',async e=>{
   if(a==='copy'){const el=$(b.dataset.from);try{await navigator.clipboard.writeText(el.textContent);toast('Copied')}catch(e){const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);toast('Selected. Copy it from here.')}return}
   if(a==='week')return makeWeek('He tapped to have the week laid out.',true);
   if(a==='sameBusy'){const bl=sameBusy();for(const k of bl){await addBusy({from:k.s,to:k.e,what:k.x||'busy'});logEv('busy',`${k.x||'busy'} ${k.s}-${k.e}`)}if(bl.length){say(`Blocked, ${sir()}: ${bl.map(k=>`${k.x||'busy'} ${t12(k.s)} to ${t12(k.e)}`).join(', ')}.`,true);makePlan('He confirmed the same blocked time as last '+DNL[dow()]+'.',false)}return}
+  if(a==='sameNo'){await dayWrite(today(),cur=>({...cur,noSame:true}));V.greeting=true;renderToday();return}
   if(a==='memAdd'){const el=$('memAdd'),x=el.value.trim();if(x){el.value='';await saveMem([{x,k:'you'}],'typed');toast('I’ll remember that.',1800)}return}
   if(a==='memDel'){await db.doc('mem/'+id).update({on:false}).catch(()=>{});toast('Forgotten.',1500);return}
   if(a==='settings')return settingsSheet();
