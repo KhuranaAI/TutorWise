@@ -956,7 +956,7 @@ Rules:
 - If he asks you to plan or lay out his week, use plan_week with his wishes as the note. The app then puts the week on his screen, so do not list the week in your reply; say you are laying it out.
 - Projects: if he lists or updates his projects, use project once for each, in his own words; give status and next only if he said them.
 - If he asks a question (what is next, who owes me, who is in tonight, how many makeups), answer it from the data above; no ops are needed.
-- If he asks about the app itself (the voice, the mic, whether it answers by itself), answer from this in one or two sentences, and never say you cannot tell: ${S.settings.handsFree!==false?'On a computer he taps the brain once (or presses Space) and talks. When he pauses, or says “I’m done”, it answers out loud and keeps listening, so yes, it answers by itself. “That’s all” ends the conversation. In this hands-free mode the answers use the computer’s own voice, because Claude’s voice cannot play while the microphone is open. In Settings, “When I talk to it” switches to one answer at a time in Claude’s voice, and “Hands-free voice on this computer” picks a different computer voice.':'He taps the brain (or presses Space) for each turn and the answers come in Claude’s voice. In Settings, “When I talk to it” switches to a hands-free conversation that keeps listening and answers in the computer’s own voice.'} The app pins his week list into days by itself and rearranges it as things get done.
+- If he asks about the app itself (the voice, the mic, whether it answers by itself), answer from this in one or two sentences, and never say you cannot tell: On a computer he presses Space or taps the brain and talks. When he stops talking for a few seconds, or says “I’m done”, it answers out loud in Claude’s voice by itself. To say more he presses Space or taps again, because Claude’s voice cannot play while the microphone is open and the microphone only opens on a tap or key press. Pressing Space while it talks interrupts it. The app pins his week list into days by itself and rearranges it as things get done.
 - Use what you have learned about him when it helps. Earlier days are history, not a schedule. Never recite the list.
 - If he gives you a format, a template or an example of how he writes something (a message to parents, a fee reminder, a job ad), save it in remember with "k":"style", "t" a short name for what it is for, and "x" his wording or example in full and unchanged (up to 2000 characters). If he later changes it, save it again under the same "t". Tell him it is saved and that drafts will follow it.
 - Messages he has to send (to a parent, a student, a teacher): one task per message with a short title ("Message Roby (Viraj's mom)"). When he asks for a draft or dictates the wording, put the whole message in "msg" (in add, or in update's set for a task that exists). Write it the way his saved formats below show; if none fits, keep it short, warm and plain. The app shows it on the task with a Copy button, so your reply only says the drafts are ready. Never put the wording in the title or the notes.
@@ -1001,7 +1001,7 @@ async function respond(text,byVoice){
   if(jobs)await jobs.catch(()=>{});
   if(V.handsFree&&V.state==='idle'){
     if(!dict&&SR&&!V.noMic){if(!spoke)await wait(1500);if(V.state==='idle'&&V.handsFree)listen()}
-    else if(dict){V.hint='Tap the brain, or press Space, to answer.';renderCore()}}
+    else if(dict){V.hint='Press Space or tap the brain to answer.';renderCore()}}
 }
 async function applyOps(ops,src,wasCheck){
   const out=[],newIds=[];let n=0,re='',wk='',cal=false,full=!!wasCheck,touched=false,wkFull=false,wkShow=false;V.pinSay='';
@@ -1097,7 +1097,7 @@ function renderCore(){
   $('vState').dataset.s=st;
   if(V.greeting)V.say=greet();
   $('vSay').textContent=V.say;
-  if(live)$('vHeard').innerHTML=(esc(V.buf)+(V.partial?` <i>${esc(V.partial)}</i>`:''))||(V.conv?`<i>I’m listening. ${+S.settings.pause?'Pause when you want my answer, or say “I’m done”.':'Say “I’m done” when you want my answer.'}</i>`:'<i>Go ahead, take your time. Say “I’m done” or tap the brain when you’re finished.</i>');
+  if(live)$('vHeard').innerHTML=(esc(V.buf)+(V.partial?` <i>${esc(V.partial)}</i>`:''))||(V.conv?`<i>I’m listening. ${+S.settings.pause?'Pause when you want my answer, or say “I’m done”.':'Say “I’m done” when you want my answer.'}</i>`:(+S.settings.pause?'<i>Go ahead, take your time. When you stop talking, I’ll answer.</i>':'<i>Go ahead, take your time. Say “I’m done” when you want my answer.</i>'));
   else $('vHeard').textContent=V.hint||(V.heard?`You said: ${V.heard.length>150?V.heard.slice(0,147)+'…':V.heard}`:lastSame());
   $('dump').placeholder=hear?'Type, or tap the brain and talk…':'Tell me anything…';
   $('orbBtn').setAttribute('aria-label',live?'Stop and send':st==='speaking'?'Stop speaking':hear?'Start talking':'Write to your assistant');
@@ -1161,7 +1161,7 @@ function renderToday(){
   $('topBox').innerHTML=m==='eve'?sec('sec:close','Close the day',closeB)+tonightS:m==='teach'?tonightS:'';
   $('cenBox').innerHTML=(m==='work'?tonightS:'')+sec('sec:money',`Who owes · ${money(f.sum)}`,moneyB);
   $('moreBox').innerHTML=`<button class="lnk" data-act="goAI" style="margin-top:4px"><span class="grow">AI help<small>${nd?nd+' draft'+(nd>1?'s':'')+' ready to review':'Hand something off'}</small></span></button><button class="lnk" data-act="goMem"><span class="grow">Memory<small>${S.mem.length} things I know about you</small></span></button><button class="lnk" data-act="settings"><span class="grow">Settings<small>What it calls you, your hours, voice check</small></span></button>`
-    +sec('sec:report','Overnight report',repB)+sec('sec:week','Wake-ups and workouts',weekBody())+sec('sec:hist','What you’ve told me',histB)+sec('sec:help','How to use this',`<div class="m" style="display:flex;flex-direction:column;gap:8px;font-size:14px"><div><b>Talk to it.</b> On a computer, tap the brain once (or press Space) and just talk: it answers out loud and keeps listening. Say “that’s all” to stop. On a phone, type in the box. New tasks, things you finished, who paid, who missed.</div><div><b>Work down today’s docket.</b> Tap the circle when something is done. Tap a line for Not now or Stuck.</div><div><b>Tell it when you get up, and tap Workout.</b> It plans from your real day and tracks your week.</div><div><b>Calendar</b> has your week and the next three weeks. <b>Centre</b> has fees, makeups and every student.</div><div><b>It remembers.</b> What you tell it and what you do is kept, and it brings it back on the same weekday. See and fix what it knows under Memory.</div><div><b>AI help</b> (under More) holds finished drafts. Copy them, or hit Redo if they’re off.</div></div>`);
+    +sec('sec:report','Overnight report',repB)+sec('sec:week','Wake-ups and workouts',weekBody())+sec('sec:hist','What you’ve told me',histB)+sec('sec:help','How to use this',`<div class="m" style="display:flex;flex-direction:column;gap:8px;font-size:14px"><div><b>Talk to it.</b> On a computer, press Space (or tap the brain) and talk as long as you like. When you stop, it answers out loud. Press Space again to say more. On a phone, type in the box. New tasks, things you finished, who paid, who missed.</div><div><b>Work down today’s docket.</b> Tap the circle when something is done. Tap a line for Not now or Stuck.</div><div><b>Tell it when you get up, and tap Workout.</b> It plans from your real day and tracks your week.</div><div><b>Calendar</b> has your week and the next three weeks. <b>Centre</b> has fees, makeups and every student.</div><div><b>It remembers.</b> What you tell it and what you do is kept, and it brings it back on the same weekday. See and fix what it knows under Memory.</div><div><b>AI help</b> (under More) holds finished drafts. Copy them, or hit Redo if they’re off.</div></div>`);
   renderCal();
 }
 function renderCal(){const el=$('calBox');if(!el)return;const wk=weekItems(),wp=weekPace();
@@ -1224,9 +1224,7 @@ function sheet(html){$('sheetBody').innerHTML=html;$('sheet').hidden=false}
 function settingsSheet(){const s=S.settings;const f=(k,l,t='time')=>`<label for="s_${k}">${l}</label><input id="s_${k}" type="${t}" value="${esc(s[k])}">`;
   sheet(`<h3 style="font:600 18px var(--disp);margin:0">Settings</h3>${f('address','What it calls you','text')}
   ${tts?`<label for="s_voice">Its voice</label><div class="row" style="flex-wrap:nowrap"><select id="s_voice">${['buttery','airy','glassy','rounded'].map(v=>`<option ${s.voice===v?'selected':''}>${v}</option>`).join('')}</select><button data-act="testVoice">Test</button></div>`:''}
-  ${dict?`<label for="s_conv">When I talk to it</label><select id="s_conv"><option value="1" ${s.handsFree!==false?'selected':''}>Keep the conversation going, hands-free (computer’s voice)</option><option value="0" ${s.handsFree===false?'selected':''}>One answer at a time, in Claude’s voice</option></select>
-  <label for="s_pause">It answers when</label><select id="s_pause">${[[2,'I pause for 2 seconds'],[3,'I pause for 3 seconds'],[5,'I pause for 5 seconds'],[0,'only when I say “I’m done”']].map(([v,l])=>`<option value="${v}" ${(+s.pause||0)===v?'selected':''}>${l}</option>`).join('')}</select>`:''}
-  ${'speechSynthesis'in window&&speechSynthesis.getVoices().some(v=>/^en/i.test(v.lang))?`<label for="s_sysVoice">Hands-free voice on this computer</label><div class="row" style="flex-wrap:nowrap"><select id="s_sysVoice">${speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)).map(v=>`<option ${pickVoice()?.name===v.name?'selected':''}>${esc(v.name)}</option>`).join('')}</select><button data-act="testSys">Test</button></div>`:''}
+  ${dict?`<label for="s_pause">It answers when</label><select id="s_pause">${[[2,'I pause for 2 seconds'],[3,'I pause for 3 seconds'],[5,'I pause for 5 seconds'],[0,'only when I say “I’m done”']].map(([v,l])=>`<option value="${v}" ${(+s.pause||0)===v?'selected':''}>${l}</option>`).join('')}</select>`:''}
   <label>Voice in this view</label><div class="row" style="flex-wrap:nowrap;align-items:center"><button data-act="voiceCheck" style="flex:none">Check voice</button><span class="m grow" id="vcOut">Microphone: ${esc(micWord())}. Speaker: ${esc(spkWord())}.</span></div>
   ${f('wake','Wake-up time you’re aiming for')}${f('workStart','Focused work starts')}${f('teachStart','Teaching starts')}${f('teachEnd','Teaching ends')}${f('protect','Always protect','text')}
   <label for="s_capacity">How full to plan your free time</label><select id="s_capacity">${[0.5,0.65,0.8].map(v=>`<option value="${v}" ${+s.capacity===v?'selected':''}>${Math.round(v*100)}% ${v===0.5?'(light)':v===0.65?'(realistic)':'(packed)'}</option>`).join('')}</select>
@@ -1241,12 +1239,12 @@ function upSheet(){const hb=S.habits.get(today())||{};
    He may ramble: nothing is sent on a pause. His turn ends when he says "you can speak now" or taps.
    Speaking: Claude's voice where offered, else this device's own voice. */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition,AND=/Android/i.test(navigator.userAgent);
-const STOP=/(?:[\s,.;:!?-]*\b(?:(?:and|ok(?:ay)?|all ?right|so|now)[\s,]+)*you (?:can|may) (?:(?:speak|talk)(?: now)?|(?:answer|respond|go(?: ahead)?) now)|(?:^|[.!?,]\s*)(?:(?:ok(?:ay)?|all ?right)[\s,]+)?i'?m done(?:[\s,.!]+send it)?|(?:^|[.!?]\s*)send it|(?:^|[.!?]\s*)over to you)[\s.!?]*$/i;
-const END=/[\s,.;:!?-]*\b(?:that'?s all|that is all|that'?s it for now|stop listening|we'?re done|goodbye|talk (?:to you )?later)(?:,? (?:thanks|thank you|jarvis))*[\s.!?]*$/i;
+const STOP=/(?:[\s,.;:!?-]*\b(?:(?:and|ok(?:ay)?|all ?right|so|now)[\s,]+)*you (?:can|may) (?:(?:speak|talk)(?: now)?|(?:answer|respond|go(?: ahead)?) now)|(?:^|[.!?,]\s*)(?:(?:ok(?:ay)?|all ?right)[\s,]+)?i[’']?m done(?:[\s,.!]+send it)?|(?:^|[.!?]\s*)send it|(?:^|[.!?]\s*)over to you)[\s.!?]*$/i;
+const END=/[\s,.;:!?-]*\b(?:that[’']?s all|that is all|that[’']?s it for now|stop listening|we[’']?re done|goodbye|talk (?:to you )?later)(?:,? (?:thanks|thank you|jarvis))*[\s.!?]*$/i;
 let rec=null,spUnlocked=false;const utts=[];
 /* Conversation: one tap opens the mic and it stays open. He talks, it answers out loud, he talks again. The answer comes when he pauses (or says he is done).
    Claude's own voice cannot speak while Claude's dictation is listening, so in a conversation the answers use this computer's voice. */
-const convOn=()=>!!dict&&S.settings.handsFree!==false;
+const convOn=()=>false; /* Claude's voice cannot play while the mic is open, and he prefers that voice: one turn at a time */
 const nrm=x=>String(x||'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
 const echoOf=x=>{const w=nrm(x).split(' ').filter(Boolean);if(!w.length)return true;if(Date.now()-(V.spokeEnd||0)>7000)return false;const r=new Set(nrm(V.lastReply).split(' '));return w.filter(k=>r.has(k)).length/w.length>=.7};
 const endPause=b=>{const base=(+S.settings.pause||0)*1000;if(!base)return 0;const t=b.trim();if(/\b(?:hold on|one sec(?:ond)?|give me a (?:sec|second|minute)|let me think|um+|uh+|hmm+|and|so|but|because|or|then|also|like|to|the|a|my|i|i need to|i have to)[\s,.…]*$/i.test(t))return Math.max(base,7000);return /[.!?]["'”]?$/.test(t)?base:Math.max(base,4500)};
@@ -1296,7 +1294,7 @@ function wireDict(){
     if(V.conv&&(V.state==='thinking'||V.state==='idle')){if(!echoOf(text)){V.next=(V.next||'')+text;V.lastHeard=Date.now()}return}
     if(V.conv&&(V.state==='speaking'||Date.now()<(V.spokeEnd||0)+1300||echoOf(text)))return;
     if(V.state!=='listening'&&V.state!=='starting')return;V.buf=V.buf?V.buf+text:text.trimStart();V.partial='';V.lastHeard=Date.now();orb.kick(.9);heardMore()});
-  dict.onPartial(({text})=>{if(V.conv&&V.state!=='listening'&&V.state!=='starting')return;if(V.conv&&Date.now()<(V.spokeEnd||0)+1300)return;V.partial=text;if(text){V.lastHeard=Date.now();orb.kick(.5)}renderCore()});
+  dict.onPartial(({text})=>{if(V.conv&&V.state!=='listening'&&V.state!=='starting')return;if(V.conv&&Date.now()<(V.spokeEnd||0)+1300)return;if(text!==V.partial){V.partial=text;if(text){V.lastHeard=Date.now();orb.kick(.5)}renderCore()}});
   dict.onState(({state,reason})=>{
     if(state==='listening'){V.lastHeard=Date.now();if(V.state==='starting')setState('listening')}
     else if(state==='idle'&&(V.state==='listening'||V.state==='starting')&&!V.finishing){
@@ -1327,10 +1325,10 @@ function listen(){
   renderCore();
   clearInterval(V.silence);V.silence=setInterval(()=>{if(V.state!=='listening')return;const quiet=Date.now()-V.lastHeard,has=V.buf.trim(),el=$('vTime');
     if(el){const n=Math.floor((Date.now()-V.t0)/1000);el.textContent=Math.floor(n/60)+':'+String(n%60).padStart(2,'0')}
-    const need=endPause(V.buf);
-    if(has&&!V.partial&&need&&quiet>need)finish(true);
-    else if(!has&&!V.partial&&quiet>(V.conv?150000:90000)){V.handsFree=false;if(V.conv)V.say=`Standing by, ${sir()}.`;finish(false)}
-    else if(has&&!V.partial&&quiet>300000)finish(false)},400)}
+    const said=(V.buf+' '+(V.partial||'')).trim(),need=endPause(said);
+    if(said&&need&&quiet>need)finish(true);
+    else if(!said&&quiet>(V.conv?150000:90000)){V.handsFree=false;finish(false)}
+    else if(said&&quiet>300000)finish(false)},400)}
 /* back to listening after an answer, without a tap */
 function resumeEar(){if(!V.conv||!dict||!dict.active()){V.conv=false;return false}V.buf=(V.next||'').trimStart();V.next='';V.partial='';V.lastHeard=V.t0=Date.now();setState('listening');if(V.buf)heardMore();return true}
 async function finish(send){
@@ -1338,7 +1336,7 @@ async function finish(send){
   if(V.conv&&send){const text=V.buf.replace(STOP,'').trim();V.buf='';V.partial='';if(text){V.state='idle';respond(text,true)}else renderCore();return} /* the mic stays open */
   V.finishing=true;V.wantEar=false;V.conv=false;clearInterval(V.silence);
   try{if(dict)await dict.stop();else await srStop()}catch(e){}
-  const text=V.buf.replace(STOP,'').trim();V.buf='';V.partial='';V.finishing=false;
+  const text=(V.buf.trim()?V.buf:V.partial||'').replace(STOP,'').trim();V.buf='';V.partial='';V.finishing=false;
   if(send&&text){V.state='idle';respond(text,true)}else{if(text){$('dump').value=text;grow()}setState('idle')}}
 async function endConv(){if(!V.conv)return;V.conv=false;V.wantEar=false;clearInterval(V.silence);V.next='';try{if(dict)await dict.stop()}catch(e){}}
 function orbTap(){const st=V.state;V.hint='';

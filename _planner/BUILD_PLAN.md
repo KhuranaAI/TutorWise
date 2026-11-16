@@ -243,3 +243,17 @@ after every answer. He wants "the native talking feature" and a week list that i
   for the scheduler, added to Claude as a custom connector; the app then calls it through the `mcp` capability
   (declare it with the tool list its builder returns; do not guess argument names), and agent sessions get it too.
   A brief for the scheduler's own builder was handed to him. This replaces the Apps Script export idea.
+
+## 2026-11-16, afternoon: the conversation mode failed on his computer (app v18)
+- He reported that it never answered on its own (he always had to tap) and that the computer voice "sounds like
+  Stephen Hawking"; he wants the original Claude voice back.
+- Silence detection had two weak points: it waited for the speech service to settle a phrase (an empty live guess)
+  and it treated every live-guess event as new speech, so a re-sent guess kept the clock from running. Now "he
+  stopped" means nothing new heard (settled text plus live guess) for the pause time; then the mic is stopped, which
+  delivers the last words, and the turn is sent. A stop with no settled text falls back to the last live guess.
+- The hands-free conversation mode is switched off (`convOn()` returns false; its code stays). Answers are spoken in
+  Claude's voice. The platform's voice cannot play while its dictation listens, and dictation only starts from a
+  click or key press, so each turn starts with Space or a tap; Space while it speaks interrupts it. The settings for
+  the conversation mode and the computer voice are gone; the pause setting stays.
+- The stop phrases accept curly apostrophes. Harness: `run3.js` (live-guess-only speech, re-sent guesses, Space to
+  talk, Claude voice). Not yet heard on his computer.
