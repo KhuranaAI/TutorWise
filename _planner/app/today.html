@@ -52,6 +52,8 @@ button:disabled{opacity:.5}
 .chips button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .chips button.ok{border-color:var(--line2);color:var(--mute)}
 .chips button.go{border-color:var(--acc);color:var(--acc)}
+.chips a.chip{flex:none;border-radius:99px;padding:6px 12px;font:600 13px var(--body);border:1px solid var(--line2);color:var(--ink);text-decoration:none}
+a.btn{display:inline-block;font:600 14px var(--body);border-radius:12px;padding:9px 12px;text-decoration:none;background:var(--acc);color:var(--acc-ink);border:1px solid var(--acc)}
 .core .chips{flex-wrap:wrap;justify-content:center;overflow:visible;min-height:34px;margin-top:4px}
 
 /* the docket: his day as one checklist, with the fixed times in their place */
@@ -1004,7 +1006,7 @@ function renderCore(){
   const hb=S.habits.get(today())||{};
   $('quick').innerHTML=live?'<button class="on" data-act="sendNow">I’m done, send it</button><button data-act="cancelListen">Cancel</button>'
     :st==='speaking'?'<button data-act="stopSpeak">Stop</button>':st==='thinking'?''
-    :`<button data-act="docket" class="go">What’s on the docket?</button>${hb.up?`<button data-act="up" class="ok">Up${hb.upAt?' '+esc(t12(hb.upAt)):''} ✓</button>`:modeNow()==='work'?'<button data-act="upNow">I’m up</button><button data-act="up">Up earlier…</button>':'<button data-act="up">I’m up</button>'}<button data-act="habit" data-h="workout" class="${hb.workout?'ok':''}">Workout${hb.workout?' ✓':''}</button>${canSpeak()?'<button data-act="brief">Brief me</button>':''}`;
+    :`<button data-act="docket" class="go">What’s on the docket?</button>${hb.up?`<button data-act="up" class="ok">Up${hb.upAt?' '+esc(t12(hb.upAt)):''} ✓</button>`:modeNow()==='work'?'<button data-act="upNow">I’m up</button><button data-act="up">Up earlier…</button>':'<button data-act="up">I’m up</button>'}<button data-act="habit" data-h="workout" class="${hb.workout?'ok':''}">Workout${hb.workout?' ✓':''}</button>${!hear&&voiceLine()?`<a class="chip" href="${esc(voiceLine())}" target="_blank" rel="noopener">Talk by voice</a>`:''}${canSpeak()?'<button data-act="brief">Brief me</button>':''}`;
   const vb=$('btnVoice');vb.hidden=!canSpeak();vb.innerHTML=V.voiceOn?ICON.on:ICON.off;vb.setAttribute('aria-pressed',String(V.voiceOn));vb.setAttribute('aria-label',V.voiceOn?'Spoken replies are on':'Spoken replies are off');
   orb.set(st);
 }
@@ -1222,7 +1224,10 @@ function orbTap(){const st=V.state;V.hint='';
   if(st==='listening'||st==='starting'){finish(true);return}
   if(st==='speaking')stopSpeak();
   if(canHear()){listen();return}
+  let typed=false;try{typed=localStorage.getItem('hq.type')==='1'}catch(e){}
+  if(voiceLine()&&!typed){sheet(`<h3 style="font:600 18px var(--disp);margin:0 0 6px">Talk to me by voice</h3><p class="why" style="margin:0 0 12px">This phone gives the app no microphone. Your voice line uses Claude’s own mic instead, and everything you say there lands here.</p><div class="row"><a class="btn" href="${esc(voiceLine())}" target="_blank" rel="noopener">Open the voice line</a><button data-act="typeHere">Type here instead</button></div>`);return}
   const el=$('dump');el.focus();el.scrollIntoView({block:'center',behavior:'smooth'})}
+const voiceLine=()=>/^https:\/\/claude\.ai\//.test(S.settings.voiceLine||'')?S.settings.voiceLine:'';
 const micWord=()=>dict?'Claude’s dictation':SR&&!V.noMic?'this browser’s speech recognition':'not available in this view, so type instead';
 const spkWord=()=>tts?'Claude’s voice':V.speechOk?'this device’s voice':V.noSpeech?'not available in this view':'not checked yet';
 async function voiceCheck(){const el=$('vcOut');if(el)el.textContent='Checking…';V.noSpeech=false;const ok=await speak(`Voice check, ${sir()}. I can speak here.`,true);
@@ -1320,6 +1325,7 @@ document.addEventListener('click',async e=>{
   if(a==='row'){S.rowSel=S.rowEx===id?'':id;renderToday();return}
   if(a==='undone'){S.rowSel=null;return undoTask(id)}
   if(a==='howSheet')return howSheet();
+  if(a==='typeHere'){try{localStorage.setItem('hq.type','1')}catch(e){}$('sheet').hidden=true;const el=$('dump');el.focus();return}
   if(a==='goCal')return show('cal');
   if(a==='goCentre')return show('centre');
   if(a==='goMem')return show('mem');

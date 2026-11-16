@@ -186,3 +186,27 @@ and a list of things for the day. What changed:
 - Checked: harness scenarios 1-11 (mocked capabilities, including a fake speech recogniser that drops mid-sentence);
   twelve real-style messages and one day plan run through the new prompts on a Sonnet-class model with a copy of the
   real records. Not checked on his phone.
+
+## 2026-11-16, later: mic on the phone, app icon, new look (app v14 and v15)
+- **Mic on iPhone: not possible inside the artifact.** The viewer refuses microphone access to pages on every platform
+  unless a capability grants it; `dictation` and `tts` resolve null in the Claude mobile apps and no device-mic capability is
+  on this account. The browser speech-recognition path stays in the code as a fallback but will be refused the same way.
+- **Voice line.** A separate Claude Code session titled "Jarvis line" (Sonnet-class, id kept in `settings/main.voiceLine`,
+  not in this repo) acts as the voice front end on the phone: he dictates with Claude's own mic, it reads and writes the
+  same database with the same rules as the app (capture, calendar with clash check, one-off rule, check-in, projects)
+  and answers in one or two sentences. Tested: a dry-run capture (about 14 s a turn, correct clash and one question)
+  and one real pinned write. Where the app has no mic, the brain opens a sheet with a link to it, plus a
+  "Talk by voice" chip. Replies there are text, not speech.
+- **A real standalone app** (own home-screen icon, own microphone, spoken replies) is possible but leaves Claude: it
+  needs hosting, his Firebase for data, a speech-to-text service and a paid model API key behind a small server.
+  Not started; his decision.
+- **Icon.** Artifact icon set to a brain. `app/icon-1024.png` is a home-screen icon (the app's neural brain in a signal
+  ring); on iOS it is applied through a Shortcut that opens the artifact link, since the page cannot set the icon of
+  a claude.ai bookmark.
+- **New look (v14).** One dark look, Chakra Petch for display type. Home = the core (brighter, instrument ring), one
+  line from the assistant, the composer, then "Today's docket": the plan's picks as a checklist (tap the circle to
+  finish, tap again to undo, tap a line for Not now / Stuck), fixed times shown in place (calendar events, teaching),
+  a line comparing work left with time free, and a progress bar. Under it: done / on track / slipping (opens a
+  sheet), "Don't forget", and links to the week and the centre. Tabs: Today, Calendar (week strip + next 3 weeks),
+  Tasks (projects, old items, list), Centre (fees, who owes, lessons), More (AI help, Memory, settings, reports).
+- Finishing a task whose title mentions a workout also ticks the workout habit.
