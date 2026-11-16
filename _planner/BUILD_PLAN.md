@@ -301,3 +301,9 @@ after every answer. He wants "the native talking feature" and a week list that i
   the server with those three read tools only. Writes are not wired into HQ yet; Jarvis (a normal Claude chat with the
   connector) can already call the write tools, per the new About rows on the Jarvis Board.
 - Not yet: scheduler writes from HQ's own intake, month totals from month_summary, free-slot search for makeups.
+- Schedule editing from HQ (v23): intake ops `sch_attend`, `sch_cancel`, `sch_move`, `sch_add`, `sch_timetable`, `sch_undo`
+  call the scheduler's write tools (`schWrite`). Student names are matched locally, else `resolve_name` (only an exact
+  match is used; otherwise it answers "did you mean X"). Move and cancel find the session id through `get_week`, and ask
+  for a start time when the student has two lessons that day. The scheduler's own summary is appended to the reply, the
+  change_id is kept in `S.lastSch`, an Undo toast follows, then `connSync()` refreshes. Weekend and capacity rules are the
+  scheduler's own. Not done: dry-run previews, free-slot suggestions for makeups.
