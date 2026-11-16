@@ -1,29 +1,28 @@
 <title>Nimish HQ</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Chakra+Petch:wght@500;600;700&display=swap">
 <style>
-/* Layout: voice-first phone app. A neural "core" you talk to sits on top, one next action sits under it, everything else folds away.
-   Deep ink ground, signal-cyan accent; violet appears only while it is thinking. */
-:root{--bg:#0a1118;--card:#121c25;--ink:#e6eef3;--mute:#8fa2b0;--line:#22313c;--acc:#3fc1c9;--acc-ink:#04262a;--soft:#12313a;--acc2:#c9f6f8;--think:#a99cff;
-  --good:#6fd193;--warn:#f0b354;--bad:#ff8a80;--warn-bg:#3a2c10;--bad-bg:#3d1a17;--good-bg:#143524;
-  --disp:"Space Grotesk",system-ui,sans-serif;--body:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;--r:14px;color-scheme:dark}
-:root[data-theme="light"]{--bg:#f2f5f7;--card:#ffffff;--ink:#12202b;--mute:#5d6e7b;--line:#d9e1e7;--acc:#0b7f86;--acc-ink:#ffffff;--soft:#e3f1f1;--acc2:#065a60;--think:#5b4bd6;
-  --good:#1f7a45;--warn:#a86400;--bad:#b3261e;--warn-bg:#fdf1dc;--bad-bg:#fbe6e4;--good-bg:#e2f3e8;color-scheme:light}
+/* Layout: a console you talk to. The core sits on top, the day is one checklist under it, everything else is a tab away.
+   One look, dark: deep ink ground, signal-cyan for what is live, amber only for what is slipping, violet only while it thinks. */
+:root{--bg:#060c11;--panel:#0c1820;--panel2:#11222d;--card:#0c1820;--ink:#e9f2f6;--mute:#8ea3b1;--dim:#5f7482;--line:#1b2b37;--line2:#28424f;
+  --acc:#46d3dd;--acc-ink:#03252a;--soft:rgba(70,211,221,.11);--glow:rgba(70,211,221,.5);--acc2:#d2f8fa;--think:#b3a6ff;--nav:rgba(8,15,21,.9);--veil:rgba(2,6,9,.62);
+  --good:#6fdc9c;--warn:#f5b85c;--bad:#ff8f85;--warn-bg:rgba(245,184,92,.14);--bad-bg:rgba(255,143,133,.14);--good-bg:rgba(111,220,156,.14);
+  --disp:"Chakra Petch","Space Grotesk",system-ui,sans-serif;--body:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;--r:16px;color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--body)}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--body);-webkit-font-smoothing:antialiased}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
-.wrap{max-width:680px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 110px}
-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px 10px;display:flex;align-items:center;gap:8px}
-header h1{font:700 21px/1.1 var(--disp);margin:0;letter-spacing:-.01em}
-header small{display:block;font:500 12px var(--body);color:var(--mute);letter-spacing:.02em;margin-top:3px}
+.wrap{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 104px}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px 8px;display:flex;align-items:center;gap:6px}
+header h1{font:700 20px/1.1 var(--disp);margin:0;letter-spacing:.02em}
+header small{display:block;font:500 12px var(--body);color:var(--mute);margin-top:3px}
 header .hg{flex:1;min-width:0}
-header button{display:flex;align-items:center;justify-content:center;width:38px;height:38px;padding:0}
-h2{font:600 13px var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--mute);margin:22px 0 8px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+header button{display:flex;align-items:center;justify-content:center;width:38px;height:38px;padding:0;background:transparent;border-color:transparent;color:var(--mute)}
+h2{font:600 11px var(--disp);text-transform:uppercase;letter-spacing:.22em;color:var(--mute);margin:22px 0 8px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px}
 .stack{display:flex;flex-direction:column;gap:10px}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .row>.grow{flex:1;min-width:0}
-button{font:600 14px var(--body);border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 12px;cursor:pointer}
+button{font:600 14px var(--body);border-radius:12px;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);padding:9px 12px;cursor:pointer;-webkit-tap-highlight-color:transparent}
 button.pri{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
 button.ghost{border-color:transparent;background:transparent;color:var(--acc);padding:6px 8px}
 button.sm{padding:6px 10px;font-size:13px}
@@ -31,32 +30,93 @@ button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-vis
 button:disabled{opacity:.5}
 
 /* the core */
-.core{display:flex;flex-direction:column;align-items:center;gap:6px;padding-block:2px 4px;background:radial-gradient(58% 46% at 50% 26%,color-mix(in srgb,var(--acc) 11%,transparent),transparent)}
-.orbBtn{background:none;border:0;padding:0;border-radius:28px;line-height:0;-webkit-tap-highlight-color:transparent}
-.orbBtn canvas{width:240px;height:190px;max-width:100%;display:block}
-.state{font:600 11px var(--body);letter-spacing:.24em;text-transform:uppercase;color:var(--acc);min-height:16px}
+.core{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding-block:0 4px;isolation:isolate}
+.core::before{content:"";position:absolute;inset:-6px -16px auto;height:240px;z-index:-1;pointer-events:none;
+  background:radial-gradient(50% 56% at 50% 44%,rgba(70,211,221,.2),rgba(70,211,221,0) 72%),repeating-linear-gradient(0deg,rgba(130,225,235,.045) 0 1px,transparent 1px 30px),repeating-linear-gradient(90deg,rgba(130,225,235,.045) 0 1px,transparent 1px 30px);
+  -webkit-mask-image:radial-gradient(62% 72% at 50% 44%,#000 28%,transparent 76%);mask-image:radial-gradient(62% 72% at 50% 44%,#000 28%,transparent 76%)}
+.orbBtn{background:none;border:0;padding:0;border-radius:28px;line-height:0}
+.orbBtn canvas{width:232px;height:184px;max-width:100%;display:block}
+.state{font:600 11px var(--disp);letter-spacing:.3em;text-transform:uppercase;color:var(--acc);min-height:16px;margin-top:-8px}
 .state[data-s="thinking"]{color:var(--think)}
-.say{font:500 18px/1.36 var(--disp);text-align:center;margin:2px 0 0;text-wrap:balance;max-width:34ch;min-height:49px}
-.heard{color:var(--mute);font-size:14px;text-align:center;margin:0;min-height:20px;max-width:46ch;overflow-wrap:anywhere}
-.heard i{font-style:normal;opacity:.55}
-.inrow{width:100%;flex-wrap:nowrap;align-items:flex-end;margin-top:4px}
-.inrow textarea{flex:1;min-width:0;height:44px;min-height:44px;max-height:140px;resize:none}
-.inrow button{height:44px}
+.say{font:600 19px/1.3 var(--disp);text-align:center;margin:2px 0 0;text-wrap:balance;max-width:32ch}
+.heard{color:var(--mute);font-size:14px;text-align:center;margin:0;max-width:46ch;overflow-wrap:anywhere}
+.heard:empty{display:none}
+.heard i{font-style:normal;opacity:.6}
+.inrow{width:100%;display:flex;gap:8px;align-items:flex-end;margin-top:6px;background:var(--panel);border:1px solid var(--line2);border-radius:26px;padding:5px 5px 5px 16px}
+.inrow:focus-within{border-color:var(--acc);box-shadow:0 0 0 3px var(--soft)}
+.inrow textarea{flex:1;min-width:0;border:0;background:transparent;padding:10px 0;height:42px;min-height:42px;max-height:140px;resize:none;border-radius:0}
+.inrow textarea:focus-visible{outline:none}
+.inrow button{width:42px;height:42px;border-radius:50%;padding:0;flex:none;display:grid;place-items:center}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
-.chips button{flex:none;border-radius:99px;padding:6px 12px;font-size:13px}
+.chips button{flex:none;border-radius:99px;padding:6px 12px;font-size:13px;background:transparent}
 .chips button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.chips button.ok{border-color:var(--acc);color:var(--acc)}
-.core .chips{flex-wrap:wrap;justify-content:center;overflow:visible;min-height:34px;margin-top:2px}
-.stat{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
-.stat button{border-radius:99px;padding:5px 11px;font-size:13px;font-variant-numeric:tabular-nums}
-.stat .bad{color:var(--bad);border-color:var(--bad-bg);background:var(--bad-bg)}
-.stat .warn{color:var(--warn);border-color:var(--warn-bg);background:var(--warn-bg)}
+.chips button.ok{border-color:var(--line2);color:var(--mute)}
+.chips button.go{border-color:var(--acc);color:var(--acc)}
+.core .chips{flex-wrap:wrap;justify-content:center;overflow:visible;min-height:34px;margin-top:4px}
 
-.pick{border-left:4px solid var(--acc)}
-.pick .n{font:600 12px var(--body);letter-spacing:.04em;color:var(--acc)}
-.pick h3{font:600 18px/1.25 var(--disp);margin:3px 0 6px;text-wrap:balance}
+/* the docket: his day as one checklist, with the fixed times in their place */
+.dk{position:relative;margin-top:14px;background:linear-gradient(180deg,var(--panel2),var(--panel) 120px);border:1px solid var(--line);border-radius:var(--r);padding:14px 14px 8px}
+.dk::before,.dk::after{content:"";position:absolute;width:20px;height:20px;border:2px solid var(--acc);pointer-events:none}
+.dk::before{left:-1px;top:-1px;border-right:0;border-bottom:0;border-top-left-radius:var(--r)}
+.dk::after{right:-1px;bottom:-1px;border-left:0;border-top:0;border-bottom-right-radius:var(--r)}
+.dkh{display:flex;align-items:baseline;gap:10px}
+.dkh .lbl{flex:1;min-width:0;font:600 12px var(--disp);letter-spacing:.22em;text-transform:uppercase;color:var(--acc)}
+.dkh .cnt{font:700 22px/1 var(--disp)}
+.dkh .cnt small{font:500 13px var(--disp);color:var(--mute)}
+.bar{display:flex;gap:4px;margin:10px 0 8px}
+.bar i{flex:1;height:4px;border-radius:2px;background:var(--line2)}
+.bar i.on{background:var(--acc);box-shadow:0 0 8px var(--glow)}
+.bar i.off{background:var(--warn);opacity:.75}
+.fit{font-size:13px;color:var(--mute)}
+.fit.over{color:var(--warn)}
+.rows{list-style:none;margin:8px 0 0;padding:0}
+.r{display:grid;grid-template-columns:36px minmax(0,1fr) auto;column-gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.ck{position:relative;width:28px;height:28px;border-radius:50%;border:2px solid var(--line2);background:transparent;padding:0;display:grid;place-items:center;color:transparent}
+.ck::after{content:"";position:absolute;inset:-9px}
+.ck svg{width:15px;height:15px}
+.r.now .ck{border-color:var(--acc);box-shadow:0 0 0 4px var(--soft)}
+.r.done .ck{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+.rt{min-width:0;overflow-wrap:anywhere;background:none;border:0;border-radius:6px;padding:3px 0;text-align:left;color:var(--ink);font:500 15px/1.35 var(--body)}
+.r.now .rt{font-weight:600}
+.r.done .rt{color:var(--dim);text-decoration:line-through}
+.r.off .rt{color:var(--dim)}
+.rm{font:500 12px var(--disp);color:var(--mute);white-space:nowrap}
+.tag{display:inline-block;font:700 10px var(--disp);letter-spacing:.16em;color:var(--acc-ink);background:var(--acc);border-radius:4px;padding:2px 5px;margin-right:7px;vertical-align:2px;text-decoration:none}
+.rx{grid-column:2 / -1;padding:2px 0 6px}
+.rx .why{margin:2px 0 8px}
+.r.fx{display:flex;align-items:center;gap:9px;padding:10px 0}
+.r.fx::after{content:"";flex:1;min-width:12px;height:1px;background:var(--line2);order:3}
+.r.fx .tm{font:600 12px var(--disp);letter-spacing:.04em;color:var(--acc);white-space:nowrap}
+.r.fx .rt{flex:0 1 auto;color:var(--mute);font:500 14px/1.3 var(--body);padding:0}
+.r.fx .rm{order:4}
+.r.fx.past .tm,.r.fx.past .rt{color:var(--dim)}
+.r.fx.now .rt{color:var(--ink)}
+.r.sep{display:block;padding:10px 0 2px;font:600 10px var(--disp);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+.dkf{border-top:1px solid var(--line);margin-top:2px;padding-top:10px}
+.dkf .m{display:block;margin-bottom:2px}
+.dkf button{padding-left:0}
+.how{display:flex;width:100%;margin-top:10px;padding:11px 14px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);align-items:center;text-align:left;gap:8px}
+.how .k{flex:1;min-width:0;font:500 12px var(--body);color:var(--mute)}
+.how .k b{display:block;font:700 21px/1.15 var(--disp);color:var(--ink)}
+.how .k.good b{color:var(--good)}
+.how .k.warn b{color:var(--warn)}
+.how::after,.lnk::after{content:"";width:8px;height:8px;border-right:2px solid var(--dim);border-top:2px solid var(--dim);transform:rotate(45deg);flex:none;margin-right:2px}
+.fg{margin-top:10px;padding:12px 14px;border-radius:var(--r);border:1px dashed var(--line2)}
+.fg .lbl{font:600 11px var(--disp);letter-spacing:.2em;text-transform:uppercase;color:var(--warn)}
+.fg div{font-size:14px;margin-top:6px}
+.lnk{display:flex;width:100%;align-items:center;gap:10px;margin-top:8px;padding:12px 14px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);text-align:left;font-weight:600}
+.lnk .grow{flex:1;min-width:0}
+.lnk small{display:block;color:var(--mute);font-weight:400;font-size:13px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wk7{display:flex;gap:8px;overflow-x:auto;padding:3px 3px 8px;margin:0 -3px;scroll-snap-type:x proximity}
+.dayc{flex:none;width:124px;scroll-snap-align:start;text-align:left;padding:10px;border-radius:14px;background:var(--panel);border:1px solid var(--line);display:flex;flex-direction:column;gap:5px;align-items:flex-start}
+.dayc.on{border-color:var(--acc);box-shadow:0 0 0 3px var(--soft)}
+.dayc .d{font:600 11px var(--disp);letter-spacing:.16em;color:var(--mute);text-transform:uppercase}
+.dayc.on .d{color:var(--acc)}
+.dayc .th{font:500 13px/1.3 var(--body);color:var(--ink)}
+.dayc .n{font-size:12px;color:var(--mute);font-weight:400}
+
 .why{color:var(--mute);font-size:14px;margin:0 0 6px}
-.first{background:var(--soft);border-radius:9px;padding:8px 10px;font-size:14px;margin:0 0 10px}
+.first{background:var(--soft);border-radius:10px;padding:8px 10px;font-size:14px;margin:0 0 10px}
 .pill{display:inline-block;font:600 11px var(--body);letter-spacing:.03em;padding:2px 8px;border-radius:99px;background:var(--soft);color:var(--acc);white-space:nowrap}
 .pill.warn{background:var(--warn-bg);color:var(--warn)}.pill.bad{background:var(--bad-bg);color:var(--bad)}.pill.good{background:var(--good-bg);color:var(--good)}.pill.mute{background:var(--line);color:var(--mute)}
 .item{padding:11px 0;border-bottom:1px solid var(--line)}
@@ -67,13 +127,13 @@ button:disabled{opacity:.5}
 .item .m{margin-top:2px}
 .num{font-variant-numeric:tabular-nums}
 .big{font:700 28px var(--disp);font-variant-numeric:tabular-nums}
-textarea,input,select{font:15px var(--body);color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;width:100%}
+textarea,input,select{font:15px var(--body);color:var(--ink);background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:10px;width:100%}
 textarea{min-height:110px;resize:vertical}
 input[type=checkbox]{width:auto}
-details.sec{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin-top:8px}
+details.sec{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);margin-top:8px}
 details.sec>summary{list-style:none;cursor:pointer;padding:13px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:600}
 details.sec>summary::-webkit-details-marker{display:none}
-details.sec>summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:rotate(45deg);flex:none;margin-right:4px}
+details.sec>summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--dim);border-bottom:2px solid var(--dim);transform:rotate(45deg);flex:none;margin-right:4px}
 details.sec[open]>summary::after{transform:rotate(225deg)}
 .secb{padding:0 14px 12px}
 .item details summary{cursor:pointer;color:var(--acc);font-weight:600;font-size:14px}
@@ -82,25 +142,29 @@ details.sec[open]>summary::after{transform:rotate(225deg)}
 .week .on{outline:1px solid var(--acc)}
 .week span{display:block;font-size:11px;color:var(--mute)}
 .week b{display:block;font:600 11px var(--body);margin:2px 0}
-.week i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--line)}
+.week i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--line2)}
 .week i.y{background:var(--good)}
 .bub{border-radius:12px;padding:9px 11px;max-width:92%;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}
 .bub.me{align-self:flex-end;background:var(--soft)}
 .bub.ai{align-self:flex-start;background:var(--bg);border:1px solid var(--line)}
-nav{position:fixed;inset:auto 0 0 0;z-index:6;background:var(--card);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-nav button{flex:1;border:0;border-radius:0;background:none;color:var(--mute);padding:13px 2px 12px;font-size:13px}
-nav button.on{color:var(--acc);box-shadow:inset 0 3px 0 var(--acc)}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:10px;z-index:9;font-size:14px;max-width:90vw;display:flex;gap:12px;align-items:center}
+nav{position:fixed;inset:auto 0 0 0;z-index:6;background:var(--nav);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav button{flex:1;min-width:0;border:0;border-radius:0;background:none;color:var(--dim);padding:9px 2px 8px;font:600 10px var(--disp);letter-spacing:.1em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:4px}
+nav button svg{width:22px;height:22px}
+nav button.on{color:var(--acc)}
+#sheet{position:fixed;inset:0;z-index:8;background:var(--veil);display:flex;align-items:flex-end}
+#sheetBody{width:100%;max-width:640px;margin:0 auto;border-radius:20px 20px 0 0;max-height:86%;overflow:auto;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:12px;z-index:9;font-size:14px;max-width:90vw;display:flex;gap:12px;align-items:center}
 .toast button{background:none;border:0;color:var(--bg);text-decoration:underline;padding:0;font-size:14px}
 .empty{color:var(--mute);text-align:center;padding:22px 8px}
 pre.out{white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.5 var(--body);margin:8px 0;background:var(--bg);border-radius:10px;padding:10px;max-height:340px;overflow:auto}
 label{font-size:13px;color:var(--mute);display:block;margin:10px 0 4px}
+@media (prefers-reduced-motion:no-preference){.ck,.bar i,.rt{transition:background-color .2s,border-color .2s,color .2s,box-shadow .2s}}
 </style>
 
 <div class="wrap">
 <header><div class="hg"><h1 id="hTitle">Today</h1><small id="hSub">Loading your day…</small></div>
   <button id="btnVoice" data-act="voice" hidden></button>
-  <button data-act="settings" aria-label="Settings"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2.2"/><circle cx="9" cy="12" r="2.2"/><circle cx="17" cy="18" r="2.2"/></svg></button></header>
+  <button data-act="settings" aria-label="Settings"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2.2"/><circle cx="9" cy="12" r="2.2"/><circle cx="17" cy="18" r="2.2"/></svg></button></header>
 
 <section id="v-today">
   <div class="core">
@@ -108,17 +172,19 @@ label{font-size:13px;color:var(--mute);display:block;margin:10px 0 4px}
     <div class="state" id="vState">Tell me anything</div>
     <p class="say" id="vSay" aria-live="polite">Loading your day…</p>
     <p class="heard" id="vHeard"></p>
-    <div class="row inrow"><textarea id="dump" rows="1" aria-label="Tell your assistant something" placeholder="Type or talk…"></textarea><button class="pri" data-act="send" id="btnSend">Send</button></div>
+    <div class="inrow"><textarea id="dump" rows="1" aria-label="Tell your assistant something" placeholder="Tell me anything…"></textarea><button class="pri" data-act="send" id="btnSend" aria-label="Send"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg></button></div>
     <div class="chips" id="quick"></div>
   </div>
-  <div id="topBox" style="margin-top:10px"></div>
+  <div id="topBox"></div>
   <div id="nowBox"></div>
-  <div class="stat" id="statBox"></div>
-  <div id="secBox" style="margin-top:14px"></div>
+  <div id="statBox"></div>
 </section>
+
+<section id="v-cal" hidden><div id="calBox"></div></section>
 
 <section id="v-all" hidden>
   <div id="projBox"></div>
+  <div id="chkBox"></div>
   <div class="chips" id="areaChips"></div>
   <div class="chips" id="statChips" style="margin-top:6px"></div>
   <div class="card" id="allList" style="margin-top:10px"><div class="empty">Your tasks will list here.</div></div>
@@ -127,10 +193,13 @@ label{font-size:13px;color:var(--mute);display:block;margin:10px 0 4px}
 <section id="v-centre" hidden>
   <div class="card"><div class="row"><div class="grow"><div class="why" style="margin:0">Fees still to collect this month</div><div class="big" id="owedTotal">–</div></div>
     <button data-act="feeNotes">Next month’s fee notes</button></div><div style="margin-top:6px"><button class="ghost sm" data-act="feeSync" style="padding-left:0">Check my fee sheet now</button></div></div>
+  <div id="cenBox"></div>
   <div class="card" id="schedCard" style="margin-top:10px"></div>
   <div id="makeBox2"></div><div id="revBox"></div>
   <h2>Students</h2><div class="card" id="stuList"><div class="empty">Students will list here with fees, makeups owed and schedule.</div></div>
 </section>
+
+<section id="v-more" hidden><div id="moreBox"></div></section>
 
 <section id="v-ai" hidden>
   <div class="card stack"><b>Hand something off</b>
@@ -146,10 +215,9 @@ label{font-size:13px;color:var(--mute);display:block;margin:10px 0 4px}
 </section>
 </div>
 
-<nav id="nav"><button data-v="today" class="on">Today</button><button data-v="all">Everything</button><button data-v="centre">Centre</button><button data-v="ai">AI help</button><button data-v="mem">Memory</button></nav>
+<nav id="nav"><button data-v="today" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/></svg>Today</button><button data-v="cal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Calendar</button><button data-v="all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10M4 6l1.2 1.2L7.5 5M4 12l1.2 1.2L7.5 11M4 18l1.2 1.2L7.5 17"/></svg>Tasks</button><button data-v="centre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9.5 12 5l9 4.5-9 4.5-9-4.5z"/><path d="M7 12v4.2c3 2.4 7 2.4 10 0V12"/></svg>Centre</button><button data-v="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.7" fill="currentColor" stroke="none"/></svg>More</button></nav>
 
-<div id="sheet" hidden style="position:fixed;inset:0;z-index:8;background:rgba(0,0,0,.55);display:flex;align-items:flex-end">
-  <div class="card" style="width:100%;max-width:680px;margin:0 auto;border-radius:18px 18px 0 0;max-height:86%;overflow:auto;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))" id="sheetBody"></div></div>
+<div id="sheet" hidden><div class="card" id="sheetBody"></div></div>
 
 <script type="text/plain" id="gsManifest">
 {
@@ -398,6 +466,8 @@ const S={tasks:new Map(),students:new Map(),drafts:[],dumps:[],plan:null,setting
 const V={state:'idle',say:'',greeting:true,heard:'',buf:'',partial:'',lastHeard:0,finishing:false,silence:0,voiceOn:true,ttsOff:false,ctx:null,unlocked:false};
 try{V.voiceOn=localStorage.getItem('hq.voice')!=='0';V.noMic=localStorage.getItem('hq.noMic')===today()}catch{}
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const durS=m=>{m=Math.max(0,Math.round(m));const h=Math.floor(m/60),r=m%60;return h?`${h}h${r?' '+r+'m':''}`:`${r}m`};
+const CHECK='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.2 8.4l3.1 3.1 6.5-6.9"/></svg>';
 S.days=new Map();S.mem=[];S.events=[];S.projects=[];
 let db=null,sample=null,dict=null,tts=null,mcp=null;
 
@@ -603,7 +673,7 @@ function facts(){const all=[...S.tasks.values()],wk=addD(today(),-7),marks=S.pla
   for(const i of Object.keys(marks))if(marks[i]==='done'&&S.tasks.get(i)?.s==='recurring')done.push(T(S.tasks.get(i)));
   for(const t of all){if(t.s!=='ready'&&t.s!=='waiting')continue;const d=t.due?dayDiff(t.due):null;
     if((t.defer||0)>=2)slip.push(`${T(t)} (set aside ${t.defer} times)`);
-    else if((t.carry||0)>=2)slip.push(`${T(t)} (on his plan ${t.carry} days running, not done)`);
+    else if((t.carry||0)>=2)slip.push(`${T(t)} (on the plan ${t.carry} days running, not done)`);
     else if(d!==null&&d<0)slip.push(`${T(t)} (${-d} days past its date)`);
     else if(d!==null&&d<=2)slip.push(`${T(t)} (due ${d===0?'today':d===1?'tomorrow':'in 2 days'})`);
     else if(d!==null&&d<=14)track.push(`${T(t)} (due in ${d} days)`);
@@ -620,7 +690,12 @@ const lastLbl=d=>{const n=-dayDiff(d.date);return n<=7?'Last '+DNL[d.dow]:Math.r
 async function finishTask(id,ev){const t=S.tasks.get(id);if(!t)return;
   if(t.s==='recurring'){const marks={...(S.plan?.marks||{}),[id]:'done'};if(S.plan)S.plan={...S.plan,marks};await db.doc('plans/'+today()).update({marks}).catch(()=>{});await up(id,{last:today()})}
   else await up(id,{s:'done',doneAt:stamp(),ev});
-  logEv('did',T(t))}
+  logEv('did',T(t));
+  if(/work ?out/i.test(t.t)){const hb={...(S.habits.get(today())||{}),date:today(),workout:true};S.habits.set(today(),hb);db.doc('habits/'+today()).set(hb).catch(()=>{});logEv('workout','')}}
+async function undoTask(id){const t=S.tasks.get(id);if(!t)return;const marks={...(S.plan?.marks||{})};
+  if(marks[id]){delete marks[id];if(S.plan)S.plan={...S.plan,marks};await db.doc('plans/'+today()).update({marks}).catch(()=>{})}
+  if(t.s==='done')await up(id,{s:'ready',doneAt:null});
+  logEv('undid',T(t));V.greeting=true;renderToday()}
 function openEv(){if(S.openLogged||!S.daysKnown)return;S.openLogged=true;logEv('open','')}
 const dayLine=d=>{const e=d.ev||[],g=k=>e.filter(v=>v.k===k).map(v=>v.x).filter(Boolean),up=e.find(v=>v.k==='up'),parts=[up?'up '+up.x:'wake time not logged'];
   if(g('did').length)parts.push('finished: '+g('did').slice(0,4).join(', '));if(g('skip').length)parts.push('set aside: '+g('skip').slice(0,3).join(', '));
@@ -735,13 +810,6 @@ Return JSON only: {"headline":"one plain sentence on what this week is about","d
     if(announce)await say(`Your week is laid out, ${sir()}. ${w.headline}`,true,true);
   }catch(e){if(e?.code==='not_granted')sample=null;if(announce)say(`I couldn’t lay out the week just now, ${sir()}. Ask me again in a minute.`,true,true)}
   S.weeking=false;renderToday()}
-function weekPlanBody(){const w=S.week,ds=(w?.days||[]).filter(d=>d.date>=today());
-  if(S.weeking)return '<div class="m">Laying out your week…</div>';
-  if(!ds.length)return '<div class="m" style="margin-bottom:8px">No week laid out yet.</div><button class="sm pri" data-act="week">Plan my week</button>';
-  return (w.headline?`<div class="why" style="margin:0 0 8px">${esc(w.headline)}</div>`:'')+ds.map(d=>{const on=d.date===today(),b=busyTxt(d.date,true),ex=[d.note,b&&!String(d.note||'').toLowerCase().includes((busyOn(d.date)[0].x||'').toLowerCase())?b:''].filter(Boolean).join(' · ');
-    return `<div class="item"${on?' style="border-left:3px solid var(--acc);padding-left:10px"':''}><div class="row" style="flex-wrap:nowrap"><span class="pill ${on?'':'mute'}">${on?'Today':DN[dowOf(d.date)]+' '+(+d.date.slice(8))}</span><span class="t grow">${esc(d.theme)}</span></div>${(d.items||[]).map(i=>S.tasks.get(i)).filter(Boolean).map(t=>`<div class="m" style="margin-top:4px">${t.s==='done'?'✓ ':'· '}${esc(T(t))}</div>`).join('')}${ex?`<div class="m" style="margin-top:4px;font-style:italic">${esc(ex)}</div>`:''}</div>`}).join('')
-    +'<div class="row" style="margin-top:8px"><button class="ghost sm" data-act="week">Redo the week</button></div>'}
-
 /* ---------- what the assistant says ---------- */
 function greet(spoken){
   const s=S.settings,a=sir(),h=+nowHM().slice(0,2),hi=`${h<12?'Good morning':h<17?'Good afternoon':'Good evening'}, ${a}.`;
@@ -753,8 +821,8 @@ function greet(spoken){
   if(!hb.up)return `${hi} When did you get up today?`;
   const free=freeMinutes(),lead=free>0?` You have ${dur(free)} ${isWk()?'before teaching':'to work with'}.`:'';
   if(nb){const gap=toM(nb.s)-toM(nowHM()),nm=nb.x&&nb.x!=='busy'?nb.x[0].toUpperCase()+nb.x.slice(1):'Blocked time';
-    if(gap<45)return `${hi} Next on your calendar: ${nm} at ${t12(nb.s)}. Nothing else is expected before then.`;
-    return `${hi} Next on your calendar: ${nm} at ${t12(nb.s)}. You have ${dur(Math.min(gap,free||gap))} before it.`+(cur&&spoken?` First: ${T(cur.t)}.`:'')}
+    if(gap<45)return `${hi} ${nm} in ${dur(gap)}. I’ll hold the rest until then.`;
+    return `${hi} ${nm} at ${t12(nb.s)}, in ${dur(gap)}.`+(cur&&spoken?` First: ${T(cur.t)}.`:'')}
   if(cur)return hi+lead+(spoken||!lead?` First: ${T(cur.t)}.`:'');
   if(S.plan)return `${hi} Today’s list is clear.`;
   return `${hi} Give me a moment to plan your day.`}
@@ -881,7 +949,7 @@ async function applyOps(ops,src,wasCheck){
       if(ex){await db.doc('projects/'+ex.id).update(pt);S.projects=S.projects.map(x=>x.id===ex.id?{...x,...pt}:x)}else{const rf=db.collection('projects').doc();await rf.set(pt);S.projects=[...S.projects,{id:rf.id,...pt}]}
       out.push('project: '+nm)}
   }catch(e){console.warn(e)}}
-  if(cal){renderToday();setTimeout(()=>document.querySelector('details[data-key="sec:cal"]')?.scrollIntoView({block:'start',behavior:'smooth'}),500)}
+  if(cal)show('cal');
   if(wk)V.jobs=(async()=>{await wait(300);await makeWeek(wk,true);await makePlan(re||'Follow the new week plan.',false)})();
   else if(re)V.jobs=(async()=>{await wait(300);await makePlan(re,full?'full':true)})();
   return out}
@@ -931,12 +999,12 @@ function renderCore(){
   $('vSay').textContent=V.say;
   if(live)$('vHeard').innerHTML=(esc(V.buf)+(V.partial?` <i>${esc(V.partial)}</i>`:''))||'<i>Go ahead, take your time. Say “you can speak now” or tap the brain when you’re done.</i>';
   else $('vHeard').textContent=V.hint||(V.heard?`You said: ${V.heard.length>150?V.heard.slice(0,147)+'…':V.heard}`:lastSame());
-  $('dump').placeholder=hear?'Type or talk…':'Tell me here…';
+  $('dump').placeholder=hear?'Type, or tap the brain and talk…':'Tell me anything…';
   $('orbBtn').setAttribute('aria-label',live?'Stop and send':st==='speaking'?'Stop speaking':hear?'Start talking':'Write to your assistant');
   const hb=S.habits.get(today())||{};
   $('quick').innerHTML=live?'<button class="on" data-act="sendNow">I’m done, send it</button><button data-act="cancelListen">Cancel</button>'
     :st==='speaking'?'<button data-act="stopSpeak">Stop</button>':st==='thinking'?''
-    :`${hb.up?`<button data-act="up" class="ok">Up${hb.upAt?' '+esc(t12(hb.upAt)):''} ✓</button>`:modeNow()==='work'?'<button data-act="upNow">Just now</button><button data-act="up">Earlier…</button>':'<button data-act="up">I’m up</button>'}<button data-act="habit" data-h="workout" class="${hb.workout?'ok':''}">Workout${hb.workout?' ✓':''}</button><button data-act="docket">What’s on the docket?</button>${canSpeak()?'<button data-act="brief">Brief me</button>':''}`;
+    :`<button data-act="docket" class="go">What’s on the docket?</button>${hb.up?`<button data-act="up" class="ok">Up${hb.upAt?' '+esc(t12(hb.upAt)):''} ✓</button>`:modeNow()==='work'?'<button data-act="upNow">I’m up</button><button data-act="up">Up earlier…</button>':'<button data-act="up">I’m up</button>'}<button data-act="habit" data-h="workout" class="${hb.workout?'ok':''}">Workout${hb.workout?' ✓':''}</button>${canSpeak()?'<button data-act="brief">Brief me</button>':''}`;
   const vb=$('btnVoice');vb.hidden=!canSpeak();vb.innerHTML=V.voiceOn?ICON.on:ICON.off;vb.setAttribute('aria-pressed',String(V.voiceOn));vb.setAttribute('aria-label',V.voiceOn?'Spoken replies are on':'Spoken replies are off');
   orb.set(st);
 }
@@ -951,30 +1019,33 @@ function weekBody(){const days=[];for(let k=6;k>=0;k--){const d=new Date(Date.pa
   return `<div class="week">${days.map(x=>`<div class="${x.d===today()?'on':''}"><span>${x.l}</span><b class="num">${x.h.upAt?esc(t12(x.h.upAt).replace(' ','')):'–'}</b><i class="${x.h.workout?'y':''}"></i></div>`).join('')}</div>
   <div class="m" style="margin-top:8px">${avg!==null?`Average wake-up: ${t12(String(Math.floor(avg/60)).padStart(2,'0')+':'+String(avg%60).padStart(2,'0'))} over ${ups.length} day${ups.length>1?'s':''}. `:'Tell me when you get up each day and your wake times will build up here. '}Workouts: ${w} of 7 (the dot under each day).</div>`}
 function renderToday(){
-  const s=S.settings,m=modeNow();
+  const s=S.settings,m=modeNow(),now=toM(nowHM());
   $('hSub').textContent=new Date(today()+'T12:00:00Z').toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric',timeZone:'UTC'});
-  if(S.loaded&&!S.secInit){S.secInit=true;S.open.add('sec:wk7');if(m!=='work')S.open.add('sec:tonight');if(m==='eve')S.open.add('sec:close')}
+  if(S.loaded&&!S.secInit){S.secInit=true;for(const k of['sec:tonight','sec:money'])S.open.add(k);if(m==='eve')S.open.add('sec:close')}
   renderCore();
-  /* the one next action */
-  const p=S.plan,marks=p?.marks||{},all=(p?.picks||[]).map(k=>({k,t:S.tasks.get(k.id)})).filter(x=>x.t),op=openPicks(),cur=op[0];
-  const bzN=busyNow(),head=bzN?`After ${esc(bzN.x&&bzN.x!=='busy'?bzN.x:'this')}`:m==='teach'?'Between lessons':m==='eve'?'Before you switch off':'Right now';
-  let h=`<h2>${head}</h2>`;
-  if(cur){const{k,t}=cur;
-    h+=`<div class="card pick"><div class="n">${esc(AREAS[t.a]||t.a)} · ${k.min||t.est||'?'} min</div><h3>${esc(T(t))}</h3><p class="why">${esc(k.why)}</p><p class="first"><b>Start:</b> ${esc(k.first||t.next||t.t)}</p>
-      <div class="row"><button class="pri sm" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="mark" data-m="skip" data-id="${t.id}">Not now</button><button class="sm" data-act="mark" data-m="stuck" data-id="${t.id}">Stuck</button>${t.out==='ready'?`<button class="sm ghost" data-act="goAI">Open the draft</button>`:t.ai?`<button class="sm ghost" data-act="aiTask" data-id="${t.id}">Let AI draft it</button>`:''}</div></div>`;
-    const rest=m==='work'?op.slice(1):[],quick=m!=='work'?[]:(p.quick||[]).map(id=>S.tasks.get(id)).filter(t=>t&&t.s!=='done'&&!all.some(x=>x.t.id===t.id));
-    if(rest.length||quick.length)h+=`<div class="card" style="margin-top:8px">${rest.map(({k,t})=>`<div class="item row"><div class="grow"><div class="t">${esc(T(t))}</div><div class="m">Then · ${k.min||t.est||'?'} min</div></div><button class="sm" data-act="done" data-id="${t.id}">Done</button></div>`).join('')}${quick.map(t=>`<div class="item row"><div class="grow"><div class="t">${esc(T(t))}</div><div class="m">Five-minute win</div></div><button class="sm" data-act="done" data-id="${t.id}">Done</button></div>`).join('')}</div>`;
-    h+=`<div class="row" style="margin-top:6px"><button class="ghost sm" data-act="plan" ${S.planning?'disabled':''}>${S.planning?'Planning…':'Replan from now'}</button></div>`}
-  else if(all.length){const dn=all.filter(x=>x.t.s==='done'||marks[x.k.id]==='done').length;
-    h+=`<div class="card"><b>Today’s list is clear.</b><div class="why" style="margin:4px 0 10px">${dn} of ${all.length} done${all.length-dn?`, ${all.length-dn} set aside`:''}.</div><button class="sm" data-act="plan" ${S.planning?'disabled':''}>${S.planning?'Planning…':'Plan a bit more'}</button></div>`}
-  else h+=`<div class="card empty">${!S.loaded?'Loading your day…':S.planning?'Planning your day…':'No plan yet for today.'}${S.loaded&&!S.planning?'<div style="margin-top:10px"><button class="pri sm" data-act="plan">Plan my day</button></div>':''}</div>`;
-  if(p&&(p.how||(p.forgot||[]).length))h+=`<div class="card" style="margin-top:8px">${p.how?`<div class="m" style="font-size:14px"><b style="color:var(--ink)">How you’re doing.</b> ${esc(p.how)}</div>`:''}${(p.forgot||[]).length?`<div class="m" style="font-size:14px;margin-top:${p.how?10:0}px"><b style="color:var(--ink)">Don’t forget.</b></div>${p.forgot.map(x=>`<div class="m" style="font-size:14px;margin-top:4px">• ${esc(x)}</div>`).join('')}`:''}</div>`;
-  $('nowBox').innerHTML=h;
-  /* status chips */
+  /* the docket: today's list as one checklist, fixed times in their place */
+  const p=S.plan,dkt=agenda(),picks=dkt.rows.filter(r=>!r.fx),op=openPicks(),cur=op[0],bz=busyNow(),free=freeMinutes(),dn=picks.filter(r=>r.st==='done').length;
+  const ids=picks.filter(r=>r.st!=='done').map(r=>r.k.id),ex=S.rowSel===''?null:S.rowSel&&ids.includes(S.rowSel)?S.rowSel:cur?cur.k.id:null;S.rowEx=ex;
+  const hmOf=n=>String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
+  const row=r=>{
+    if(r.fx){const past=r.e<=now,on=r.s<=now&&now<r.e;return `<li class="r fx${past?' past':''}${on?' now':''}"><span class="tm num">${esc(t12(hmOf(r.s)).replace(' ',''))}</span><span class="rt">${on?'<span class="tag">NOW</span>':''}${esc(r.t[0].toUpperCase()+r.t.slice(1))}${r.teach?' until '+esc(t12(s.teachEnd)):''}</span><span class="rm num">${r.teach?'':durS(r.e-r.s)}</span></li>`}
+    const{k,t,st}=r,isNow=!bz&&m!=='teach'&&cur&&k.id===cur.k.id,open=ex===k.id;
+    return `<li class="r ${st==='done'?'done':st==='open'?'':'off'}${isNow?' now':''}"><button class="ck" data-act="${st==='done'?'undone':'done'}" data-id="${t.id}" aria-label="${st==='done'?'Not done after all':'Done'}: ${esc(T(t))}">${CHECK}</button><button class="rt" data-act="row" data-id="${t.id}" aria-expanded="${open}">${isNow?'<span class="tag">NOW</span>':''}${esc(T(t))}${st==='skip'?' <span class="pill mute">not today</span>':st==='stuck'?' <span class="pill warn">stuck</span>':''}</button><span class="rm num">${st==='done'?'':(r.ev?esc(t12(r.ev.s).replace(' ',''))+' · ':'')+durS(k.min||t.est||30)}</span>${open?`<div class="rx">${k.why?`<p class="why">${esc(k.why)}</p>`:''}<p class="first"><b>Start:</b> ${esc(k.first||t.next||t.t)}</p><div class="row">${st==='open'?`<button class="pri sm" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="mark" data-m="skip" data-id="${t.id}">Not now</button><button class="sm" data-act="mark" data-m="stuck" data-id="${t.id}">Stuck</button>`:`<button class="pri sm" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="undone" data-id="${t.id}">Back on the list</button>`}${t.out==='ready'?'<button class="sm ghost" data-act="goAI">Open the draft</button>':t.ai?`<button class="sm ghost" data-act="aiTask" data-id="${t.id}">Let AI draft it</button>`:''}</div></div>`:''}</li>`};
+  const quick=m!=='work'?[]:(p?.quick||[]).map(id=>S.tasks.get(id)).filter(t=>t&&t.s!=='done'&&!picks.some(r=>r.k.id===t.id));
+  const head=bz?`After ${esc(bz.x&&bz.x!=='busy'?bz.x:'this')}`:m==='teach'?'Between lessons':m==='eve'?'Before you switch off':'Today’s docket';
+  const over=m==='work'&&op.length>0&&dkt.work>free;
+  const fit=!op.length?(dn===picks.length?`All ${picks.length} done. Nice work.`:'Nothing left open.'):m==='work'?`${durS(dkt.work)} of work left · ${durS(free)} free ${isWk()?'before teaching':'today'}${over?'. It won’t all fit, so the last ones can move.':''}`:`${durS(dkt.work)} left on today’s list`;
+  $('nowBox').innerHTML=picks.length?`<div class="dk"><div class="dkh"><span class="lbl">${head}</span><span class="cnt num">${dn}<small>/${picks.length}</small></span></div>
+    <div class="bar" aria-hidden="true">${picks.map(r=>`<i class="${r.st==='done'?'on':r.st==='open'?'':'off'}"></i>`).join('')}</div><div class="fit${over?' over':''}">${fit}</div>
+    <ol class="rows">${dkt.rows.map(row).join('')}${quick.length?`<li class="r sep">If you have five minutes</li>${quick.map(t=>`<li class="r"><button class="ck" data-act="done" data-id="${t.id}" aria-label="Done: ${esc(T(t))}">${CHECK}</button><span class="rt">${esc(T(t))}</span><span class="rm num">5m</span></li>`).join('')}`:''}</ol>
+    <div class="dkf">${p?.leftOut?`<span class="m">${esc(p.leftOut)}</span>`:''}<button class="ghost sm" data-act="plan" ${S.planning?'disabled':''}>${S.planning?'Planning…':op.length?'Replan from now':'Plan a bit more'}</button></div></div>`
+   :`<div class="dk"><div class="dkh"><span class="lbl">Today’s docket</span></div><div class="empty">${!S.loaded?'Loading your day…':S.planning?'Planning your day…':'No plan yet for today.'}${S.loaded&&!S.planning?'<div class="row" style="justify-content:center;margin-top:10px"><button class="pri sm" data-act="docket">Check in and plan</button><button class="sm" data-act="plan">Just plan it</button></div>':''}</div></div>`;
   const f=feeTot(),mk=[...S.students.values()].reduce((a,x)=>a+(x.active!==false?(x.owed||0):0),0),ver=[...S.tasks.values()].filter(t=>t.s==='verify').sort((a,b)=>(a.p||3)-(b.p||3)),nd=S.drafts.filter(d=>d.state==='ready').length;
-  $('statBox').innerHTML=(f.sum?`<button class="bad" data-act="sec" data-key="sec:money">${money(f.sum)} unpaid</button>`:'')+(mk?`<button class="warn" data-act="sec" data-key="sec:makeups">${mk} h of makeups owed</button>`:'')
-    +(nd?`<button data-act="goAI">${nd} draft${nd>1?'s':''} ready</button>`:'')+(schedLive()&&S.sched.unmarked?`<button class="warn" data-act="sec" data-key="sec:tonight">${S.sched.unmarked} lesson${S.sched.unmarked>1?'s':''} not marked in the scheduler</button>`:'')+(ver.length?`<button data-act="sec" data-key="sec:check">${ver.length} old items to confirm</button>`:'');
-  /* sections */
+  const pf=facts();
+  $('statBox').innerHTML=(S.loaded?`<button class="how" data-act="howSheet" aria-label="How you’re doing"><span class="k good"><b class="num">${pf.done.length}</b>done this week</span><span class="k"><b class="num">${pf.track.length}</b>on track</span><span class="k${pf.slip.length?' warn':''}"><b class="num">${pf.slip.length}</b>slipping</span></button>`:'')
+    +((p?.forgot||[]).length?`<div class="fg"><span class="lbl">Don’t forget</span>${p.forgot.map(x=>`<div>${esc(x)}</div>`).join('')}</div>`:'')
+    +(S.loaded?`<button class="lnk" data-act="goCal"><span class="grow">This week<small>${esc(S.week?.headline||'Not laid out yet')}</small></span></button>`:'')
+    +(f.sum||mk?`<button class="lnk" data-act="goCentre"><span class="grow">Centre<small>${[f.sum?money(f.sum)+' unpaid':'',mk?mk+' h of makeups owed':''].filter(Boolean).join(' · ')}</small></span></button>`:'');
   const tn=tonight(),att=x=>S.att.get(today()+'_'+x.id)?.status;
   const stP={attended:['good','Came'],missed_credit:['warn','Missed · credit'],missed_no_credit:['bad','Missed'],holiday:['mute','Holiday'],cancelled:['mute','Cancelled']};
   let tb=tn.some(x=>x.live)?tn.map(({s:x,x:sl,t,st})=>`<div class="item row"><div class="grow"><span class="t">${esc(x.name)}</span> <span class="m num">${t12(sl.s)}–${t12(sl.e)}${t?' · '+esc(t):''}</span></div><span class="pill ${(stP[st]||['mute'])[0]}">${(stP[st]||['','Not marked'])[1]}</span></div>`).join('')+`<div style="margin-top:10px"><a href="https://schedule.tutorwise.ca" target="_blank" rel="noopener" style="color:var(--acc);font-weight:600;font-size:14px">Mark attendance in your scheduler</a></div>`
@@ -984,16 +1055,40 @@ function renderToday(){
   const closeB=m==='eve'?`<div class="why" style="margin:0 0 8px">${unm?unm+' of today’s items aren’t marked yet: tap Done or Not now on each.':'Today’s items are all marked.'} Anything else happen today? Say it in one go.</div><button class="sm pri" data-act="focus" data-say="How did today go, ${esc(sir())}?">Tell me about today</button>`:'';
   const paidToday=[...S.students.values()].filter(x=>x.fee?.undo?.at===today());
   const moneyB=f.sum||paidToday.length?`<div class="row" style="margin-bottom:4px"><div class="big grow">${money(f.sum)}</div>${f.sum?'<button class="sm" data-act="aiChase">Draft reminders</button>':''}</div>${f.ow.map(x=>`<div class="item row"><div class="grow"><span class="t">${esc(x.name)}</span> <span class="m num">${money(owes(x))}${x.fee?.given?' · note given '+esc(x.fee.given):''}</span></div><button class="sm" data-act="paidFull" data-id="${x.id}">Paid</button></div>`).join('')}${paidToday.map(x=>`<div class="item row"><div class="grow"><span class="t">${esc(x.name)}</span> <span class="m num">${money(x.fee.paid-(x.fee.undo.paid||0))} recorded today${x.fee.sheet==='written'?' · in your fee sheet':''}</span></div><button class="sm ghost" data-act="undoPay" data-id="${x.id}">Undo</button></div>`).join('')}<div class="row" style="padding-top:10px"><span class="m grow">From your fee sheet${S.stats?.asOf?', last checked '+esc(new Date(S.stats.asOf+'T12:00:00Z').toLocaleDateString('en-CA',{month:'short',day:'numeric',timeZone:'UTC'})):''}.</span><button class="ghost sm" data-act="feeSync">Check now</button></div>`:'';
-  const checkB=ver.slice(0,3).map(t=>`<div class="item"><div class="t">${esc(t.t)}</div><div class="m">${esc(AREAS[t.a]||'')}</div><div class="row" style="margin-top:6px"><button class="sm" data-act="set" data-s="ready" data-id="${t.id}">Still to do</button><button class="sm" data-act="done" data-id="${t.id}">Already done</button><button class="sm" data-act="set" data-s="parked" data-id="${t.id}">Drop it</button></div></div>`).join('');
   const ag=S.agent,repB=ag&&ag.date===today()&&ag.brief?`<div class="why" style="white-space:pre-wrap;margin:0">${esc(ag.brief)}</div>${(ag.flags||[]).map(x=>`<div class="m" style="margin-top:6px">• ${esc(x)}</div>`).join('')}`:'';
   const histB=S.dumps.length?`<div class="stack">${S.dumps.map(d=>`<div class="bub me">${esc(d.text)}</div>${d.reply?`<div class="bub ai">${esc(d.reply)}${d.ops?.length?`<div class="m" style="margin-top:6px">${d.ops.map(esc).join(' · ')}</div>`:''}</div>`:''}`).join('')}</div>`:'';
   const tonightS=isWk()?sec('sec:tonight',`Tonight’s lessons${tn.length?' · '+tn.length:''}`,tb):'';
   $('topBox').innerHTML=m==='eve'?sec('sec:close','Close the day',closeB)+tonightS:m==='teach'?tonightS:'';
-  $('secBox').innerHTML=sec('sec:wk7','This week',weekPlanBody())+sec('sec:cal','Calendar · next 3 weeks',calBody())+(m==='work'?tonightS:'')+sec('sec:money',`Money to collect · ${money(f.sum)}`,moneyB)+sec('sec:makeups',`Makeups to book · ${mk} h`,makeupBody())
-    +sec('sec:check',`Quick check · ${ver.length} old items`,checkB)+sec('sec:week','Wake-ups and workouts',weekBody())+sec('sec:report','Overnight report',repB)+sec('sec:left','Left out on purpose',p?.leftOut?`<div class="why" style="margin:0">${esc(p.leftOut)}</div>`:'')+sec('sec:hist','What you’ve told me',histB)
-    +sec('sec:help','How to use this',`<div class="m" style="display:flex;flex-direction:column;gap:8px;font-size:14px"><div><b>Tell it anything.</b> Type in the box at the top. Where the mic works, tap the brain and talk as long as you like, then say “you can speak now”. New tasks, things you finished, who paid, who missed.</div><div><b>Do the one thing under “Right now”.</b> Then tap Done, Not now, or Stuck.</div><div><b>Tell it when you get up, and tap Workout.</b> It plans from your real day and tracks your week.</div><div><b>Money, tonight’s lessons and makeups</b> are in the sections on this page. Every student is in Centre.</div><div><b>It remembers.</b> What you tell it and what you do is kept, and it brings it back on the same weekday. See and fix what it knows under Memory.</div><div><b>AI help</b> holds finished drafts. Copy them, or hit Redo if they’re off.</div></div>`);
+  $('cenBox').innerHTML=(m==='work'?tonightS:'')+sec('sec:money',`Who owes · ${money(f.sum)}`,moneyB);
+  $('moreBox').innerHTML=`<button class="lnk" data-act="goAI" style="margin-top:4px"><span class="grow">AI help<small>${nd?nd+' draft'+(nd>1?'s':'')+' ready to review':'Hand something off'}</small></span></button><button class="lnk" data-act="goMem"><span class="grow">Memory<small>${S.mem.length} things I know about you</small></span></button><button class="lnk" data-act="settings"><span class="grow">Settings<small>What it calls you, your hours, voice check</small></span></button>`
+    +sec('sec:report','Overnight report',repB)+sec('sec:week','Wake-ups and workouts',weekBody())+sec('sec:hist','What you’ve told me',histB)+sec('sec:help','How to use this',`<div class="m" style="display:flex;flex-direction:column;gap:8px;font-size:14px"><div><b>Tell it anything.</b> Type in the box at the top. Where the mic works, tap the brain and talk as long as you like, then say “you can speak now”. New tasks, things you finished, who paid, who missed.</div><div><b>Work down today’s docket.</b> Tap the circle when something is done. Tap a line for Not now or Stuck.</div><div><b>Tell it when you get up, and tap Workout.</b> It plans from your real day and tracks your week.</div><div><b>Calendar</b> has your week and the next three weeks. <b>Centre</b> has fees, makeups and every student.</div><div><b>It remembers.</b> What you tell it and what you do is kept, and it brings it back on the same weekday. See and fix what it knows under Memory.</div><div><b>AI help</b> (under More) holds finished drafts. Copy them, or hit Redo if they’re off.</div></div>`);
+  renderCal();
 }
+function renderCal(){const el=$('calBox');if(!el)return;const w=S.week,ds=(w?.days||[]).filter(d=>d.date>=today());
+  if(!S.calDay||!ds.some(d=>d.date===S.calDay))S.calDay=ds[0]?.date||today();
+  const sel=ds.find(d=>d.date===S.calDay),n=d=>(d.items||[]).filter(i=>S.tasks.has(i)).length+evOn(d.date).length;
+  const det=d=>{const ev=evOn(d.date),it=(d.items||[]).map(i=>S.tasks.get(i)).filter(Boolean);
+    return `<div style="font:600 16px var(--disp);margin-bottom:4px">${esc(d.theme)}</div>${ev.map(e=>`<div class="item"><div class="t">${esc(e.t)}</div><div class="m">${esc(evWhen(e))}${e.tent?' · pencilled in':''}${e.where?' · '+esc(e.where):''}</div></div>`).join('')}${it.map(t=>`<div class="item"><div class="t"${t.s==='done'?' style="text-decoration:line-through;color:var(--dim)"':''}>${esc(T(t))}</div></div>`).join('')}${d.note?`<div class="m" style="margin-top:8px">${esc(d.note)}</div>`:''}`};
+  el.innerHTML='<h2 style="margin-top:6px">This week</h2>'+(S.weeking?'<div class="card m">Laying out your week…</div>':ds.length?`${w.headline?`<p class="why" style="margin:0 0 10px">${esc(w.headline)}</p>`:''}<div class="wk7">${ds.map(d=>`<button class="dayc${d.date===S.calDay?' on':''}" data-act="calDay" data-d="${d.date}"><span class="d">${d.date===today()?'Today':DN[dowOf(d.date)]+' '+(+d.date.slice(8))}</span><span class="th">${esc(d.theme)}</span><span class="n">${n(d)} thing${n(d)===1?'':'s'}</span></button>`).join('')}</div>${sel?`<div class="card" style="margin-top:6px">${det(sel)}</div>`:''}<div class="row" style="margin-top:6px"><button class="ghost sm" data-act="week">Redo the week</button></div>`
+    :'<div class="card"><div class="m" style="margin-bottom:8px">No week laid out yet.</div><button class="sm pri" data-act="week">Plan my week</button></div>')
+    +`<h2>Next 3 weeks</h2><div class="card">${calBody()}</div>`}
+function howSheet(){const pf=facts(),p=S.plan,L=(t,a)=>a.length?`<h2>${t}</h2><div class="card">${a.slice(0,8).map(x=>`<div class="item" style="font-size:14px">${esc(x)}</div>`).join('')}</div>`:'';
+  sheet(`<h3 style="font:600 18px var(--disp);margin:0 0 6px">How you’re doing</h3>${p?.how?`<p class="why" style="margin:0">${esc(p.how)}</p>`:''}${L('Slipping',pf.slip)}${L('On track',pf.track)}${L('Done this week',pf.done)}${L('You may be forgetting',pf.forget)}${pf.slip.length+pf.track.length+pf.done.length+pf.forget.length?'':'<p class="m">Nothing to report yet. Mark things done as you go and this fills in.</p>'}<div class="row" style="margin-top:14px"><button data-act="close">Close</button></div>`)}
+/* today's picks in his order, with the fixed times (calendar, teaching) dropped in where they fall */
+function agenda(){const p=S.plan,marks=p?.marks||{},s=S.settings,own=new Map(evOn(today()).filter(e=>e.task&&hm(e.s)&&(p?.picks||[]).some(k=>k.id===e.task)).map(e=>[e.id,e]));
+  const timed=new Map([...own.values()].map(e=>[e.task,e])),fixed=busyOn(today()).filter(b=>!own.has(b.id)).map(b=>({fx:1,s:toM(b.s),e:toM(b.e),t:b.x||'Busy'}));
+  if(isWk())fixed.push({fx:1,s:toM(s.teachStart),e:toM(s.teachEnd),t:'Teaching',teach:1});
+  fixed.sort((a,b)=>a.s-b.s);
+  const rows=[];let at=Math.max(toM(nowHM()),toM(s.workStart)),fi=0,work=0;
+  const flush=lim=>{while(fi<fixed.length&&fixed[fi].s<=lim){const f=fixed[fi++];rows.push(f);if(f.e>at)at=f.e}};
+  for(const k of p?.picks||[]){const tk=S.tasks.get(k.id);if(!tk)continue;const st=tk.s==='done'||marks[k.id]==='done'?'done':marks[k.id]||'open';
+    const ev=timed.get(k.id);
+    if(st==='open'){const mn=k.min||tk.est||30;if(ev){flush(toM(ev.s));at=Math.max(at,toM(ev.s))}else flush(at+mn/2);rows.push({k,t:tk,st,ev});at+=mn;work+=mn}else rows.push({k,t:tk,st,ev})}
+  flush(1e9);return{rows,work}}
 function renderList(){
+  const ver=[...S.tasks.values()].filter(t=>t.s==='verify').sort((a,b)=>(a.p||3)-(b.p||3));
+  const checkB=ver.slice(0,3).map(t=>`<div class="item"><div class="t">${esc(t.t)}</div><div class="m">${esc(AREAS[t.a]||'')}</div><div class="row" style="margin-top:6px"><button class="sm" data-act="set" data-s="ready" data-id="${t.id}">Still to do</button><button class="sm" data-act="done" data-id="${t.id}">Already done</button><button class="sm" data-act="set" data-s="parked" data-id="${t.id}">Drop it</button></div></div>`).join('');
+  $('chkBox').innerHTML=ver.length?sec('sec:check',`Old items to confirm · ${ver.length}`,checkB):'';
   $('projBox').innerHTML=S.projects.length?`<h2 style="margin-top:0">Projects</h2><div class="card">${[...S.projects].sort((a,b)=>(a.status==='done')-(b.status==='done')||String(a.name).localeCompare(String(b.name))).map(p=>`<div class="item"><div class="row"><div class="grow t">${esc(p.name)}</div><span class="pill ${p.status==='done'?'good':p.status==='paused'?'mute':p.status==='waiting'?'warn':''}">${esc(p.status||'active')}</span></div><div class="m">${p.next?'<b>Next:</b> '+esc(p.next):'No next step yet'}${p.n?' · '+esc(p.n):''}</div></div>`).join('')}</div><h2>Everything</h2>`:'';
   const all=[...S.tasks.values()];const areas=[...new Set(all.map(t=>t.a))];
   $('areaChips').innerHTML=`<button class="${S.area?'':'on'}" data-act="area" data-a="">All</button>`+Object.keys(AREAS).filter(a=>areas.includes(a)).map(a=>`<button class="${S.area===a?'on':''}" data-act="area" data-a="${a}">${esc(AREAS[a])}</button>`).join('');
@@ -1022,8 +1117,8 @@ function renderAI(){
   $('drafts').innerHTML=S.drafts.length?S.drafts.map(d=>`<div class="card" data-d="${d.id}"><div class="row"><b class="grow">${esc(d.title)}</b><span class="pill ${d.state==='ready'?'good':d.state==='failed'?'bad':'warn'}">${d.state==='ready'?'Ready to review':d.state==='failed'?'Failed':'Working…'}</span></div><pre class="out" id="o${d.id}">${esc(d.body||'')}</pre>
     <div class="row"><button class="sm pri" data-act="copy" data-from="o${d.id}">Copy</button><button class="sm" data-act="redo" data-id="${d.id}">Redo</button><button class="sm ghost" data-act="delDraft" data-id="${d.id}">Remove</button></div></div>`).join(''):'<div class="empty">Drafts and research land here. Wrong? Hit Redo.</div>';
 }
-function show(v){S.view=v;for(const k of['today','all','centre','ai','mem'])$('v-'+k).hidden=k!==v;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
-  $('hTitle').textContent={today:'Today',all:'Everything',centre:'Centre',ai:'AI help',mem:'Memory'}[v];window.scrollTo(0,0);orb.sync()}
+function show(v){S.view=v;for(const k of['today','cal','all','centre','more','ai','mem'])$('v-'+k).hidden=k!==v;const tab=v==='ai'||v==='mem'?'more':v;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===tab));
+  $('hTitle').textContent={today:'Today',cal:'Calendar',all:'Tasks',centre:'Centre',more:'More',ai:'AI help',mem:'Memory'}[v];window.scrollTo(0,0);orb.sync()}
 function sheet(html){$('sheetBody').innerHTML=html;$('sheet').hidden=false}
 function settingsSheet(){const s=S.settings;const f=(k,l,t='time')=>`<label for="s_${k}">${l}</label><input id="s_${k}" type="${t}" value="${esc(s[k])}">`;
   sheet(`<h3 style="font:600 18px var(--disp);margin:0">Settings</h3>${f('address','What it calls you','text')}
@@ -1162,17 +1257,17 @@ const orb=(()=>{
     if(!still){acc+=K.rate*dt/1000;while(acc>1){acc--;spawn()}}
     ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);ctx.lineCap='round';
     /* rings */
-    ctx.setLineDash([2,7]);ctx.lineWidth=1;ctx.strokeStyle=`rgba(${K.hue},.2)`;ctx.beginPath();ctx.arc(CX,CY,92,0,6.2832);ctx.stroke();ctx.setLineDash([]);
+    ctx.lineWidth=1;ctx.strokeStyle=`rgba(${K.hue},.34)`;ctx.beginPath();for(let i=0;i<60;i++){const a=i/60*6.2832,r2=i%5?90.5:93;ctx.moveTo(CX+Math.cos(a)*88,CY+Math.sin(a)*88);ctx.lineTo(CX+Math.cos(a)*r2,CY+Math.sin(a)*r2)}ctx.stroke();
     const rot=still?0:t*(st==='thinking'?1.7:st==='idle'?.22:.5);
-    for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(CX,CY,87,rot+i*2.0944,rot+i*2.0944+1.05);ctx.strokeStyle=`rgba(${K.hue},${st==='idle'?.26:.55})`;ctx.lineWidth=1.5;ctx.stroke()}
+    ctx.shadowColor=`rgba(${K.hue},.75)`;ctx.shadowBlur=8;for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(CX,CY,82.5,rot+i*2.0944,rot+i*2.0944+1.2);ctx.strokeStyle=`rgba(${K.hue},${st==='idle'?.7:.95})`;ctx.lineWidth=2.2;ctx.stroke()}ctx.shadowBlur=0;
     if(st==='listening'){ctx.beginPath();for(let i=0;i<=90;i++){const a=i/90*6.2832,amp=1.2+energy*8,r=80+Math.sin(a*5+t*6)*amp*.6+Math.sin(a*9-t*4.3)*amp*.4,x=CX+Math.cos(a)*r,y=CY+Math.sin(a)*r;i?ctx.lineTo(x,y):ctx.moveTo(x,y)}
       ctx.closePath();ctx.strokeStyle=`rgba(${C.b},${.3+energy*.55})`;ctx.lineWidth=1.3;ctx.stroke()}
     if(st==='speaking')for(let i=0;i<3;i++){const p=((t*.85+i/3)%1),r=34+p*52;ctx.beginPath();ctx.arc(CX,CY,r,0,6.2832);ctx.strokeStyle=`rgba(${C.b},${(1-p)*.3*(.35+env)})`;ctx.lineWidth=1.2;ctx.stroke()}
     /* brain */
     const sc=1+energy*.025+(st==='speaking'?env*.012:0);ctx.translate(CX,CY);ctx.scale(sc,sc);ctx.translate(-CX,-CY);
-    ctx.lineWidth=1.3;ctx.strokeStyle=`rgba(${K.hue},${st==='idle'?.34:.5})`;ctx.stroke(P);
-    ctx.lineWidth=1;ctx.strokeStyle=`rgba(${K.hue},.16)`;for(const s of SUL)ctx.stroke(s);
-    ctx.beginPath();for(const[a,b]of edges){ctx.moveTo(nodes[a].x,nodes[a].y);ctx.lineTo(nodes[b].x,nodes[b].y)}ctx.strokeStyle=`rgba(${K.hue},${K.edge})`;ctx.lineWidth=.7;ctx.stroke();
+    ctx.fillStyle='rgba(8,26,34,.55)';ctx.fill(P);ctx.shadowColor=`rgba(${K.hue},.9)`;ctx.shadowBlur=10;ctx.lineWidth=1.9;ctx.lineJoin='round';ctx.strokeStyle=`rgba(${C.b},${st==='idle'?.86:.98})`;ctx.stroke(P);ctx.shadowBlur=0;
+    ctx.lineWidth=1;ctx.strokeStyle=`rgba(${K.hue},.28)`;for(const s of SUL)ctx.stroke(s);
+    ctx.beginPath();for(const[a,b]of edges){ctx.moveTo(nodes[a].x,nodes[a].y);ctx.lineTo(nodes[b].x,nodes[b].y)}ctx.strokeStyle=`rgba(${K.hue},${K.edge*1.9})`;ctx.lineWidth=.8;ctx.stroke();
     for(let i=sparks.length-1;i>=0;i--){const s=sparks[i];s.p+=dt/s.d*K.spd;const A=nodes[s.a],B=nodes[s.b];
       if(s.p>=1){B.e=1;sparks.splice(i,1);if(rnd()<K.casc)spawn(s.b);continue}
       const x=A.x+(B.x-A.x)*s.p,y=A.y+(B.y-A.y)*s.p;
@@ -1182,7 +1277,7 @@ const orb=(()=>{
     for(const n of nodes){n.e*=Math.exp(-dt/520);const br=still?.6:.5+.5*Math.sin(t*1.4+n.ph),lit=still&&st!=='idle'?.6:n.e,
         jx=st==='listening'&&!still?Math.sin(t*9+n.ph)*energy*1.4:0,jy=st==='listening'&&!still?Math.cos(t*8+n.ph)*energy*1.4:0;
       if(lit>.12){ctx.fillStyle=`rgba(${K.hue},${.16*lit})`;ctx.beginPath();ctx.arc(n.x+jx,n.y+jy,(n.r+lit*1.6)*3,0,6.2832);ctx.fill()}
-      ctx.fillStyle=`rgba(${lit>.5?C.b:K.hue},${Math.min(1,.38+.24*br+.5*lit)})`;ctx.beginPath();ctx.arc(n.x+jx,n.y+jy,n.r+lit*1.5,0,6.2832);ctx.fill()}
+      ctx.fillStyle=`rgba(${lit>.5?C.b:K.hue},${Math.min(1,.62+.3*br+.5*lit)})`;ctx.beginPath();ctx.arc(n.x+jx,n.y+jy,n.r+lit*1.5,0,6.2832);ctx.fill()}
   }
   function loop(now){raf=0;if(state==='idle'){skip=!skip;if(skip){raf=requestAnimationFrame(loop);return}}draw(now);raf=requestAnimationFrame(loop)}
   function sync(){const want=!reduce&&document.visibilityState==='visible'&&S.view==='today'&&vis;
@@ -1222,11 +1317,18 @@ document.addEventListener('click',async e=>{
   if(a==='upClear'){const hb={...(S.habits.get(today())||{}),date:today(),up:false};delete hb.upAt;S.habits.set(today(),hb);await db?.doc('habits/'+today()).set(hb).catch(()=>{});$('sheet').hidden=true;V.greeting=true;renderToday();return}
   if(a==='habit'){const hb={...(S.habits.get(today())||{}),date:today()},h=b.dataset.h;hb[h]=!hb[h];S.habits.set(today(),hb);renderToday();await db?.doc('habits/'+today()).set(hb).catch(()=>{});if(hb[h]){logEv('workout','');say(`Logged, ${sir()}. Good work.`,true)}return}
   if(a==='plan')return makePlan('He asked to replan from the current time. Keep earlier picks where they still fit.',true);
-  if(a==='done'){const t=S.tasks.get(id);if(!t)return;const wasPick=(S.plan?.picks||[]).some(k=>k.id===id)&&S.view==='today',nx=openPicks(id)[0];
+  if(a==='row'){S.rowSel=S.rowEx===id?'':id;renderToday();return}
+  if(a==='undone'){S.rowSel=null;return undoTask(id)}
+  if(a==='howSheet')return howSheet();
+  if(a==='goCal')return show('cal');
+  if(a==='goCentre')return show('centre');
+  if(a==='goMem')return show('mem');
+  if(a==='calDay'){S.calDay=b.dataset.d;renderCal();return}
+  if(a==='done'){S.rowSel=null;const t=S.tasks.get(id);if(!t)return;const wasPick=(S.plan?.picks||[]).some(k=>k.id===id)&&S.view==='today',nx=openPicks(id)[0];
     await finishTask(id,'tapped Done');
     if(wasPick)say(nx?`Done, ${sir()}. Next: ${T(nx.t)}.`:`Done, ${sir()}. That clears today’s list.`,true);else toast('Done: '+t.t);return}
   if(a==='set'){await up(id,{s:b.dataset.s});return}
-  if(a==='mark'){const t=S.tasks.get(id),mk=b.dataset.m,marks={...(S.plan?.marks||{}),[id]:mk},nx=openPicks(id)[0];
+  if(a==='mark'){S.rowSel=null;const t=S.tasks.get(id),mk=b.dataset.m,marks={...(S.plan?.marks||{}),[id]:mk},nx=openPicks(id)[0];
     if(S.plan)S.plan={...S.plan,marks};await db.doc('plans/'+today()).update({marks}).catch(()=>{});if(t){await up(id,{defer:(t.defer||0)+1});logEv(mk==='stuck'?'stuck':'skip',T(t))}
     if(mk==='stuck'){V.ctx={stuck:id};say(`What’s in the way, ${sir()}? Tell me and I’ll sort it out.`,true);if(!canHear())$('dump').focus()}
     else say(nx?`No problem. Next: ${T(nx.t)}.`:`No problem, ${sir()}. Nothing else is queued for today.`,true);return}
