@@ -153,3 +153,36 @@ API keys or subscriptions. Build it as **one private claude.ai Artifact page** t
 - Removed a real first name that had been used as an example inside the intake prompt.
 - Open: he has not run Centre > Link it; whether phone pushes arrive is still unconfirmed; on the phone, voice means
   talking to Claude in the chat (this session files what he says there into `days` and `mem`).
+
+## 2026-11-16: his written spec (app v12)
+He sent a six-part update: hands-free voice, a daily check-in, instant capture, a calendar, one-off versus recurring,
+and a list of things for the day. What changed:
+- **One-off rule.** Yesterday's same-weekday reminder (chip, greeting question, the busy part of "Last <weekday>") is
+  removed. Nothing repeats unless he says so. Prompts and the overnight agent carry the same rule.
+- **Calendar inside the app.** `events/{id}`: `{t, date, s, e, approx, tent, where, n, rep, skip, task}`. Timed events are
+  blocked time (`busyOn`). Ops: `event`, `event_change`, `event_cancel`, `show_calendar` (`busy`/`free` still work).
+  Clash check against teaching hours and other events (`clashes`). "Calendar · next 3 weeks" section on Today.
+  Google Calendar is NOT connected on his account yet (only Drive and Sheets). When it is: read its tool schemas in a
+  session, declare it under the `mcp` capability, mirror `events` both ways. Do not guess its argument names.
+- **Daily check-in.** "What's on the docket?" (also a chip) makes the assistant ask one question about time, energy,
+  place, fixed commitments and what has to get done (op `checkin`, `V.ctx.checkin`, valid 20 minutes). His answer is
+  stored as `days/{date}.cx` (op `constraints`), named items get `today` + `todayN` (ops `today`, `add` with
+  `today:true`), then the day is planned (up to 6 picks, his order) and spoken (`plan.say`). `facts()` computes done /
+  slipping / on track / may-be-forgetting; plans carry `how` and `forgot`, shown under the picks.
+- **Capture.** "I need to get X done" is added at once, with at most one question (when, or how long).
+- **Projects.** `projects/{id}`: `{name, status, next, n}`; op `project`; listed at the top of Everything.
+- **Voice.** No sending on a pause. His turn ends on "you can speak now" (regex `STOP`), a tap, or Space. Hearing: the
+  platform's dictation where offered, else the browser's speech recognition (auto-restart when it drops, 7 s start
+  timeout, falls back to typing and remembers a refusal for the day). Speaking: the platform voice, else the device
+  voice, unlocked by a silent word on the first real tap (the old unlock ran on `pointerdown`, which is not a user
+  activation on touch screens, so phones never spoke). Typing path: text that ends with the stop phrase sends itself,
+  which makes the phone keyboard's dictation usable without the Send button. Settings has "Check voice".
+  Platform dictation can only start from a click or key press, so after a reply he taps or presses Space to answer;
+  with the browser recogniser the mic reopens by itself.
+- Known limit, unchanged: the Claude mobile apps give a page neither dictation nor the Claude voice, and no microphone.
+  Whether the device voice now speaks on his iPhone is unverified until he taps "Check voice".
+- Overnight agent prompt: one-off rule, events as blocked time, carry counter for unfinished picks, `how`/`forgot`,
+  projects, and the plan is a draft that his check-in replaces.
+- Checked: harness scenarios 1-11 (mocked capabilities, including a fake speech recogniser that drops mid-sentence);
+  twelve real-style messages and one day plan run through the new prompts on a Sonnet-class model with a copy of the
+  real records. Not checked on his phone.
