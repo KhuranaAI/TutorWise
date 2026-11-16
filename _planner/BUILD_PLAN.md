@@ -257,3 +257,23 @@ after every answer. He wants "the native talking feature" and a week list that i
   the conversation mode and the computer voice are gone; the pause setting stays.
 - The stop phrases accept curly apostrophes. Harness: `run3.js` (live-guess-only speech, re-sent guesses, Space to
   talk, Claude voice). Not yet heard on his computer.
+
+## 2026-11-16, evening: productivity score (app v19, v20)
+- He asked for a daily productivity score from what he planned versus what he did, where unplanned work he says was
+  just as important still counts.
+- `days/{date}.pl` records what was planned: the ids on today's docket with their minutes (`trackPlan()`, run when the
+  plan or the day record changes). Items the app moves off today by itself, or that he takes off the week, leave `pl`;
+  items he pushes ("Not today") stay and are marked `pushed`. Items already done when they first appear are extras.
+- `days/{date}.ex` holds his say on extras: `{taskId: {imp:true}}` for done tasks that mattered, and
+  `{c...: {t, min, manual:true}}` for work that is on no list (op `credit`). Op `counts` flags a done task.
+- `scoreOf(date)`: earned = minutes of planned items done + unplanned items done today at half their minutes (full when
+  `imp`) + manual credits; score = earned / planned minutes (120 if nothing was planned), capped at 100. It is stored in
+  `days/{date}.score` (debounced `scoreSync()` after each render; written only when it changes). Before teaching ends
+  the card says "So far" instead of a verdict. The sheet lists planned items (done, pushed, not yet), extras with a
+  "counts fully / half" toggle, the last 7 scores and their average, and "Add something that counted".
+- The intake prompt carries a score line and rules for `counts` and `credit`; the overnight agent finalises yesterday's
+  score with the same formula (`final:true`) and mentions it in the brief and the push.
+- Daily commitments: a recurring task with `daily:true` and `est` goes onto every day's docket (`dailies()`), counts as
+  planned work, and its minutes come off each day's budget for the week list. His study block (chemistry, physics,
+  grade 12 functions, about 90 minutes a day) was converted from an all-day repeating event into `tasks/d_study`.
+- Seeded today's `pl` from the current docket (with the done flags) so today's score is right from the start.
