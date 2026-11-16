@@ -2,6 +2,11 @@
   "modules": [
     { "id": "m1-question-job", "file": "module-01-question-job.json" },
     { "id": "m2-find-the-proof", "file": "module-02-find-the-proof.json" },
-    { "id": "m3-own-words", "file": "module-03-own-words-gist-main-idea.json" }
+    { "id": "m3-own-words", "file": "module-03-own-words-gist-main-idea.json" },
+    { "id": "m4-fact-inference-guess", "file": "module-04-fact-inference-guess.json" },
+    { "id": "m5-three-sentence-answer", "file": "module-05-three-sentence-answer.json" },
+    { "id": "m6-best-answer", "file": "module-06-best-answer.json" },
+    { "id": "m7-opinion-reasons", "file": "module-07-opinion-reasons.json" },
+    { "id": "m8-sentences-stand-alone", "file": "module-08-sentences-stand-alone.json" }
   ]
 }

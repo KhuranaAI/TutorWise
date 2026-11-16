@@ -1,0 +1,1057 @@
+{
+  "schemaVersion": 1,
+  "id": "m5-three-sentence-answer",
+  "number": 5,
+  "title": "The three-sentence answer",
+  "goal": "Answer a question about a news report in three sentences: answer it, give the evidence, explain it.",
+  "card": {
+    "title": "A – E – E: ANSWER · EVIDENCE · EXPLAIN",
+    "lines": [
+      "A: ANSWER the question in a full sentence. Start from the question's words.",
+      "E: EVIDENCE. Write 'The report says…' and give the exact detail. Copying the words is allowed.",
+      "E: EXPLAIN. Write 'This shows…' and say why that detail answers the question.",
+      "Two parts in the question? Answer both parts in your A sentence.",
+      "Check: did I answer every part? Is it under 100 words?"
+    ]
+  },
+  "traps": {
+    "T": {
+      "label": "true, but not what they asked",
+      "feedback": "It is in the report, but it answers a different question."
+    },
+    "N": {
+      "label": "not from the report",
+      "feedback": "That is not in the report. Evidence has to come from the report."
+    },
+    "R": {
+      "label": "repeats the answer",
+      "feedback": "That says the answer again. It does not say what the evidence proves."
+    },
+    "X": {
+      "label": "does not connect",
+      "feedback": "That does not connect the evidence to the answer."
+    },
+    "F": {
+      "label": "not a full answer",
+      "feedback": "That is only a piece. It does not answer the question in a full sentence."
+    },
+    "P": {
+      "label": "missed a part",
+      "feedback": "Look for AND joining two questions. Count the parts again."
+    }
+  },
+  "rubrics": {
+    "aee3": {
+      "max": 3,
+      "levels": [
+        {
+          "score": 3,
+          "description": "Answer, evidence and explanation are all there, and every part of the question is answered."
+        },
+        {
+          "score": 2,
+          "description": "Two of the three (for example, a correct answer with evidence but no explanation), or all three with one part of the question missing."
+        },
+        {
+          "score": 1,
+          "description": "One of the three."
+        },
+        {
+          "score": 0,
+          "description": "Nothing usable: off topic, or only copied text with no answer."
+        }
+      ]
+    },
+    "explain2": {
+      "max": 2,
+      "levels": [
+        {
+          "score": 2,
+          "description": "Says what the evidence proves and links it to the answer."
+        },
+        {
+          "score": 1,
+          "description": "Repeats the answer or the evidence in other words."
+        },
+        {
+          "score": 0,
+          "description": "Off topic, or nothing usable."
+        }
+      ]
+    }
+  },
+  "passages": {
+    "bike": {
+      "title": "Teens Build Free Bike Repair Stand Outside Library",
+      "format": "news report",
+      "level": "Developing",
+      "sentences": [
+        "WESTVIEW — A group of Grade 10 students has installed a free bike repair stand outside the Westview Public Library, and it has been busy since the day it opened.",
+        "The stand, bolted to the sidewalk near the bike racks, holds a pump, wrenches, screwdrivers and tire levers on steel cables.",
+        "The students built it as a project for their technology class after noticing that many classmates rode bikes with flat tires or loose brakes because the nearest repair shop is a 40-minute bus ride away.",
+        "\"We fixed about fifteen bikes in the first week, and then people started fixing their own,\" said Aisha Rahman, 15, one of the builders.",
+        "The library paid for the materials, about $600, from its community fund.",
+        "Librarian Tom Reyes said the stand has brought new visitors inside: \"People come to fix a tire and leave with a library card.\"",
+        "The students plan to add a laminated guide showing how to patch a tube.",
+        "They hope another school will copy the idea next year."
+      ],
+      "chunks": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          7,
+          8
+        ]
+      ]
+    },
+    "quiet": {
+      "title": "School Opens Quiet Room for Students Who Need a Break",
+      "format": "news report",
+      "level": "Developing",
+      "sentences": [
+        "MAPLEWOOD — Maplewood Secondary opened a \"quiet room\" on Monday, a former storage room on the second floor with dim lights, two beanbag chairs and no screens.",
+        "Students can use the room for up to fifteen minutes during class time if a teacher gives them a pass.",
+        "Guidance counsellor Priya Nair said the room was created after a survey last spring in which 40 percent of students said they sometimes felt too overwhelmed to stay in class.",
+        "\"Before, the only options were the hallway or the office, and neither one is calming,\" Nair said.",
+        "In the first week, the room was used 62 times.",
+        "Grade 11 student Devon Clarke said he used it before a presentation.",
+        "\"Ten minutes with no noise and I could breathe again,\" he said.",
+        "Some teachers worried students would use the room to skip class, so passes are recorded and the room is checked every fifteen minutes.",
+        "Nair said the school will look at the numbers in December to decide whether to keep the room."
+      ],
+      "chunks": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          5,
+          6,
+          7
+        ],
+        [
+          8,
+          9
+        ]
+      ]
+    },
+    "desk": {
+      "title": "Students Run a Free Tech Help Desk for Seniors",
+      "format": "news report",
+      "level": "Developing",
+      "sentences": [
+        "EASTGATE — Every Wednesday after school, six students from Eastgate Collegiate set up a table in the Eastgate Seniors' Centre and wait for questions.",
+        "The students help older adults with their phones and tablets, from sending photos to booking a doctor's appointment online.",
+        "Teacher Mark Bell started the help desk in January after his own grandmother missed an appointment because she could not open an email.",
+        "\"Many seniors are embarrassed to ask their families again and again,\" Bell said.",
+        "About twenty seniors now come each week, and some bring a written list of questions.",
+        "Volunteer Jaya Menon, 16, said the hardest part is slowing down.",
+        "\"I had to learn to let them tap the screen themselves, even when it takes longer,\" she said.",
+        "The centre's director, Helen Park, said several seniors have started video calling their grandchildren for the first time.",
+        "The students earn volunteer hours for their work, and the program will continue until June."
+      ],
+      "chunks": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          5,
+          6,
+          7
+        ],
+        [
+          8,
+          9
+        ]
+      ],
+      "tutorNote": "Eastgate and the people in this report are invented."
+    },
+    "arena": {
+      "title": "Arena Offers Free Friday Skating for Teens",
+      "format": "news report",
+      "level": "Developing",
+      "sentences": [
+        "NORTHBROOK — The Northbrook Arena is now free for teenagers on Friday nights from 7 to 9 p.m.",
+        "The town council started the program in November after police reported groups of teens gathering in the plaza parking lot with nothing to do.",
+        "Skate rentals are free too, thanks to forty pairs donated by a local sports store.",
+        "About ninety teens came on the first Friday, more than the arena expected.",
+        "\"We ran out of size nine skates in ten minutes,\" said arena manager Paul Demers.",
+        "Some neighbours on Birch Street, beside the front entrance, complained about noise when the crowd left at nine o'clock.",
+        "In response, the arena now closes its front doors at the end of the night and sends everyone out the back exit, which opens onto the main road.",
+        "Grade 10 student Maria Lopez said she comes every week.",
+        "\"It's the one night all my friends are in the same place,\" she said.",
+        "Council will vote in March on whether to keep the program next winter."
+      ],
+      "chunks": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4,
+          5
+        ],
+        [
+          6,
+          7
+        ],
+        [
+          8,
+          9
+        ],
+        [
+          10
+        ]
+      ],
+      "tutorNote": "Northbrook and the people in this report are invented."
+    }
+  },
+  "sections": [
+    {
+      "id": "learn",
+      "title": "Three sentences",
+      "mode": "tutor",
+      "minutes": 10,
+      "tutorNote": "I DO. Read the three sentences on the card. Look at the news report together: the headline, the place in capitals, the first lines (who, what, where, when), the quotation marks. Reveal the worked example one step at a time, thinking aloud. Then sort the six sentences: which is the answer, which is evidence, which explains?",
+      "steps": [
+        {
+          "id": "m5-learn-1",
+          "type": "explain",
+          "text": [
+            "Some questions ask you to write an answer about a news report.",
+            "Use three sentences, every time.",
+            "A: ANSWER the question in a full sentence. Start from the question's words.",
+            "E: EVIDENCE. Write 'The report says…' and give the exact detail. Copying the words is allowed.",
+            "E: EXPLAIN. Write 'This shows…' and say why that detail answers the question.",
+            "If the question has two parts, answer both parts in your A sentence."
+          ],
+          "showCard": true
+        },
+        {
+          "id": "m5-learn-2",
+          "type": "explain",
+          "text": [
+            "This is a news report.",
+            "It has a headline. The first word, in capitals, is the place.",
+            "The first sentences tell you who, what, where and when.",
+            "Quotation marks often show the exact words a person said.",
+            "The last part often tells what will happen next."
+          ],
+          "showCard": false,
+          "passage": "bike"
+        },
+        {
+          "id": "m5-learn-3",
+          "type": "worked",
+          "title": "Watch one",
+          "reveals": [
+            {
+              "label": "The job",
+              "text": "A reason, about why the students built the stand. One part. And I have to use the report."
+            },
+            {
+              "label": "Find the proof",
+              "text": "Search word: BUILT. Sentence 3 says they built it 'after noticing that many classmates rode bikes with flat tires or loose brakes because the nearest repair shop is a 40-minute bus ride away.'",
+              "highlight": [
+                3
+              ]
+            },
+            {
+              "label": "A: Answer",
+              "text": "The students built the stand because their classmates' bikes needed fixing and the repair shop was far away."
+            },
+            {
+              "label": "E: Evidence",
+              "text": "The report says many classmates rode with flat tires or loose brakes because the nearest repair shop is a 40-minute bus ride away."
+            },
+            {
+              "label": "E: Explain",
+              "text": "This shows that students had no easy way to fix their bikes, so a free stand right outside the library solved that problem."
+            },
+            {
+              "label": "Check",
+              "text": "One part, and I answered it. About 65 words. Under 100."
+            }
+          ],
+          "question": "Explain why the students decided to build the repair stand. Use information from the news report to support your answer.",
+          "passage": "bike",
+          "numbers": true
+        },
+        {
+          "id": "m5-learn-4",
+          "type": "sort",
+          "prompt": "Which sentence is which? Sort each one.",
+          "question": "Two questions: \"Why did the students build the stand?\" and \"Was the stand popular?\"",
+          "categories": [
+            {
+              "id": "a",
+              "label": "ANSWER"
+            },
+            {
+              "id": "ev",
+              "label": "EVIDENCE"
+            },
+            {
+              "id": "ex",
+              "label": "EXPLAIN"
+            }
+          ],
+          "cards": [
+            {
+              "text": "The students built the stand because their classmates' bikes needed fixing.",
+              "category": "a",
+              "why": "It answers the first question in a full sentence."
+            },
+            {
+              "text": "The report says the nearest repair shop is a 40-minute bus ride away.",
+              "category": "ev",
+              "why": "It gives an exact detail from the report."
+            },
+            {
+              "text": "This shows that students had no easy way to fix their bikes.",
+              "category": "ex",
+              "why": "It says what the detail proves."
+            },
+            {
+              "text": "Yes, the stand was popular from the start.",
+              "category": "a",
+              "why": "It answers the second question in a full sentence."
+            },
+            {
+              "text": "The report says the students fixed about fifteen bikes in the first week.",
+              "category": "ev",
+              "why": "It gives an exact detail from the report."
+            },
+            {
+              "text": "This shows that many people needed the stand and used it right away.",
+              "category": "ex",
+              "why": "It says what the detail proves."
+            }
+          ],
+          "passage": "bike",
+          "hint2": "Look at the first words. 'The report says' starts evidence. 'This shows' starts an explanation.",
+          "hint3": "A sentence with neither starter is the answer."
+        }
+      ]
+    },
+    {
+      "id": "together",
+      "title": "Build one together",
+      "mode": "tutor",
+      "minutes": 12,
+      "tutorNote": "WE DO. For the first question the student finds the proof, then chooses the answer, the evidence and the explanation one at a time; read each wrong choice aloud and say why it fails. The second question has two parts, and its second part needs an inference: the A sentence answers both parts, and the evidence comes from what Aisha Rahman said. The student says each sentence aloud before typing it. (The model answers here follow the three boxes exactly, so some are worded differently from the paper guide.)",
+      "steps": [
+        {
+          "id": "m5-t1",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "How has the repair stand helped the library? Use information from the news report to support your answer.",
+          "passage": "bike",
+          "correct": [
+            6
+          ],
+          "hint2": "Search for LIBRARY or LIBRARIAN. Which sentence tells what the stand did for the library?",
+          "hint3": "It is sentence 5 or sentence 6.",
+          "near": [
+            {
+              "sentences": [
+                5
+              ],
+              "why": "That sentence says the library PAID for the stand. The question asks how the stand HELPED the library."
+            }
+          ],
+          "then": {
+            "id": "m5-t1a",
+            "type": "mcq",
+            "stem": "Which is the best ANSWER sentence?",
+            "options": [
+              {
+                "id": "a",
+                "text": "The repair stand has brought new people into the library.",
+                "why": "Right. It answers the question in a full sentence, starting from the question's words.",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "The library paid about $600 for the materials.",
+                "why": "That is in the report, but it tells what the library did for the stand, not how the stand helped the library.",
+                "trap": "T"
+              },
+              {
+                "id": "c",
+                "text": "People come to fix a tire.",
+                "why": "That is only a piece of the evidence. It does not say how the library was helped.",
+                "trap": "F"
+              }
+            ],
+            "passage": "bike"
+          }
+        },
+        {
+          "id": "m5-t2",
+          "type": "mcq",
+          "stem": "Which EVIDENCE proves that answer?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The report says the stand holds a pump, wrenches and screwdrivers.",
+              "why": "True, but it does not prove that new people came into the library.",
+              "trap": "T"
+            },
+            {
+              "id": "b",
+              "text": "The report says Librarian Tom Reyes said, \"People come to fix a tire and leave with a library card.\"",
+              "why": "Right. It is an exact detail, and it proves the answer.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "I think most people like libraries.",
+              "why": "That is your own idea. Evidence has to come from the report.",
+              "trap": "N"
+            }
+          ],
+          "passage": "bike",
+          "original": "The repair stand has brought new people into the library.",
+          "originalLabel": "The answer so far"
+        },
+        {
+          "id": "m5-t3",
+          "type": "mcq",
+          "stem": "Which EXPLAIN sentence finishes it?",
+          "options": [
+            {
+              "id": "a",
+              "text": "This shows that the repair stand has brought new people into the library.",
+              "why": "That says the answer again. What does the evidence prove?",
+              "trap": "R"
+            },
+            {
+              "id": "b",
+              "text": "This shows that the stand turns bike riders into new library members.",
+              "why": "Right. It says what the detail proves, and it links back to the answer.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "This shows that bikes need a lot of repairs.",
+              "why": "That is not what the librarian's words show. Link the evidence to the library.",
+              "trap": "X"
+            }
+          ],
+          "passage": "bike",
+          "original": "The repair stand has brought new people into the library. The report says Librarian Tom Reyes said, \"People come to fix a tire and leave with a library card.\"",
+          "originalLabel": "The answer so far"
+        },
+        {
+          "id": "m5-t4",
+          "type": "explain",
+          "text": [
+            "Now put the three together.",
+            "A: The repair stand has brought new people into the library.",
+            "E: The report says Librarian Tom Reyes said, \"People come to fix a tire and leave with a library card.\"",
+            "E: This shows that the stand turns bike riders into new library members.",
+            "Check: one part, and it is answered. About 40 words. Under 100."
+          ],
+          "showCard": false,
+          "passage": "bike"
+        },
+        {
+          "id": "m5-t5",
+          "type": "mcq",
+          "stem": "How many parts does this question have? \"What do the students plan to do next, and why might that help?\"",
+          "options": [
+            {
+              "id": "a",
+              "text": "1 part",
+              "why": "Look for AND joining two questions. Count again.",
+              "trap": "P"
+            },
+            {
+              "id": "b",
+              "text": "2 parts",
+              "why": "Right. Part one: what they plan to do. Part two: why that might help.",
+              "correct": true
+            }
+          ],
+          "passage": "bike"
+        },
+        {
+          "id": "m5-t6",
+          "type": "find",
+          "prompt": "Tap the sentence that proves part one.",
+          "question": "What do the students plan to do next?",
+          "passage": "bike",
+          "correct": [
+            7
+          ],
+          "hint2": "Search for PLAN.",
+          "hint3": "It is sentence 7 or sentence 8.",
+          "near": [
+            {
+              "sentences": [
+                8
+              ],
+              "why": "That sentence tells what they HOPE another school will do. Which sentence tells what the students PLAN to do?"
+            }
+          ],
+          "then": {
+            "id": "m5-t6a",
+            "type": "text",
+            "prompt": "Write all three sentences. Say each one out loud first.",
+            "stem": "What do the students plan to do next, and why might that help? Use information from the news report to support your answer.",
+            "parts": [
+              {
+                "label": "A: Answer",
+                "help": "Answer both parts: what they plan, and why it might help.",
+                "rows": 2
+              },
+              {
+                "label": "E: Evidence",
+                "starter": "The report says",
+                "help": "Find a detail that shows why a guide could help. Look at what Aisha Rahman said.",
+                "rows": 3
+              },
+              {
+                "label": "E: Explain",
+                "starter": "This shows",
+                "rows": 3
+              }
+            ],
+            "minWords": 40,
+            "maxWords": 100,
+            "checklist": [
+              "I answered every part of the question.",
+              "I used a detail from the report.",
+              "I explained what the detail shows.",
+              "It is under 100 words."
+            ],
+            "model": [
+              "The students plan to add a guide that shows how to patch a tube, and it could help people fix their own bikes.",
+              "The report says that after the first week, people started fixing their own bikes.",
+              "This shows that people want to do their own repairs. A guide would show them how, even when the students are not there."
+            ],
+            "rubric": "aee3",
+            "passage": "bike"
+          }
+        }
+      ]
+    },
+    {
+      "id": "link",
+      "title": "The sentence people skip",
+      "mode": "tutor",
+      "minutes": 8,
+      "tutorNote": "WE DO. The Explain sentence is the one that gets skipped, and it is what separates a middle score from a top one. Each screen gives the answer and the evidence; the student chooses, then writes, only the explanation. Ask: what does that detail PROVE? If the student repeats the answer, say 'That is your answer again.' The typed ones go to the review queue; score 0 to 2.",
+      "steps": [
+        {
+          "id": "m5-x0",
+          "type": "explain",
+          "text": [
+            "The third sentence is the one people skip.",
+            "It does not say your answer again.",
+            "It says what the evidence PROVES.",
+            "Start with 'This shows…'."
+          ],
+          "showCard": false
+        },
+        {
+          "id": "m5-x1",
+          "type": "mcq",
+          "stem": "The question: \"How did the library help the students?\" Which EXPLAIN sentence is best?",
+          "options": [
+            {
+              "id": "a",
+              "text": "This shows that the library paid for the materials.",
+              "why": "That says the evidence again. What does it prove?",
+              "trap": "R"
+            },
+            {
+              "id": "b",
+              "text": "This shows the students could build the stand without spending their own money.",
+              "why": "Right. It says what the detail proves.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "This shows that $600 is not much money.",
+              "why": "The report does not say that, and it does not explain how the library helped.",
+              "trap": "X"
+            }
+          ],
+          "passage": "bike",
+          "original": "The library helped the students by paying for the materials. The report says the library paid about $600 from its community fund.",
+          "originalLabel": "The answer so far"
+        },
+        {
+          "id": "m5-x2",
+          "type": "mcq",
+          "stem": "The question: \"Did people learn to fix their own bikes?\" Which EXPLAIN sentence is best?",
+          "options": [
+            {
+              "id": "a",
+              "text": "This shows that the students did not have to do every repair, because people could use the tools themselves.",
+              "why": "Right. It says what her words prove.",
+              "correct": true
+            },
+            {
+              "id": "b",
+              "text": "This shows that people learned to fix their own bikes.",
+              "why": "That says the answer again. What does the evidence prove?",
+              "trap": "R"
+            },
+            {
+              "id": "c",
+              "text": "This shows that Aisha Rahman is 15 years old.",
+              "why": "That is in the report, but it does not explain the evidence.",
+              "trap": "X"
+            }
+          ],
+          "passage": "bike",
+          "original": "Yes, people learned to fix their own bikes at the stand. The report says Aisha Rahman said, \"We fixed about fifteen bikes in the first week, and then people started fixing their own.\"",
+          "originalLabel": "The answer so far"
+        },
+        {
+          "id": "m5-x3",
+          "type": "text",
+          "prompt": "Say it out loud first, then type it.",
+          "stem": "The question: \"Why is the stand useful even when the students are not there?\" Write only the EXPLAIN sentence.",
+          "original": "The stand is useful even when the students are not there because the tools stay at the stand. The report says it holds a pump, wrenches, screwdrivers and tire levers on steel cables.",
+          "originalLabel": "The answer so far",
+          "frame": "This shows",
+          "model": [
+            "This shows that the tools are always there, so anyone can fix a bike at any time."
+          ],
+          "rubric": "explain2",
+          "passage": "bike"
+        },
+        {
+          "id": "m5-x4",
+          "type": "text",
+          "prompt": "Say it out loud first, then type it.",
+          "stem": "The question: \"Why did students need a repair stand near the library?\" Write only the EXPLAIN sentence.",
+          "original": "Students needed a repair stand close by because the repair shop was too far away. The report says the nearest repair shop is a 40-minute bus ride away.",
+          "originalLabel": "The answer so far",
+          "frame": "This shows",
+          "model": [
+            "This shows that getting a bike fixed took too long, so many students just kept riding with flat tires."
+          ],
+          "rubric": "explain2",
+          "passage": "bike"
+        }
+      ]
+    },
+    {
+      "id": "own",
+      "title": "Write one on your own",
+      "mode": "solo",
+      "minutes": 12,
+      "tutorNote": "YOU DO on a new report. The question has two parts. The student taps the proof first, then writes in three boxes with the sentence starters. It goes to the review queue; score 0 to 3, and note parts answered, evidence specific, explanation linked and the word count. As a rough guide only, in the test's own codes: all three with both parts is about a 30; a missing explanation or a missing part about a 20; one vague point about a 10.",
+      "steps": [
+        {
+          "id": "m5-o0",
+          "type": "explain",
+          "text": [
+            "Read the news report.",
+            "Then answer one question about it in three sentences.",
+            "This question has two parts. Answer both in your A sentence."
+          ],
+          "showCard": false,
+          "passage": "quiet"
+        },
+        {
+          "id": "m5-o1",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "Why were some teachers concerned about the quiet room, and what did the school do about it?",
+          "passage": "quiet",
+          "correct": [
+            8
+          ],
+          "hint2": "Search for TEACHERS. One sentence has the worry and what the school did.",
+          "hint3": "It is sentence 8 or sentence 9.",
+          "near": [
+            {
+              "sentences": [
+                9
+              ],
+              "why": "That sentence tells what will happen in December. Which sentence tells what worried the teachers?"
+            },
+            {
+              "sentences": [
+                2
+              ],
+              "why": "That sentence gives the rule for students. Which sentence tells what worried the teachers?"
+            }
+          ],
+          "then": {
+            "id": "m5-o1a",
+            "type": "text",
+            "stem": "Explain why some teachers were concerned about the quiet room and what the school did about their concern. Use information from the news report to support your answer.",
+            "parts": [
+              {
+                "label": "A: Answer",
+                "help": "Answer both parts: what worried the teachers, and what the school did.",
+                "rows": 2
+              },
+              {
+                "label": "E: Evidence",
+                "starter": "The report says",
+                "rows": 3
+              },
+              {
+                "label": "E: Explain",
+                "starter": "This shows",
+                "rows": 3
+              }
+            ],
+            "minWords": 40,
+            "maxWords": 100,
+            "checklist": [
+              "I answered every part of the question.",
+              "I used a detail from the report.",
+              "I explained what the detail shows.",
+              "It is under 100 words."
+            ],
+            "model": [
+              "Some teachers were worried that students would use the quiet room to skip class, so the school made rules to check on it.",
+              "The report says passes are recorded and the room is checked every fifteen minutes.",
+              "This shows the school can see who uses the room and for how long, so students cannot use it to skip class."
+            ],
+            "rubric": "aee3",
+            "passage": "quiet"
+          }
+        }
+      ]
+    },
+    {
+      "id": "own-2",
+      "title": "A new question",
+      "mode": "solo",
+      "minutes": 10,
+      "tutorNote": "YOU DO, on another day if possible. One part this time. The boxes are still labelled A, E, E, but the sentence starters are gone; the card is still there. Score 0 to 3.",
+      "steps": [
+        {
+          "id": "m5-p1",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "Why did the school create the quiet room?",
+          "passage": "quiet",
+          "correct": [
+            3,
+            4
+          ],
+          "hint2": "Search for CREATED.",
+          "hint3": "It is sentence 3 or sentence 5.",
+          "near": [
+            {
+              "sentences": [
+                1
+              ],
+              "why": "That sentence tells what the room is like. Which sentence tells WHY it was created?"
+            }
+          ],
+          "then": {
+            "id": "m5-p1a",
+            "type": "text",
+            "stem": "Why did the school create the quiet room? Use information from the news report to support your answer.",
+            "parts": [
+              {
+                "label": "A: Answer",
+                "help": "Start from the question's words.",
+                "rows": 2
+              },
+              {
+                "label": "E: Evidence",
+                "help": "A detail from the report.",
+                "rows": 3
+              },
+              {
+                "label": "E: Explain",
+                "help": "What does that detail show?",
+                "rows": 3
+              }
+            ],
+            "minWords": 40,
+            "maxWords": 100,
+            "checklist": [
+              "I answered every part of the question.",
+              "I used a detail from the report.",
+              "I explained what the detail shows.",
+              "It is under 100 words."
+            ],
+            "model": [
+              "The school created the quiet room because many students sometimes felt too overwhelmed to stay in class.",
+              "The report says that in a survey last spring, 40 percent of students said they felt that way.",
+              "This shows the school needed a calm place for students to go, because the hallway and the office were not calming."
+            ],
+            "rubric": "aee3",
+            "passage": "quiet"
+          }
+        }
+      ]
+    },
+    {
+      "id": "home",
+      "title": "Home practice",
+      "mode": "solo",
+      "minutes": 14,
+      "tutorNote": "Home set on a new report: two answers in three sentences each, with the boxes labelled but no starters, and one choose-the-evidence question between them. Assign after 'A new question'.",
+      "steps": [
+        {
+          "id": "m5-h0",
+          "type": "explain",
+          "text": [
+            "Read the news report.",
+            "Then answer two questions about it. Each answer has three sentences."
+          ],
+          "showCard": false,
+          "passage": "desk"
+        },
+        {
+          "id": "m5-h1",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "Why did Mark Bell start the help desk?",
+          "passage": "desk",
+          "correct": [
+            3,
+            4
+          ],
+          "hint2": "Search for STARTED.",
+          "hint3": "It is sentence 2 or sentence 3.",
+          "near": [
+            {
+              "sentences": [
+                1
+              ],
+              "why": "That sentence tells what the students do each week. Which sentence tells WHY the help desk was started?"
+            }
+          ],
+          "then": {
+            "id": "m5-h1a",
+            "type": "text",
+            "stem": "Why did Mark Bell start the help desk? Use information from the news report to support your answer.",
+            "parts": [
+              {
+                "label": "A: Answer",
+                "help": "Start from the question's words.",
+                "rows": 2
+              },
+              {
+                "label": "E: Evidence",
+                "help": "A detail from the report.",
+                "rows": 3
+              },
+              {
+                "label": "E: Explain",
+                "help": "What does that detail show?",
+                "rows": 3
+              }
+            ],
+            "minWords": 40,
+            "maxWords": 100,
+            "checklist": [
+              "I answered every part of the question.",
+              "I used a detail from the report.",
+              "I explained what the detail shows.",
+              "It is under 100 words."
+            ],
+            "model": [
+              "Mark Bell started the help desk because some seniors need help with technology and do not want to keep asking their families.",
+              "The report says his own grandmother missed an appointment because she could not open an email.",
+              "This shows that trouble with technology can cause real problems, so he wanted seniors to have a place to get help."
+            ],
+            "rubric": "aee3",
+            "passage": "desk"
+          }
+        },
+        {
+          "id": "m5-h2",
+          "type": "mcq",
+          "stem": "Which EVIDENCE shows how the help desk has helped seniors?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The report says several seniors have started video calling their grandchildren for the first time.",
+              "why": "Right. It is an exact detail about what seniors can do now.",
+              "correct": true
+            },
+            {
+              "id": "b",
+              "text": "The report says the students earn volunteer hours for their work.",
+              "why": "That tells how the STUDENTS are helped, not the seniors.",
+              "trap": "T"
+            },
+            {
+              "id": "c",
+              "text": "The report says the help desk is every Wednesday after school.",
+              "why": "True, but it tells when, not how seniors were helped.",
+              "trap": "T"
+            }
+          ],
+          "passage": "desk",
+          "hint2": "The question is about SENIORS. Which detail shows a change for them?",
+          "hint3": "It is (a) or (b). Who is each one about?"
+        },
+        {
+          "id": "m5-h3",
+          "type": "text",
+          "stem": "How has the help desk helped seniors? Use information from the news report to support your answer.",
+          "parts": [
+            {
+              "label": "A: Answer",
+              "help": "Start from the question's words.",
+              "rows": 2
+            },
+            {
+              "label": "E: Evidence",
+              "help": "A detail from the report.",
+              "rows": 3
+            },
+            {
+              "label": "E: Explain",
+              "help": "What does that detail show?",
+              "rows": 3
+            }
+          ],
+          "minWords": 40,
+          "maxWords": 100,
+          "checklist": [
+            "I answered every part of the question.",
+            "I used a detail from the report.",
+            "I explained what the detail shows.",
+            "It is under 100 words."
+          ],
+          "model": [
+            "The help desk has helped seniors learn to use their phones and tablets.",
+            "The report says several seniors have started video calling their grandchildren for the first time.",
+            "This shows that seniors can now do things with their devices that they could not do before."
+          ],
+          "rubric": "aee3",
+          "passage": "desk"
+        }
+      ]
+    },
+    {
+      "id": "check",
+      "title": "Check",
+      "mode": "solo",
+      "minutes": 14,
+      "tutorNote": "Mastery check on a new report, with one box and no starters, as on the test. The question has two parts. Two choose-the-best questions follow. Guide threshold: three of the four independent answers on new reports (this one, the two quiet-room answers and the first home answer) score 2 or 3, with every part answered, in 40 to 100 words, with no prompting.",
+      "steps": [
+        {
+          "id": "m5-c0",
+          "type": "explain",
+          "text": [
+            "Read the news report.",
+            "Then answer the question in three sentences: answer, evidence, explain.",
+            "This time there is one box, like on the test.",
+            "Check: every part answered? Under 100 words?"
+          ],
+          "showCard": false,
+          "passage": "arena"
+        },
+        {
+          "id": "m5-c1",
+          "type": "text",
+          "stem": "Explain what some neighbours complained about and what the arena did about it. Use information from the news report to support your answer.",
+          "minWords": 40,
+          "maxWords": 100,
+          "rows": 8,
+          "checklist": [
+            "I answered every part of the question.",
+            "I used a detail from the report.",
+            "I explained what the detail shows.",
+            "It is under 100 words."
+          ],
+          "model": [
+            "Some neighbours on Birch Street complained about noise when the crowd left at nine o'clock, so the arena changed the way people leave.",
+            "The report says the arena now closes its front doors at the end of the night and sends everyone out the back exit, which opens onto the main road.",
+            "This shows the crowd now leaves away from Birch Street, so there should be less noise for the neighbours."
+          ],
+          "rubric": "aee3",
+          "passage": "arena"
+        },
+        {
+          "id": "m5-c2",
+          "type": "mcq",
+          "stem": "Which EVIDENCE shows that the free skating is popular?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The report says council will vote in March.",
+              "why": "True, but it tells what happens next, not whether teens come.",
+              "trap": "T"
+            },
+            {
+              "id": "b",
+              "text": "The report says about ninety teens came on the first Friday, more than the arena expected.",
+              "why": "Right. It is an exact detail, and it shows the skating is popular.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "Skating is good exercise for teenagers.",
+              "why": "That is your own idea. Evidence has to come from the report.",
+              "trap": "N"
+            }
+          ],
+          "passage": "arena",
+          "hint2": "Which detail shows how many teens came?",
+          "hint3": "It is (a) or (b). Which one is about teens coming?"
+        },
+        {
+          "id": "m5-c3",
+          "type": "mcq",
+          "stem": "Which EXPLAIN sentence finishes it?",
+          "options": [
+            {
+              "id": "a",
+              "text": "This shows that the free skating is popular.",
+              "why": "That says the answer again. What does the evidence prove?",
+              "trap": "R"
+            },
+            {
+              "id": "b",
+              "text": "This shows that the arena is very large.",
+              "why": "The report does not say that, and it does not link to the answer.",
+              "trap": "X"
+            },
+            {
+              "id": "c",
+              "text": "This shows that many teens wanted somewhere to go on Friday nights.",
+              "why": "Right. It says what the number proves.",
+              "correct": true
+            }
+          ],
+          "passage": "arena",
+          "original": "The free skating is popular with teens. The report says about ninety teens came on the first Friday, more than the arena expected.",
+          "originalLabel": "The answer so far",
+          "hint2": "Which one says what the number PROVES?",
+          "hint3": "It is not (a). That one repeats the answer."
+        }
+      ]
+    }
+  ]
+}

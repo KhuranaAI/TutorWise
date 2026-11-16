@@ -1,0 +1,1147 @@
+{
+  "schemaVersion": 1,
+  "id": "m7-opinion-reasons",
+  "number": 7,
+  "title": "Your opinion, your reasons",
+  "goal": "Say what you think, give two different reasons, and prove each one with a real example.",
+  "card": {
+    "title": "FOUR BOXES",
+    "lines": [
+      "Box 1: OPINION + 2 REASONS. 'I think … because … and …'",
+      "Box 2: REASON 1 + a little more about it + a real EXAMPLE + why it matters. 'One reason is … For example, … This shows …'",
+      "Box 3: REASON 2, the same way. 'Another reason is …'",
+      "Box 4: 'In conclusion, …' Your opinion and both reasons again, short. Then one closing sentence. No new reasons.",
+      "A real example gives at least two of these: who exactly, what exactly, when, how much.",
+      "Reason menu: money · time · sleep and health · safety · learning · friends and family · stress and fun · fairness · the future."
+    ]
+  },
+  "traps": {
+    "same": {
+      "label": "the same reason again",
+      "feedback": "That is the same reason in different words."
+    },
+    "vague": {
+      "label": "still vague",
+      "feedback": "That is still vague. Who exactly? When? How much?"
+    },
+    "reason": {
+      "label": "a reason, not an example",
+      "feedback": "That is a new reason, not an example. A real example is a real case, with a who, a when or a how much."
+    }
+  },
+  "rubrics": {
+    "opinion2": {
+      "max": 2,
+      "levels": [
+        {
+          "score": 2,
+          "description": "A full sentence that names the topic and one clear side."
+        },
+        {
+          "score": 1,
+          "description": "A side is clear, but the topic is missing or it is not a full sentence."
+        },
+        {
+          "score": 0,
+          "description": "No side, both sides, or off topic."
+        }
+      ]
+    },
+    "reasons2": {
+      "max": 2,
+      "levels": [
+        {
+          "score": 2,
+          "description": "Two different reasons."
+        },
+        {
+          "score": 1,
+          "description": "One reason, or two that are the same idea in different words."
+        },
+        {
+          "score": 0,
+          "description": "No reason given."
+        }
+      ]
+    },
+    "specific2": {
+      "max": 2,
+      "levels": [
+        {
+          "score": 2,
+          "description": "A real example with at least two of: who exactly, what exactly, when, how much."
+        },
+        {
+          "score": 1,
+          "description": "Some detail added, but it is still general."
+        },
+        {
+          "score": 0,
+          "description": "Still vague, or a new reason instead of an example."
+        }
+      ]
+    },
+    "paragraph3": {
+      "max": 3,
+      "levels": [
+        {
+          "score": 3,
+          "description": "The reason, a specific example and why it matters are all there."
+        },
+        {
+          "score": 2,
+          "description": "Two of the three."
+        },
+        {
+          "score": 1,
+          "description": "One of the three."
+        },
+        {
+          "score": 0,
+          "description": "Nothing usable."
+        }
+      ]
+    },
+    "box1": {
+      "max": 2,
+      "levels": [
+        {
+          "score": 2,
+          "description": "A clear opinion and two different reasons."
+        },
+        {
+          "score": 1,
+          "description": "A clear opinion with one reason, or with two reasons that are the same idea."
+        },
+        {
+          "score": 0,
+          "description": "No clear opinion."
+        }
+      ]
+    },
+    "box4": {
+      "max": 2,
+      "levels": [
+        {
+          "score": 2,
+          "description": "Says the opinion and both reasons again, with no new reason."
+        },
+        {
+          "score": 1,
+          "description": "Says the opinion again but leaves out the reasons, or adds a new reason."
+        },
+        {
+          "score": 0,
+          "description": "Changes sides, or is off topic."
+        }
+      ]
+    },
+    "essayTopic": {
+      "label": "Topic development",
+      "max": 6,
+      "levels": [
+        {
+          "score": 6,
+          "name": "Code 60",
+          "description": "Clear, consistent opinion. Specific details, thoughtfully chosen. The ideas build on each other."
+        },
+        {
+          "score": 5,
+          "name": "Code 50",
+          "description": "Clear, consistent opinion. Enough specific details. Logical order."
+        },
+        {
+          "score": 4,
+          "name": "Code 40",
+          "description": "Clear, consistent opinion. Enough details, but only some are specific. The order is mechanical."
+        },
+        {
+          "score": 3,
+          "name": "Code 30",
+          "description": "Clear opinion. The details are too few or vague. Organized, with lapses."
+        },
+        {
+          "score": 2,
+          "name": "Code 20",
+          "description": "The opinion is unclear or changes. The details are too few or repeat. Little organization."
+        },
+        {
+          "score": 1,
+          "name": "Code 10",
+          "description": "On the topic, but no opinion; or an opinion with no supporting details."
+        },
+        {
+          "score": 0,
+          "name": "Blank or Code I",
+          "description": "Blank, off topic, or only the prompt copied out."
+        }
+      ]
+    },
+    "essayConventions": {
+      "label": "Conventions",
+      "max": 4,
+      "levels": [
+        {
+          "score": 4,
+          "name": "Code 40",
+          "description": "Control of conventions is evident. A few errors may exist."
+        },
+        {
+          "score": 3,
+          "name": "Code 30",
+          "description": "Errors do not distract from the meaning."
+        },
+        {
+          "score": 2,
+          "name": "Code 20",
+          "description": "Errors distract from the meaning."
+        },
+        {
+          "score": 1,
+          "name": "Code 10",
+          "description": "Fewer than 30 words, or the errors get in the way of the meaning."
+        },
+        {
+          "score": 0,
+          "name": "Blank or Code I",
+          "description": "Blank or off topic."
+        }
+      ]
+    }
+  },
+  "passages": {
+    "later": {
+      "title": "Should high schools start later in the morning?",
+      "format": "opinion essay (model)",
+      "level": "Developing",
+      "sentences": [
+        "I think high schools should start later in the morning, because teenagers need more sleep and because students learn more when they are awake.",
+        "One reason is that teenagers need more sleep.",
+        "Many students stay up late doing homework or working, and then they have to be up at 6:30 to catch the bus.",
+        "For example, my friend works until 10 p.m. on weeknights and is half asleep in first period.",
+        "If school started at 9:30, he would get one more hour of sleep and could actually pay attention.",
+        "Another reason is that students would learn more.",
+        "It is hard to understand math at 8:00 a.m. when your brain is not awake yet.",
+        "Last year my first-period class was science, and when the same class moved to the afternoon, my marks went up.",
+        "This shows that the time of day changes how much students learn.",
+        "In conclusion, schools should start later because students would get more sleep and do better in class.",
+        "It is a small change that would make a big difference."
+      ],
+      "chunks": [
+        [
+          1
+        ],
+        [
+          2,
+          3,
+          4,
+          5
+        ],
+        [
+          6,
+          7,
+          8,
+          9
+        ],
+        [
+          10,
+          11
+        ]
+      ],
+      "tutorNote": "A model essay, not a reading passage. Each paragraph is one of the four boxes."
+    }
+  },
+  "sections": [
+    {
+      "id": "learn",
+      "title": "Four boxes",
+      "mode": "tutor",
+      "minutes": 10,
+      "tutorNote": "I DO. Read the four boxes. Reveal the model essay one box at a time and name each part aloud: opinion and two reasons; reason, a little more about it, a real example, why it matters; again; conclusion and one closing sentence. Then the student taps the side the writer is on and each real example. Point out that the opinion is the same at the start and at the end.",
+      "steps": [
+        {
+          "id": "m7-learn-1",
+          "type": "explain",
+          "text": [
+            "An opinion essay is four boxes.",
+            "Box 1: what you think, and your two reasons.",
+            "Box 2: reason one, a real example, and why it matters.",
+            "Box 3: reason two, a real example, and why it matters.",
+            "Box 4: say it again, short, and add one closing sentence.",
+            "A real example gives at least two of these: who exactly, what exactly, when, how much."
+          ],
+          "showCard": true
+        },
+        {
+          "id": "m7-learn-2",
+          "type": "worked",
+          "title": "Watch one",
+          "reveals": [
+            {
+              "label": "Pick a side",
+              "text": "Yes. I think high schools should start later."
+            },
+            {
+              "label": "Two reasons from the menu",
+              "text": "Sleep, and learning. TIME is too close to sleep, so I leave it out."
+            },
+            {
+              "label": "Box 1",
+              "text": "My opinion and both reasons, in one sentence.",
+              "highlight": [
+                1
+              ]
+            },
+            {
+              "label": "Box 2",
+              "text": "Reason one: sleep. A little more about it. A real example: my friend who works until 10 p.m. Then why it matters.",
+              "highlight": [
+                2,
+                3,
+                4,
+                5
+              ]
+            },
+            {
+              "label": "Box 3",
+              "text": "Reason two: learning. A little more about it. A real example: my science class and my marks. Then 'This shows…'",
+              "highlight": [
+                6,
+                7,
+                8,
+                9
+              ]
+            },
+            {
+              "label": "Box 4",
+              "text": "In conclusion: the same opinion and both reasons again. Then one closing sentence. No new reasons.",
+              "highlight": [
+                10,
+                11
+              ]
+            },
+            {
+              "label": "Count",
+              "text": "About 170 words. Four boxes. The same opinion at the start and at the end. Two different reasons. Each has a real example."
+            }
+          ],
+          "question": "Should high schools start later in the morning?",
+          "passage": "later"
+        },
+        {
+          "id": "m7-learn-3",
+          "type": "find",
+          "prompt": "Tap a sentence that says which side the writer is on.",
+          "question": "Which side is the writer on?",
+          "passage": "later",
+          "correct": [
+            1,
+            10
+          ],
+          "found": "Right. The writer says which side in sentence 1, and again in sentence 10.",
+          "other": "That sentence gives a reason or an example. Which sentence says which side the writer is on?",
+          "hint2": "The opinion comes first. Look for 'I think'.",
+          "hint3": "It is sentence 1 or sentence 2.",
+          "near": [
+            {
+              "sentences": [
+                2
+              ],
+              "why": "That is reason one. Which sentence says which side the writer is on?"
+            },
+            {
+              "sentences": [
+                6
+              ],
+              "why": "That is reason two. Which sentence says which side the writer is on?"
+            },
+            {
+              "sentences": [
+                11
+              ],
+              "why": "That says the change is good. It does not say what the change is. Which sentence says which side the writer is on?"
+            }
+          ]
+        },
+        {
+          "id": "m7-learn-4",
+          "type": "find",
+          "prompt": "Tap the real example.",
+          "question": "What real example does the writer give for the FIRST reason?",
+          "passage": "later",
+          "correct": [
+            4
+          ],
+          "found": "Right. Sentence 4 is about one real person, with a when: weeknights, until 10 p.m.",
+          "other": "That is not the example for the first reason. Look for one person the writer knows.",
+          "hint2": "Look for the words 'For example'.",
+          "hint3": "It is sentence 3 or sentence 4.",
+          "near": [
+            {
+              "sentences": [
+                3
+              ],
+              "why": "That sentence is about students in general. Which sentence is about one person the writer knows?"
+            },
+            {
+              "sentences": [
+                2
+              ],
+              "why": "That is the reason. Which sentence gives a real example of it?"
+            },
+            {
+              "sentences": [
+                8
+              ],
+              "why": "That is the example for the SECOND reason."
+            }
+          ]
+        },
+        {
+          "id": "m7-learn-5",
+          "type": "find",
+          "prompt": "Tap the real example.",
+          "question": "What real example does the writer give for the SECOND reason?",
+          "passage": "later",
+          "correct": [
+            8
+          ],
+          "found": "Right. Sentence 8 is one real case: last year, my science class, my marks.",
+          "other": "That is not the example for the second reason. Look in box 3 for the writer's own class.",
+          "hint2": "Look in box 3. Find the sentence about the writer's own class.",
+          "hint3": "It is sentence 7 or sentence 8.",
+          "near": [
+            {
+              "sentences": [
+                7
+              ],
+              "why": "That sentence is about students in general. Which sentence is about the writer's own class?"
+            },
+            {
+              "sentences": [
+                4
+              ],
+              "why": "That is the example for the FIRST reason."
+            },
+            {
+              "sentences": [
+                6
+              ],
+              "why": "That is the reason. Which sentence gives a real example of it?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "opinion",
+      "title": "Pick a side",
+      "mode": "tutor",
+      "minutes": 8,
+      "tutorNote": "WE DO. An opinion picks one side and names the topic. The student says each opinion aloud before typing it. 'It depends' and 'some people think' are the errors to catch. The typed sentences go to the review queue; score 0 to 2.",
+      "steps": [
+        {
+          "id": "m7-op0",
+          "type": "explain",
+          "text": [
+            "Start by picking ONE side.",
+            "Say it in one sentence. It helps to start with 'I think'.",
+            "Name the topic in your sentence, so a reader knows what you are talking about.",
+            "Do not say 'it depends'. Do not give both sides."
+          ],
+          "showCard": false
+        },
+        {
+          "id": "m7-op1",
+          "type": "sort",
+          "prompt": "Is it a clear opinion? Sort each sentence.",
+          "categories": [
+            {
+              "id": "clear",
+              "label": "CLEAR OPINION"
+            },
+            {
+              "id": "not",
+              "label": "NOT CLEAR"
+            }
+          ],
+          "cards": [
+            {
+              "text": "I think phones should not be allowed in class.",
+              "category": "clear",
+              "why": "One side, and it names the topic."
+            },
+            {
+              "text": "Some people think yes and some people think no.",
+              "category": "not",
+              "why": "That gives both sides. Which side are YOU on?"
+            },
+            {
+              "text": "Many people talk about phones in class.",
+              "category": "not",
+              "why": "That names the topic, but it does not pick a side."
+            },
+            {
+              "text": "I think students should be paid for good marks.",
+              "category": "clear",
+              "why": "One side, and it names the topic."
+            },
+            {
+              "text": "It depends.",
+              "category": "not",
+              "why": "That does not pick a side."
+            },
+            {
+              "text": "Students should not have to wear uniforms.",
+              "category": "clear",
+              "why": "There is no 'I think', but the side is clear and the topic is named."
+            }
+          ],
+          "hint2": "Ask: can I tell which side the writer is on?",
+          "hint3": "A clear opinion picks one side and names the topic."
+        },
+        {
+          "id": "m7-op2",
+          "type": "text",
+          "prompt": "Say it out loud first, then type it.",
+          "stem": "Should students choose their own seats in class? Write your opinion in one sentence.",
+          "frame": "I think",
+          "model": [
+            "I think students should choose their own seats in class."
+          ],
+          "rubric": "opinion2"
+        },
+        {
+          "id": "m7-op3",
+          "type": "text",
+          "prompt": "Say it out loud first, then type it.",
+          "stem": "Is it better to have one long school break or several short ones? Write your opinion in one sentence.",
+          "frame": "I think",
+          "model": [
+            "I think several short breaks are better than one long break."
+          ],
+          "rubric": "opinion2"
+        }
+      ]
+    },
+    {
+      "id": "reasons",
+      "title": "Two different reasons",
+      "mode": "tutor",
+      "minutes": 10,
+      "tutorNote": "WE DO. Reasons come from the menu on the card: money, time, sleep and health, safety, learning, friends and family, stress and fun, fairness, the future. Two reasons that are the same idea in different words count as one. The student points to two different menu words before typing. Score the typed answer 0 to 2.",
+      "steps": [
+        {
+          "id": "m7-r0",
+          "type": "explain",
+          "text": [
+            "Now you need two reasons, and they must be DIFFERENT.",
+            "Use the reason menu on the card.",
+            "Pick two menu words that fit. Turn each one into a sentence.",
+            "'Students would be happier' and 'students would enjoy school more' are the SAME reason said twice."
+          ],
+          "showCard": true
+        },
+        {
+          "id": "m7-r1",
+          "type": "match",
+          "prompt": "Should high schools start later? Match each menu word to a reason.",
+          "pairs": [
+            {
+              "left": "sleep and health",
+              "right": "Teenagers would get more sleep."
+            },
+            {
+              "left": "learning",
+              "right": "Students understand more when they are awake."
+            },
+            {
+              "left": "safety",
+              "right": "Fewer students would walk to the bus in the dark."
+            },
+            {
+              "left": "friends and family",
+              "right": "Families could eat breakfast together."
+            }
+          ]
+        },
+        {
+          "id": "m7-r2",
+          "type": "mcq",
+          "stem": "Should students be paid for good marks? One reason is: \"Students would work harder.\" Which one is a DIFFERENT reason?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Students would try more.",
+              "why": "That is the same reason in different words: working harder.",
+              "trap": "same"
+            },
+            {
+              "id": "b",
+              "text": "Students could save the money for college.",
+              "why": "Right. That is about money and the future. A different idea.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "Students would put in more effort.",
+              "why": "That is the same reason again: working harder.",
+              "trap": "same"
+            }
+          ],
+          "hint2": "Which one comes from a different word on the reason menu?",
+          "hint3": "It is (b) or (c). Which one is NOT about working harder?"
+        },
+        {
+          "id": "m7-r3",
+          "type": "mcq",
+          "stem": "Should students be allowed to use phones in class? One reason is: \"Phones distract students.\" Which one is a DIFFERENT reason?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Phones make it hard to pay attention.",
+              "why": "That is the same reason in different words: distraction.",
+              "trap": "same"
+            },
+            {
+              "id": "b",
+              "text": "Phones make students stop listening to the lesson.",
+              "why": "That is the same reason again: distraction.",
+              "trap": "same"
+            },
+            {
+              "id": "c",
+              "text": "Phones make cheating easy.",
+              "why": "Right. That is about fairness. A different idea.",
+              "correct": true
+            }
+          ],
+          "hint2": "Which one comes from a different word on the reason menu?",
+          "hint3": "It is (a) or (c). Which one is NOT about paying attention?"
+        },
+        {
+          "id": "m7-r4",
+          "type": "text",
+          "prompt": "Point to two different menu words first.",
+          "stem": "Should students be allowed to use phones in class? Pick a side. Then write two DIFFERENT reasons from the menu.",
+          "parts": [
+            {
+              "label": "My opinion",
+              "starter": "I think",
+              "rows": 2
+            },
+            {
+              "label": "Reason 1",
+              "starter": "One reason is",
+              "rows": 2
+            },
+            {
+              "label": "Reason 2",
+              "starter": "Another reason is",
+              "rows": 2
+            }
+          ],
+          "model": [
+            "I think phones should not be allowed in class.",
+            "One reason is that phones distract students.",
+            "Another reason is that phones make cheating easy."
+          ],
+          "rubric": "reasons2"
+        }
+      ]
+    },
+    {
+      "id": "specific",
+      "title": "Make it real",
+      "mode": "tutor",
+      "minutes": 10,
+      "tutorNote": "WE DO: the vague-to-specific drill. Say the vague version; the student makes it real by adding who exactly, what exactly, when and how much. Push with 'Who exactly? When? How much?' An example is a real case, not another reason. The typed examples go to the review queue; score 0 to 2. Any real detail is fine; it does not have to match the model, and it may be made up if it could be real.",
+      "steps": [
+        {
+          "id": "m7-s0",
+          "type": "explain",
+          "text": [
+            "A reason needs a real example.",
+            "'Phones are distracting' is vague. It could be about anyone, at any time.",
+            "'My phone buzzed in math and I missed the homework' is real.",
+            "A real example gives at least two of these: who exactly, what exactly, when, how much.",
+            "It can be about you or someone you know. If you have none, write one that could be real."
+          ],
+          "showCard": false
+        },
+        {
+          "id": "m7-s1",
+          "type": "sort",
+          "prompt": "Vague or specific? A real example gives at least two of these: who exactly, what exactly, when, how much.",
+          "categories": [
+            {
+              "id": "vague",
+              "label": "VAGUE"
+            },
+            {
+              "id": "specific",
+              "label": "SPECIFIC"
+            }
+          ],
+          "cards": [
+            {
+              "text": "Phones are distracting.",
+              "category": "vague",
+              "why": "Who? When? It could be anyone, at any time."
+            },
+            {
+              "text": "When a notification pops up in the middle of a lesson, I look at it and miss what the teacher said.",
+              "category": "specific",
+              "why": "A who (I), a when (in the middle of a lesson) and exactly what happened."
+            },
+            {
+              "text": "Sports are good for you.",
+              "category": "vague",
+              "why": "Which sport? Good how? For whom?"
+            },
+            {
+              "text": "Playing basketball three evenings a week helps me sleep and keeps me off my phone.",
+              "category": "specific",
+              "why": "A who (me), exactly what (basketball) and a how much: three evenings a week."
+            },
+            {
+              "text": "Uniforms cost money.",
+              "category": "vague",
+              "why": "How much? For whom?"
+            },
+            {
+              "text": "A school blazer costs over $100, and a family with three kids in the school pays for three.",
+              "category": "specific",
+              "why": "Exactly what (a blazer), a how much (over $100) and a who (a family with three kids)."
+            },
+            {
+              "text": "Homework takes a long time.",
+              "category": "vague",
+              "why": "How long? Whose homework? When?"
+            },
+            {
+              "text": "On Tuesdays I have two hours of homework and a four-hour shift, so I'm up until midnight.",
+              "category": "specific",
+              "why": "A when (Tuesdays), a how much (two hours, four hours) and a who (I)."
+            }
+          ],
+          "hint2": "Ask: who exactly? when? how much? If you cannot tell, it is vague.",
+          "hint3": "A specific example has a number, a day, a place or a person in it."
+        },
+        {
+          "id": "m7-s2",
+          "type": "mcq",
+          "stem": "The reason: \"Part-time jobs teach responsibility.\" Which one is a real EXAMPLE of it?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Part-time jobs teach teens to be on time.",
+              "why": "That says the reason again in other words. It is about teens in general, with no when and no how much.",
+              "trap": "vague"
+            },
+            {
+              "id": "b",
+              "text": "Part-time jobs also pay well.",
+              "why": "That is a new reason, not an example.",
+              "trap": "reason"
+            },
+            {
+              "id": "c",
+              "text": "When I started at the grocery store, I had to be on time every Saturday at 7 a.m., or the team would be short one person.",
+              "why": "Right. A who (I), a where (the grocery store) and a when (every Saturday at 7 a.m.).",
+              "correct": true
+            }
+          ],
+          "hint2": "A real example is a real case. Look for a who and a when.",
+          "hint3": "It is (a) or (c). Which one has a day and a time in it?"
+        },
+        {
+          "id": "m7-s3",
+          "type": "text",
+          "prompt": "Say it out loud first, then type it.",
+          "stem": "Make it real. The vague version: \"School lunches cost too much.\" Add at least two of these: who exactly, what exactly, when, how much.",
+          "model": [
+            "A slice of pizza and a juice in our cafeteria cost $8, and I buy lunch four days a week."
+          ],
+          "rubric": "specific2"
+        },
+        {
+          "id": "m7-s4",
+          "type": "text",
+          "prompt": "Say it out loud first, then type it.",
+          "stem": "Make it real. The vague version: \"The bus is often late.\" Add at least two of these: who exactly, what exactly, when, how much.",
+          "model": [
+            "Last Monday the 7:40 bus came at 8:05, and I missed the first twenty minutes of math."
+          ],
+          "rubric": "specific2"
+        }
+      ]
+    },
+    {
+      "id": "specific-own",
+      "title": "Make it real on your own",
+      "mode": "solo",
+      "minutes": 10,
+      "tutorNote": "YOU DO. Two choose-the-example questions, then four vague statements to make real. The typed answers go to the review queue; score 0 to 2. Guide threshold: four of five vague details made specific; count these four with the two typed in 'Make it real'.",
+      "steps": [
+        {
+          "id": "m7-so1",
+          "type": "mcq",
+          "stem": "The reason: \"Uniforms save time in the morning.\" Which one is a real EXAMPLE of it?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Uniforms make mornings faster.",
+              "why": "That is the reason again. Who exactly? When? How much?",
+              "trap": "vague"
+            },
+            {
+              "id": "b",
+              "text": "My sister used to change her outfit three times before school, and now she is dressed in five minutes.",
+              "why": "Right. A who (my sister), exactly what she did and a how much (five minutes).",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "Uniforms also cost less than other clothes.",
+              "why": "That is a new reason, not an example.",
+              "trap": "reason"
+            }
+          ],
+          "hint2": "A real example is a real case. Look for a who and a how much.",
+          "hint3": "It is (a) or (b). Which one is about one real person?"
+        },
+        {
+          "id": "m7-so2",
+          "type": "mcq",
+          "stem": "The reason: \"A later start would help students learn.\" Which one is a real EXAMPLE of it?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Last year my marks went up when my science class moved from first period to the afternoon.",
+              "why": "Right. A who (me), exactly what happened and a when (last year).",
+              "correct": true
+            },
+            {
+              "id": "b",
+              "text": "Students would learn more.",
+              "why": "That is the reason again. Who exactly? When? How much?",
+              "trap": "vague"
+            },
+            {
+              "id": "c",
+              "text": "A later start would also be safer.",
+              "why": "That is a new reason, not an example.",
+              "trap": "reason"
+            }
+          ],
+          "hint2": "A real example is a real case. Look for a who and a when.",
+          "hint3": "It is (a) or (b). Which one tells about one real class?"
+        },
+        {
+          "id": "m7-so3",
+          "type": "text",
+          "prompt": "Say it out loud first, then type it.",
+          "stem": "Make it real. The vague version: \"Video games can teach you things.\" Add at least two of these: who exactly, what exactly, when, how much.",
+          "model": [
+            "Playing a building game with my cousin every weekend taught me to plan ahead and save up for what I need."
+          ],
+          "rubric": "specific2"
+        },
+        {
+          "id": "m7-so4",
+          "type": "text",
+          "prompt": "Say it out loud first, then type it.",
+          "stem": "Make it real. The vague version: \"Group projects are unfair.\" Add at least two of these: who exactly, what exactly, when, how much.",
+          "model": [
+            "In my last science project, I wrote all four pages while two of my partners did nothing, and we all got the same mark."
+          ],
+          "rubric": "specific2"
+        },
+        {
+          "id": "m7-so5",
+          "type": "text",
+          "prompt": "Say it out loud first, then type it.",
+          "stem": "Make it real. The vague version: \"Teenagers need more sleep.\" Add at least two of these: who exactly, what exactly, when, how much.",
+          "model": [
+            "On school nights I get about six hours of sleep, and by third period I can hardly keep my eyes open."
+          ],
+          "rubric": "specific2"
+        },
+        {
+          "id": "m7-so6",
+          "type": "text",
+          "prompt": "Say it out loud first, then type it.",
+          "stem": "Make it real. The vague version: \"Volunteering helps people.\" Add at least two of these: who exactly, what exactly, when, how much.",
+          "model": [
+            "Every Saturday morning I pack food boxes at the food bank, and about forty families pick them up."
+          ],
+          "rubric": "specific2"
+        }
+      ]
+    },
+    {
+      "id": "paragraph",
+      "title": "Build the boxes",
+      "mode": "tutor",
+      "minutes": 15,
+      "tutorNote": "WE DO. A body paragraph is a reason (with one more sentence about it if the student has one), a real example, and why it matters. First the student puts a model paragraph in order. Then, for their own side of the phones question, the student writes one body paragraph, then Box 1 and Box 4, saying each sentence aloud first. Scores: body paragraph 0 to 3; Box 1 and Box 4 0 to 2 each.",
+      "steps": [
+        {
+          "id": "m7-p0",
+          "type": "explain",
+          "text": [
+            "Box 2 and box 3 are body paragraphs. Each one has these jobs.",
+            "REASON: 'One reason is…' You can add one more sentence about it.",
+            "EXAMPLE: 'For example,…' A real case, with a who and a when.",
+            "WHY IT MATTERS: 'This shows…'"
+          ],
+          "showCard": true
+        },
+        {
+          "id": "m7-p1",
+          "type": "order",
+          "prompt": "Put this body paragraph in order.",
+          "sentences": [
+            {
+              "text": "One reason is that phones distract students."
+            },
+            {
+              "text": "For example, my phone buzzed in math last week.",
+              "why": "'For example' needs a reason before it. Which sentence gives the reason?"
+            },
+            {
+              "text": "While I was reading the message, I missed the homework.",
+              "why": "'The message' points back to the buzz. The buzz has to come first."
+            },
+            {
+              "text": "This shows that one message can make a student miss something important.",
+              "why": "'This shows' explains the example. It comes last."
+            }
+          ],
+          "after": "Right. Reason, example, why it matters. That is a body paragraph.",
+          "hint2": "Find the sentence that starts with 'One reason is'.",
+          "hint3": "'For example' comes after the reason. 'This shows' comes last."
+        },
+        {
+          "id": "m7-p2",
+          "type": "text",
+          "prompt": "Say each sentence out loud first.",
+          "stem": "Should students be allowed to use phones in class? Write ONE body paragraph for your side.",
+          "parts": [
+            {
+              "label": "Reason",
+              "starter": "One reason is",
+              "rows": 2
+            },
+            {
+              "label": "Real example",
+              "starter": "For example,",
+              "help": "A real case. Who exactly? When? How much?",
+              "rows": 3
+            },
+            {
+              "label": "Why it matters",
+              "starter": "This shows",
+              "rows": 2
+            }
+          ],
+          "model": [
+            "One reason is that phones make cheating easy.",
+            "For example, during a quiz last month, two students in my class were texting answers to each other under their desks.",
+            "This shows that with phones in class, teachers cannot tell who really understands the work."
+          ],
+          "rubric": "paragraph3"
+        },
+        {
+          "id": "m7-p3",
+          "type": "text",
+          "prompt": "Say it out loud first, then type it.",
+          "stem": "Now write Box 1 for the same question: your opinion and your two reasons. One or two sentences.",
+          "frame": "I think",
+          "model": [
+            "I think phones should not be allowed in class because they distract students and because they make cheating easy."
+          ],
+          "rubric": "box1"
+        },
+        {
+          "id": "m7-p4",
+          "type": "text",
+          "prompt": "Say it out loud first, then type it.",
+          "stem": "Now write Box 4: your opinion and both reasons again, short. Then add one closing sentence. No new reasons.",
+          "frame": "In conclusion,",
+          "model": [
+            "In conclusion, phones should not be allowed in class because they distract students and make cheating easy. School is better without them."
+          ],
+          "rubric": "box4"
+        }
+      ]
+    },
+    {
+      "id": "essay-1",
+      "title": "First essay: four boxes",
+      "mode": "solo",
+      "minutes": 30,
+      "tutorNote": "YOU DO: the first whole essay, with the four boxes and their sentence starters. About five minutes to plan aloud or on paper, then about twenty to write; the timer is there if the student wants it. No help once the writing starts. Two marks, topic development and conventions, using my short summary of the test's own scoring guide, as a guide only. Note the word count, opinion first (yes or no), opinion kept (yes or no), the number of different reasons, of specific examples and of paragraphs. Then name ONE change that would move it up a level.",
+      "steps": [
+        {
+          "id": "m7-e1-0",
+          "type": "explain",
+          "text": [
+            "Now write a whole essay.",
+            "Take about five minutes to plan: your side, two different reasons from the menu, and a real example for each.",
+            "Then write for about twenty minutes. Fill the four boxes in order.",
+            "Write it once. Do not write a rough copy and then a good copy."
+          ],
+          "showCard": true
+        },
+        {
+          "id": "m7-e1",
+          "type": "text",
+          "stem": "Should students be paid for good marks? Write an essay that gives your opinion and supports it with reasons and examples.",
+          "parts": [
+            {
+              "label": "Box 1: Opinion and two reasons",
+              "starter": "I think",
+              "rows": 3
+            },
+            {
+              "label": "Box 2: Reason 1, a real example, why it matters",
+              "starter": "One reason is",
+              "rows": 6
+            },
+            {
+              "label": "Box 3: Reason 2, a real example, why it matters",
+              "starter": "Another reason is",
+              "rows": 6
+            },
+            {
+              "label": "Box 4: In conclusion",
+              "starter": "In conclusion,",
+              "rows": 3
+            }
+          ],
+          "minWords": 150,
+          "timer": 25,
+          "checklist": [
+            "I said my opinion in the first sentence.",
+            "It is the same opinion at the end.",
+            "I have two different reasons.",
+            "Each reason has a real example (who exactly, what exactly, when, how much).",
+            "There are four boxes (paragraphs).",
+            "It is over 150 words.",
+            "I read it out loud once. Every sentence ends with a period."
+          ],
+          "model": [
+            "I think students should be paid for good marks because money makes students work harder and because it teaches them how to save.",
+            "One reason is that money makes students work harder. Many students do not see why a test matters, but they understand a reward. For example, my cousin's parents started paying him $20 for every mark over 80 last year, and he went from two marks over 80 to five. This shows that a small reward can change how hard a student tries.",
+            "Another reason is that it teaches students how to save. Teenagers do not get many chances to handle their own money. For example, my friend earned $60 for her report card in June and put half of it in the bank for a new bike. This shows that being paid for marks can teach a real money skill.",
+            "In conclusion, students should be paid for good marks because they would work harder and learn to save. It would be worth the cost."
+          ],
+          "rubric": "essayTopic",
+          "rubric2": "essayConventions"
+        }
+      ]
+    },
+    {
+      "id": "essay-2",
+      "title": "Second essay: no starters",
+      "mode": "solo",
+      "minutes": 30,
+      "tutorNote": "YOU DO, on another day. The four boxes are still there, but the sentence starters are gone; the card and its reason menu can stay. Mark it the same way, and look first for the one change you named after the last essay.",
+      "steps": [
+        {
+          "id": "m7-e2",
+          "type": "text",
+          "stem": "Is it better to play on a team or to do a sport on your own? Write an essay that gives your opinion and supports it with reasons and examples.",
+          "parts": [
+            {
+              "label": "Box 1: Opinion and two reasons",
+              "help": "What you think, and your two reasons.",
+              "rows": 3
+            },
+            {
+              "label": "Box 2: Reason 1, a real example, why it matters",
+              "help": "Reason, a little more about it, a real example, then why it matters.",
+              "rows": 6
+            },
+            {
+              "label": "Box 3: Reason 2, a real example, why it matters",
+              "help": "A DIFFERENT reason, a little more about it, a real example, then why it matters.",
+              "rows": 6
+            },
+            {
+              "label": "Box 4: In conclusion",
+              "help": "Your opinion and both reasons again, short. Then one closing sentence. No new reasons.",
+              "rows": 3
+            }
+          ],
+          "minWords": 150,
+          "timer": 25,
+          "checklist": [
+            "I said my opinion in the first sentence.",
+            "It is the same opinion at the end.",
+            "I have two different reasons.",
+            "Each reason has a real example (who exactly, what exactly, when, how much).",
+            "There are four boxes (paragraphs).",
+            "It is over 150 words.",
+            "I read it out loud once. Every sentence ends with a period."
+          ],
+          "model": [
+            "I think it is better to play on a team than to do a sport on your own because teammates make sure you come and because a team teaches you to work with other people.",
+            "One reason is that teammates make sure you come. When you train alone, it is easy to skip a day. For example, last winter I wanted to stay home from a 7 a.m. hockey practice, but two of my teammates texted me, so I went. This shows that a team keeps you going when you want to quit.",
+            "Another reason is that a team teaches you to work with other people. In a team sport, you cannot win by yourself. For example, in our last soccer game, I passed to a teammate instead of shooting, and she scored the winning goal. This shows that a team teaches you to trust others.",
+            "In conclusion, playing on a team is better because your teammates keep you going and you learn to work together. Those lessons last longer than the season."
+          ],
+          "rubric": "essayTopic",
+          "rubric2": "essayConventions"
+        }
+      ]
+    },
+    {
+      "id": "essay-3",
+      "title": "Third essay: one box",
+      "mode": "solo",
+      "minutes": 25,
+      "tutorNote": "YOU DO: the mastery task. One box, no starters; the student starts a new line for each paragraph. The timer is set to twenty minutes, as in the plan. Guide threshold: two essays in a row on new prompts (the second essay and this one), each 150 words or more, with the opinion stated first and kept to the end, two different reasons, at least one specific example for each, four paragraphs, finished in 25 minutes, that you would mark Code 30 or higher for topic development.",
+      "steps": [
+        {
+          "id": "m7-e3-0",
+          "type": "explain",
+          "text": [
+            "One box this time, like on the test.",
+            "Plan first: your side, two different reasons, a real example for each.",
+            "Start a new line for each of your four paragraphs.",
+            "Try to finish in about twenty minutes."
+          ],
+          "showCard": false
+        },
+        {
+          "id": "m7-e3",
+          "type": "text",
+          "stem": "Should high school students have homework on weekends? Write an essay that gives your opinion and supports it with reasons and examples.",
+          "minWords": 150,
+          "timer": 20,
+          "rows": 14,
+          "checklist": [
+            "I said my opinion in the first sentence.",
+            "It is the same opinion at the end.",
+            "I have two different reasons.",
+            "Each reason has a real example (who exactly, what exactly, when, how much).",
+            "There are four paragraphs, each on a new line.",
+            "It is over 150 words.",
+            "I read it out loud once. Every sentence ends with a period."
+          ],
+          "model": [
+            "I think high school students should not have homework on weekends because they need time to rest and because many of them work.",
+            "One reason is that students need time to rest. After five days of classes, the brain needs a break. For example, last month I had a history essay and a math sheet due on the same Monday, and I spent all of Sunday at my desk. This shows that weekend homework can leave students more tired on Monday than they were on Friday.",
+            "Another reason is that many students work on weekends. Two days are not enough for a long shift and a lot of homework. For example, my brother works at a restaurant from noon to eight every Saturday and does not start his homework until nine at night. This shows that weekend homework is hardest on students who have jobs.",
+            "In conclusion, students should not have homework on weekends because they need rest and many of them work. Two free days would send everyone back to school ready to learn."
+          ],
+          "rubric": "essayTopic",
+          "rubric2": "essayConventions"
+        }
+      ]
+    }
+  ]
+}

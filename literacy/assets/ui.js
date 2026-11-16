@@ -25,8 +25,8 @@ export function feedbackBox() {
 }
 
 /** Three-step hint ladder. Calls onLevel(n) each time a new level is shown. */
-export function hintLadder(item, onLevel, startLevel = 0) {
-  const steps = [HINT1];
+export function hintLadder(item, onLevel, startLevel = 0, first = HINT1) {
+  const steps = [first || HINT1];
   if (item.hint2) { steps.push(item.hint2); if (item.hint3) steps.push(item.hint3); }
   let level = 0;
   const list = el("ol", { class: "hint-list" });
@@ -82,10 +82,10 @@ export function shuffleNotSame(arr) {
   return arr.slice().reverse();
 }
 
-export function originalBox(text, coverable = false) {
+export function originalBox(text, coverable = false, label = "The sentence") {
   const body = el("p", { class: "original-text" }, text);
   const box = el("div", { class: "original" },
-    el("div", { class: "original-head" }, el("span", { class: "original-label" }, "The sentence"), speakButton(text)),
+    el("div", { class: "original-head" }, el("span", { class: "original-label" }, label || "The sentence"), speakButton(text)),
     body);
   if (!coverable) return box;
   const btn = el("button", { class: "btn btn-small", type: "button", "aria-pressed": "false" }, "Cover it");

@@ -3,13 +3,16 @@
 import { el } from "./auth.js";
 import { PassageView } from "./passage.js";
 import { stop as stopSpeech } from "./speech.js";
+import { tapStrip } from "./strip.js";
 import { components } from "./items/index.js";
 import { cardDialog } from "./items/card.js";
 import {
   sectionAttempts, saveAttempt, saveProgress, getWritten, saveWritten, writtenId,
 } from "./store.js";
 
-const PROMPT_IN_COMPONENT = new Set(["find", "verify", "match", "sort"]);
+const PROMPT_IN_COMPONENT = new Set(["find", "verify", "match", "sort", "order"]);
+const NUMBERED = new Set(["find", "verify", "claim"]);
+const TAP_IN_PASSAGE = new Set(["find", "claim"]);
 
 export async function openSection({ root, uid, module, section, progress, written, cardHidden, onExit }) {
   const steps = section.steps;
@@ -39,6 +42,11 @@ export async function openSection({ root, uid, module, section, progress, writte
       case "job": return k(`about-${item.parts.length}`);
       case "match": return item.pairs.every((_, i) => k(`pair-${i + 1}`));
       case "sort": return item.cards.every((_, i) => k(`card-${i + 1}`));
+      case "order": return k(`pos-${item.sentences.length - 1}`);
+      case "claim":
+        if (item.box === "fact") return k("finger");
+        if (item.box !== "inference") return k("box");
+        return k(`clue-${Math.min(item.need ?? 2, (item.proof || []).length)}`);
       default: return k("");
     }
   }
@@ -112,11 +120,11 @@ export async function openSection({ root, uid, module, section, progress, writte
   function leaving() { leaveHooks.forEach((f) => { try { f(); } catch {} }); leaveHooks = []; stopSpeech(); }
 
   // ---------- item context ----------
-  function makeCtx(item, index, passage, onComplete) {
+  function makeCtx(item, index, passage, onComplete, strip = null) {
     let hint = 0;
     const startedAt = Date.now();
     const ctx = {
-      item, module, section, mode, passage, uid,
+      item, module, section, mode, passage, uid, strip,
       hintStart: 0,
       writtenKey: writtenId(uid, module.id, section.id, item.id),
       onHint: (lvl) => { hint = Math.max(hint, lvl); },
@@ -159,7 +167,7 @@ export async function openSection({ root, uid, module, section, progress, writte
     stage.classList.toggle("has-passage", !!item.passage);
     if (item.passage && module.passages[item.passage]) {
       pv = new PassageView(module.passages[item.passage]);
-      pv.configure({ numbers: item.type === "find" || item.type === "verify", chunk: item.chunk ?? null });
+      pv.configure({ numbers: NUMBERED.has(item.type) || item.numbers === true, chunk: item.chunk ?? null });
       passageSlot.append(pv.root);
     }
 
@@ -168,10 +176,18 @@ export async function openSection({ root, uid, module, section, progress, writte
     back.disabled = index === 0;
     back.addEventListener("click", () => show(index - 1));
     next.addEventListener("click", () => (index + 1 < steps.length ? show(index + 1) : finish()));
-    const ready = () => { finished.add(index); next.disabled = false; };
+    // Items answered by tapping in the passage get a bar that stays in view on narrow screens.
+    stage.querySelector(".tap-strip")?.remove();
+    const strip = pv && TAP_IN_PASSAGE.has(item.type) ? tapStrip() : null;
+    if (strip) stage.prepend(strip.node);
+    const ready = () => {
+      finished.add(index); next.disabled = false;
+      // On a narrow screen the taps happen up in the passage: bring the result and Next into view.
+      if (strip && !wide.matches) taskSlot.scrollIntoView({ block: "end" });
+    };
     next.disabled = !wasDone(item, index);
 
-    const ctx = makeCtx(item, index, pv, ready);
+    const ctx = makeCtx(item, index, pv, ready, strip);
     let body;
     try { body = components[item.type](ctx); }
     catch (e) { console.error(e); body = el("p", { class: "msg msg-bad" }, "This step could not be shown. Tell your tutor."); next.disabled = false; }
@@ -194,6 +210,7 @@ export async function openSection({ root, uid, module, section, progress, writte
     persist("done", 0);
     stepLabel.textContent = "Done";
     stage.classList.remove("has-passage");
+    stage.querySelector(".tap-strip")?.remove();
     passageSlot.replaceChildren();
     updateShowPassage();
     const h = el("h2", { tabindex: "-1" }, "Done");

@@ -37,7 +37,7 @@ export function render(ctx) {
   });
 
   return el("div", { class: "item item-mcq" },
-    item.original ? originalBox(item.original) : null,
+    item.original ? originalBox(item.original, false, item.originalLabel) : null,
     questionLine(item.stem),
     el("div", { class: "choices", role: "group", "aria-label": "Choices" }, rows),
     fb.node, hints.node);
@@ -74,7 +74,7 @@ export function renderMulti(ctx) {
     }
   });
   return el("div", { class: "item item-mcq" },
-    item.original ? originalBox(item.original) : null,
+    item.original ? originalBox(item.original, false, item.originalLabel) : null,
     questionLine(item.stem),
     el("p", { class: "muted" }, `Choose ${need}.`),
     el("div", { class: "choices", role: "group", "aria-label": "Choices" }, rows),

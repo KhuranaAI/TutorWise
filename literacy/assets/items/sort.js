@@ -2,7 +2,7 @@
 // Each card's tries are saved under its own key (card-1, card-2, ...).
 import { el } from "../auth.js";
 import { speakButton } from "../speech.js";
-import { feedbackBox, hintLadder, shuffle } from "../ui.js";
+import { feedbackBox, hintLadder, shuffle, questionLine } from "../ui.js";
 
 export function render(ctx) {
   const { item } = ctx;
@@ -40,7 +40,8 @@ export function render(ctx) {
   function place(cat) {
     if (!active) { status.textContent = "Tap a card first."; return; }
     const c = active;
-    const ok = c.category === cat.id;
+    // `accept` lists other categories that can also be argued for this card.
+    const ok = c.category === cat.id || (c.accept || []).includes(cat.id);
     ctx.record(`card-${c.i + 1}`, cat.id, ok);
     if (ok) {
       placed += 1;
@@ -56,6 +57,7 @@ export function render(ctx) {
   }
 
   return el("div", { class: "item item-sort" },
+    item.question ? questionLine(item.question) : null,
     el("p", { class: "instruction" }, item.prompt || "Sort each card."),
     el("div", { class: "sort-cards" }, cards),
     status,

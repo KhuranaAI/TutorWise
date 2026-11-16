@@ -1,7 +1,7 @@
 // Numbers for the tutor view. Pure functions: no browser or Firebase code,
 // so they can be checked on their own.
 
-export const SCORED = new Set(["match", "job", "find", "verify", "mcq", "multi", "sort"]);
+export const SCORED = new Set(["match", "job", "find", "verify", "mcq", "multi", "sort", "claim", "order"]);
 
 export const ERROR_CODES = [
   ["Q", "misunderstood the question"],
@@ -41,6 +41,13 @@ export function expectedSubs(item) {
     case "job": return ["flip", "parts", ...item.parts.flatMap((_, i) => [`kind-${i + 1}`, `about-${i + 1}`])];
     case "match": return item.pairs.map((_, i) => `pair-${i + 1}`);
     case "sort": return item.cards.map((_, i) => `card-${i + 1}`);
+    case "order": return item.sentences.slice(0, -1).map((_, i) => `pos-${i + 1}`);
+    case "claim": {
+      if (item.box === "fact") return ["finger"];
+      if (item.box !== "inference") return ["finger", "box"];
+      const need = Math.min(item.need ?? 2, (item.proof || []).length);
+      return ["finger", "box", ...Array.from({ length: need }, (_, i) => `clue-${i + 1}`)];
+    }
     default: return [""];
   }
 }

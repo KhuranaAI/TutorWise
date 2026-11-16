@@ -17,6 +17,7 @@ export function render(ctx) {
     area, fb.node, hints.node);
 
   const tried = new Set();
+  ctx.strip?.set(item.question, item.prompt || "Tap the sentence that proves the answer.");
   passage.onTap = (n) => {
     if (tried.has(n)) return;
     const ok = item.correct.includes(n);
@@ -26,10 +27,16 @@ export function render(ctx) {
       passage.highlight(item.correct, "proof");
       hints.disable();
       const where = item.correct.length > 1 ? `Sentences ${item.correct.join(" and ")} prove it.` : `Sentence ${n} proves it.`;
-      fb.ok(`Right. ${where}`);
+      // `found` replaces the usual line where "proves it" would not fit (a planted mistake, a word to look at).
+      const right = item.found || `Right. ${where}`;
+      fb.ok(right);
+      ctx.strip?.say("ok", right);
+      ctx.strip?.set(item.question, item.then ? "Now answer the question below." : "");
       if (item.then) {
         const go = continueButton("Now answer the question", () => {
           go.remove(); fb.clear(); hints.node.remove();
+          // The follow-up's own instruction line (for example "Answer in a full sentence.").
+          if (item.then.prompt) area.append(el("p", { class: "instruction" }, item.then.prompt));
           area.append(ctx.child(item.then));
         });
         area.append(el("div", { class: "actions" }, go));
@@ -39,7 +46,10 @@ export function render(ctx) {
       tried.add(n);
       passage.mark(n, "wrong");
       const near = (item.near || []).find((z) => z.sentences.includes(n));
-      fb.bad(near ? near.why : OTHER);
+      // `other`: the item's own line for any other wrong tap (a mistake hunt is not a proof hunt).
+      const why = near ? near.why : (item.other || OTHER);
+      fb.bad(why);
+      ctx.strip?.say("bad", why);
     }
   };
   passage.apply();

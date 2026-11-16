@@ -6,6 +6,7 @@ import {
   serverTimestamp, deleteField,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { loadAllModules } from "./content.js";
+import { markLines } from "./marks.js";
 import { db, requireRole, signOutAndLeave, urls, el } from "./auth.js";
 import { PassageView } from "./passage.js";
 import {
@@ -60,12 +61,15 @@ let students = [];
 async function loadStudent() {
   const ids = new Set(modules.map((m) => m.id));
   const snap = await getDocs(collection(db, "osslt_students"));
-  students = snap.docs.map((d) => d.data())
-    .filter((s) => s.uid && Array.isArray(s.modules) && s.modules.some((id) => ids.has(id)))
-    .map((s) => ({ uid: s.uid, displayName: s.name, given: s.modules }))
+  // id  = the student's name as a slug (used by the picker).
+  // rid = the id their reading-lesson rows are filed under: their first sign-in account's id.
+  //       It stays the same when a PIN change gives them a new sign-in account.
+  students = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+    .filter((s) => s.uid && Array.isArray(s.modules) && s.modules.some((x) => ids.has(x)))
+    .map((s) => ({ id: s.id, rid: s.rid || s.uid, displayName: s.name, given: s.modules }))
     .sort((a, b) => a.displayName.localeCompare(b.displayName));
-  const want = new URLSearchParams(location.search).get("s") || sessionStorage.getItem("tutor-student");
-  return students.find((s) => s.uid === want) || students[0] || null;
+  const want = sessionStorage.getItem("tutor-student"); // set by the gradebook's link and by the picker
+  return students.find((s) => s.id === want) || students[0] || null;
 }
 
 async function loadData(sid) {
@@ -74,7 +78,7 @@ async function loadData(sid) {
 }
 
 async function refresh() {
-  data = await loadData(student.uid);
+  data = await loadData(student.rid);
 }
 
 // ---------------------------------------------------------------- routing
@@ -115,10 +119,9 @@ function nav(active) {
 
 function page(active, title, ...body) {
   const pick = el("select", { id: "pick-student", "aria-label": "Student" },
-    students.map((s) => el("option", { value: s.uid, selected: s.uid === student.uid }, s.displayName)));
+    students.map((s) => el("option", { value: s.id, selected: s.id === student.id }, s.displayName)));
   pick.addEventListener("change", () => {
     sessionStorage.setItem("tutor-student", pick.value);
-    history.replaceState(null, "", location.pathname + location.hash); // drop any ?s= so the picker wins
     data = null; student = null; route(true);
   });
   app.replaceChildren(
@@ -140,7 +143,7 @@ function renderOverview() {
     cardBtn.addEventListener("click", async () => {
       cardBtn.disabled = true;
       try {
-        await setDoc(doc(db, "module_settings", `${student.uid}__${mod.id}`), { studentId: student.uid, moduleId: mod.id, cardHidden: !cardHidden });
+        await setDoc(doc(db, "module_settings", `${student.rid}__${mod.id}`), { studentId: student.rid, moduleId: mod.id, cardHidden: !cardHidden });
         await refresh(); renderOverview();
       } catch (e) { console.error(e); cardBtn.disabled = false; alert("Could not save. Check the connection."); }
     });
@@ -171,10 +174,25 @@ function renderOverview() {
         el("td", {}, access));
     });
 
+    // Open (or close) every solo section of this module in one go.
+    const solo = mod.sections.filter((sec) => sec.mode === "solo");
+    const closed = solo.filter((sec) => !data.assignments.some((a) => a.moduleId === mod.id && a.sectionId === sec.id));
+    const bulk = solo.length ? el("button", { class: "btn btn-small", type: "button" },
+      closed.length ? `Open all solo sections (${closed.length})` : "Close all solo sections") : null;
+    bulk?.addEventListener("click", async () => {
+      bulk.disabled = true;
+      const ref = (sec) => doc(db, "assignments", `${student.rid}__${mod.id}__${sec.id}`);
+      try {
+        if (closed.length) await Promise.all(closed.map((sec) => setDoc(ref(sec), { studentId: student.rid, moduleId: mod.id, sectionId: sec.id, assignedAt: serverTimestamp(), note: "" })));
+        else await Promise.all(solo.map((sec) => deleteDoc(ref(sec))));
+        await refresh(); renderOverview();
+      } catch (e) { console.error(e); bulk.disabled = false; alert("Could not save. Check the connection."); }
+    });
+
     return el("section", { class: "card module-card", "aria-labelledby": "ov-" + mod.id },
       el("div", { class: "row" },
         el("h2", { id: "ov-" + mod.id }, `Module ${mod.number}: ${mod.title}`),
-        mod.card ? cardBtn : null),
+        el("div", { class: "access" }, bulk, mod.card ? cardBtn : null)),
       el("div", { class: "table-wrap" },
         el("table", { class: "data" },
           el("thead", {}, el("tr", {}, ...["Section", "Status", "First-try accuracy", "Usual hint level", "Readiness (guide only)", "Last activity", "Time", "Access"].map((t) => el("th", { scope: "col" }, t)))),
@@ -182,8 +200,30 @@ function renderOverview() {
       notesBox(mod));
   });
   page("overview", "Reading lessons",
+    standing(),
     el("p", { class: "muted small" }, "First-try accuracy counts scored items only. Hint levels: 0 none, 1 read the question again, 2 where to look, 3 narrowed down, 4 modelled by tutor."),
     ...cards);
+}
+
+// Where the student is in the sequence: how much is done, and the next section to run
+// together and the next one to do alone, in module order.
+function standing() {
+  let total = 0, done = 0, nextTutor = null, nextSolo = null;
+  for (const mod of modules.filter((m) => student.given.includes(m.id))) for (const sec of mod.sections) {
+    total += 1;
+    if (data.progress.find((p) => p.moduleId === mod.id && p.sectionId === sec.id)?.status === "done") { done += 1; continue; }
+    if (sec.mode === "tutor") { if (!nextTutor) nextTutor = { mod, sec }; }
+    else if (!nextSolo) nextSolo = { mod, sec, open: data.assignments.some((a) => a.moduleId === mod.id && a.sectionId === sec.id) };
+  }
+  const waiting = data.written.filter((w) => w.status === "submitted").length;
+  const line = (label, hit, extra) => el("p", {}, el("strong", {}, label), " ",
+    hit ? el("a", { href: `#/section/${hit.mod.id}/${hit.sec.id}` }, `Module ${hit.mod.number}: ${hit.sec.title}`) : "nothing left",
+    hit && extra ? el("span", { class: "muted" }, extra) : null);
+  return el("section", { class: "card standing", "aria-labelledby": "standing-h" },
+    el("h2", { id: "standing-h" }, "Where things stand"),
+    el("p", {}, `${done} of ${total} sections done. `, waiting ? el("a", { href: "#/review" }, `${waiting} written ${waiting === 1 ? "answer" : "answers"} to mark.`) : "Nothing to mark."),
+    line("Next with you:", nextTutor),
+    line("Next on their own:", nextSolo, nextSolo ? (nextSolo.open ? " (open)" : " (closed: open it below when you are ready)") : null));
 }
 
 function readinessBadge(r) {
@@ -195,10 +235,10 @@ function readinessBadge(r) {
 
 async function toggleAssign(mod, sec, assigned, btn) {
   btn.disabled = true;
-  const id = `${student.uid}__${mod.id}__${sec.id}`;
+  const id = `${student.rid}__${mod.id}__${sec.id}`;
   try {
     if (assigned) await deleteDoc(doc(db, "assignments", id));
-    else await setDoc(doc(db, "assignments", id), { studentId: student.uid, moduleId: mod.id, sectionId: sec.id, assignedAt: serverTimestamp(), note: "" });
+    else await setDoc(doc(db, "assignments", id), { studentId: student.rid, moduleId: mod.id, sectionId: sec.id, assignedAt: serverTimestamp(), note: "" });
     await refresh(); renderOverview();
   } catch (e) { console.error(e); btn.disabled = false; alert("Could not save. Check the connection."); }
 }
@@ -212,7 +252,7 @@ function notesBox(mod) {
     if (!note) return;
     add.disabled = true;
     try {
-      await addDoc(collection(db, "tutor_notes"), { studentId: student.uid, moduleId: mod.id, note, createdAt: serverTimestamp() });
+      await addDoc(collection(db, "tutor_notes"), { studentId: student.rid, moduleId: mod.id, note, createdAt: serverTimestamp() });
       await refresh(); renderOverview();
     } catch (e) { console.error(e); add.disabled = false; alert("Could not save. Check the connection."); }
   });
@@ -226,7 +266,10 @@ function notesBox(mod) {
 function subName(sub, item) {
   const [k, n] = sub.split("-");
   const part = item?.parts?.length === 2 && n ? `, part ${n}` : "";
-  return { flip: "Flip word", parts: "How many parts", kind: `Kind${part}`, about: `About${part}` }[k] || sub;
+  return {
+    flip: "Flip word", parts: "How many parts", kind: `Kind${part}`, about: `About${part}`,
+    finger: "Finger test", box: "Which box", clue: `Clue ${n}`, pos: `Place ${n}`,
+  }[k] || sub;
 }
 
 function describe(mod, item, row) {
@@ -248,6 +291,12 @@ function describe(mod, item, row) {
       const i = Number(sub.split("-")[1]) - 1;
       return `"${item.cards[i]?.text}" → ${item.categories.find((c) => c.id === v)?.label || v}`;
     }
+    case "claim": {
+      if (sub === "finger") return `Finger test: ${v === "none" ? "no sentence says it" : `sentence ${v}`}`;
+      if (sub === "box") return `Box: ${mod.boxes?.[v]?.label || v}`;
+      return `${subName(sub, item)}: sentence ${v}`;
+    }
+    case "order": return `${subName(sub, item)}: "${item.sentences[v - 1]?.text ?? v}"`;
     default: return JSON.stringify(v);
   }
 }
@@ -273,7 +322,7 @@ function trapLabel(mod, item, row) {
   return null;
 }
 
-const itemText = (item) => item.question || item.stem || item.prompt || item.title || (item.text ? item.text[0] : "") || "";
+const itemText = (item) => item.question || item.statement || item.stem || item.prompt || item.title || (item.text ? item.text[0] : "") || "";
 
 function renderSection(mid, sid) {
   const mod = findModule(mid);
@@ -289,7 +338,8 @@ function renderSection(mid, sid) {
     if (item.type === "text") {
       const w = data.written.find((x) => x.moduleId === mod.id && x.sectionId === sec.id && x.itemId === item.id);
       first = w ? el("div", {}, el("div", { class: "written" }, w.text || "(empty)"), el("div", { class: "muted small" }, `${w.wordCount} words · ${w.status}`)) : "–";
-      result = w?.status === "reviewed" ? `${w.rubricScore}/${w.rubricMax}` : w?.status === "submitted" ? el("a", { href: "#/review" }, "to mark") : "–";
+      result = w?.status === "reviewed" ? el("div", {}, markLines(mod, item, w).map((line) => el("div", {}, line.replace(/^Score: (\d+) out of (\d+)$/, "$1/$2"))))
+        : w?.status === "submitted" ? el("a", { href: "#/review" }, "to mark") : "–";
     } else if (s.scored && s.rows.length) {
       const firsts = s.rows.filter((x) => x.attemptNumber === 1);
       const laters = s.rows.filter((x) => x.attemptNumber > 1);
@@ -301,7 +351,7 @@ function renderSection(mid, sid) {
       first = el("ul", { class: "tries" }, firsts.map(line));
       later = laters.length ? el("ul", { class: "tries" }, laters.map(line)) : "–";
       result = s.firstCorrect === true ? el("span", { class: "status status-done" }, "right first time")
-        : s.firstCorrect === false ? el("span", { class: "status status-bad" }, item.type === "job" ? `missed: ${s.failedSubs.map((x) => subName(x, item).toLowerCase()).join("; ")}` : "wrong first time")
+        : s.firstCorrect === false ? el("span", { class: "status status-bad" }, item.type === "job" || item.type === "claim" ? `missed: ${s.failedSubs.map((x) => subName(x, item).toLowerCase()).join("; ")}` : "wrong first time")
         : "unfinished";
     } else if (!s.scored) {
       result = el("span", { class: "muted" }, "not scored");
@@ -364,12 +414,20 @@ function reviewCard(w) {
   const parent = sec.steps.find((s) => s.then?.id === item.id);
   const pKey = item.passage || parent?.passage;
   const rubric = mod.rubrics?.[item.rubric];
+  const rubric2 = item.rubric2 ? mod.rubrics?.[item.rubric2] : null;
   const max = rubric?.max ?? 0;
   const key = w.id.replace(/[^A-Za-z0-9_-]/g, "_");
 
-  const scores = el("fieldset", { class: "scores" }, el("legend", {}, `Score (0 to ${max})`),
-    ...Array.from({ length: max + 1 }, (_, s) => el("label", { class: "check" },
-      el("input", { type: "radio", name: "score-" + key, value: String(s), checked: w.rubricScore === s }), String(s))));
+  // One set of score buttons per rubric. A rubric whose levels have names ("Code 30") shows the names.
+  const scoreSet = (r, name, current) => {
+    const top = r?.max ?? 0;
+    const nameOf = (s) => r?.levels?.find((l) => l.score === s)?.name || String(s);
+    return el("fieldset", { class: "scores" }, el("legend", {}, r?.label ? r.label : `Score (0 to ${top})`),
+      ...Array.from({ length: top + 1 }, (_, s) => el("label", { class: "check" },
+        el("input", { type: "radio", name: name + key, value: String(s), checked: current === s }), nameOf(s))));
+  };
+  const scores = scoreSet(rubric, "score-", w.rubricScore);
+  const scores2 = rubric2 ? scoreSet(rubric2, "score2-", w.rubricScore2) : null;
   const codes = el("fieldset", { class: "codes" }, el("legend", {}, "Error codes"),
     ...ERROR_CODES.map(([c, label]) => el("label", { class: "check" },
       el("input", { type: "checkbox", value: c, checked: (w.errorCodes || []).includes(c) }), el("span", {}, el("strong", {}, c), ` ${label}`))));
@@ -379,13 +437,15 @@ function reviewCard(w) {
   const save = el("button", { class: "btn btn-primary", type: "button" }, w.status === "reviewed" ? "Update the mark" : "Save the mark");
   save.addEventListener("click", async () => {
     const picked = scores.querySelector("input:checked");
-    if (!picked) { msg.className = "msg msg-bad"; msg.textContent = "Choose a score first."; return; }
+    const picked2 = scores2?.querySelector("input:checked");
+    if (!picked || (scores2 && !picked2)) { msg.className = "msg msg-bad"; msg.textContent = scores2 ? "Choose both marks first." : "Choose a score first."; return; }
     save.disabled = true;
     try {
       await updateDoc(doc(db, "written_responses", w.id), {
         status: "reviewed",
         rubricScore: Number(picked.value),
         rubricMax: max,
+        ...(scores2 ? { rubricScore2: Number(picked2.value), rubricMax2: rubric2.max } : {}),
         errorCodes: [...codes.querySelectorAll("input:checked")].map((x) => x.value),
         tutorComment: comment.value.trim(),
         reviewedAt: serverTimestamp(),
@@ -415,11 +475,12 @@ function reviewCard(w) {
       el("div", {},
         el("h3", {}, "Student's answer"),
         el("p", { class: "written" }, w.text || "(empty)"),
-        el("p", { class: "muted small" }, `${w.wordCount} words${item.maxWords ? ` (aim: ${item.maxWords} or fewer)` : ""}`),
+        el("p", { class: "muted small" }, `${w.wordCount} words${item.minWords && item.maxWords ? ` (aim: ${item.minWords} to ${item.maxWords})` : item.maxWords ? ` (aim: ${item.maxWords} or fewer)` : item.minWords ? ` (aim: ${item.minWords} or more)` : ""}`),
         item.model?.length ? el("div", {}, el("h3", {}, "Model answer"), ...item.model.map((m) => el("p", { class: "model-text" }, m))) : null),
       el("div", {},
-        rubric ? el("div", {}, el("h3", {}, "Rubric"), el("ul", { class: "rubric" }, rubric.levels.map((l) => el("li", {}, el("strong", {}, `${l.score}: `), l.description)))) : null,
-        scores, codes,
+        ...[rubric, rubric2].filter(Boolean).map((r) => el("div", {}, el("h3", {}, r.label ? `Rubric: ${r.label}` : "Rubric"),
+          el("ul", { class: "rubric" }, r.levels.map((l) => el("li", {}, el("strong", {}, `${l.name || l.score}: `), l.description))))),
+        scores, scores2, codes,
         el("div", { class: "field" }, el("label", { for: "c-" + key }, "Comment for the student"), comment),
         save, msg)));
 }

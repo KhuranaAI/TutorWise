@@ -1,0 +1,1952 @@
+{
+  "schemaVersion": 1,
+  "id": "m6-best-answer",
+  "number": 6,
+  "title": "Choosing the best answer",
+  "goal": "Five steps, the same every time: read the question, find the proof, check each answer, cross out the traps, answer.",
+  "card": {
+    "title": "READ → FIND → CHECK → ELIMINATE → ANSWER",
+    "lines": [
+      "READ the question twice. Say the job. Watch for NOT, EXCEPT, BEST and how many answers it wants.",
+      "FIND the proof in the passage before you look at the answers.",
+      "CHECK each answer against the proof.",
+      "ELIMINATE: cross out the wrong ones and name the trap.",
+      "ANSWER with what is left.",
+      "The four traps: THE OPPOSITE · NOT THERE · TRUE, BUT NOT WHAT THEY ASKED · HALF RIGHT."
+    ]
+  },
+  "traps": {
+    "O": {
+      "label": "the opposite",
+      "feedback": "The passage says the opposite."
+    },
+    "N": {
+      "label": "not there",
+      "feedback": "It may sound sensible, but it is not in the passage."
+    },
+    "T": {
+      "label": "true, but not what they asked",
+      "feedback": "It is in the passage, but it answers a different question."
+    },
+    "H": {
+      "label": "half right",
+      "feedback": "Part of it is right and part of it is wrong, or it goes too far."
+    }
+  },
+  "passages": {
+    "popcorn": {
+      "title": "The Snack Counter",
+      "format": "information paragraph",
+      "level": "Developing",
+      "sentences": [
+        "Movie theatres make surprisingly little money from tickets.",
+        "For a big new film, a large share of each ticket price goes back to the studio that made the movie, especially in the first weeks after release.",
+        "The theatre keeps more as the weeks go by, but by then most people have already seen the film.",
+        "This is why the snack counter matters so much.",
+        "Popcorn costs a theatre only cents to make, yet a large bag can sell for eight dollars or more.",
+        "The same is true of fountain drinks.",
+        "The money from snacks stays with the theatre, and it pays for staff, cleaning, and the giant screens and sound systems that customers expect.",
+        "Some theatres have tried lowering snack prices to attract more visitors, but most found that people bought the same amount either way.",
+        "Theatre owners also know that the smell of popcorn in the lobby is itself a kind of advertising.",
+        "Many theatres pop fresh batches on purpose during the busiest times, even when they already have plenty ready."
+      ]
+    },
+    "yawn": {
+      "title": "Why We Yawn",
+      "format": "information paragraph",
+      "level": "Developing",
+      "sentences": [
+        "Most people think a yawn means you are tired or bored, but scientists are not sure that is the whole story.",
+        "Yawning happens more often when the brain is warm, and a deep yawn pulls in cool air and stretches the jaw, which may help cool the brain down.",
+        "This could explain why people yawn more in warm rooms than in cold ones.",
+        "Yawning is also catching: seeing, hearing or even reading about a yawn can start one.",
+        "Researchers think this \"contagious\" yawning may be linked to empathy, since people tend to catch yawns more easily from friends and family than from strangers."
+      ]
+    },
+    "geese": {
+      "title": "Why Geese Fly in a V",
+      "format": "information paragraph",
+      "level": "Developing",
+      "sentences": [
+        "Every fall, Canada geese cross the sky in a shape like the letter V.",
+        "The shape is not for show.",
+        "Each goose flies slightly behind and to the side of the one ahead, where the moving air gives it a small lift.",
+        "This means most of the flock uses less energy than a bird flying alone.",
+        "The goose at the front gets no help, so it has the hardest job.",
+        "When the leader gets tired, it drops back and another goose takes its place.",
+        "The V has a second advantage: every bird can see the others, which helps the flock stay together.",
+        "Geese also honk while they fly.",
+        "Scientists think the honking helps the birds keep track of one another, especially in fog or at night.",
+        "Together, these habits let a flock travel hundreds of kilometres in a single day."
+      ]
+    },
+    "salt": {
+      "title": "Salt on Winter Roads",
+      "format": "information paragraph",
+      "level": "Developing",
+      "sentences": [
+        "When snow is coming, trucks spread salt on Canadian roads.",
+        "Salt does not melt ice by being warm.",
+        "It works because salty water freezes at a lower temperature than plain water, so a thin layer of salt keeps ice from sticking to the pavement.",
+        "Salt has limits, though.",
+        "Below about minus ten degrees Celsius it works slowly, and in extreme cold it hardly works at all.",
+        "On those days, many cities spread sand instead, which does not melt anything but gives tires something to grip.",
+        "Salt also causes damage.",
+        "It rusts cars and bridges, and when the snow melts it washes into streams and lakes, where it can harm fish and plants.",
+        "For this reason, some cities now mix their salt with beet juice, which helps it stick to the road so that less is needed.",
+        "Even so, plain salt is still the most common choice because it is cheap and it works on most winter days."
+      ]
+    }
+  },
+  "sections": [
+    {
+      "id": "learn",
+      "title": "Five steps",
+      "mode": "tutor",
+      "minutes": 10,
+      "tutorNote": "I DO. Read the five steps and the four traps. Reveal the worked example one step at a time, thinking aloud; the point of FIND is to hold the proof before meeting the answers. Then match each trap to what it means. On screen the answers stay covered until the proof is tapped, and the traps are named after the answer is chosen.",
+      "steps": [
+        {
+          "id": "m6-learn-1",
+          "type": "explain",
+          "text": [
+            "Most test questions give you four answers. Three of them are traps.",
+            "Use five steps, the same every time.",
+            "READ the question twice and say the job.",
+            "FIND the proof in the passage before you look at the answers.",
+            "CHECK each answer against the proof.",
+            "ELIMINATE: cross out the wrong ones and name the trap.",
+            "ANSWER with what is left."
+          ],
+          "showCard": true
+        },
+        {
+          "id": "m6-learn-2",
+          "type": "explain",
+          "text": [
+            "The traps have names. If you can name the trap, it cannot catch you.",
+            "THE OPPOSITE: the passage says the reverse.",
+            "NOT THERE: it sounds sensible, but the passage never says it.",
+            "TRUE, BUT NOT WHAT THEY ASKED: it is in the passage, but it answers a different question.",
+            "HALF RIGHT: part is right and part is wrong, or it goes too far with a word like ALWAYS or NEVER.",
+            "On screen, you answer first. Then you name the trap in each wrong answer."
+          ],
+          "showCard": false
+        },
+        {
+          "id": "m6-learn-3",
+          "type": "worked",
+          "title": "Watch one",
+          "reveals": [
+            {
+              "label": "READ",
+              "text": "Twice. The job: a reason, about why the snack counter matters. One part."
+            },
+            {
+              "label": "FIND",
+              "text": "The answers stay covered. Search words: SNACK COUNTER. Sentence 4 says 'This is why the snack counter matters so much.' THIS points back, so I read the sentences before and after it.",
+              "highlight": [
+                4
+              ]
+            },
+            {
+              "label": "FIND: read back",
+              "text": "Sentences 1 to 3: theatres keep little of the ticket money.",
+              "highlight": [
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "label": "FIND: read on",
+              "text": "Popcorn costs cents and sells for eight dollars. And sentence 7: 'The money from snacks stays with the theatre.' That is my proof.",
+              "highlight": [
+                5,
+                7
+              ]
+            },
+            {
+              "label": "CHECK (b)",
+              "text": "'Because snacks are cheap to make and the money stays with the theatre.' That matches my proof."
+            },
+            {
+              "label": "ELIMINATE (a)",
+              "text": "'Because customers expect popcorn.' The passage says customers expect big screens and sound, not popcorn. NOT THERE."
+            },
+            {
+              "label": "ELIMINATE (c)",
+              "text": "'Because tickets are expensive.' The passage never says tickets are expensive. It only sounds right because of what I already know. NOT THERE."
+            },
+            {
+              "label": "ELIMINATE (d)",
+              "text": "'Because the studio sells the snacks.' The passage says the snack money stays with the theatre. THE OPPOSITE."
+            },
+            {
+              "label": "ANSWER",
+              "text": "(b) is what is left, and it matches the proof."
+            }
+          ],
+          "question": "Why does the snack counter matter so much to a theatre?",
+          "passage": "popcorn",
+          "numbers": true
+        },
+        {
+          "id": "m6-learn-4",
+          "type": "match",
+          "prompt": "Match each trap to what it means.",
+          "pairs": [
+            {
+              "left": "the opposite",
+              "right": "The passage says the reverse."
+            },
+            {
+              "left": "not there",
+              "right": "It sounds sensible, but the passage never says it."
+            },
+            {
+              "left": "true, but not what they asked",
+              "right": "It is in the passage, but it answers a different question."
+            },
+            {
+              "left": "half right",
+              "right": "Part is right and part is wrong, or it goes too far."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "together",
+      "title": "Run it together",
+      "mode": "tutor",
+      "minutes": 12,
+      "tutorNote": "WE DO. The student says each step aloud. On paper you would hold a card over the answers; on screen they stay covered until the proof is tapped. After the second and third questions the student names the trap in every wrong answer. The third question was added to the paper set so that HALF RIGHT and TRUE, BUT NOT WHAT THEY ASKED are both met with you before they come up alone.",
+      "steps": [
+        {
+          "id": "m6-t1",
+          "type": "find",
+          "prompt": "FIND the proof first. The answers are covered. Tap the sentence.",
+          "question": "According to the paragraph, where does a large share of the ticket money go for a new film?",
+          "passage": "popcorn",
+          "correct": [
+            2
+          ],
+          "hint2": "Search for TICKET and SHARE.",
+          "hint3": "It is sentence 2 or sentence 7.",
+          "near": [
+            {
+              "sentences": [
+                1
+              ],
+              "why": "That sentence says theatres make little from tickets. Which sentence says where the money GOES?"
+            },
+            {
+              "sentences": [
+                7
+              ],
+              "why": "That sentence is about SNACK money. The question asks about TICKET money."
+            }
+          ],
+          "then": {
+            "id": "m6-t1a",
+            "type": "mcq",
+            "prompt": "CHECK each answer against your proof. Then ANSWER.",
+            "stem": "According to the paragraph, where does a large share of the ticket money go for a new film?",
+            "options": [
+              {
+                "id": "a",
+                "text": "to the theatre staff",
+                "why": "Staff are paid with snack money. The passage does not say ticket money goes to them.",
+                "trap": "N"
+              },
+              {
+                "id": "b",
+                "text": "to the studio that made the movie",
+                "why": "Right. Sentence 2: a large share goes back to the studio.",
+                "correct": true
+              },
+              {
+                "id": "c",
+                "text": "to the snack counter",
+                "why": "The snack counter is in the passage, but it is not where ticket money goes.",
+                "trap": "T"
+              },
+              {
+                "id": "d",
+                "text": "to the people who clean the theatre",
+                "why": "Cleaning is paid for with snack money. The passage does not say ticket money goes there.",
+                "trap": "N"
+              }
+            ],
+            "passage": "popcorn"
+          }
+        },
+        {
+          "id": "m6-t2",
+          "type": "find",
+          "prompt": "FIND the proof first. Tap the sentence.",
+          "question": "What happened when some theatres lowered snack prices?",
+          "passage": "popcorn",
+          "correct": [
+            8
+          ],
+          "hint2": "Search for LOWERING or PRICES.",
+          "hint3": "It is sentence 5 or sentence 8.",
+          "near": [
+            {
+              "sentences": [
+                5
+              ],
+              "why": "That sentence gives the usual price of popcorn. Which sentence tells what happened when prices went DOWN?"
+            }
+          ],
+          "then": {
+            "id": "m6-t2a",
+            "type": "mcq",
+            "prompt": "CHECK each answer against your proof. Then ANSWER.",
+            "stem": "What happened when some theatres lowered snack prices?",
+            "options": [
+              {
+                "id": "a",
+                "text": "Many more people came.",
+                "why": "The passage tells what people BOUGHT. It never says how many came.",
+                "trap": "N"
+              },
+              {
+                "id": "b",
+                "text": "People bought more snacks.",
+                "why": "The passage says people bought the same amount either way.",
+                "trap": "O"
+              },
+              {
+                "id": "c",
+                "text": "People bought about the same amount.",
+                "why": "Right. Sentence 8: 'people bought the same amount either way.'",
+                "correct": true
+              },
+              {
+                "id": "d",
+                "text": "The theatres closed.",
+                "why": "Nothing in the passage says a theatre closed.",
+                "trap": "N"
+              }
+            ],
+            "passage": "popcorn"
+          }
+        },
+        {
+          "id": "m6-t2x",
+          "type": "sort",
+          "prompt": "Now ELIMINATE. Name the trap in each wrong answer.",
+          "question": "What happened when some theatres lowered snack prices?",
+          "categories": [
+            {
+              "id": "O",
+              "label": "THE OPPOSITE"
+            },
+            {
+              "id": "N",
+              "label": "NOT THERE"
+            },
+            {
+              "id": "T",
+              "label": "TRUE, BUT NOT WHAT THEY ASKED"
+            },
+            {
+              "id": "H",
+              "label": "HALF RIGHT"
+            }
+          ],
+          "cards": [
+            {
+              "text": "Many more people came.",
+              "category": "N",
+              "accept": [
+                "O"
+              ],
+              "why": "The passage tells what people BOUGHT. It never says how many came. (The theatres HOPED for more visitors, so THE OPPOSITE is right too.)"
+            },
+            {
+              "text": "People bought more snacks.",
+              "category": "O",
+              "why": "The passage says people bought the same amount either way. That is the reverse."
+            },
+            {
+              "text": "The theatres closed.",
+              "category": "N",
+              "why": "Nothing in the passage says a theatre closed."
+            }
+          ],
+          "passage": "popcorn",
+          "numbers": true,
+          "hint2": "Check each wrong answer against the passage. Is it the reverse, missing, true but about something else, or only half right?",
+          "hint3": "THE OPPOSITE: the passage says the reverse. NOT THERE: the passage never says it. TRUE, BUT NOT WHAT THEY ASKED: it is in the passage. HALF RIGHT: part is right and part is wrong."
+        },
+        {
+          "id": "m6-t6",
+          "type": "find",
+          "prompt": "FIND the proof first. Tap the sentence.",
+          "question": "What does the paragraph say about the cost of popcorn?",
+          "passage": "popcorn",
+          "correct": [
+            5
+          ],
+          "hint2": "Search for POPCORN and COSTS.",
+          "hint3": "It is sentence 5 or sentence 9.",
+          "near": [
+            {
+              "sentences": [
+                9
+              ],
+              "why": "That sentence is about the SMELL of popcorn. Which sentence is about what it costs?"
+            },
+            {
+              "sentences": [
+                6
+              ],
+              "why": "That sentence is about drinks. Which sentence is about what popcorn costs?"
+            }
+          ],
+          "then": {
+            "id": "m6-t6a",
+            "type": "mcq",
+            "prompt": "CHECK each answer against your proof. Then ANSWER.",
+            "stem": "What does the paragraph say about the cost of popcorn?",
+            "options": [
+              {
+                "id": "a",
+                "text": "It is cheap to make, and theatres always sell it for less than a dollar.",
+                "why": "The first half is right: it costs only cents to make. The second half is wrong: a large bag can sell for eight dollars or more.",
+                "trap": "H"
+              },
+              {
+                "id": "b",
+                "text": "It costs only cents to make, but a large bag can sell for eight dollars or more.",
+                "why": "Right. Sentence 5.",
+                "correct": true
+              },
+              {
+                "id": "c",
+                "text": "The money from snacks pays for staff and cleaning.",
+                "why": "True, and it is in the passage. But it does not say what popcorn costs.",
+                "trap": "T"
+              },
+              {
+                "id": "d",
+                "text": "It costs a theatre more to make than any other snack.",
+                "why": "The passage never compares popcorn with other snacks.",
+                "trap": "N"
+              }
+            ],
+            "passage": "popcorn"
+          }
+        },
+        {
+          "id": "m6-t6x",
+          "type": "sort",
+          "prompt": "Now ELIMINATE. Name the trap in each wrong answer.",
+          "question": "What does the paragraph say about the cost of popcorn?",
+          "categories": [
+            {
+              "id": "O",
+              "label": "THE OPPOSITE"
+            },
+            {
+              "id": "N",
+              "label": "NOT THERE"
+            },
+            {
+              "id": "T",
+              "label": "TRUE, BUT NOT WHAT THEY ASKED"
+            },
+            {
+              "id": "H",
+              "label": "HALF RIGHT"
+            }
+          ],
+          "cards": [
+            {
+              "text": "It is cheap to make, and theatres always sell it for less than a dollar.",
+              "category": "H",
+              "why": "The first half is right. The second half is wrong, and it has the word ALWAYS. Read to the end of every answer."
+            },
+            {
+              "text": "The money from snacks pays for staff and cleaning.",
+              "category": "T",
+              "why": "It is true, and it is in the passage. But it answers a different question."
+            },
+            {
+              "text": "It costs a theatre more to make than any other snack.",
+              "category": "N",
+              "why": "The passage never compares popcorn with other snacks."
+            }
+          ],
+          "passage": "popcorn",
+          "numbers": true,
+          "hint2": "Check each wrong answer against the passage. Is it the reverse, missing, true but about something else, or only half right?",
+          "hint3": "THE OPPOSITE: the passage says the reverse. NOT THERE: the passage never says it. TRUE, BUT NOT WHAT THEY ASKED: it is in the passage. HALF RIGHT: part is right and part is wrong."
+        }
+      ]
+    },
+    {
+      "id": "together-2",
+      "title": "Tricky questions together",
+      "mode": "tutor",
+      "minutes": 10,
+      "tutorNote": "WE DO: three kinds of question that need extra care. A word-meaning question: find the word, read its sentence and the next one, then try each meaning in the sentence. A NOT question: check each choice against the passage first; three are there, and the answer is the one that is not. A question that asks for TWO answers: check every choice and keep all that match. (In the NOT question the fourth choice is 'parking' rather than the paper set's 'new movies', because the passage does mention a new film.)",
+      "steps": [
+        {
+          "id": "m6-t8",
+          "type": "explain",
+          "text": [
+            "Three kinds of question need extra care.",
+            "WORD MEANING: find the word. Read its sentence and the next one. Then try each meaning in the sentence. Which one still makes sense?",
+            "NOT: three of the answers ARE in the passage. You are hunting for the one that is not.",
+            "TWO ANSWERS: check every choice. Keep all that match.",
+            "A question may say 'the paragraph'. It means the passage on your screen."
+          ],
+          "showCard": false
+        },
+        {
+          "id": "m6-t3",
+          "type": "find",
+          "prompt": "Tap the sentence with the word in it.",
+          "question": "What does the word \"advertising\" mean in this paragraph?",
+          "passage": "popcorn",
+          "correct": [
+            9
+          ],
+          "found": "Right. The word is in sentence 9.",
+          "other": "That sentence does not have the word in it. Search for ADVERTISING.",
+          "hint2": "Search for ADVERTISING. Read that sentence and the one after it.",
+          "hint3": "It is sentence 9 or sentence 10.",
+          "then": {
+            "id": "m6-t3a",
+            "type": "mcq",
+            "prompt": "Try each meaning in the sentence. Which one still makes sense?",
+            "stem": "The word \"advertising\" in the paragraph means",
+            "options": [
+              {
+                "id": "a",
+                "text": "a sign with prices",
+                "why": "A sign is one kind of advertising, but this sentence is about a smell, not a sign.",
+                "trap": "N"
+              },
+              {
+                "id": "b",
+                "text": "something that makes people want to buy",
+                "why": "Right. The smell makes people want popcorn, so it works like an ad.",
+                "correct": true
+              },
+              {
+                "id": "c",
+                "text": "a free sample",
+                "why": "Nothing in the passage is given away for free.",
+                "trap": "N"
+              },
+              {
+                "id": "d",
+                "text": "a loud announcement",
+                "why": "This sentence is about a smell, not a sound.",
+                "trap": "N"
+              }
+            ],
+            "passage": "popcorn"
+          }
+        },
+        {
+          "id": "m6-t4",
+          "type": "sort",
+          "prompt": "This question has NOT in it. First check each choice. Is it in the passage?",
+          "question": "Which of these is NOT mentioned as something snack money pays for?",
+          "categories": [
+            {
+              "id": "in",
+              "label": "IN THE PASSAGE"
+            },
+            {
+              "id": "out",
+              "label": "NOT IN THE PASSAGE"
+            }
+          ],
+          "cards": [
+            {
+              "text": "staff",
+              "category": "in",
+              "why": "Sentence 7: snack money pays for staff."
+            },
+            {
+              "text": "cleaning",
+              "category": "in",
+              "why": "Sentence 7: snack money pays for cleaning."
+            },
+            {
+              "text": "sound systems",
+              "category": "in",
+              "why": "Sentence 7: it pays for the screens and sound systems."
+            },
+            {
+              "text": "parking",
+              "category": "out",
+              "why": "The passage never mentions parking."
+            }
+          ],
+          "passage": "popcorn",
+          "numbers": true,
+          "hint2": "Find each choice in the passage. Three of them are there.",
+          "hint3": "Look for the one you cannot find anywhere."
+        },
+        {
+          "id": "m6-t5",
+          "type": "mcq",
+          "prompt": "Now ANSWER.",
+          "stem": "Which of these is NOT mentioned as something snack money pays for?",
+          "options": [
+            {
+              "id": "a",
+              "text": "staff",
+              "why": "Snack money does pay for staff. Sentence 7. You are hunting for the one that is NOT there."
+            },
+            {
+              "id": "b",
+              "text": "cleaning",
+              "why": "Snack money does pay for cleaning. Sentence 7. You are hunting for the one that is NOT there."
+            },
+            {
+              "id": "c",
+              "text": "sound systems",
+              "why": "Snack money does pay for sound systems. Sentence 7. You are hunting for the one that is NOT there."
+            },
+            {
+              "id": "d",
+              "text": "parking",
+              "why": "Right. Staff, cleaning, screens and sound systems are listed. Parking is not.",
+              "correct": true
+            }
+          ],
+          "passage": "popcorn",
+          "numbers": true,
+          "hint2": "NOT turns the job around. Three of these ARE in the passage. Check each one.",
+          "hint3": "It is (c) or (d). One of them is in sentence 7. Choose the one that is NOT there."
+        },
+        {
+          "id": "m6-t7",
+          "type": "multi",
+          "stem": "Select the TWO statements the paragraph supports.",
+          "select": 2,
+          "options": [
+            {
+              "id": "a",
+              "text": "Popcorn costs a theatre only cents to make.",
+              "why": "Sentence 5: popcorn costs a theatre only cents to make.",
+              "correct": true
+            },
+            {
+              "id": "b",
+              "text": "Theatres make most of their money from tickets.",
+              "why": "Sentence 1 says theatres make surprisingly little money from tickets.",
+              "trap": "O"
+            },
+            {
+              "id": "c",
+              "text": "Most people see a new film in its first weeks.",
+              "why": "Sentence 3: by the later weeks, most people have already seen the film.",
+              "correct": true
+            },
+            {
+              "id": "d",
+              "text": "Fountain drinks cost a lot to make.",
+              "why": "Sentence 6 says the same is true of fountain drinks: they are cheap to make too.",
+              "trap": "O"
+            }
+          ],
+          "passage": "popcorn",
+          "numbers": true,
+          "hint2": "It asks for TWO. Check every choice against the passage. Keep all that match.",
+          "hint3": "(b) is wrong: sentence 1 says the reverse. Check the other three."
+        }
+      ]
+    },
+    {
+      "id": "own",
+      "title": "Run it on your own",
+      "mode": "solo",
+      "minutes": 12,
+      "tutorNote": "YOU DO on the same passage: one question with the proof step and the traps, one main-idea question, and one that asks for two answers. Watch for the choice that only sounds sensible from life (fresh popcorn tastes better). In the two-answer question, the third choice is worded differently from the paper set, so that a sentence in the passage says it outright.",
+      "steps": [
+        {
+          "id": "m6-o1",
+          "type": "find",
+          "prompt": "FIND the proof first. Tap the sentence.",
+          "question": "Why do many theatres pop fresh popcorn even when they already have enough?",
+          "passage": "popcorn",
+          "correct": [
+            9
+          ],
+          "hint2": "Sentence 10 says what they do. Read the sentence just before it.",
+          "hint3": "It is sentence 9 or sentence 10.",
+          "near": [
+            {
+              "sentences": [
+                10
+              ],
+              "why": "That sentence tells WHAT they do. Which sentence gives the reason?"
+            }
+          ],
+          "then": {
+            "id": "m6-o1a",
+            "type": "mcq",
+            "prompt": "CHECK each answer against your proof. Then ANSWER.",
+            "stem": "Why do many theatres pop fresh popcorn even when they already have enough?",
+            "options": [
+              {
+                "id": "a",
+                "text": "Fresh popcorn tastes better.",
+                "why": "It may be true in life, but the passage never says it.",
+                "trap": "N"
+              },
+              {
+                "id": "b",
+                "text": "The smell makes people want to buy some.",
+                "why": "Right. Sentence 9: the smell in the lobby is a kind of advertising.",
+                "correct": true
+              },
+              {
+                "id": "c",
+                "text": "Old popcorn has to be thrown out.",
+                "why": "The passage never says that.",
+                "trap": "N"
+              },
+              {
+                "id": "d",
+                "text": "Customers complain about stale popcorn.",
+                "why": "The passage never mentions complaints.",
+                "trap": "N"
+              }
+            ],
+            "passage": "popcorn"
+          }
+        },
+        {
+          "id": "m6-o1x",
+          "type": "sort",
+          "prompt": "Now ELIMINATE. Name the trap in each wrong answer.",
+          "question": "Why do many theatres pop fresh popcorn even when they already have enough?",
+          "categories": [
+            {
+              "id": "O",
+              "label": "THE OPPOSITE"
+            },
+            {
+              "id": "N",
+              "label": "NOT THERE"
+            },
+            {
+              "id": "T",
+              "label": "TRUE, BUT NOT WHAT THEY ASKED"
+            },
+            {
+              "id": "H",
+              "label": "HALF RIGHT"
+            }
+          ],
+          "cards": [
+            {
+              "text": "Fresh popcorn tastes better.",
+              "category": "N",
+              "why": "It may be true in life. But where is it in the passage? Nowhere."
+            },
+            {
+              "text": "Old popcorn has to be thrown out.",
+              "category": "N",
+              "why": "The passage never says that."
+            },
+            {
+              "text": "Customers complain about stale popcorn.",
+              "category": "N",
+              "why": "The passage never mentions complaints."
+            }
+          ],
+          "passage": "popcorn",
+          "numbers": true,
+          "hint2": "Check each wrong answer against the passage. Is it the reverse, missing, true but about something else, or only half right?",
+          "hint3": "THE OPPOSITE: the passage says the reverse. NOT THERE: the passage never says it. TRUE, BUT NOT WHAT THEY ASKED: it is in the passage. HALF RIGHT: part is right and part is wrong."
+        },
+        {
+          "id": "m6-o2",
+          "type": "mcq",
+          "prompt": "No single sentence proves a main idea. Check each answer against the whole paragraph.",
+          "stem": "Which sentence best states the main idea of the paragraph?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Popcorn is expensive at the movies.",
+              "why": "That is one detail. It leaves out tickets and why snacks matter.",
+              "trap": "H"
+            },
+            {
+              "id": "b",
+              "text": "Theatres depend on snack sales because they keep little of the ticket money.",
+              "why": "Right. It covers both halves: tickets earn little, so snacks matter.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "Studios make most of the money from films.",
+              "why": "Part of that is in the passage, but it leaves out the snack counter, which is half the paragraph.",
+              "trap": "H"
+            },
+            {
+              "id": "d",
+              "text": "Lowering snack prices does not work.",
+              "why": "That is one detail near the end.",
+              "trap": "T"
+            }
+          ],
+          "passage": "popcorn",
+          "hint2": "A main idea fits the whole paragraph, not one sentence.",
+          "hint3": "It is (b) or (c). Which one covers tickets AND snacks?"
+        },
+        {
+          "id": "m6-o3",
+          "type": "multi",
+          "stem": "Select the TWO statements the paragraph supports.",
+          "select": 2,
+          "options": [
+            {
+              "id": "a",
+              "text": "In a film's sixth week, the theatre keeps more of the ticket money than in the first week.",
+              "why": "Sentence 3: the theatre keeps more as the weeks go by.",
+              "correct": true
+            },
+            {
+              "id": "b",
+              "text": "Popcorn is the most popular snack.",
+              "why": "The passage never says which snack is most popular.",
+              "trap": "N"
+            },
+            {
+              "id": "c",
+              "text": "A theatre keeps the money it makes from snacks.",
+              "why": "Sentence 7: the money from snacks stays with the theatre.",
+              "correct": true
+            },
+            {
+              "id": "d",
+              "text": "Studios set the snack prices.",
+              "why": "The passage never says that. The snack money stays with the theatre.",
+              "trap": "N"
+            }
+          ],
+          "passage": "popcorn",
+          "numbers": true,
+          "hint2": "It asks for TWO. Check every choice against the passage. Keep all that match.",
+          "hint3": "(b) is not in the passage. Check the other three."
+        }
+      ]
+    },
+    {
+      "id": "own-2",
+      "title": "A new passage",
+      "mode": "solo",
+      "minutes": 12,
+      "tutorNote": "YOU DO on a new passage: three questions with the proof step, two of them followed by the traps, then a NOT question. Two trap cards accept a second label, because a wrong answer can sometimes be argued either way; what matters is that the student checks it against the passage.",
+      "steps": [
+        {
+          "id": "m6-p1",
+          "type": "find",
+          "prompt": "FIND the proof first. Tap the sentence.",
+          "question": "According to the paragraph, when do people yawn more?",
+          "passage": "yawn",
+          "correct": [
+            2,
+            3
+          ],
+          "hint2": "Search for MORE.",
+          "hint3": "It is sentence 3 or sentence 5.",
+          "near": [
+            {
+              "sentences": [
+                5
+              ],
+              "why": "That sentence is about CATCHING yawns from other people. Which sentence says when people yawn MORE?"
+            }
+          ],
+          "then": {
+            "id": "m6-p1a",
+            "type": "mcq",
+            "prompt": "CHECK each answer against your proof. Then ANSWER.",
+            "stem": "According to the paragraph, when do people yawn more?",
+            "options": [
+              {
+                "id": "a",
+                "text": "in cold rooms",
+                "why": "The passage says people yawn more in WARM rooms than in cold ones.",
+                "trap": "O"
+              },
+              {
+                "id": "b",
+                "text": "in warm rooms",
+                "why": "Right. Sentence 3: 'people yawn more in warm rooms than in cold ones.'",
+                "correct": true
+              },
+              {
+                "id": "c",
+                "text": "when they are with strangers",
+                "why": "The passage says yawns are caught more easily from friends and family than from strangers.",
+                "trap": "O"
+              },
+              {
+                "id": "d",
+                "text": "when they read about a yawn",
+                "why": "Reading about a yawn can START one. That is in the passage. But the question asks when people yawn MORE.",
+                "trap": "T"
+              }
+            ],
+            "passage": "yawn"
+          }
+        },
+        {
+          "id": "m6-p1x",
+          "type": "sort",
+          "prompt": "Now ELIMINATE. Name the trap in each wrong answer.",
+          "question": "According to the paragraph, when do people yawn more?",
+          "categories": [
+            {
+              "id": "O",
+              "label": "THE OPPOSITE"
+            },
+            {
+              "id": "N",
+              "label": "NOT THERE"
+            },
+            {
+              "id": "T",
+              "label": "TRUE, BUT NOT WHAT THEY ASKED"
+            },
+            {
+              "id": "H",
+              "label": "HALF RIGHT"
+            }
+          ],
+          "cards": [
+            {
+              "text": "in cold rooms",
+              "category": "O",
+              "why": "The passage says people yawn more in WARM rooms. That is the reverse."
+            },
+            {
+              "text": "when they are with strangers",
+              "category": "O",
+              "why": "The passage says yawns are caught more easily from friends and family than from strangers. That is the reverse."
+            },
+            {
+              "text": "when they read about a yawn",
+              "category": "T",
+              "accept": [
+                "N"
+              ],
+              "why": "Reading about a yawn can START one, and that is in the passage. But it does not say people yawn MORE. NOT THERE is right too."
+            }
+          ],
+          "passage": "yawn",
+          "numbers": true,
+          "hint2": "Check each wrong answer against the passage. Is it the reverse, missing, true but about something else, or only half right?",
+          "hint3": "THE OPPOSITE: the passage says the reverse. NOT THERE: the passage never says it. TRUE, BUT NOT WHAT THEY ASKED: it is in the passage. HALF RIGHT: part is right and part is wrong."
+        },
+        {
+          "id": "m6-p2",
+          "type": "find",
+          "prompt": "FIND the proof first. Tap the sentence.",
+          "question": "What might a deep yawn do, according to the paragraph?",
+          "passage": "yawn",
+          "correct": [
+            2
+          ],
+          "hint2": "Search for DEEP YAWN.",
+          "hint3": "It is sentence 1 or sentence 2.",
+          "near": [
+            {
+              "sentences": [
+                1
+              ],
+              "why": "That sentence tells what most people THINK a yawn means. Which sentence tells what a deep yawn might DO?"
+            }
+          ],
+          "then": {
+            "id": "m6-p2a",
+            "type": "mcq",
+            "prompt": "CHECK each answer against your proof. Then ANSWER.",
+            "stem": "What might a deep yawn do, according to the paragraph?",
+            "options": [
+              {
+                "id": "a",
+                "text": "warm the brain",
+                "why": "The passage says it may help COOL the brain down.",
+                "trap": "O"
+              },
+              {
+                "id": "b",
+                "text": "make you tired",
+                "why": "The passage says people think a yawn MEANS you are tired. It never says a yawn makes you tired.",
+                "trap": "N"
+              },
+              {
+                "id": "c",
+                "text": "help cool the brain",
+                "why": "Right. Sentence 2: it 'may help cool the brain down.'",
+                "correct": true
+              },
+              {
+                "id": "d",
+                "text": "show that you are bored",
+                "why": "That is what most people think a yawn MEANS. The question asks what a deep yawn might DO.",
+                "trap": "T"
+              }
+            ],
+            "passage": "yawn"
+          }
+        },
+        {
+          "id": "m6-p3",
+          "type": "find",
+          "prompt": "FIND the proof first. Tap the sentence.",
+          "question": "Why do researchers think contagious yawning may be linked to empathy?",
+          "passage": "yawn",
+          "correct": [
+            5
+          ],
+          "hint2": "Search for EMPATHY. Read to the end of that sentence.",
+          "hint3": "It is sentence 4 or sentence 5.",
+          "near": [
+            {
+              "sentences": [
+                4
+              ],
+              "why": "That sentence says yawning is catching. Which sentence gives the REASON for the link to empathy?"
+            }
+          ],
+          "then": {
+            "id": "m6-p3a",
+            "type": "mcq",
+            "prompt": "CHECK each answer against your proof. Then ANSWER.",
+            "stem": "Why do researchers think contagious yawning may be linked to empathy?",
+            "options": [
+              {
+                "id": "a",
+                "text": "Because yawns are catching.",
+                "why": "True, and it is in the passage. But it is not the reason for the link to empathy.",
+                "trap": "T"
+              },
+              {
+                "id": "b",
+                "text": "Because people catch yawns more easily from people they know well.",
+                "why": "Right. Sentence 5: more easily from friends and family than from strangers.",
+                "correct": true
+              },
+              {
+                "id": "c",
+                "text": "Because yawning cools the brain.",
+                "why": "It is in the passage, but it is a different idea.",
+                "trap": "T"
+              },
+              {
+                "id": "d",
+                "text": "Because tired people yawn.",
+                "why": "The passage does not give that as a reason.",
+                "trap": "N"
+              }
+            ],
+            "passage": "yawn"
+          }
+        },
+        {
+          "id": "m6-p3x",
+          "type": "sort",
+          "prompt": "Now ELIMINATE. Name the trap in each wrong answer.",
+          "question": "Why do researchers think contagious yawning may be linked to empathy?",
+          "categories": [
+            {
+              "id": "O",
+              "label": "THE OPPOSITE"
+            },
+            {
+              "id": "N",
+              "label": "NOT THERE"
+            },
+            {
+              "id": "T",
+              "label": "TRUE, BUT NOT WHAT THEY ASKED"
+            },
+            {
+              "id": "H",
+              "label": "HALF RIGHT"
+            }
+          ],
+          "cards": [
+            {
+              "text": "Because yawns are catching.",
+              "category": "T",
+              "why": "It is true, and it is in the passage. But it is not the REASON for the link to empathy."
+            },
+            {
+              "text": "Because yawning cools the brain.",
+              "category": "T",
+              "why": "It is in the passage, but it belongs to a different idea."
+            },
+            {
+              "text": "Because tired people yawn.",
+              "category": "N",
+              "accept": [
+                "T"
+              ],
+              "why": "The passage does not give that as a reason. NOT THERE and TRUE, BUT NOT WHAT THEY ASKED are both right here."
+            }
+          ],
+          "passage": "yawn",
+          "numbers": true,
+          "hint2": "Check each wrong answer against the passage. Is it the reverse, missing, true but about something else, or only half right?",
+          "hint3": "THE OPPOSITE: the passage says the reverse. NOT THERE: the passage never says it. TRUE, BUT NOT WHAT THEY ASKED: it is in the passage. HALF RIGHT: part is right and part is wrong."
+        },
+        {
+          "id": "m6-p4",
+          "type": "sort",
+          "prompt": "This question has NOT in it. First check each choice. Is it in the passage?",
+          "question": "Which is NOT given in the paragraph as something that can start a yawn?",
+          "categories": [
+            {
+              "id": "in",
+              "label": "IN THE PASSAGE"
+            },
+            {
+              "id": "out",
+              "label": "NOT IN THE PASSAGE"
+            }
+          ],
+          "cards": [
+            {
+              "text": "seeing a yawn",
+              "category": "in",
+              "why": "Sentence 4."
+            },
+            {
+              "text": "hearing a yawn",
+              "category": "in",
+              "why": "Sentence 4."
+            },
+            {
+              "text": "reading about a yawn",
+              "category": "in",
+              "why": "Sentence 4."
+            },
+            {
+              "text": "smelling food",
+              "category": "out",
+              "why": "The passage never mentions food."
+            }
+          ],
+          "passage": "yawn",
+          "numbers": true,
+          "hint2": "Find each choice in the passage. Three of them are there.",
+          "hint3": "Look for the one you cannot find anywhere."
+        },
+        {
+          "id": "m6-p5",
+          "type": "mcq",
+          "prompt": "Now ANSWER.",
+          "stem": "Which is NOT given in the paragraph as something that can start a yawn?",
+          "options": [
+            {
+              "id": "a",
+              "text": "seeing a yawn",
+              "why": "That IS in the passage. Sentence 4. You are hunting for the one that is NOT there."
+            },
+            {
+              "id": "b",
+              "text": "hearing a yawn",
+              "why": "That IS in the passage. Sentence 4. You are hunting for the one that is NOT there."
+            },
+            {
+              "id": "c",
+              "text": "reading about a yawn",
+              "why": "That IS in the passage. Sentence 4. You are hunting for the one that is NOT there."
+            },
+            {
+              "id": "d",
+              "text": "smelling food",
+              "why": "Right. Seeing, hearing and reading are listed. Smelling food is not.",
+              "correct": true
+            }
+          ],
+          "passage": "yawn",
+          "numbers": true,
+          "hint2": "NOT turns the job around. Three of these ARE in the passage. Check each one.",
+          "hint3": "It is (c) or (d). One of them is in sentence 4. Choose the one that is NOT there."
+        }
+      ]
+    },
+    {
+      "id": "home",
+      "title": "Home practice",
+      "mode": "solo",
+      "minutes": 14,
+      "tutorNote": "Home set: six questions on a new passage, with the traps named after the first two. One question has NOT and one asks for two answers. Assign after 'A new passage'.",
+      "steps": [
+        {
+          "id": "m6-h1",
+          "type": "find",
+          "prompt": "FIND the proof first. Tap the sentence.",
+          "question": "Why does flying in a V save energy for most of the geese?",
+          "passage": "geese",
+          "correct": [
+            3
+          ],
+          "hint2": "Search for AIR or LIFT.",
+          "hint3": "It is sentence 3 or sentence 4.",
+          "near": [
+            {
+              "sentences": [
+                4
+              ],
+              "why": "That sentence says they use less energy. Which sentence says WHY?"
+            },
+            {
+              "sentences": [
+                5
+              ],
+              "why": "That sentence is about the goose at the front, which gets no help."
+            }
+          ],
+          "then": {
+            "id": "m6-h1a",
+            "type": "mcq",
+            "prompt": "CHECK each answer against your proof. Then ANSWER.",
+            "stem": "Why does flying in a V save energy for most of the geese?",
+            "options": [
+              {
+                "id": "a",
+                "text": "The moving air from the goose ahead gives each bird a small lift.",
+                "why": "Right. Sentence 3.",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "The goose at the front gets the most help from the air.",
+                "why": "The passage says the goose at the front gets NO help.",
+                "trap": "O"
+              },
+              {
+                "id": "c",
+                "text": "Every bird can see the others.",
+                "why": "True, and it is in the passage. But that is the SECOND advantage, not why the V saves energy.",
+                "trap": "T"
+              },
+              {
+                "id": "d",
+                "text": "Geese flap their wings more slowly in the fall.",
+                "why": "The passage never says that.",
+                "trap": "N"
+              }
+            ],
+            "passage": "geese"
+          }
+        },
+        {
+          "id": "m6-h1x",
+          "type": "sort",
+          "prompt": "Now ELIMINATE. Name the trap in each wrong answer.",
+          "question": "Why does flying in a V save energy for most of the geese?",
+          "categories": [
+            {
+              "id": "O",
+              "label": "THE OPPOSITE"
+            },
+            {
+              "id": "N",
+              "label": "NOT THERE"
+            },
+            {
+              "id": "T",
+              "label": "TRUE, BUT NOT WHAT THEY ASKED"
+            },
+            {
+              "id": "H",
+              "label": "HALF RIGHT"
+            }
+          ],
+          "cards": [
+            {
+              "text": "The goose at the front gets the most help from the air.",
+              "category": "O",
+              "why": "The passage says the goose at the front gets NO help. That is the reverse."
+            },
+            {
+              "text": "Every bird can see the others.",
+              "category": "T",
+              "why": "It is true, and it is in the passage. But it is the second advantage, not why the V saves energy."
+            },
+            {
+              "text": "Geese flap their wings more slowly in the fall.",
+              "category": "N",
+              "why": "The passage never says that."
+            }
+          ],
+          "passage": "geese",
+          "numbers": true,
+          "hint2": "Check each wrong answer against the passage. Is it the reverse, missing, true but about something else, or only half right?",
+          "hint3": "THE OPPOSITE: the passage says the reverse. NOT THERE: the passage never says it. TRUE, BUT NOT WHAT THEY ASKED: it is in the passage. HALF RIGHT: part is right and part is wrong."
+        },
+        {
+          "id": "m6-h2",
+          "type": "find",
+          "prompt": "FIND the proof first. Tap the sentence.",
+          "question": "What happens when the lead goose gets tired?",
+          "passage": "geese",
+          "correct": [
+            6
+          ],
+          "hint2": "Search for TIRED.",
+          "hint3": "It is sentence 5 or sentence 6.",
+          "near": [
+            {
+              "sentences": [
+                5
+              ],
+              "why": "That sentence says the leader has the hardest job. Which sentence says what happens when it gets TIRED?"
+            }
+          ],
+          "then": {
+            "id": "m6-h2a",
+            "type": "mcq",
+            "prompt": "CHECK each answer against your proof. Then ANSWER.",
+            "stem": "What happens when the lead goose gets tired?",
+            "options": [
+              {
+                "id": "a",
+                "text": "It drops back, and the whole flock lands to rest.",
+                "why": "The first half is right: it drops back. The second half is wrong: the passage never says the flock lands.",
+                "trap": "H"
+              },
+              {
+                "id": "b",
+                "text": "It drops back and another goose takes its place.",
+                "why": "Right. Sentence 6.",
+                "correct": true
+              },
+              {
+                "id": "c",
+                "text": "It flies faster to stay at the front.",
+                "why": "The passage says it DROPS BACK.",
+                "trap": "O"
+              },
+              {
+                "id": "d",
+                "text": "Geese honk while they fly.",
+                "why": "True, and it is in the passage. But it is not what happens when the leader gets tired.",
+                "trap": "T"
+              }
+            ],
+            "passage": "geese"
+          }
+        },
+        {
+          "id": "m6-h2x",
+          "type": "sort",
+          "prompt": "Now ELIMINATE. Name the trap in each wrong answer.",
+          "question": "What happens when the lead goose gets tired?",
+          "categories": [
+            {
+              "id": "O",
+              "label": "THE OPPOSITE"
+            },
+            {
+              "id": "N",
+              "label": "NOT THERE"
+            },
+            {
+              "id": "T",
+              "label": "TRUE, BUT NOT WHAT THEY ASKED"
+            },
+            {
+              "id": "H",
+              "label": "HALF RIGHT"
+            }
+          ],
+          "cards": [
+            {
+              "text": "It drops back, and the whole flock lands to rest.",
+              "category": "H",
+              "why": "The first half is right. The second half is wrong: the passage never says the flock lands. Read to the end of every answer."
+            },
+            {
+              "text": "It flies faster to stay at the front.",
+              "category": "O",
+              "why": "The passage says it DROPS BACK. That is the reverse."
+            },
+            {
+              "text": "Geese honk while they fly.",
+              "category": "T",
+              "why": "It is true, and it is in the passage. But it does not answer this question."
+            }
+          ],
+          "passage": "geese",
+          "numbers": true,
+          "hint2": "Check each wrong answer against the passage. Is it the reverse, missing, true but about something else, or only half right?",
+          "hint3": "THE OPPOSITE: the passage says the reverse. NOT THERE: the passage never says it. TRUE, BUT NOT WHAT THEY ASKED: it is in the passage. HALF RIGHT: part is right and part is wrong."
+        },
+        {
+          "id": "m6-h3",
+          "type": "find",
+          "prompt": "FIND the proof first. Tap the sentence.",
+          "question": "What do scientists think the honking is for?",
+          "passage": "geese",
+          "correct": [
+            9
+          ],
+          "hint2": "Search for HONKING.",
+          "hint3": "It is sentence 8 or sentence 9.",
+          "near": [
+            {
+              "sentences": [
+                8
+              ],
+              "why": "That sentence says geese honk. Which sentence says what the honking is FOR?"
+            }
+          ],
+          "then": {
+            "id": "m6-h3a",
+            "type": "mcq",
+            "prompt": "CHECK each answer against your proof. Then ANSWER.",
+            "stem": "What do scientists think the honking is for?",
+            "options": [
+              {
+                "id": "a",
+                "text": "to scare away other birds",
+                "why": "The passage never says that.",
+                "trap": "N"
+              },
+              {
+                "id": "b",
+                "text": "to help the geese keep track of one another",
+                "why": "Right. Sentence 9.",
+                "correct": true
+              },
+              {
+                "id": "c",
+                "text": "to help the flock use less energy",
+                "why": "Using less energy is in the passage, but that is what the V shape does, not the honking.",
+                "trap": "T"
+              },
+              {
+                "id": "d",
+                "text": "to tell the leader to speed up",
+                "why": "The passage never says that.",
+                "trap": "N"
+              }
+            ],
+            "passage": "geese"
+          }
+        },
+        {
+          "id": "m6-h4",
+          "type": "find",
+          "prompt": "Tap the sentence with the word in it.",
+          "question": "What does the word \"advantage\" mean in this paragraph?",
+          "passage": "geese",
+          "correct": [
+            7
+          ],
+          "found": "Right. The word is in sentence 7.",
+          "other": "That sentence does not have the word in it. Search for ADVANTAGE.",
+          "hint2": "Search for ADVANTAGE. Read what comes right after it.",
+          "hint3": "It is sentence 6 or sentence 7.",
+          "then": {
+            "id": "m6-h4a",
+            "type": "mcq",
+            "prompt": "Try each meaning in the sentence. Which one still makes sense?",
+            "stem": "The word \"advantage\" in the paragraph means",
+            "options": [
+              {
+                "id": "a",
+                "text": "a problem",
+                "why": "Seeing the others HELPS the flock stay together. That is the reverse of a problem.",
+                "trap": "O"
+              },
+              {
+                "id": "b",
+                "text": "something that helps",
+                "why": "Right. Seeing the others helps the flock stay together.",
+                "correct": true
+              },
+              {
+                "id": "c",
+                "text": "a direction",
+                "why": "Nothing in that sentence is about direction.",
+                "trap": "N"
+              },
+              {
+                "id": "d",
+                "text": "a kind of bird",
+                "why": "The sentence is about the V shape, not a kind of bird.",
+                "trap": "N"
+              }
+            ],
+            "passage": "geese"
+          }
+        },
+        {
+          "id": "m6-h5",
+          "type": "mcq",
+          "stem": "Which of these is NOT something the paragraph says about the goose at the front?",
+          "options": [
+            {
+              "id": "a",
+              "text": "It gets no help from the moving air.",
+              "why": "The passage does say this. Sentence 5. You are hunting for the one it does NOT say."
+            },
+            {
+              "id": "b",
+              "text": "It has the hardest job.",
+              "why": "The passage does say this. Sentence 5. You are hunting for the one it does NOT say."
+            },
+            {
+              "id": "c",
+              "text": "It drops back when it gets tired.",
+              "why": "The passage does say this. Sentence 6. You are hunting for the one it does NOT say."
+            },
+            {
+              "id": "d",
+              "text": "It is always the oldest goose.",
+              "why": "Right. The passage never says how old the leader is.",
+              "correct": true
+            }
+          ],
+          "passage": "geese",
+          "numbers": true,
+          "hint2": "NOT turns the job around. Three of these ARE in the passage. Check each one.",
+          "hint3": "It is (c) or (d). One of them is in sentence 6. Choose the one that is NOT there."
+        },
+        {
+          "id": "m6-h6",
+          "type": "multi",
+          "stem": "Select the TWO statements the paragraph supports.",
+          "select": 2,
+          "options": [
+            {
+              "id": "a",
+              "text": "A goose flying alone uses more energy than most geese in a V.",
+              "why": "Sentence 4: most of the flock uses less energy than a bird flying alone.",
+              "correct": true
+            },
+            {
+              "id": "b",
+              "text": "Geese fly only during the day.",
+              "why": "Sentence 9 talks about honking at night, so they fly at night too.",
+              "trap": "O"
+            },
+            {
+              "id": "c",
+              "text": "More than one goose leads the flock during a long flight.",
+              "why": "Sentence 6: when the leader gets tired, another goose takes its place.",
+              "correct": true
+            },
+            {
+              "id": "d",
+              "text": "Geese honk only when they are in danger.",
+              "why": "The passage never mentions danger.",
+              "trap": "N"
+            }
+          ],
+          "passage": "geese",
+          "numbers": true,
+          "hint2": "It asks for TWO. Check every choice against the passage. Keep all that match.",
+          "hint3": "(b) is wrong: sentence 9 mentions night. Check the other three."
+        }
+      ]
+    },
+    {
+      "id": "check",
+      "title": "Check",
+      "mode": "solo",
+      "minutes": 14,
+      "tutorNote": "Mastery check: six questions on a new passage, with the traps named after the first two, one NOT question and one that asks for two answers. Guide threshold: five of six right on the first try here and in the home set, on two different days, with the proof tapped before each answer, and at least seven of the twelve trap cards labelled correctly.",
+      "steps": [
+        {
+          "id": "m6-c1",
+          "type": "find",
+          "prompt": "FIND the proof first. Tap the sentence.",
+          "question": "According to the paragraph, how does salt stop ice from sticking to the road?",
+          "passage": "salt",
+          "correct": [
+            3
+          ],
+          "hint2": "Search for WORKS BECAUSE.",
+          "hint3": "It is sentence 2 or sentence 3.",
+          "near": [
+            {
+              "sentences": [
+                2
+              ],
+              "why": "That sentence says how salt does NOT work. Which sentence says how it DOES work?"
+            },
+            {
+              "sentences": [
+                1
+              ],
+              "why": "That sentence says when trucks spread salt. Which sentence says HOW salt works?"
+            }
+          ],
+          "then": {
+            "id": "m6-c1a",
+            "type": "mcq",
+            "prompt": "CHECK each answer against your proof. Then ANSWER.",
+            "stem": "According to the paragraph, how does salt stop ice from sticking to the road?",
+            "options": [
+              {
+                "id": "a",
+                "text": "Salt melts the ice by warming the road.",
+                "why": "The passage says salt does NOT melt ice by being warm.",
+                "trap": "O"
+              },
+              {
+                "id": "b",
+                "text": "Salty water freezes at a lower temperature than plain water.",
+                "why": "Right. Sentence 3.",
+                "correct": true
+              },
+              {
+                "id": "c",
+                "text": "Sand gives tires something to grip.",
+                "why": "True, and it is in the passage. But it is about sand, not about how salt works.",
+                "trap": "T"
+              },
+              {
+                "id": "d",
+                "text": "Salt soaks up the melted snow.",
+                "why": "The passage never says that.",
+                "trap": "N"
+              }
+            ],
+            "passage": "salt"
+          }
+        },
+        {
+          "id": "m6-c1x",
+          "type": "sort",
+          "prompt": "Now ELIMINATE. Name the trap in each wrong answer.",
+          "question": "According to the paragraph, how does salt stop ice from sticking to the road?",
+          "categories": [
+            {
+              "id": "O",
+              "label": "THE OPPOSITE"
+            },
+            {
+              "id": "N",
+              "label": "NOT THERE"
+            },
+            {
+              "id": "T",
+              "label": "TRUE, BUT NOT WHAT THEY ASKED"
+            },
+            {
+              "id": "H",
+              "label": "HALF RIGHT"
+            }
+          ],
+          "cards": [
+            {
+              "text": "Salt melts the ice by warming the road.",
+              "category": "O",
+              "accept": [
+                "H"
+              ],
+              "why": "The passage says salt does NOT melt ice by being warm. That is the reverse. (Only the WARMING part is wrong, so HALF RIGHT is right too.)"
+            },
+            {
+              "text": "Sand gives tires something to grip.",
+              "category": "T",
+              "why": "It is true, and it is in the passage. But it does not say how SALT works."
+            },
+            {
+              "text": "Salt soaks up the melted snow.",
+              "category": "N",
+              "why": "The passage never says that."
+            }
+          ],
+          "passage": "salt",
+          "numbers": true,
+          "hint2": "Check each wrong answer against the passage. Is it the reverse, missing, true but about something else, or only half right?",
+          "hint3": "THE OPPOSITE: the passage says the reverse. NOT THERE: the passage never says it. TRUE, BUT NOT WHAT THEY ASKED: it is in the passage. HALF RIGHT: part is right and part is wrong."
+        },
+        {
+          "id": "m6-c2",
+          "type": "find",
+          "prompt": "FIND the proof first. Tap the sentence.",
+          "question": "Why do many cities spread sand on the coldest days?",
+          "passage": "salt",
+          "correct": [
+            5,
+            6
+          ],
+          "hint2": "Search for SAND. Read the sentence before it too.",
+          "hint3": "It is in sentences 5 and 6.",
+          "near": [
+            {
+              "sentences": [
+                10
+              ],
+              "why": "That sentence is about why plain salt is common. Which sentences are about SAND and the coldest days?"
+            }
+          ],
+          "then": {
+            "id": "m6-c2a",
+            "type": "mcq",
+            "prompt": "CHECK each answer against your proof. Then ANSWER.",
+            "stem": "Why do many cities spread sand on the coldest days?",
+            "options": [
+              {
+                "id": "a",
+                "text": "Salt hardly works in extreme cold, and sand melts the ice instead.",
+                "why": "The first half is right. The second half is wrong: the passage says sand does not melt anything.",
+                "trap": "H"
+              },
+              {
+                "id": "b",
+                "text": "Salt hardly works in extreme cold, and sand gives tires grip.",
+                "why": "Right. Sentences 5 and 6.",
+                "correct": true
+              },
+              {
+                "id": "c",
+                "text": "Sand is easier to spread than salt.",
+                "why": "The passage never says that.",
+                "trap": "N"
+              },
+              {
+                "id": "d",
+                "text": "Salt rusts cars and bridges.",
+                "why": "True, and it is in the passage. But it is not the reason cities use sand on the coldest days.",
+                "trap": "T"
+              }
+            ],
+            "passage": "salt"
+          }
+        },
+        {
+          "id": "m6-c2x",
+          "type": "sort",
+          "prompt": "Now ELIMINATE. Name the trap in each wrong answer.",
+          "question": "Why do many cities spread sand on the coldest days?",
+          "categories": [
+            {
+              "id": "O",
+              "label": "THE OPPOSITE"
+            },
+            {
+              "id": "N",
+              "label": "NOT THERE"
+            },
+            {
+              "id": "T",
+              "label": "TRUE, BUT NOT WHAT THEY ASKED"
+            },
+            {
+              "id": "H",
+              "label": "HALF RIGHT"
+            }
+          ],
+          "cards": [
+            {
+              "text": "Salt hardly works in extreme cold, and sand melts the ice instead.",
+              "category": "H",
+              "why": "The first half is right. The second half is wrong: sand does not melt anything. Read to the end of every answer."
+            },
+            {
+              "text": "Sand is easier to spread than salt.",
+              "category": "N",
+              "why": "The passage never says that."
+            },
+            {
+              "text": "Salt rusts cars and bridges.",
+              "category": "T",
+              "why": "It is true, and it is in the passage. But it does not answer this question."
+            }
+          ],
+          "passage": "salt",
+          "numbers": true,
+          "hint2": "Check each wrong answer against the passage. Is it the reverse, missing, true but about something else, or only half right?",
+          "hint3": "THE OPPOSITE: the passage says the reverse. NOT THERE: the passage never says it. TRUE, BUT NOT WHAT THEY ASKED: it is in the passage. HALF RIGHT: part is right and part is wrong."
+        },
+        {
+          "id": "m6-c3",
+          "type": "find",
+          "prompt": "FIND the proof first. Tap the sentence.",
+          "question": "How can road salt harm living things?",
+          "passage": "salt",
+          "correct": [
+            8
+          ],
+          "hint2": "Search for HARM.",
+          "hint3": "It is sentence 7 or sentence 8.",
+          "near": [
+            {
+              "sentences": [
+                7
+              ],
+              "why": "That sentence says salt causes damage. Which sentence says WHAT it harms?"
+            }
+          ],
+          "then": {
+            "id": "m6-c3a",
+            "type": "mcq",
+            "prompt": "CHECK each answer against your proof. Then ANSWER.",
+            "stem": "How can road salt harm living things?",
+            "options": [
+              {
+                "id": "a",
+                "text": "It washes into streams and lakes, where it can harm fish and plants.",
+                "why": "Right. Sentence 8.",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "It makes roads freeze faster.",
+                "why": "Salt keeps ice from sticking. It does not make roads freeze.",
+                "trap": "O"
+              },
+              {
+                "id": "c",
+                "text": "It rusts cars and bridges.",
+                "why": "True, and it is in the passage. But cars and bridges are not living things.",
+                "trap": "T"
+              },
+              {
+                "id": "d",
+                "text": "It makes the air colder.",
+                "why": "The passage never says that.",
+                "trap": "N"
+              }
+            ],
+            "passage": "salt"
+          }
+        },
+        {
+          "id": "m6-c4",
+          "type": "find",
+          "prompt": "Tap the sentence with the word in it.",
+          "question": "What does the word \"limits\" mean in this paragraph?",
+          "passage": "salt",
+          "correct": [
+            4
+          ],
+          "found": "Right. The word is in sentence 4.",
+          "other": "That sentence does not have the word in it. Search for LIMITS.",
+          "hint2": "Search for LIMITS. Then read the next sentence.",
+          "hint3": "It is sentence 4 or sentence 7.",
+          "then": {
+            "id": "m6-c4a",
+            "type": "mcq",
+            "prompt": "Try each meaning in the sentence. Which one still makes sense?",
+            "stem": "The word \"limits\" in the paragraph means",
+            "options": [
+              {
+                "id": "a",
+                "text": "rules that drivers must follow",
+                "why": "That is another meaning of the word, as in a speed limit. It does not fit this sentence.",
+                "trap": "N"
+              },
+              {
+                "id": "b",
+                "text": "times when it does not work well",
+                "why": "Right. The next sentence explains: below about minus ten, salt works slowly.",
+                "correct": true
+              },
+              {
+                "id": "c",
+                "text": "high prices",
+                "why": "The passage says salt is cheap.",
+                "trap": "O"
+              },
+              {
+                "id": "d",
+                "text": "different kinds of salt",
+                "why": "The sentence is not about kinds of salt.",
+                "trap": "N"
+              }
+            ],
+            "passage": "salt"
+          }
+        },
+        {
+          "id": "m6-c5",
+          "type": "mcq",
+          "stem": "Which of these is NOT mentioned as something salt damages or harms?",
+          "options": [
+            {
+              "id": "a",
+              "text": "cars",
+              "why": "Cars ARE mentioned. Sentence 8. You are hunting for the one that is NOT there."
+            },
+            {
+              "id": "b",
+              "text": "bridges",
+              "why": "Bridges ARE mentioned. Sentence 8. You are hunting for the one that is NOT there."
+            },
+            {
+              "id": "c",
+              "text": "fish",
+              "why": "Fish ARE mentioned. Sentence 8. You are hunting for the one that is NOT there."
+            },
+            {
+              "id": "d",
+              "text": "road signs",
+              "why": "Right. Cars, bridges, fish and plants are listed. Road signs are not.",
+              "correct": true
+            }
+          ],
+          "passage": "salt",
+          "numbers": true,
+          "hint2": "NOT turns the job around. Three of these ARE in the passage. Check each one.",
+          "hint3": "It is (c) or (d). One of them is in sentence 8. Choose the one that is NOT there."
+        },
+        {
+          "id": "m6-c6",
+          "type": "multi",
+          "stem": "Select the TWO statements the paragraph supports.",
+          "select": 2,
+          "options": [
+            {
+              "id": "a",
+              "text": "Salt works best on the coldest days of winter.",
+              "why": "Sentence 5: in extreme cold it hardly works at all.",
+              "trap": "O"
+            },
+            {
+              "id": "b",
+              "text": "Mixing salt with beet juice lets cities use less salt.",
+              "why": "Sentence 9: it helps the salt stick, so less is needed.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "Sand melts ice.",
+              "why": "Sentence 6: sand does not melt anything.",
+              "trap": "O"
+            },
+            {
+              "id": "d",
+              "text": "Plain salt is still used more than anything else.",
+              "why": "Sentence 10: plain salt is still the most common choice.",
+              "correct": true
+            }
+          ],
+          "passage": "salt",
+          "numbers": true,
+          "hint2": "It asks for TWO. Check every choice against the passage. Keep all that match.",
+          "hint3": "(a) is wrong: sentence 5 says it hardly works in extreme cold. Check the other three."
+        }
+      ]
+    }
+  ]
+}

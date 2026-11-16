@@ -35,4 +35,4 @@ export function sectionItems(section) {
   return out;
 }
 
-export const SCORED = new Set(["match", "job", "find", "verify", "mcq", "multi", "sort"]);
+export const SCORED = new Set(["match", "job", "find", "verify", "mcq", "multi", "sort", "claim", "order"]);

@@ -1,17 +1,24 @@
-// Student pages: home (modules and sections) and the section player.
-// Routes: #/  and  #/s/<moduleId>/<sectionId>
+// Student pages: home (next steps, then modules and their sections) and the section player.
+// Routes: #/   #/m/<moduleId> (home, with that module open)   #/s/<moduleId>/<sectionId>
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { db, requireRole, signOutAndLeave, urls, el } from "./auth.js";
 import { loadAllModules, sectionItems } from "./content.js";
+import { markLines } from "./marks.js";
 import { loadStudentState, markFeedbackSeen } from "./store.js";
 import { openSection } from "./player.js";
 
 const { user, profile } = await requireRole("student");
-const uid = user.uid;
+// Work is filed under the student's "filing id": the id of their first sign-in account.
+// A PIN change gives them a new sign-in account but keeps the filing id (stored as `rid`
+// on their student record), so nothing already saved has to move.
+const idMatch = (user.email || "").match(/^(.+)\.\d+@osslt\.tutorwise\.ca$/);
+let uid = user.uid;
 const app = document.getElementById("app");
 
+// Shown only to a student who also has other modules on the main page.
+const allLink = el("a", { class: "btn btn-small", href: urls.signIn, hidden: true }, "All my modules");
 document.getElementById("meta").append(
-  el("a", { class: "btn btn-small", href: urls.signIn }, "All my modules"),
+  allLink,
   el("span", {}, profile.displayName),
   el("button", { class: "btn btn-small", type: "button", onclick: signOutAndLeave }, "Sign out"),
 );
@@ -23,13 +30,19 @@ catch (e) { console.error(e); app.replaceChildren(el("p", { class: "msg msg-bad"
 // Show only the reading modules the tutor has given this student
 // (the list lives in osslt_students/{name-slug}.modules).
 try {
-  const m = (user.email || "").match(/^(.+)\.\d+@osslt\.tutorwise\.ca$/);
+  const m = idMatch;
   if (m) {
     const s = await getDoc(doc(db, "osslt_students", m[1]));
-    const given = s.exists() && Array.isArray(s.data().modules) ? s.data().modules : [];
+    if (s.exists() && s.data().rid) uid = s.data().rid;
+    const list = s.exists() ? s.data().modules : null;
+    const given = Array.isArray(list) ? list : [];
+    const readingIds = new Set(modules.map((x) => x.id));
+    // No list saved (an older record) means the main page shows its own modules.
+    allLink.hidden = Array.isArray(list) && !list.some((id) => !readingIds.has(id));
     modules = modules.filter((x) => given.includes(x.id));
-  }
-} catch (e) { console.error(e); modules = []; }
+  } else allLink.hidden = false;
+} catch (e) { console.error(e); modules = []; allLink.hidden = false; }
+if (!modules.length) allLink.hidden = false;
 
 let player = null;
 let flash = "";
@@ -41,6 +54,7 @@ route();
 async function route() {
   if (player) { const p = player; player = null; p.leave(); }
   const m = location.hash.match(/^#\/s\/([^/]+)\/([^/]+)$/);
+  const openModule = location.hash.match(/^#\/m\/([^/]+)$/)?.[1] || null;
   app.replaceChildren(el("p", { class: "loading" }, "Loading…"));
   let state;
   try { state = await loadStudentState(uid); }
@@ -66,7 +80,7 @@ async function route() {
   document.body.classList.remove("in-player");
   app.className = "wrap";
   document.title = "Reading | TutorWise";
-  renderHome(state);
+  renderHome(state, openModule);
 }
 
 function isOpen(state, module, section) {
@@ -78,7 +92,50 @@ function statusOf(state, module, section) {
   return p?.status === "done" ? "done" : p?.status === "in_progress" ? "in_progress" : "not_started";
 }
 
-function renderHome(state) {
+/**
+ * The next thing to do, in module order: the first section the student may open and has
+ * not finished, once for work alone and once for work with the tutor.
+ */
+function nextSteps(state) {
+  let solo = null, withTutor = null, left = 0, n = 0;
+  for (const mod of modules) for (const s of mod.sections) {
+    n += 1;
+    if (statusOf(state, mod, s) === "done") continue;
+    left += 1;
+    if (s.mode === "solo") { if (!solo && isOpen(state, mod, s)) solo = { mod, s, n }; }
+    else if (!withTutor) withTutor = { mod, s, n };
+  }
+  return { solo, withTutor, left };
+}
+
+function nextCard(state) {
+  const { solo, withTutor, left } = nextSteps(state);
+  const row = (kind, hit, primary, none) => {
+    if (!hit) return el("div", { class: "next-row" }, el("div", {}, el("p", { class: "next-kind" }, kind), el("p", { class: "muted" }, none)));
+    const st = statusOf(state, hit.mod, hit.s);
+    const verb = st === "in_progress" ? "Keep going" : "Start";
+    return el("div", { class: "next-row" },
+      el("div", {},
+        el("p", { class: "next-kind" }, kind),
+        el("p", { class: "next-title" }, hit.s.title),
+        el("p", { class: "muted small" }, `Module ${hit.mod.number}: ${hit.mod.title} · about ${hit.s.minutes} minutes`)),
+      el("a", { class: "btn" + (primary ? " btn-primary" : ""), href: `#/s/${hit.mod.id}/${hit.s.id}`, "aria-label": `${verb}: ${hit.s.title}` }, verb));
+  };
+  if (!left) {
+    return el("section", { class: "card next-card", "aria-labelledby": "next-h" },
+      el("h2", { id: "next-h" }, "Your next steps"),
+      el("p", {}, "You have finished every lesson here. You can do any of them again."));
+  }
+  // Whichever comes first in the order of the lessons is listed first and gets the main button.
+  const soloFirst = solo && (!withTutor || solo.n < withTutor.n);
+  const alone = row("On your own", solo, soloFirst, "Nothing to do on your own right now. Your tutor will open the next part.");
+  const together = row("With your tutor", withTutor, !soloFirst, "No more lessons with your tutor here.");
+  return el("section", { class: "card next-card", "aria-labelledby": "next-h" },
+    el("h2", { id: "next-h" }, "Your next steps"),
+    ...(soloFirst ? [alone, together] : [together, alone]));
+}
+
+function renderHome(state, openModule) {
   const out = [el("h1", {}, `Hi, ${profile.displayName}`)];
   if (flash) { out.push(el("p", { class: "msg msg-ok", role: "status" }, flash)); flash = ""; }
 
@@ -91,12 +148,11 @@ function renderHome(state) {
         const mod = modules.find((x) => x.id === w.moduleId);
         const sec = mod?.sections.find((s) => s.id === w.sectionId);
         const item = sec && sectionItems(sec).find((i) => i.id === w.itemId);
-        const max = w.rubricMax ?? mod?.rubrics?.[item?.rubric]?.max;
         return el("li", { class: "feedback-item" },
           el("p", { class: "muted" }, `${mod?.title || ""} · ${sec?.title || ""}`),
           item ? el("p", {}, el("strong", {}, item.stem)) : null,
-          el("p", {}, "You wrote: ", el("em", {}, w.text)),
-          w.rubricScore != null ? el("p", {}, `Score: ${w.rubricScore} out of ${max}`) : null,
+          el("p", {}, "You wrote: ", el("em", { class: "you-wrote" }, w.text)),
+          ...markLines(mod, item, w).map((line) => el("p", {}, line)),
           w.tutorComment ? el("p", {}, w.tutorComment) : null);
       }))));
     for (const w of fresh) if (!w.seenAt && !seenThisVisit.has(w.id)) { seenThisVisit.add(w.id); markFeedbackSeen(w.id).catch(() => {}); }
@@ -106,16 +162,32 @@ function renderHome(state) {
     out.push(el("div", { class: "card" },
       el("p", {}, "Your tutor has not given you any reading lessons yet."),
       el("a", { class: "btn", href: urls.signIn }, "Go to all my modules")));
+    app.replaceChildren(...out);
+    return;
   }
-  for (const mod of modules) {
+
+  out.push(nextCard(state));
+
+  // One card per module. The module with the next step in it starts open; the rest are folded.
+  const { solo, withTutor } = nextSteps(state);
+  const current = openModule || (solo || withTutor)?.mod.id || modules[0].id;
+  let total = 0, finished = 0;
+  const cards = modules.map((mod) => {
     const done = mod.sections.filter((s) => statusOf(state, mod, s) === "done").length;
-    out.push(el("section", { class: "card module-card", "aria-labelledby": "mh-" + mod.id },
-      el("p", { class: "muted module-num" }, `Module ${mod.number} · ${done} of ${mod.sections.length} sections done`),
-      el("h2", { id: "mh-" + mod.id }, mod.title),
-      el("p", {}, mod.goal),
-      el("ol", { class: "section-list" }, mod.sections.map((s) => sectionRow(state, mod, s)))));
-  }
+    total += mod.sections.length; finished += done;
+    return el("details", { class: "card module-card", id: "mod-" + mod.id, open: mod.id === current },
+      el("summary", {},
+        el("span", { class: "module-num muted" }, `Module ${mod.number}`),
+        el("span", { class: "module-name" }, mod.title),
+        el("span", { class: `status ${done === mod.sections.length ? "status-done" : done ? "status-in_progress" : ""}` }, `${done} of ${mod.sections.length} done`)),
+      el("p", { class: "module-goal" }, mod.goal),
+      el("ol", { class: "section-list" }, mod.sections.map((s) => sectionRow(state, mod, s))));
+  });
+  out.push(el("h2", { class: "all-h" }, "All your lessons"),
+    el("p", { class: "muted small" }, `${finished} of ${total} parts done. Tap a module to see its parts.`),
+    ...cards);
   app.replaceChildren(...out);
+  if (openModule) document.getElementById("mod-" + openModule)?.scrollIntoView({ block: "start" });
 }
 
 function sectionRow(state, mod, s) {

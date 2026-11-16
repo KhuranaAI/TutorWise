@@ -1509,6 +1509,362 @@
           "model": "I need a person or a group: who the article is written for. One part."
         }
       ]
+    },
+    {
+      "id": "check-b",
+      "title": "Check, second day",
+      "mode": "solo",
+      "minutes": 10,
+      "tutorNote": "Mastery check, form B, for a different day from 'Check'. Ten new questions: three two-part, one NOT. Guide threshold: nine of ten on the first attempt with no hints, on both forms.",
+      "steps": [
+        {
+          "id": "m1-b1",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Where do the buses leave from on Saturdays?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "place",
+              "kindDistractors": [
+                "time",
+                "person",
+                "reason"
+              ],
+              "about": "where the buses leave from on Saturdays",
+              "aboutDistractors": [
+                {
+                  "text": "the buses",
+                  "why": "topic"
+                },
+                {
+                  "text": "when the buses leave on Saturdays",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a place: where the buses leave from on Saturdays. One part."
+        },
+        {
+          "id": "m1-b2",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Why did the store close early on Friday?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "reason",
+              "kindDistractors": [
+                "time",
+                "place",
+                "thing"
+              ],
+              "about": "the store closing early on Friday",
+              "aboutDistractors": [
+                {
+                  "text": "the store",
+                  "why": "topic"
+                },
+                {
+                  "text": "when the store opens on Saturday",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a reason: why the store closed early on Friday. One part."
+        },
+        {
+          "id": "m1-b3",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "What did Sam forget, and how did he get it back?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "thing",
+              "kindDistractors": [
+                "person",
+                "place",
+                "time"
+              ],
+              "about": "what Sam forgot",
+              "aboutDistractors": [
+                {
+                  "text": "Sam",
+                  "why": "topic"
+                },
+                {
+                  "text": "how Sam got it back",
+                  "why": "otherPart"
+                }
+              ]
+            },
+            {
+              "kind": "way",
+              "kindDistractors": [
+                "reason",
+                "amount",
+                "thing"
+              ],
+              "about": "how Sam got it back",
+              "aboutDistractors": [
+                {
+                  "text": "Sam",
+                  "why": "topic"
+                },
+                {
+                  "text": "what Sam forgot",
+                  "why": "otherPart"
+                }
+              ]
+            }
+          ],
+          "model": "Two parts. Part one: a thing Sam forgot. Part two: a way he got it back."
+        },
+        {
+          "id": "m1-b4",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "When does the pool open in the summer?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "time",
+              "kindDistractors": [
+                "place",
+                "amount",
+                "reason"
+              ],
+              "about": "the pool opening in the summer",
+              "aboutDistractors": [
+                {
+                  "text": "the pool",
+                  "why": "topic"
+                },
+                {
+                  "text": "how much the pool costs",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a time: when the pool opens in the summer. One part."
+        },
+        {
+          "id": "m1-b5",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Which of these is NOT a job the volunteers do?",
+          "flipWord": "NOT",
+          "parts": [
+            {
+              "kind": "choice",
+              "kindDistractors": [
+                "reason",
+                "time",
+                "place"
+              ],
+              "about": "jobs the volunteers do",
+              "aboutDistractors": [
+                {
+                  "text": "the volunteers",
+                  "why": "topic"
+                },
+                {
+                  "text": "why the volunteers help",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need one choice. Three choices will be jobs the volunteers do. I need the one that is NOT a job they do."
+        },
+        {
+          "id": "m1-b6",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Who started the club, and why did they start it?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "person",
+              "kindDistractors": [
+                "time",
+                "thing",
+                "place"
+              ],
+              "about": "who started the club",
+              "aboutDistractors": [
+                {
+                  "text": "the club",
+                  "why": "topic"
+                },
+                {
+                  "text": "why they started the club",
+                  "why": "otherPart"
+                }
+              ]
+            },
+            {
+              "kind": "reason",
+              "kindDistractors": [
+                "person",
+                "way",
+                "time"
+              ],
+              "about": "why they started the club",
+              "aboutDistractors": [
+                {
+                  "text": "the club",
+                  "why": "topic"
+                },
+                {
+                  "text": "who started the club",
+                  "why": "otherPart"
+                }
+              ]
+            }
+          ],
+          "model": "Two parts. Part one: a person or a group, who started the club. Part two: the reason they started it."
+        },
+        {
+          "id": "m1-b7",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "How long does the ferry ride take?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "amount",
+              "kindDistractors": [
+                "way",
+                "place",
+                "reason"
+              ],
+              "about": "how long the ferry ride takes",
+              "aboutDistractors": [
+                {
+                  "text": "the ferry",
+                  "why": "topic"
+                },
+                {
+                  "text": "where the ferry goes",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need an amount of time: how long the ferry ride takes. One part."
+        },
+        {
+          "id": "m1-b8",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "When did the power go out, and what did the family do?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "time",
+              "kindDistractors": [
+                "place",
+                "reason",
+                "person"
+              ],
+              "about": "when the power went out",
+              "aboutDistractors": [
+                {
+                  "text": "the power",
+                  "why": "topic"
+                },
+                {
+                  "text": "what the family did",
+                  "why": "otherPart"
+                }
+              ]
+            },
+            {
+              "kind": "action",
+              "kindDistractors": [
+                "time",
+                "reason",
+                "words"
+              ],
+              "about": "what the family did",
+              "aboutDistractors": [
+                {
+                  "text": "the family",
+                  "why": "topic"
+                },
+                {
+                  "text": "when the power went out",
+                  "why": "otherPart"
+                }
+              ]
+            }
+          ],
+          "model": "Two parts. Part one: a time, when the power went out. Part two: something the family did."
+        },
+        {
+          "id": "m1-b9",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "Which sentence shows that Lina was proud of her work?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "sentence",
+              "kindDistractors": [
+                "reason",
+                "person",
+                "time"
+              ],
+              "about": "Lina being proud of her work",
+              "aboutDistractors": [
+                {
+                  "text": "Lina",
+                  "why": "topic"
+                },
+                {
+                  "text": "what work Lina did",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a sentence from the text: proof that Lina was proud of her work. One part."
+        },
+        {
+          "id": "m1-b10",
+          "type": "job",
+          "prompt": "Say the job. Do not answer the question.",
+          "question": "What is the main purpose of the last paragraph?",
+          "flipWord": null,
+          "parts": [
+            {
+              "kind": "purpose",
+              "kindDistractors": [
+                "sentence",
+                "person",
+                "amount"
+              ],
+              "about": "what the last paragraph is for",
+              "aboutDistractors": [
+                {
+                  "text": "what the whole text is about",
+                  "why": "other"
+                },
+                {
+                  "text": "the last sentence",
+                  "why": "other"
+                }
+              ]
+            }
+          ],
+          "model": "I need a purpose: what the last paragraph is for. One part."
+        }
+      ]
     }
   ]
 }

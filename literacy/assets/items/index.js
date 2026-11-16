@@ -9,6 +9,8 @@ import * as match from "./match.js";
 import * as sort from "./sort.js";
 import * as multi from "./multi.js";
 import * as text from "./text.js";
+import * as claim from "./claim.js";
+import * as order from "./order.js";
 
 export const components = {
   explain: explain.render,
@@ -21,4 +23,6 @@ export const components = {
   sort: sort.render,
   multi: multi.render,
   text: text.render,
+  claim: claim.render,
+  order: order.render,
 };
