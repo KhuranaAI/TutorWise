@@ -109,6 +109,20 @@ a.btn{display:inline-block;font:600 14px var(--body);border-radius:12px;padding:
 .lnk{display:flex;width:100%;align-items:center;gap:10px;margin-top:8px;padding:12px 14px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);text-align:left;font-weight:600}
 .lnk .grow{flex:1;min-width:0}
 .lnk small{display:block;color:var(--mute);font-weight:400;font-size:13px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wkd{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px 4px;margin-top:8px}
+.wkd.on{border-color:var(--acc);box-shadow:0 0 0 3px var(--soft)}
+.wkh{display:flex;align-items:baseline;gap:8px;padding-bottom:4px}
+.wkh .d{flex:1;font:600 12px var(--disp);letter-spacing:.16em;text-transform:uppercase;color:var(--mute)}
+.wkd.on .wkh .d{color:var(--acc)}
+.wkh .n{font:500 12px var(--disp);color:var(--mute)}
+.wki{display:flex;width:100%;align-items:center;gap:10px;background:none;border:0;border-top:1px solid var(--line);border-radius:0;padding:9px 0;text-align:left;font:500 15px/1.35 var(--body);color:var(--ink)}
+.wki .dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--line2);flex:none}
+.wki.done .dot{background:var(--acc);border-color:var(--acc)}
+.wki .tt{flex:1;min-width:0;overflow-wrap:anywhere}
+.wki.done .tt{color:var(--dim);text-decoration:line-through}
+.wki .mm{font:500 12px var(--disp);color:var(--mute);white-space:nowrap}
+.wkd .evl{font-size:13px;color:var(--mute);padding:7px 0;border-top:1px solid var(--line)}
+.wkd .none{font-size:13px;color:var(--dim);padding:7px 0;border-top:1px solid var(--line)}
 .wk7{display:flex;gap:8px;overflow-x:auto;padding:3px 3px 8px;margin:0 -3px;scroll-snap-type:x proximity}
 .dayc{flex:none;width:124px;scroll-snap-align:start;text-align:left;padding:10px;border-radius:14px;background:var(--panel);border:1px solid var(--line);display:flex;flex-direction:column;gap:5px;align-items:flex-start}
 .dayc.on{border-color:var(--acc);box-shadow:0 0 0 3px var(--soft)}
@@ -459,7 +473,7 @@ const isWk=()=>[1,2,3,4,5].includes(dow());
 const AREAS={centre:'TutorWise ops',students:'Students',staff:'Hiring & staff',materials:'Teaching materials',reno:'Centre renovation',growth:'Marketing & money',party:'Christmas party',
   corona:'Corona Holdings',judah:'Judah Rise',brother:'Brother’s business',car:'Cars & dispute',home:'Home & errands',finance:'Personal finance',travel:'Trips & gifts',health:'Routine & health',tech:'Tech & ideas',planner:'This planner',other:'Other'};
 const STAT={ready:'To do',verify:'Check if still open',waiting:'Waiting',recurring:'Repeats',idea:'Idea',done:'Done',parked:'Parked'};
-const DEF={name:'Nimish',address:'sir',voice:'buttery',autoSend:true,wake:'07:00',workout:'07:30',workStart:'09:00',teachStart:'16:00',teachEnd:'20:00',capacity:0.65,protect:'Workout',schedSheetId:''};
+const DEF={name:'Nimish',address:'sir',voice:'buttery',autoSend:true,handsFree:true,pause:3,wake:'07:00',workout:'07:30',workStart:'09:00',teachStart:'16:00',teachEnd:'20:00',capacity:0.65,protect:'Workout',schedSheetId:''};
 const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const ICON={on:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
   off:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="m16 9 5 6m0-6-5 6"/></svg>'};
@@ -669,6 +683,59 @@ function calDays(n){const out=[];for(let k=0;k<n;k++){const d=addD(today(),k),ev
 const calLines=n=>calDays(n).map(({d,ev,du})=>ev.map(e=>`${e.id}|${d} ${DN[dowOf(d)]} ${e.s?e.s+(e.e?'-'+e.e:''):e.approx?'around this date':'all day'}|${e.t}${e.rep?' (repeats '+e.rep+')':''}${e.tent?' (pencilled in)':''}${e.where?' @ '+e.where:''}`).concat(du.map(t=>`${t.id}|${d} ${DN[dowOf(d)]} due|${T(t)}`)).join('\n')).join('\n');
 const cxTxt=c=>[c.time&&'time: '+c.time,c.energy&&'energy: '+c.energy,c.where&&'where: '+c.where,c.fixed&&'fixed: '+c.fixed].filter(Boolean).join('; ');
 const mineToday=()=>[...S.tasks.values()].filter(t=>t.today===today()&&t.s!=='done'&&t.s!=='parked').sort((a,b)=>(a.todayN??99)-(b.todayN??99)||a.id.localeCompare(b.id));
+/* ---------- this week's list ----------
+   What he says must get done this week. Every item is pinned to a day, and the pins are redone whenever something is
+   added, finished, pushed or carried over, so the whole list is done by the end of the week. No AI in the shuffling: it is instant. */
+const wkKey=()=>mondayOf();
+const monOf=d=>{const x=new Date(d+'T12:00:00Z');x.setUTCDate(x.getUTCDate()+1-(x.getUTCDay()||7));return x.toISOString().slice(0,10)};
+const isDone=t=>t.s==='done';
+const estOf=t=>+t.est||30;
+const weekItems=()=>[...S.tasks.values()].filter(t=>t.wk===wkKey()&&t.s!=='parked'&&t.s!=='idea').sort((a,b)=>(a.wkN??999)-(b.wkN??999)||a.id.localeCompare(b.id));
+const nextN=()=>Math.max(-1,...weekItems().map(t=>t.wkN??0))+1;
+const dayWord=d=>d===today()?'today':dayDiff(d)===1?'tomorrow':DNL[dowOf(d)];
+const short=x=>{x=String(x);return x.length>44?x.slice(0,42).replace(/\s+\S*$/,'')+'…':x};
+function horizon(){const out=[],end=dow()>=1&&dow()<=5?5:0;let d=today();for(let i=0;i<8;i++){out.push(d);if(dowOf(d)===end)break;d=addD(d,1)}return out}
+function dayBudget(d){const s=S.settings,cap=+s.capacity||.65,base=+s.dayBudget||180;if(d===today())return Math.round(freeMinutes()*cap);
+  const wk=dowOf(d)>=1&&dowOf(d)<=5,a=toM(s.workStart),b=toM(wk?s.teachStart:'22:00');let blocked=0;for(const e of busyOn(d))blocked+=Math.max(0,Math.min(b,toM(e.e))-Math.max(a,toM(e.s)));
+  return Math.max(30,Math.min(base,Math.round((b-a-blocked)*cap)))}
+/* which day each open item sits on. Placed items stay put (unless `full`), unfinished days roll forward, new ones fill from today. */
+function layoutWeek(full){const days=horizon(),last=days[days.length-1],by=new Map(days.map(d=>[d,[]])),wait=[],items=weekItems().filter(t=>!isDone(t));
+  for(const t of items){if(t.day&&by.has(t.day)&&(t.pin||!full))by.get(t.day).push(t);else if(t.pin&&t.day&&t.day>last)continue;else wait.push(t)}
+  const load=d=>by.get(d).reduce((a,t)=>a+estOf(t),0),left=items.reduce((a,t)=>a+estOf(t),0),tgt=d=>Math.min(dayBudget(d),Math.max(60,Math.round(left/days.length*1.3)));
+  wait.sort((a,b)=>String(a.day||'9').localeCompare(String(b.day||'9'))||((a.wkN??999)-(b.wkN??999))||a.id.localeCompare(b.id));
+  for(const t of wait){const e=estOf(t),carried=t.day&&t.day<days[0];
+    const d=(carried?days.find(x=>load(x)+e<=dayBudget(x)):days.find(x=>load(x)+e<=tgt(x))||days.find(x=>load(x)+e<=dayBudget(x)))||days.reduce((m,x)=>load(x)-dayBudget(x)<load(m)-dayBudget(m)?x:m,days[0]);
+    by.get(d).push(t)}
+  return{days,by}}
+/* today's docket is simply the items pinned to today */
+async function syncPlan(){const wk=weekItems(),td=today();if(!wk.length||!db)return;
+  const picks=wk.filter(t=>t.day===td).map(t=>({id:t.id,why:t.pin?'You put this on today.':t.carried?'Carried over.':'',first:t.next||'',min:estOf(t)})),cur=S.plan,sig=x=>JSON.stringify((x||[]).map(k=>[k.id,k.min]));
+  if(cur&&cur.by==='week'&&sig(cur.picks)===sig(picks))return;
+  const plan={headline:picks.length?`${picks.length} from your week list today.`:'Nothing pinned to today.',picks,quick:[],leftOut:'',by:'week',at:stamp(),marks:cur?.marks||{},how:`${wk.filter(isDone).length} of ${wk.length} done this week.`,forgot:[]};
+  S.plan=plan;await db.doc('plans/'+td).set(plan).catch(()=>{})}
+async function applyWeek(full){if(!db||!weekItems().length)return[];const L=layoutWeek(full),moved=[];
+  for(const [d,list] of L.by)for(const t of list)if(t.day!==d){moved.push(t.id);S.tasks.set(t.id,{...S.tasks.get(t.id),day:d});await db.doc('tasks/'+t.id).update({day:d,up:stamp()}).catch(()=>{})}
+  await syncPlan();renderAll();return moved}
+/* a new day or a new week: what was not finished comes along */
+async function rollWeek(){const k=wkKey(),old=[...S.tasks.values()].filter(t=>t.wk&&t.wk<k&&!isDone(t)&&t.s!=='parked'&&t.s!=='idea');let n=nextN();
+  for(const t of old){const c={wk:k,day:null,pin:false,carried:true,wkN:n++};S.tasks.set(t.id,{...t,...c});await db.doc('tasks/'+t.id).update({...c,up:stamp()}).catch(()=>{})}
+  await applyWeek(false)}
+function weekPace(){const wk=weekItems(),op=wk.filter(t=>!isDone(t)),left=op.reduce((a,t)=>a+estOf(t),0),room=horizon().reduce((a,d)=>a+dayBudget(d),0);return{all:wk.length,done:wk.length-op.length,left,room,ok:left<=room+20}}
+function pinnedSay(ids){const ts=ids.map(i=>S.tasks.get(i)).filter(t=>t&&t.day);if(!ts.length)return'';
+  if(ts.length<=3)return ' '+ts.map(t=>`${short(T(t))}: ${dayWord(t.day)}`).join('. ')+'.';
+  const byD={};for(const t of ts)byD[t.day]=(byD[t.day]||0)+1;return ` ${ts.length} pinned: `+Object.keys(byD).sort().map(d=>`${byD[d]} ${dayWord(d)}`).join(', ')+'.'}
+const daySay=()=>{const op=openPicks(),w=weekPace();return (op.length?`Today: ${op.slice(0,3).map(x=>short(T(x.t))).join(', ')}${op.length>3?', and '+(op.length-3)+' more':''}.`:'Nothing is pinned to today.')+` ${w.done} of ${w.all} done this week${w.ok?'':', and it is more than fits before the week ends, so tell me what can wait'}.`};
+async function pinItem(id,date,at){const t=S.tasks.get(id);if(!t||!isDate(date))return false;const c={wk:monOf(date),day:date,pin:true};if(hm(at))c.at=at;if(t.wk!==c.wk||t.wkN==null)c.wkN=nextN();
+  S.tasks.set(id,{...t,...c});await up(id,c);return true}
+async function pushItem(id){const t=S.tasks.get(id),nx=horizon()[1];if(!t)return;
+  if(!nx){say(`It’s the last day of your week, ${sir()}, so it stays on today.`,true);return}
+  const c={day:nx,pin:false,defer:(t.defer||0)+1};S.tasks.set(id,{...t,...c});await up(id,c);logEv('skip',T(t));await applyWeek(false);V.greeting=false;say(`Moved to ${dayWord(nx)}, ${sir()}.`,true)}
+function weekAsk(){show('today');say(`Tell me everything that has to get done this week, ${sir()}. I’ll pin it into your days.`,true);if(!canHear())$('dump').focus()}
+function wkSheet(id){const t=S.tasks.get(id);if(!t)return;const days=horizon();
+  sheet(`<h3 style="font:600 18px var(--disp);margin:0 0 4px">${esc(T(t))}</h3><div class="m">${isDone(t)?'Done':t.day?'On '+esc(dayWord(t.day))+(t.pin?', where you put it':''):'Not placed yet'} · about ${durS(estOf(t))}</div>
+  ${isDone(t)?'':`<label>Move it to</label><div class="row">${days.map(d=>`<button class="sm${t.day===d?' pri':''}" data-act="wkMove" data-id="${t.id}" data-d="${d}">${d===today()?'Today':DN[dowOf(d)]}</button>`).join('')}</div>`}
+  <div class="row" style="margin-top:14px">${isDone(t)?`<button class="sm" data-act="undone" data-id="${t.id}">Not done after all</button>`:`<button class="sm pri" data-act="done" data-id="${t.id}">Done</button>${t.pin?`<button class="sm" data-act="wkFloat" data-id="${t.id}">Let me place it</button>`:''}`}<button class="sm" data-act="wkOff" data-id="${t.id}">Take it off this week</button><button class="sm ghost" data-act="close">Close</button></div>`)}
+
 /* what is done, slipping and on track, and what he may be forgetting: facts for the planner to choose from */
 function facts(){const all=[...S.tasks.values()],wk=addD(today(),-7),marks=S.plan?.marks||{},done=[],slip=[],track=[],forget=[];
   for(const t of all)if(t.s==='done'&&String(t.doneAt||'').slice(0,10)>=wk)done.push(T(t));
@@ -691,12 +758,13 @@ const saidToday=()=>((S.days.get(today())||{}).ev||[]).filter(e=>e.k==='said').s
 const lastLbl=d=>{const n=-dayDiff(d.date);return n<=7?'Last '+DNL[d.dow]:Math.round(n/7)+' '+DNL[d.dow]+'s ago'};
 async function finishTask(id,ev){const t=S.tasks.get(id);if(!t)return;
   if(t.s==='recurring'){const marks={...(S.plan?.marks||{}),[id]:'done'};if(S.plan)S.plan={...S.plan,marks};await db.doc('plans/'+today()).update({marks}).catch(()=>{});await up(id,{last:today()})}
-  else await up(id,{s:'done',doneAt:stamp(),ev});
-  logEv('did',T(t));
+  else{const c={s:'done',doneAt:stamp(),ev,...(t.wk?{day:today()}:{})};S.tasks.set(id,{...t,...c});await up(id,c)}
+  logEv('did',T(t));if(t.wk)await applyWeek(false);
   if(/work ?out/i.test(t.t)){const hb={...(S.habits.get(today())||{}),date:today(),workout:true};S.habits.set(today(),hb);db.doc('habits/'+today()).set(hb).catch(()=>{});logEv('workout','')}}
 async function undoTask(id){const t=S.tasks.get(id);if(!t)return;const marks={...(S.plan?.marks||{})};
   if(marks[id]){delete marks[id];if(S.plan)S.plan={...S.plan,marks};await db.doc('plans/'+today()).update({marks}).catch(()=>{})}
-  if(t.s==='done')await up(id,{s:'ready',doneAt:null});
+  if(t.s==='done'){S.tasks.set(id,{...t,s:'ready',doneAt:null});await up(id,{s:'ready',doneAt:null})}
+  if(t.wk)await applyWeek(false);
   logEv('undid',T(t));V.greeting=true;renderToday()}
 function openEv(){if(S.openLogged||!S.daysKnown)return;S.openLogged=true;logEv('open','')}
 const dayLine=d=>{const e=d.ev||[],g=k=>e.filter(v=>v.k===k).map(v=>v.x).filter(Boolean),up=e.find(v=>v.k==='up'),parts=[up?'up '+up.x:'wake time not logged'];
@@ -706,17 +774,22 @@ const dayLine=d=>{const e=d.ev||[],g=k=>e.filter(v=>v.k===k).map(v=>v.x).filter(
   return DN[d.dow]+' '+d.date+': '+parts.join('; ')};
 const pastDays=(same,n)=>[...S.days.values()].filter(d=>d.date<today()&&(!same||d.dow===dow())).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,n);
 const hasD=m=>Number.isInteger(m.d)&&m.d>=0&&m.d<=6;
-const recallText=()=>{const m=[...S.mem].sort((a,b)=>(b.d===dow())-(a.d===dow())).slice(0,70).map(x=>`${x.id}|${hasD(x)?DNL[x.d]+'s: ':''}${x.x}`).join('\n'),sw=pastDays(true,3).map(dayLine).join('\n'),rc=pastDays(false,3).map(dayLine).join('\n');
+const recallText=()=>{const m=[...S.mem].sort((a,b)=>(b.d===dow())-(a.d===dow())).slice(0,70).map(x=>x.k==='style'?`${x.id}|He gave you a format for: ${x.t||'how he writes'} (kept in full; drafts follow it)`:`${x.id}|${hasD(x)?DNL[x.d]+'s: ':''}${x.x}`).join('\n'),sw=pastDays(true,3).map(dayLine).join('\n'),rc=pastDays(false,3).map(dayLine).join('\n');
   return `What you have learned about him (id|fact):\n${m||'nothing yet'}\nHow earlier ${DNL[dow()]}s went (history only: nothing in it repeats unless the calendar says so):\n${sw||'no record yet'}\nThe last few days:\n${rc||'no record yet'}`};
 function lastSame(){const d=pastDays(true,1)[0];if(!d)return'';const e=d.ev||[],up=e.find(v=>v.k==='up'),n=e.filter(v=>v.k==='did').length;
   const parts=[up?(hm(up.x)?'up at '+t12(up.x):up.x?'up '+up.x:''):'',n?n+' thing'+(n>1?'s':'')+' finished':''].filter(Boolean);
   return parts.length?`${lastLbl(d)}: ${parts.join(', ')}.`:''}
 async function saveMem(list,src){for(const r of (Array.isArray(list)?list:[]).slice(0,4)){const x=String(r?.x||'').trim();if(x.length<6||S.mem.some(m=>norm(m.x)===norm(x)))continue;
+  if(r.k==='style'){const t=String(r.t||'How he writes').trim().slice(0,60),old=S.mem.find(m=>m.k==='style'&&norm(m.t||'')===norm(t)),doc={x:x.slice(0,2500),k:'style',t,d:null,src,at:today(),on:true};
+    if(old)await db.doc('mem/'+old.id).update(doc).catch(()=>{});else await db.collection('mem').doc().set(doc).catch(()=>{});continue}
   await db.collection('mem').doc().set({x:x.slice(0,240),k:['you','pref','pattern','person'].includes(r.k)?r.k:'you',d:hasD(r)?r.d:null,src,at:today(),on:true}).catch(()=>{})}}
-function renderMem(){const el=$('memList');if(!el)return;const K={you:'About you',pref:'How you like things',pattern:'Patterns I’ve noticed',person:'People'};
-  el.innerHTML=S.mem.length?Object.keys(K).map(k=>{const l=S.mem.filter(m=>(K[m.k]?m.k:'you')===k);return l.length?`<h2>${K[k]}</h2><div class="card">${l.map(m=>`<div class="item row" style="flex-wrap:nowrap"><div class="grow">${hasD(m)?`<span class="pill mute">${DN[m.d]}</span> `:''}${esc(m.x)}</div><button class="sm ghost" data-act="memDel" data-id="${m.id}">Forget</button></div>`).join('')}</div>`:''}).join(''):'<div class="card empty" style="margin-top:10px">Nothing learned yet. It builds as you talk to it and use it.</div>';
+const styles=()=>S.mem.filter(m=>m.k==='style');
+const styleText=()=>styles().length?`His own formats and examples. When the task is the kind of thing one of them covers, follow it closely: its structure, tone, greeting, length and sign-off.\n${styles().map(m=>`[${m.t||'How he writes'}]\n${m.x}`).join('\n\n')}\n`:'';
+const knowText=()=>{const f=S.mem.filter(m=>m.k!=='style').slice(0,40).map(m=>'- '+m.x).join('\n');return f?`What you know about him:\n${f}\n`:''};
+function renderMem(){const el=$('memList');if(!el)return;const K={style:'How you write',you:'About you',pref:'How you like things',pattern:'Patterns I’ve noticed',person:'People'};
+  el.innerHTML=S.mem.length?Object.keys(K).map(k=>{const l=S.mem.filter(m=>(K[m.k]?m.k:'you')===k);return l.length?`<h2>${K[k]}</h2><div class="card">${l.map(m=>`<div class="item row" style="flex-wrap:nowrap"><div class="grow"${m.k==='style'?' style="white-space:pre-wrap"':''}>${m.k==='style'?`<b>${esc(m.t||'How you write')}</b>\n`:''}${hasD(m)?`<span class="pill mute">${DN[m.d]}</span> `:''}${esc(m.x)}</div><button class="sm ghost" data-act="memDel" data-id="${m.id}">Forget</button></div>`).join('')}</div>`:''}).join(''):'<div class="card empty" style="margin-top:10px">Nothing learned yet. It builds as you talk to it and use it.</div>';
   const pd=pastDays(false,7);$('memDays').innerHTML=pd.length?`<h2>Your last days</h2><div class="card">${pd.map(d=>`<div class="item m" style="font-size:14px">${esc(dayLine(d))}</div>`).join('')}</div>`:''}
-function maybeAuto(){if(S.loaded&&S.planKnown&&!S.plan&&!S.autoTried&&sample&&open().length){S.autoTried=true;makePlan()}}
+function maybeAuto(){if(!(S.loaded&&S.planKnown)||S.rolled)return;if([...S.tasks.values()].some(t=>t.wk)){S.rolled=true;rollWeek()}}
 const endH=x=>+x.e.slice(0,2)+(x.e.slice(3)>'00'?1:0);
 const tonight=()=>{const d=dow();
   if(schedLive()){const hq=[...S.students.values()];return S.sched.sessions.filter(x=>x.d===today()).map(x=>({s:hq.find(h=>h.sched&&norm(h.sched)===norm(x.n))||{id:'',name:x.n},x:{s:x.s,e:x.e},t:x.t,st:x.st,live:true})).sort((a,b)=>a.x.s.localeCompare(b.x.s))}
@@ -842,35 +915,41 @@ function intakePrompt(text){
   const mk=[...S.students.values()].filter(x=>x.owed>0).map(x=>`${x.name} ${x.owed} h`).join(', ')||'none';
   const picks=(S.plan?.picks||[]).map((k,i)=>{const t=S.tasks.get(k.id);return t?`${i+1}. ${T(t)} [${t.s==='done'||marks[k.id]==='done'?'done':marks[k.id]==='skip'?'not today':marks[k.id]==='stuck'?'stuck':'open'}]`:''}).filter(Boolean).join(' ')||'none yet';
   const tn=tonight().map(({s:x,x:sl})=>`${x.name} ${sl.s}-${sl.e}`).join(', ')||'not on file';
-  const lines=[...S.tasks.values()].filter(t=>t.s!=='done'&&t.s!=='parked').map(t=>`${t.id}|${t.a}|${t.s}|${T(t)}`).join('\n');
+  const lines=[...S.tasks.values()].filter(t=>t.s!=='done'&&t.s!=='parked'&&t.wk!==wkKey()).map(t=>`${t.id}|${t.a}|${t.s}|${T(t)}`).join('\n');
   const ct=V.ctx?.stuck&&S.tasks.get(V.ctx.stuck);
   return `You are ${s.name}'s personal assistant inside his planner app. He just said the message below. It came through speech-to-text and he talks freely, so expect rambling, filler words and mishearings, especially of names: match them to the people and items listed here (a name split in two or spelled oddly still means the closest person on the list). Work out what he means, turn it into operations on his records, and answer him.
 Now: ${today()} (${DNL[dow()]}), ${nowHM()} Toronto. He teaches ${s.teachStart}-${s.teachEnd} on weekdays.
-${ct?`Context: he just marked "${T(ct)}" (id ${ct.id}) as stuck, and this message is probably the reason. Record the reason on that item, set a smaller next step if one is obvious, or set it to waiting if he is waiting on someone.\n`:''}${V.ctx?.checkin&&Date.now()-(V.ctx.at||0)<12e5?`Context: you just asked him for today's constraints as part of his daily check-in. This message is his answer, probably with what he feels has to get done. Record it: constraints; an event for each fixed commitment that has a time; add with "today":true for anything new; today for things already on his list; then replan. Your reply is one short sentence saying you are building his day: the app then tells him the plan, how he is doing and what he is forgetting.\n`:''}Areas: ${Object.keys(AREAS).join(', ')}.
+${ct?`Context: he just marked "${T(ct)}" (id ${ct.id}) as stuck, and this message is probably the reason. Record the reason on that item, set a smaller next step if one is obvious, or set it to waiting if he is waiting on someone.\n`:''}${V.ctx?.checkin&&Date.now()-(V.ctx.at||0)<12e5?`Context: you just asked him for today's constraints as part of his daily check-in. This message is his answer, probably with what he feels has to get done. Record it: constraints; an event for each fixed commitment that has a time (if he only has until some time, an event from that time until teaching starts, titled "Not available"); add with "week":true for anything new he names, plus "today":true if it has to be today; today for listed things he wants today; then rebalance. Your reply is one short sentence saying you are building his day: the app then tells him the plan, how he is doing and what he is forgetting.\n`:''}Areas: ${Object.keys(AREAS).join(', ')}.
 Students: ${stu}.
 Unpaid fees this month: ${f.ow.map(x=>`${x.name} ${money(owes(x))}`).join(', ')||'none'}.
 Makeup hours owed to students: ${mk}.
 Today's plan: ${picks}
 Today's constraints: ${cx&&cxTxt(cx)?cxTxt(cx):'not asked yet today'}
-How he is doing. Done this week: ${pf.done.slice(0,6).join('; ')||'nothing marked yet'}. Slipping: ${pf.slip.slice(0,5).join('; ')||'nothing'}. May be forgetting: ${pf.forget.slice(0,6).join('; ')||'nothing obvious'}.
+This week's list. This is his plan for the week (id|day|minutes|state|title), ${weekPace().done} of ${weekPace().all} done:
+${weekItems().map(t=>`${t.id}|${t.day?DN[dowOf(t.day)]+' '+t.day+(t.pin?' (he chose the day)':''):'not placed yet'}|${estOf(t)}|${isDone(t)?'done':'open'}|${T(t)}`).join('\n')||'empty: he has not told you what has to get done this week'}
 Tonight's lessons: ${tn}.
 Calendar from today on (id|when|what):
 ${calLines(60)||'nothing on it'}
 Week plan: ${(S.week?.days||[]).filter(d=>d.date>=today()).map(d=>DN[dowOf(d.date)]+' '+d.theme).join('; ')||'none yet'}
 Projects (id|name|status|next step): ${S.projects.map(p=>`${p.id}|${p.name}|${p.status||'active'}|${p.next||'none'}`).join('; ')||'none listed yet'}
 ${recallText()}
-Recent conversation: ${S.dumps.slice(0,4).reverse().map(d=>'He: "'+String(d.text).slice(0,160)+'" You: "'+String(d.reply||'').slice(0,160)+'"').join(' | ')||'none'}
-Open items (id|area|status|title):
+${styleText().slice(0,1800)}Recent conversation: ${S.dumps.slice(0,4).reverse().map(d=>'He: "'+String(d.text).slice(0,160)+'" You: "'+String(d.reply||'').slice(0,160)+'"').join(' | ')||'none'}
+His older list (id|area|status|title). It is only here so you can recognise things he mentions. Never bring these up, add them to the week or recommend them on your own:
 ${lines}
 Message: """${text}"""
 Rules:
 - If it matches an existing item, update that item; never add a duplicate. A new commitment is kind "task". A passing thought or "maybe someday" is kind "idea".
 - Mark done only when he clearly says it is finished. "s" may be ready, waiting, parked, idea, verify.
 - Never invent a date, a time, a place, a name or any other detail he did not give. Use "due" only if he gave a day; "hard":true only for a fixed external date.
-- Capture: when he says he needs to get something done, add it at once (area "other" if none fits). If he gave neither a day nor how long it takes, end your reply with ONE short question: when, or how long. If it is for today, set "today":true and use replan. If he gave a day or a time, also put it on the calendar with event.
+- His week: whatever he says he has to do goes on this week's list, unless he gives a day after this week or calls it a someday idea. Use add with "week":true for something new, or week_add for things already on his older list. Do NOT ask which day and do NOT ask how long: the app pins every item to a day, Monday to Friday around his teaching, and keeps rearranging as things get done or slip. Put your best guess of the minutes in "est" when he did not say. When he gives several things in one breath, add every one of them.
+- Moving things: when he names a day for something ("do the resumes Wednesday"), use pin with that date (and "at" only if he gave a time). "Not today" or "push it" means pin to the next day. unpin lets the app place it again. week_remove takes it off this week. If he says he only has until some time today, or will be away for part of a day, add an event titled "Not available" for the time he is not free (up to the start of teaching if he gave no end) and use rebalance. If he just asks you to rearrange, use rebalance.
+- The week list is the plan. Never add to it yourself, and never bring up, recommend or remind him of anything from his older list unless he asks what else there is.
+- While he is listing things and says he will keep going, keep your reply to a few words ("Got it, sir. Keep going.").
+- Your reply never says which day an added item landed on: the app tells him that itself, right after your reply. Just say how many you added.
 - Calendar: anything with a day or a time is an event (appointments, visits, games, trips, time he is out). Use the date he gave; "around the 4th" means that date with "approx":true. Give "from" and "to" only if he gave times. First check the calendar above and his teaching hours for a clash, and tell him in a few words if there is one. If the same thing is already on the calendar, do not add it again: say it is there. To move or cancel something use event_change or event_cancel with its id. If he asks what is coming up, or to see his calendar, use show_calendar and sum up the next two to three weeks in one or two short sentences.
 - One-off by default: an event happens once unless he clearly says it repeats ("every Tuesday", "weekly", "each month"); only then set "repeat". Never assume something repeats because it happened before, and never bring up or remind him of a past event. If he describes something that could be a habit but does not say, ask once ("Every week, or just this once?") and put his answer in remember.
-- Daily check-in: if he asks what is on the docket (or what today looks like, or what he should do today) and today's constraints are "not asked yet today", do not list tasks. Ask ONE spoken question that covers how much time and energy he has, where he is, anything fixed today, and what he feels has to get done, and return the op checkin. If the constraints are already there, answer from today's plan: what is next, how he is doing (done, on track, slipping) and what he is forgetting.
+- If he asks what is on the docket for the week (or what his week looks like), use show_week and sum the week up from this week's list in two short sentences: how many things, how they are spread, what is done. If the list is empty, ask him what has to get done this week.
+- Daily check-in: if he asks what is on the docket today (or what today looks like, or what he should do today) and today's constraints are "not asked yet today", do not list tasks. Ask ONE spoken question that covers how much time and energy he has, where he is, and anything fixed today, and return the op checkin. If the constraints are already there, answer from today's plan: what is next and how the week is going (so many of so many done).
 - Student events: missed lesson -> attendance absent; came for a makeup -> attendance makeup; came as normal -> attendance present; money received -> paid; a payment recorded by mistake -> undo_paid; a stated weekly timetable -> schedule (d: 1=Mon..5=Fri, 24h times).
 - A parent's name means their child. If a payment could belong to more than one child and he did not say, ask instead of guessing.
 - If he says when he got up today, use woke. If he lost time or plans changed, use replan. If he says what today is for, or how he wants today to go, use replan and put his own words in the note.
@@ -878,14 +957,20 @@ Rules:
 - Projects: if he lists or updates his projects, use project once for each, in his own words; give status and next only if he said them.
 - If he asks a question (what is next, who owes me, who is in tonight, how many makeups), answer it from the data above; no ops are needed.
 - Use what you have learned about him when it helps. Earlier days are history, not a schedule. Never recite the list.
+- If he gives you a format, a template or an example of how he writes something (a message to parents, a fee reminder, a job ad), save it in remember with "k":"style", "t" a short name for what it is for, and "x" his wording or example in full and unchanged (up to 2000 characters). If he later changes it, save it again under the same "t". Tell him it is saved and that drafts will follow it.
+- Messages he has to send (to a parent, a student, a teacher): one task per message with a short title ("Message Roby (Viraj's mom)"). When he asks for a draft or dictates the wording, put the whole message in "msg" (in add, or in update's set for a task that exists). Write it the way his saved formats below show; if none fits, keep it short, warm and plain. The app shows it on the task with a Copy button, so your reply only says the drafts are ready. Never put the wording in the title or the notes.
+- Longer pieces (a letter, an ad, a plan): use draft with everything he said about it in "ask". The app writes it in AI help using his saved formats; your reply only says it is being drafted.
+- Names: spell every name exactly as it is in his records and in what you have learned (for example a spelling he gave you). Speech-to-text gets names wrong; you must not, in the reply or in what you save.
+- If he says no reply is needed, reply with two or three words.
 - remember: durable things about HIM that this message reveals: a preference, a routine he says he has, a person in his life, how he likes things done, whether something repeats. Not tasks, not one-off details, nothing already in the learned list. Usually empty. "d" is the weekday number (0=Sunday..6=Saturday) only when the fact is about one weekday, else null. forget: ids from the learned list that this message shows are wrong or no longer true.
 - reply: it is read aloud to him. One or two short sentences, under 35 words, plain spoken English, no lists or symbols. Open with a brief acknowledgement and address him as "${a}" once (for example "Understood, ${a}." or "Done, ${a}."). Say exactly what you did: "added to your list" for something new; if it was already on his list, say so and say what you updated. Confirm a calendar change in a few words: what, and which day. When you mention a date, give the date (Nov 24), not only a weekday name, unless it is today or tomorrow. Ask at most one short question, only if something important is unclear, and never while a question of yours in the recent conversation is still unanswered. Never lecture and never guilt him.
-Return JSON only: {"reply":"...","remember":[{"x":"short fact, third person","k":"you|pref|pattern|person","d":null}],"forget":["id"],"ops":[{"op":"add","title":"","area":"","kind":"task","pri":3,"due":null,"hard":false,"est":null,"next":"","ai":false,"notes":"","today":false},{"op":"update","id":"","set":{"s":"waiting","wait":"who","due":"YYYY-MM-DD","p":2,"n":"note","est":20,"next":""}},{"op":"done","id":""},{"op":"today","ids":["existing items he wants done today, in his order"]},{"op":"event","title":"","date":"YYYY-MM-DD","from":null,"to":null,"approx":false,"where":"","repeat":null,"notes":""},{"op":"event_change","id":"","date":null,"from":null,"to":null,"title":null},{"op":"event_cancel","id":"","date":null},{"op":"show_calendar"},{"op":"checkin"},{"op":"constraints","time":"","energy":"","where":"","fixed":""},{"op":"project","name":"","status":"active","next":"","notes":""},{"op":"attendance","student":"","status":"absent","hours":1},{"op":"paid","student":"","amount":0,"date":"YYYY-MM-DD the money came in, worked out from what he said, else today"},{"op":"undo_paid","student":""},{"op":"schedule","student":"","slots":[{"d":1,"s":"17:00","e":"18:00"}]},{"op":"setting","key":"teachEnd","value":"20:00"},{"op":"woke","time":"HH:MM he got up today, 24h"},{"op":"replan","note":""},{"op":"plan_week","note":""}]}  (use only the ops needed; "ops" may be empty; times are 24h HH:MM; "repeat" is null, "weekly", "daily" or "monthly")`}
+Return JSON only: {"reply":"...","remember":[{"x":"short fact, third person","k":"you|pref|pattern|person|style","d":null,"t":"only for style: what the format is for"}],"forget":["id"],"ops":[{"op":"add","title":"","area":"","kind":"task","pri":3,"due":null,"hard":false,"est":null,"next":"","ai":false,"notes":"","msg":"","week":true,"today":false},{"op":"week_add","ids":["ids from his older list that he wants done this week"]},{"op":"pin","id":"","date":"YYYY-MM-DD","at":null},{"op":"unpin","id":""},{"op":"week_remove","id":""},{"op":"rebalance"},{"op":"show_week"},{"op":"draft","ask":"what to write, with every detail he gave","task":null},{"op":"update","id":"","set":{"s":"waiting","wait":"who","due":"YYYY-MM-DD","p":2,"n":"note","est":20,"next":"","t":"new title","msg":"message wording"}},{"op":"done","id":""},{"op":"today","ids":["existing items he wants done today, in his order"]},{"op":"event","title":"","date":"YYYY-MM-DD","from":null,"to":null,"approx":false,"where":"","repeat":null,"notes":""},{"op":"event_change","id":"","date":null,"from":null,"to":null,"title":null},{"op":"event_cancel","id":"","date":null},{"op":"show_calendar"},{"op":"checkin"},{"op":"constraints","time":"","energy":"","where":"","fixed":""},{"op":"project","name":"","status":"active","next":"","notes":""},{"op":"attendance","student":"","status":"absent","hours":1},{"op":"paid","student":"","amount":0,"date":"YYYY-MM-DD the money came in, worked out from what he said, else today"},{"op":"undo_paid","student":""},{"op":"schedule","student":"","slots":[{"d":1,"s":"17:00","e":"18:00"}]},{"op":"setting","key":"teachEnd","value":"20:00"},{"op":"woke","time":"HH:MM he got up today, 24h"},{"op":"replan","note":""},{"op":"plan_week","note":""}]}  (use only the ops needed; "ops" may be empty; times are 24h HH:MM; "repeat" is null, "weekly", "daily" or "monthly")`}
 
 /* ---------- talk ---------- */
 async function respond(text,byVoice){
   text=(text||'').trim();if(!text||V.state==='thinking')return;V.hint='';
-  if(END.test(text)){V.handsFree=false;text=text.replace(END,'').trim();if(!text){setState('idle');say(`Standing by, ${sir()}.`,true);return}}
+  let bye=false;
+  if(END.test(text)){V.handsFree=false;bye=true;text=text.replace(END,'').trim();if(!text){await endConv();setState('idle');say(`Standing by, ${sir()}.`,true);return}}
   else V.handsFree=!!byVoice;
   if(!db){say('I’m not connected to your records right now, so I can’t save that.');return}
   V.heard=text;setState('thinking');logEv('said',text);
@@ -896,7 +981,7 @@ async function respond(text,byVoice){
     const r=await sample.json(prompt,{modelTier:'default',cache:false});
     applied=await applyOps(Array.isArray(r?.ops)?r.ops:[],text,wasCheck);
     await saveMem(r?.remember,'said');for(const id of (Array.isArray(r?.forget)?r.forget:[]).slice(0,3))if(S.mem.some(m=>m.id===id))await db.doc('mem/'+id).update({on:false}).catch(()=>{});
-    reply=String(r?.reply||`Understood, ${sir()}.`);
+    reply=String(r?.reply||`Understood, ${sir()}.`)+(V.pinSay||'');
     const cl=applied.filter(x=>x.includes('(clashes with ')).map(x=>x.slice(x.indexOf('(clashes with ')+14,-1));
     if(cl.length&&!/clash|conflict|overlap|teaching|same time/i.test(reply))reply+=` Heads up: that overlaps ${cl.join(', ')}.`;
     if(applied.some(x=>x.includes('(fee sheet updated)')))reply+=' Your fee sheet is updated too.';
@@ -908,20 +993,32 @@ async function respond(text,byVoice){
   }
   ref.update({reply,ops:applied}).catch(()=>{});
   const jobs=V.jobs;V.jobs=null;
-  setState('idle');const spoke=await say(reply,true);
+  setState('idle');
+  if(V.conv&&!bye){const more=(V.next||'').trim();V.say=reply;V.greeting=false;renderCore();if(!more)await speak(reply,false);if(jobs)await jobs.catch(()=>{});if(resumeEar())return} /* he kept talking: do not talk over him */
+  if(bye)await endConv();
+  const spoke=await say(reply,true);
   if(jobs)await jobs.catch(()=>{});
   if(V.handsFree&&V.state==='idle'){
     if(!dict&&SR&&!V.noMic){if(!spoke)await wait(1500);if(V.state==='idle'&&V.handsFree)listen()}
     else if(dict){V.hint='Tap the brain, or press Space, to answer.';renderCore()}}
 }
 async function applyOps(ops,src,wasCheck){
-  const out=[];let n=0,re='',wk='',cal=false,full=!!wasCheck;
+  const out=[],newIds=[];let n=0,re='',wk='',cal=false,full=!!wasCheck,touched=false,wkFull=false,wkShow=false;V.pinSay='';
   for(const o of ops.slice(0,25)){try{
     if(o.op==='add'&&o.title){const id='t'+Date.now().toString(36)+(n++);
-      await db.doc('tasks/'+id).set({t:String(o.title).slice(0,200),a:AREAS[o.area]?o.area:'other',s:o.kind==='idea'?'idea':'ready',p:[1,2,3,4].includes(o.pri)?o.pri:3,due:/^\d{4}-\d\d-\d\d$/.test(o.due||'')?o.due:null,hard:!!o.hard&&!!o.due,
-        est:+o.est||null,next:o.next||'',ai:!!o.ai,n:o.notes||'',src:'talk '+today(),up:stamp(),...(o.today?{today:today(),todayN:50+n}:{})});out.push('added: '+o.title);if(o.today)re=re||'He added something that has to happen today.'}
+      const due=isDate(o.due)?o.due:null,onWk=o.week!==false&&o.kind!=='idea'&&!(due&&due>addD(wkKey(),6));
+      const doc={t:String(o.title).slice(0,200),a:AREAS[o.area]?o.area:'other',s:o.kind==='idea'?'idea':'ready',p:[1,2,3,4].includes(o.pri)?o.pri:3,due,hard:!!o.hard&&!!due,
+        est:+o.est||null,next:o.next||'',ai:!!o.ai,n:o.notes||'',...(o.msg?{msg:String(o.msg).slice(0,1500)}:{}),src:'talk '+today(),up:stamp(),...(onWk?{wk:wkKey(),wkN:nextN(),day:o.today?today():null,pin:!!o.today}:{})};
+      S.tasks.set(id,{id,...doc});await db.doc('tasks/'+id).set(doc);out.push('added: '+o.title);if(onWk){newIds.push(id);touched=true}}
+    else if(o.op==='week_add'){for(const i of (Array.isArray(o.ids)?o.ids:[]).slice(0,12)){const t=S.tasks.get(i);if(t&&t.wk!==wkKey()&&t.s!=='done'){const c={wk:wkKey(),wkN:nextN(),day:null,pin:false,s:t.s==='verify'||t.s==='idea'||t.s==='parked'?'ready':t.s};S.tasks.set(i,{...t,...c});await up(i,c);newIds.push(i);touched=true;out.push('this week: '+t.t)}}}
+    else if(o.op==='pin'&&S.tasks.has(o.id)){if(await pinItem(o.id,o.date,o.at)){touched=true;out.push(`pinned: ${S.tasks.get(o.id).t}, ${dayName(o.date)}`)}}
+    else if(o.op==='unpin'&&S.tasks.has(o.id)){const c={pin:false,day:null};S.tasks.set(o.id,{...S.tasks.get(o.id),...c});await up(o.id,c);touched=true;out.push('unpinned: '+S.tasks.get(o.id).t)}
+    else if(o.op==='week_remove'&&S.tasks.has(o.id)){const c={wk:null,day:null,pin:false};S.tasks.set(o.id,{...S.tasks.get(o.id),...c});await up(o.id,c);touched=true;out.push('off this week: '+S.tasks.get(o.id).t)}
+    else if(o.op==='draft'&&o.ask){const tid=S.tasks.has(o.task)?o.task:null;setTimeout(()=>runJob(String(o.ask).slice(0,1500),tid),400);out.push('drafting')}
+    else if(o.op==='rebalance'){wkFull=true;out.push('rearranging the week')}
+    else if(o.op==='show_week'){wkShow=true}
     else if(o.op==='update'&&S.tasks.has(o.id)){const a={};const st=o.set||{};
-      if(STAT[st.s]&&st.s!=='done')a.s=st.s;if(st.wait)a.wait=String(st.wait);if(/^\d{4}-\d\d-\d\d$/.test(st.due||''))a.due=st.due;if([1,2,3,4].includes(st.p))a.p=st.p;if(+st.est)a.est=+st.est;if(st.next)a.next=String(st.next);
+      if(STAT[st.s]&&st.s!=='done')a.s=st.s;if(st.wait)a.wait=String(st.wait);if(/^\d{4}-\d\d-\d\d$/.test(st.due||''))a.due=st.due;if([1,2,3,4].includes(st.p))a.p=st.p;if(+st.est)a.est=+st.est;if(st.next)a.next=String(st.next);if(st.msg)a.msg=String(st.msg).slice(0,1500);if(st.t)a.t=String(st.t).slice(0,200);
       if(st.n)a.n=((S.tasks.get(o.id).n||'')+'\n'+today()+': '+st.n).trim();if(Object.keys(a).length){await up(o.id,a);out.push('updated: '+S.tasks.get(o.id).t)}}
     else if(o.op==='done'&&S.tasks.has(o.id)){await finishTask(o.id,'he said so: '+src.slice(0,80));out.push('done: '+S.tasks.get(o.id).t)}
     else if(o.op==='attendance'){const s=findStu(o.student);if(s){const st=o.status==='makeup'?'makeup':o.status==='present'?'present':'absent';await logAtt(s,st,+o.hours||1);out.push(st+': '+s.name)}}
@@ -945,15 +1042,15 @@ async function applyOps(ops,src,wasCheck){
     else if(o.op==='checkin'){V.ctx={checkin:true,at:Date.now()};out.push('check-in')}
     else if(o.op==='constraints'){const cx={};for(const k of['time','energy','where','fixed'])if(o[k])cx[k]=String(o[k]).slice(0,160);
       if(Object.keys(cx).length){cx.at=nowHM();await dayWrite(today(),cur=>({...cur,cx:{...(cur.cx||{}),...cx}}));out.push('constraints noted');full=true;re=re||'He gave his constraints for today.'}}
-    else if(o.op==='today'){let k=0;for(const id of (Array.isArray(o.ids)?o.ids:[]).slice(0,8))if(S.tasks.has(id)){await up(id,{today:today(),todayN:k++})}if(k){out.push(k+' set for today');re=re||'He named what has to get done today.'}}
+    else if(o.op==='today'){let k=0;for(const id of (Array.isArray(o.ids)?o.ids:[]).slice(0,8))if(S.tasks.has(id)&&await pinItem(id,today())){k++}if(k){out.push(k+' set for today');touched=true}}
     else if(o.op==='project'&&o.name){const nm=String(o.name).trim().slice(0,80),ex=S.projects.find(p=>norm(p.name)===norm(nm)),st=['active','paused','waiting','done'].includes(o.status)?o.status:null;
       const pt={name:ex?.name||nm,up:stamp()};if(st&&(!ex||o.status!=='active'||!ex.status))pt.status=st;else if(!ex)pt.status='active';if(o.next)pt.next=String(o.next).slice(0,200);if(o.notes)pt.n=String(o.notes).slice(0,300);
       if(ex){await db.doc('projects/'+ex.id).update(pt);S.projects=S.projects.map(x=>x.id===ex.id?{...x,...pt}:x)}else{const rf=db.collection('projects').doc();await rf.set(pt);S.projects=[...S.projects,{id:rf.id,...pt}]}
       out.push('project: '+nm)}
   }catch(e){console.warn(e)}}
-  if(cal)show('cal');
-  if(wk)V.jobs=(async()=>{await wait(300);await makeWeek(wk,true);await makePlan(re||'Follow the new week plan.',false)})();
-  else if(re)V.jobs=(async()=>{await wait(300);await makePlan(re,full?'full':true)})();
+  /* the week list is the plan: re-pin instead of asking the AI for a new one */
+  if(weekItems().length){if(touched||wkFull||re||wk||full)await applyWeek(wkFull||!!re||!!wk||full);V.pinSay=pinnedSay(newIds)+(full||wkFull||wk?' '+daySay():'');if(wkShow||wk)show('cal');else if(cal)show('cal')}
+  else{if(cal||wkShow)show('cal')}
   return out}
 /* One record per student per day (and one more for a makeup), so tapping twice never double-counts. */
 async function logAtt(s,status,hours){
@@ -975,11 +1072,11 @@ async function markUp(time,quiet,noPlan){
 async function runJob(ask,taskId,draftId){
   if(!sample||!db){toast('AI help isn’t available in this view.');return}
   const t=taskId&&S.tasks.get(taskId);const ref=draftId?db.doc('drafts/'+draftId):db.collection('drafts').doc();
-  await ref.set({title:(t?.t||ask).slice(0,120),ask,taskId:taskId||null,body:'',state:'working',at:stamp()});show('ai');
+  await ref.set({title:(t?.t||ask).slice(0,120),ask,taskId:taskId||null,body:'',state:'working',at:stamp()});if(!V.conv)show('ai');
   try{const r=await sample(`You are doing a piece of work for ${S.settings.name}, owner of TutorWise, a tutoring centre in Brampton, Ontario (new unit in the same plaza; classes weekdays 4-8pm; fees by monthly subscription or hourly; e-transfers go to etransfer@tutorwise.ca). Today is ${today()}.
 Task: ${ask}
 ${t?`Context from his records: ${T(t)}. ${t.n||''}`:''}
-Produce the finished, usable deliverable itself (the message ready to send, the plan, the checklist, the ad). Be concrete and brief. Where a fact is missing (a date, a price, a name), do not invent it: write [ASK: what you need] in that spot and list those at the end under "Need from you". Plain text, no markdown symbols.`,{modelTier:'complex',cache:false,onText:u=>{const el=document.querySelector(`[data-d="${ref.id}"] pre`);if(el)el.textContent=u.text}});
+${styleText()}${knowText()}Produce the finished, usable deliverable itself (the message ready to send, the plan, the checklist, the ad). Be concrete and brief. Where a fact is missing (a date, a price, a name), do not invent it: write [ASK: what you need] in that spot and list those at the end under "Need from you". Plain text, no markdown symbols.`,{modelTier:'complex',cache:false,onText:u=>{const el=document.querySelector(`[data-d="${ref.id}"] pre`);if(el)el.textContent=u.text}});
     await ref.update({body:r.text,state:'ready',doneAt:stamp(),model:r.modelApplied||r.modelTierApplied||''});if(t)await up(taskId,{out:'ready',outId:ref.id});toast('Ready for you to review')}
   catch(e){await ref.update({state:'failed',body:e?.text||'',err:e?.message||e?.code||'failed'}).catch(()=>{});toast('That one failed. Try Redo.')}}
 function feeNotes(){
@@ -995,16 +1092,16 @@ const IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='M
 const canSpeak=()=>(tts&&!V.ttsOff)||(!tts&&'speechSynthesis'in window&&!V.noSpeech&&(!IOS||V.speechOk));
 function renderCore(){
   const st=V.state,live=st==='listening'||st==='starting',hear=canHear();
-  $('vState').innerHTML={idle:hear?'Tap to talk':'Tell me anything',starting:'One moment',listening:'Listening <span id="vTime" class="num"></span>',thinking:'Thinking',speaking:'Speaking'}[st];
+  $('vState').innerHTML={idle:hear?'Tap to talk':'Tell me anything',starting:'One moment',listening:'Listening <span id="vTime" class="num"></span>',thinking:V.conv?'Thinking · still listening':'Thinking',speaking:'Speaking'}[st];
   $('vState').dataset.s=st;
   if(V.greeting)V.say=greet();
   $('vSay').textContent=V.say;
-  if(live)$('vHeard').innerHTML=(esc(V.buf)+(V.partial?` <i>${esc(V.partial)}</i>`:''))||'<i>Go ahead, take your time. Say “you can speak now” or tap the brain when you’re done.</i>';
+  if(live)$('vHeard').innerHTML=(esc(V.buf)+(V.partial?` <i>${esc(V.partial)}</i>`:''))||(V.conv?`<i>I’m listening. ${+S.settings.pause?'Pause when you want my answer, or say “I’m done”.':'Say “I’m done” when you want my answer.'}</i>`:'<i>Go ahead, take your time. Say “I’m done” or tap the brain when you’re finished.</i>');
   else $('vHeard').textContent=V.hint||(V.heard?`You said: ${V.heard.length>150?V.heard.slice(0,147)+'…':V.heard}`:lastSame());
   $('dump').placeholder=hear?'Type, or tap the brain and talk…':'Tell me anything…';
   $('orbBtn').setAttribute('aria-label',live?'Stop and send':st==='speaking'?'Stop speaking':hear?'Start talking':'Write to your assistant');
   const hb=S.habits.get(today())||{};
-  $('quick').innerHTML=live?'<button class="on" data-act="sendNow">I’m done, send it</button><button data-act="cancelListen">Cancel</button>'
+  $('quick').innerHTML=live?`<button class="on" data-act="sendNow">I’m done, send it</button><button data-act="cancelListen">${V.conv?'Stop listening':'Cancel'}</button>`
     :st==='speaking'?'<button data-act="stopSpeak">Stop</button>':st==='thinking'?''
     :`<button data-act="docket" class="go">What’s on the docket?</button>${hb.up?`<button data-act="up" class="ok">Up${hb.upAt?' '+esc(t12(hb.upAt)):''} ✓</button>`:modeNow()==='work'?'<button data-act="upNow">I’m up</button><button data-act="up">Up earlier…</button>':'<button data-act="up">I’m up</button>'}<button data-act="habit" data-h="workout" class="${hb.workout?'ok':''}">Workout${hb.workout?' ✓':''}</button>${!hear&&voiceLine()?`<a class="chip" href="${esc(voiceLine())}" target="_blank" rel="noopener">Talk by voice</a>`:''}${canSpeak()?'<button data-act="brief">Brief me</button>':''}`;
   const vb=$('btnVoice');vb.hidden=!canSpeak();vb.innerHTML=V.voiceOn?ICON.on:ICON.off;vb.setAttribute('aria-pressed',String(V.voiceOn));vb.setAttribute('aria-label',V.voiceOn?'Spoken replies are on':'Spoken replies are off');
@@ -1032,7 +1129,7 @@ function renderToday(){
   const row=r=>{
     if(r.fx){const past=r.e<=now,on=r.s<=now&&now<r.e;return `<li class="r fx${past?' past':''}${on?' now':''}"><span class="tm num">${esc(t12(hmOf(r.s)).replace(' ',''))}</span><span class="rt">${on?'<span class="tag">NOW</span>':''}${esc(r.t[0].toUpperCase()+r.t.slice(1))}${r.teach?' until '+esc(t12(s.teachEnd)):''}</span><span class="rm num">${r.teach?'':durS(r.e-r.s)}</span></li>`}
     const{k,t,st}=r,isNow=!bz&&m!=='teach'&&cur&&k.id===cur.k.id,open=ex===k.id;
-    return `<li class="r ${st==='done'?'done':st==='open'?'':'off'}${isNow?' now':''}"><button class="ck" data-act="${st==='done'?'undone':'done'}" data-id="${t.id}" aria-label="${st==='done'?'Not done after all':'Done'}: ${esc(T(t))}">${CHECK}</button><button class="rt" data-act="row" data-id="${t.id}" aria-expanded="${open}">${isNow?'<span class="tag">NOW</span>':''}${esc(T(t))}${st==='skip'?' <span class="pill mute">not today</span>':st==='stuck'?' <span class="pill warn">stuck</span>':''}</button><span class="rm num">${st==='done'?'':(r.ev?esc(t12(r.ev.s).replace(' ',''))+' · ':'')+durS(k.min||t.est||30)}</span>${open?`<div class="rx">${k.why?`<p class="why">${esc(k.why)}</p>`:''}<p class="first"><b>Start:</b> ${esc(k.first||t.next||t.t)}</p><div class="row">${st==='open'?`<button class="pri sm" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="mark" data-m="skip" data-id="${t.id}">Not now</button><button class="sm" data-act="mark" data-m="stuck" data-id="${t.id}">Stuck</button>`:`<button class="pri sm" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="undone" data-id="${t.id}">Back on the list</button>`}${t.out==='ready'?'<button class="sm ghost" data-act="goAI">Open the draft</button>':t.ai?`<button class="sm ghost" data-act="aiTask" data-id="${t.id}">Let AI draft it</button>`:''}</div></div>`:''}</li>`};
+    return `<li class="r ${st==='done'?'done':st==='open'?'':'off'}${isNow?' now':''}"><button class="ck" data-act="${st==='done'?'undone':'done'}" data-id="${t.id}" aria-label="${st==='done'?'Not done after all':'Done'}: ${esc(T(t))}">${CHECK}</button><button class="rt" data-act="row" data-id="${t.id}" aria-expanded="${open}">${isNow?'<span class="tag">NOW</span>':''}${esc(T(t))}${st==='skip'?' <span class="pill mute">not today</span>':st==='stuck'?' <span class="pill warn">stuck</span>':''}</button><span class="rm num">${st==='done'?'':(r.ev?esc(t12(r.ev.s).replace(' ',''))+' · ':'')+(t.wk&&!t.est?'~':'')+durS(k.min||t.est||30)}</span>${open?`<div class="rx">${k.why?`<p class="why">${esc(k.why)}</p>`:''}${k.first||t.next?`<p class="first"><b>Start:</b> ${esc(k.first||t.next)}</p>`:''}${t.msg?`<p class="first" id="m_${t.id}" style="white-space:pre-wrap">${esc(t.msg)}</p>`:''}<div class="row">${t.msg?`<button class="sm" data-act="copy" data-from="m_${t.id}">Copy the message</button>`:''}${st==='open'?`<button class="pri sm" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="mark" data-m="skip" data-id="${t.id}">${t.wk===wkKey()?'Not today':'Not now'}</button><button class="sm" data-act="mark" data-m="stuck" data-id="${t.id}">Stuck</button>`:`<button class="pri sm" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="undone" data-id="${t.id}">Back on the list</button>`}${t.out==='ready'?'<button class="sm ghost" data-act="goAI">Open the draft</button>':t.ai?`<button class="sm ghost" data-act="aiTask" data-id="${t.id}">Let AI draft it</button>`:''}</div></div>`:''}</li>`};
   const quick=m!=='work'?[]:(p?.quick||[]).map(id=>S.tasks.get(id)).filter(t=>t&&t.s!=='done'&&!picks.some(r=>r.k.id===t.id));
   const head=bz?`After ${esc(bz.x&&bz.x!=='busy'?bz.x:'this')}`:m==='teach'?'Between lessons':m==='eve'?'Before you switch off':'Today’s docket';
   const over=m==='work'&&op.length>0&&dkt.work>free;
@@ -1041,13 +1138,13 @@ function renderToday(){
     <div class="bar" aria-hidden="true">${picks.map(r=>`<i class="${r.st==='done'?'on':r.st==='open'?'':'off'}"></i>`).join('')}</div><div class="fit${over?' over':''}">${fit}</div>
     <ol class="rows">${dkt.rows.map(row).join('')}${quick.length?`<li class="r sep">If you have five minutes</li>${quick.map(t=>`<li class="r"><button class="ck" data-act="done" data-id="${t.id}" aria-label="Done: ${esc(T(t))}">${CHECK}</button><span class="rt">${esc(T(t))}</span><span class="rm num">5m</span></li>`).join('')}`:''}</ol>
     <div class="dkf">${p?.leftOut?`<span class="m">${esc(p.leftOut)}</span>`:''}<button class="ghost sm" data-act="plan" ${S.planning?'disabled':''}>${S.planning?'Planning…':op.length?'Replan from now':'Plan a bit more'}</button></div></div>`
-   :`<div class="dk"><div class="dkh"><span class="lbl">Today’s docket</span></div><div class="empty">${!S.loaded?'Loading your day…':S.planning?'Planning your day…':'No plan yet for today.'}${S.loaded&&!S.planning?'<div class="row" style="justify-content:center;margin-top:10px"><button class="pri sm" data-act="docket">Check in and plan</button><button class="sm" data-act="plan">Just plan it</button></div>':''}</div></div>`;
+   :`<div class="dk"><div class="dkh"><span class="lbl">Today’s docket</span></div><div class="empty">${!S.loaded?'Loading your day…':S.planning?'Planning your day…':(weekItems().length?'Nothing is pinned to today.':'Tell me what has to get done this week and I’ll pin it into your days.')}${S.loaded&&!S.planning&&!weekItems().length?'<div class="row" style="justify-content:center;margin-top:10px"><button class="pri sm" data-act="weekAsk">Give it my week</button></div>':''}</div></div>`;
   const f=feeTot(),mk=[...S.students.values()].reduce((a,x)=>a+(x.active!==false?(x.owed||0):0),0),ver=[...S.tasks.values()].filter(t=>t.s==='verify').sort((a,b)=>(a.p||3)-(b.p||3)),nd=S.drafts.filter(d=>d.state==='ready').length;
-  const pf=facts();
-  $('statBox').innerHTML=(S.loaded?`<button class="how" data-act="howSheet" aria-label="How you’re doing"><span class="k good"><b class="num">${pf.done.length}</b>done this week</span><span class="k"><b class="num">${pf.track.length}</b>on track</span><span class="k${pf.slip.length?' warn':''}"><b class="num">${pf.slip.length}</b>slipping</span></button>`:'')
+  const wp=weekPace();
+  $('statBox').innerHTML=(!S.loaded?'':wp.all?`<button class="how" data-act="goCal" aria-label="This week"><span class="k good"><b class="num">${wp.done}</b>done this week</span><span class="k"><b class="num">${wp.all-wp.done}</b>to go</span><span class="k${wp.ok?'':' warn'}"><b>${wp.ok?'On pace':'Tight'}</b>${durS(wp.left)} left</span></button>`
+     :`<button class="lnk" data-act="weekAsk"><span class="grow">This week<small>Tell me what has to get done and I’ll pin it into your days</small></span></button>`)
     +((p?.forgot||[]).length?`<div class="fg"><span class="lbl">Don’t forget</span>${p.forgot.map(x=>`<div>${esc(x)}</div>`).join('')}</div>`:'')
-    +(S.loaded?`<button class="lnk" data-act="goCal"><span class="grow">This week<small>${esc(S.week?.headline||'Not laid out yet')}</small></span></button>`:'')
-    +(f.sum||mk?`<button class="lnk" data-act="goCentre"><span class="grow">Centre<small>${[f.sum?money(f.sum)+' unpaid':'',mk?mk+' h of makeups owed':''].filter(Boolean).join(' · ')}</small></span></button>`:'');
+    +(S.loaded?`<button class="lnk" data-act="goCentre"><span class="grow">Centre<small>Fees, makeups and students</small></span></button>`:'');
   const tn=tonight(),att=x=>S.att.get(today()+'_'+x.id)?.status;
   const stP={attended:['good','Came'],missed_credit:['warn','Missed · credit'],missed_no_credit:['bad','Missed'],holiday:['mute','Holiday'],cancelled:['mute','Cancelled']};
   let tb=tn.some(x=>x.live)?tn.map(({s:x,x:sl,t,st})=>`<div class="item row"><div class="grow"><span class="t">${esc(x.name)}</span> <span class="m num">${t12(sl.s)}–${t12(sl.e)}${t?' · '+esc(t):''}</span></div><span class="pill ${(stP[st]||['mute'])[0]}">${(stP[st]||['','Not marked'])[1]}</span></div>`).join('')+`<div style="margin-top:10px"><a href="https://schedule.tutorwise.ca" target="_blank" rel="noopener" style="color:var(--acc);font-weight:600;font-size:14px">Mark attendance in your scheduler</a></div>`
@@ -1063,17 +1160,18 @@ function renderToday(){
   $('topBox').innerHTML=m==='eve'?sec('sec:close','Close the day',closeB)+tonightS:m==='teach'?tonightS:'';
   $('cenBox').innerHTML=(m==='work'?tonightS:'')+sec('sec:money',`Who owes · ${money(f.sum)}`,moneyB);
   $('moreBox').innerHTML=`<button class="lnk" data-act="goAI" style="margin-top:4px"><span class="grow">AI help<small>${nd?nd+' draft'+(nd>1?'s':'')+' ready to review':'Hand something off'}</small></span></button><button class="lnk" data-act="goMem"><span class="grow">Memory<small>${S.mem.length} things I know about you</small></span></button><button class="lnk" data-act="settings"><span class="grow">Settings<small>What it calls you, your hours, voice check</small></span></button>`
-    +sec('sec:report','Overnight report',repB)+sec('sec:week','Wake-ups and workouts',weekBody())+sec('sec:hist','What you’ve told me',histB)+sec('sec:help','How to use this',`<div class="m" style="display:flex;flex-direction:column;gap:8px;font-size:14px"><div><b>Tell it anything.</b> Type in the box at the top. Where the mic works, tap the brain and talk as long as you like, then say “you can speak now”. New tasks, things you finished, who paid, who missed.</div><div><b>Work down today’s docket.</b> Tap the circle when something is done. Tap a line for Not now or Stuck.</div><div><b>Tell it when you get up, and tap Workout.</b> It plans from your real day and tracks your week.</div><div><b>Calendar</b> has your week and the next three weeks. <b>Centre</b> has fees, makeups and every student.</div><div><b>It remembers.</b> What you tell it and what you do is kept, and it brings it back on the same weekday. See and fix what it knows under Memory.</div><div><b>AI help</b> (under More) holds finished drafts. Copy them, or hit Redo if they’re off.</div></div>`);
+    +sec('sec:report','Overnight report',repB)+sec('sec:week','Wake-ups and workouts',weekBody())+sec('sec:hist','What you’ve told me',histB)+sec('sec:help','How to use this',`<div class="m" style="display:flex;flex-direction:column;gap:8px;font-size:14px"><div><b>Talk to it.</b> On a computer, tap the brain once (or press Space) and just talk: it answers out loud and keeps listening. Say “that’s all” to stop. On a phone, type in the box. New tasks, things you finished, who paid, who missed.</div><div><b>Work down today’s docket.</b> Tap the circle when something is done. Tap a line for Not now or Stuck.</div><div><b>Tell it when you get up, and tap Workout.</b> It plans from your real day and tracks your week.</div><div><b>Calendar</b> has your week and the next three weeks. <b>Centre</b> has fees, makeups and every student.</div><div><b>It remembers.</b> What you tell it and what you do is kept, and it brings it back on the same weekday. See and fix what it knows under Memory.</div><div><b>AI help</b> (under More) holds finished drafts. Copy them, or hit Redo if they’re off.</div></div>`);
   renderCal();
 }
-function renderCal(){const el=$('calBox');if(!el)return;const w=S.week,ds=(w?.days||[]).filter(d=>d.date>=today());
-  if(!S.calDay||!ds.some(d=>d.date===S.calDay))S.calDay=ds[0]?.date||today();
-  const sel=ds.find(d=>d.date===S.calDay),n=d=>(d.items||[]).filter(i=>S.tasks.has(i)).length+evOn(d.date).length;
-  const det=d=>{const ev=evOn(d.date),it=(d.items||[]).map(i=>S.tasks.get(i)).filter(Boolean);
-    return `<div style="font:600 16px var(--disp);margin-bottom:4px">${esc(d.theme)}</div>${ev.map(e=>`<div class="item"><div class="t">${esc(e.t)}</div><div class="m">${esc(evWhen(e))}${e.tent?' · pencilled in':''}${e.where?' · '+esc(e.where):''}</div></div>`).join('')}${it.map(t=>`<div class="item"><div class="t"${t.s==='done'?' style="text-decoration:line-through;color:var(--dim)"':''}>${esc(T(t))}</div></div>`).join('')}${d.note?`<div class="m" style="margin-top:8px">${esc(d.note)}</div>`:''}`};
-  el.innerHTML='<h2 style="margin-top:6px">This week</h2>'+(S.weeking?'<div class="card m">Laying out your week…</div>':ds.length?`${w.headline?`<p class="why" style="margin:0 0 10px">${esc(w.headline)}</p>`:''}<div class="wk7">${ds.map(d=>`<button class="dayc${d.date===S.calDay?' on':''}" data-act="calDay" data-d="${d.date}"><span class="d">${d.date===today()?'Today':DN[dowOf(d.date)]+' '+(+d.date.slice(8))}</span><span class="th">${esc(d.theme)}</span><span class="n">${n(d)} thing${n(d)===1?'':'s'}</span></button>`).join('')}</div>${sel?`<div class="card" style="margin-top:6px">${det(sel)}</div>`:''}<div class="row" style="margin-top:6px"><button class="ghost sm" data-act="week">Redo the week</button></div>`
-    :'<div class="card"><div class="m" style="margin-bottom:8px">No week laid out yet.</div><button class="sm pri" data-act="week">Plan my week</button></div>')
-    +`<h2>Next 3 weeks</h2><div class="card">${calBody()}</div>`}
+function renderCal(){const el=$('calBox');if(!el)return;const wk=weekItems(),wp=weekPace();
+  const days=[...new Set([...horizon(),...wk.map(t=>t.day).filter(d=>d&&d>=wkKey())])].sort();
+  const item=t=>{const e=!isDone(t)&&evOn(t.day||'').find(x=>x.task===t.id&&hm(x.s));return `<button class="wki${isDone(t)?' done':''}" data-act="wkItem" data-id="${t.id}"><span class="dot"></span><span class="tt">${esc(T(t))}</span><span class="mm num">${e?esc(t12(e.s).replace(' ',''))+' · ':t.pin&&!isDone(t)?'set · ':''}${isDone(t)?'done':(t.est?'':'~')+durS(estOf(t))}</span></button>`};
+  const block=d=>{const it=wk.filter(t=>t.day===d),ev=evOn(d).filter(e=>!(e.task&&it.some(t=>t.id===e.task))),op=it.filter(t=>!isDone(t)),ld=op.reduce((a,t)=>a+estOf(t),0);
+    return `<div class="wkd${d===today()?' on':''}"><div class="wkh"><span class="d">${d===today()?'Today':DNL[dowOf(d)]+' '+(+d.slice(8))}</span><span class="n num">${op.length?durS(ld):it.length?'all done':''}</span></div>${ev.map(e=>`<div class="evl">${esc(evWhen(e))} · ${esc(e.t)}${e.tent?' (pencilled in)':''}</div>`).join('')}${it.map(item).join('')||(ev.length?'':'<div class="none">Open</div>')}</div>`};
+  const loose=wk.filter(t=>!t.day&&!isDone(t));
+  el.innerHTML='<h2 style="margin-top:6px">This week’s list</h2>'+(wk.length?`<div class="card"><div class="dkh"><span class="lbl" style="letter-spacing:.12em">${wp.ok?'On pace':'More than fits'}</span><span class="cnt num">${wp.done}<small>/${wp.all}</small></span></div><div class="bar" aria-hidden="true">${wk.map(t=>`<i class="${isDone(t)?'on':''}"></i>`).join('')}</div><div class="fit${wp.ok?'':' over'}">${durS(wp.left)} of work left · room for ${durS(wp.room)} before the week ends</div></div>${days.map(block).join('')}${loose.length?`<div class="wkd"><div class="wkh"><span class="d">Not placed</span></div>${loose.map(item).join('')}</div>`:''}<div class="row" style="margin-top:8px"><button class="ghost sm" data-act="week">Rearrange the week</button><button class="ghost sm" data-act="weekAsk">Add to the list</button></div>`
+    :'<div class="card"><div class="m" style="margin-bottom:10px">Nothing on this week’s list yet. Tell me everything that has to get done this week and I’ll pin each thing to a day, then keep rearranging until it’s all done.</div><button class="sm pri" data-act="weekAsk">Give it my week</button></div>')
+    +`<h2>Calendar · next 3 weeks</h2><div class="card">${calBody()}</div>`}
 function howSheet(){const pf=facts(),p=S.plan,L=(t,a)=>a.length?`<h2>${t}</h2><div class="card">${a.slice(0,8).map(x=>`<div class="item" style="font-size:14px">${esc(x)}</div>`).join('')}</div>`:'';
   sheet(`<h3 style="font:600 18px var(--disp);margin:0 0 6px">How you’re doing</h3>${p?.how?`<p class="why" style="margin:0">${esc(p.how)}</p>`:''}${L('Slipping',pf.slip)}${L('On track',pf.track)}${L('Done this week',pf.done)}${L('You may be forgetting',pf.forget)}${pf.slip.length+pf.track.length+pf.done.length+pf.forget.length?'':'<p class="m">Nothing to report yet. Mark things done as you go and this fills in.</p>'}<div class="row" style="margin-top:14px"><button data-act="close">Close</button></div>`)}
 /* today's picks in his order, with the fixed times (calendar, teaching) dropped in where they fall */
@@ -1125,6 +1223,8 @@ function sheet(html){$('sheetBody').innerHTML=html;$('sheet').hidden=false}
 function settingsSheet(){const s=S.settings;const f=(k,l,t='time')=>`<label for="s_${k}">${l}</label><input id="s_${k}" type="${t}" value="${esc(s[k])}">`;
   sheet(`<h3 style="font:600 18px var(--disp);margin:0">Settings</h3>${f('address','What it calls you','text')}
   ${tts?`<label for="s_voice">Its voice</label><div class="row" style="flex-wrap:nowrap"><select id="s_voice">${['buttery','airy','glassy','rounded'].map(v=>`<option ${s.voice===v?'selected':''}>${v}</option>`).join('')}</select><button data-act="testVoice">Test</button></div>`:''}
+  ${dict?`<label for="s_conv">When I talk to it</label><select id="s_conv"><option value="1" ${s.handsFree!==false?'selected':''}>Keep the conversation going, hands-free</option><option value="0" ${s.handsFree===false?'selected':''}>One answer at a time, in Claude’s voice</option></select>
+  <label for="s_pause">It answers when</label><select id="s_pause">${[[2,'I pause for 2 seconds'],[3,'I pause for 3 seconds'],[5,'I pause for 5 seconds'],[0,'only when I say “I’m done”']].map(([v,l])=>`<option value="${v}" ${(+s.pause||0)===v?'selected':''}>${l}</option>`).join('')}</select>`:''}
   <label>Voice in this view</label><div class="row" style="flex-wrap:nowrap;align-items:center"><button data-act="voiceCheck" style="flex:none">Check voice</button><span class="m grow" id="vcOut">Microphone: ${esc(micWord())}. Speaker: ${esc(spkWord())}.</span></div>
   ${f('wake','Wake-up time you’re aiming for')}${f('workStart','Focused work starts')}${f('teachStart','Teaching starts')}${f('teachEnd','Teaching ends')}${f('protect','Always protect','text')}
   <label for="s_capacity">How full to plan your free time</label><select id="s_capacity">${[0.5,0.65,0.8].map(v=>`<option value="${v}" ${+s.capacity===v?'selected':''}>${Math.round(v*100)}% ${v===0.5?'(light)':v===0.65?'(realistic)':'(packed)'}</option>`).join('')}</select>
@@ -1139,14 +1239,20 @@ function upSheet(){const hb=S.habits.get(today())||{};
    He may ramble: nothing is sent on a pause. His turn ends when he says "you can speak now" or taps.
    Speaking: Claude's voice where offered, else this device's own voice. */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition,AND=/Android/i.test(navigator.userAgent);
-const STOP=/[\s,.;:!?-]*\b(?:(?:and|ok(?:ay)?|all ?right|so|now)[\s,]+)*you (?:can|may) (?:(?:speak|talk)(?: now)?|(?:answer|respond|go(?: ahead)?) now)[\s.!?]*$/i;
-const END=/[\s,.;:!?-]*\b(?:that'?s all|that is all|that'?s it for now|stop listening|we'?re done)(?:,? (?:thanks|thank you))?[\s.!?]*$/i;
+const STOP=/(?:[\s,.;:!?-]*\b(?:(?:and|ok(?:ay)?|all ?right|so|now)[\s,]+)*you (?:can|may) (?:(?:speak|talk)(?: now)?|(?:answer|respond|go(?: ahead)?) now)|(?:^|[.!?,]\s*)(?:(?:ok(?:ay)?|all ?right)[\s,]+)?i'?m done(?:[\s,.!]+send it)?|(?:^|[.!?]\s*)send it|(?:^|[.!?]\s*)over to you)[\s.!?]*$/i;
+const END=/[\s,.;:!?-]*\b(?:that'?s all|that is all|that'?s it for now|stop listening|we'?re done|goodbye|talk (?:to you )?later)(?:,? (?:thanks|thank you|jarvis))*[\s.!?]*$/i;
 let rec=null,spUnlocked=false;const utts=[];
+/* Conversation: one tap opens the mic and it stays open. He talks, it answers out loud, he talks again. The answer comes when he pauses (or says he is done).
+   Claude's own voice cannot speak while Claude's dictation is listening, so in a conversation the answers use this computer's voice. */
+const convOn=()=>!!dict&&S.settings.handsFree!==false;
+const nrm=x=>String(x||'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
+const echoOf=x=>{const w=nrm(x).split(' ').filter(Boolean);if(!w.length)return true;if(Date.now()-(V.spokeEnd||0)>7000)return false;const r=new Set(nrm(V.lastReply).split(' '));return w.filter(k=>r.has(k)).length/w.length>=.7};
+const endPause=b=>{const base=(+S.settings.pause||0)*1000;if(!base)return 0;const t=b.trim();if(/\b(?:hold on|one sec(?:ond)?|give me a (?:sec|second|minute)|let me think|um+|uh+|hmm+|and|so|but|because|or|then|also|like|to|the|a|my|i|i need to|i have to)[\s,.…]*$/i.test(t))return Math.max(base,7000);return /[.!?]["'”]?$/.test(t)?base:Math.max(base,4500)};
 const canHear=()=>!!dict||(!!SR&&!V.noMic);
 function setState(st){V.state=st;renderCore()}
 function say(text,speakIt,queue){V.say=text;V.greeting=false;renderCore();return speakIt?speak(text,false,queue):Promise.resolve(false)}
 function pickVoice(){const vs=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang));if(!vs.length)return null;
-  const sc=v=>(/daniel/i.test(v.name)?40:0)+(/premium/i.test(v.name)?30:0)+(/enhanced/i.test(v.name)?20:0)+(/en.GB/i.test(v.lang)?8:0)+(v.default?2:0);
+  const sc=v=>(/natural|neural/i.test(v.name)?60:0)+(/ryan|guy|andrew|brian|daniel|george|arthur/i.test(v.name)?24:0)+(/google uk english male/i.test(v.name)?46:0)+(/google/i.test(v.name)?12:0)+(/premium/i.test(v.name)?30:0)+(/enhanced/i.test(v.name)?20:0)+(/en.GB/i.test(v.lang)?8:0)+(v.default?2:0);
   return vs.sort((a,b)=>sc(b)-sc(a))[0]}
 /* Phones only let a page speak after a real tap. The first tap or key press says one silent word, which opens the door and tells us whether this device speaks here at all. */
 function unlockSpeech(){if(spUnlocked||tts||!('speechSynthesis'in window))return;spUnlocked=true;
@@ -1156,17 +1262,19 @@ for(const ev of['click','touchend','keydown'])document.addEventListener(ev,unloc
 /* resolves true once the words have been spoken, false if nothing could be said */
 function speak(text,force,queue){return new Promise(async res=>{
   if(!text||(!V.voiceOn&&!force))return res(false);
-  if(tts){if(V.ttsOff)return res(false);
+  V.lastReply=text;
+  if(tts&&!V.conv){if(V.ttsOff)return res(false);
     try{await tts[queue&&tts.active()?'add':'speak'](text.slice(0,1900),{voice:S.settings.voice||'buttery',rate:1.05});res(true)}
     catch(e){if(e?.code==='not_granted'||e?.code==='unavailable'){V.ttsOff=true;renderCore()}res(false)}
     return}
   if(!('speechSynthesis'in window)||V.noSpeech)return res(false);
   try{if(!queue&&(speechSynthesis.speaking||speechSynthesis.pending))speechSynthesis.cancel();
-    const parts=(text.match(/[^.!?]+[.!?]+["”’)]*|[^.!?]+$/g)||[text]).map(x=>x.trim()).filter(Boolean),v=pickVoice();let started=false,left=parts.length;
+    const parts=(text.match(/[^.!?]+[.!?]+["”’)]*|[^.!?]+$/g)||[text]).map(x=>x.trim()).filter(Boolean),v=pickVoice();let started=false,left=parts.length;V.spokeEnd=Date.now()+60000;
     for(const p of parts){const u=new SpeechSynthesisUtterance(p);if(v)u.voice=v;u.rate=1.02;utts.push(u);if(utts.length>40)utts.shift();
       u.onstart=()=>{started=true;V.speechOk=true;V.noSpeech=false;if(V.state==='idle')setState('speaking')};u.onboundary=()=>orb.tick();
-      u.onend=u.onerror=()=>{if(--left<=0){if(V.state==='speaking')setState('idle');res(started)}};
+      u.onend=u.onerror=()=>{if(--left<=0){clearTimeout(dog);V.spokeEnd=Date.now();if(V.state==='speaking')setState('idle');res(started)}};
       speechSynthesis.speak(u)}
+    const dog=setTimeout(()=>{if(left>0){left=0;try{speechSynthesis.cancel()}catch(e){}V.spokeEnd=Date.now();if(V.state==='speaking')setState('idle');res(started)}},4000+text.length*110); /* some browsers never say they finished */
     setTimeout(()=>{if(!started&&!speechSynthesis.speaking){V.noSpeech=true;renderCore();res(false)}},2600);
   }catch(e){res(false)}})}
 function stopSpeak(){if(tts)tts.stop().catch(()=>{});else try{speechSynthesis.cancel()}catch(e){}if(V.state==='speaking')setState('idle')}
@@ -1175,18 +1283,21 @@ function wireTts(){
   tts.onPosition(()=>orb.tick())}
 function heardMore(){renderCore();if(!V.partial&&V.state==='listening'&&STOP.test(V.buf))finish(true)}
 /* the mic stopped by itself: keep every word he said */
-function earLost(why){clearInterval(V.silence);const text=V.buf.trim();V.buf='';V.partial='';V.wantEar=false;V.handsFree=false;
+function earLost(why){clearInterval(V.silence);const text=((V.buf||'')+(V.next||'')).trim();V.buf='';V.next='';V.partial='';V.wantEar=false;V.handsFree=false;V.conv=false;
   if(text){$('dump').value=text;grow()}
   setState('idle');
   if(why==='denied'){toast('The microphone isn’t available here. Type it instead.',4200);$('dump').focus()}
   else if(text)toast('The mic stopped. Your words are in the box: tap the brain to keep going, or Send.',5200)}
 function wireDict(){
-  dict.onFinal(({text})=>{if(V.state!=='listening'&&V.state!=='starting')return;V.buf=V.buf?V.buf+text:text.trimStart();V.partial='';V.lastHeard=Date.now();orb.kick(.9);heardMore()});
-  dict.onPartial(({text})=>{V.partial=text;if(text){V.lastHeard=Date.now();orb.kick(.5)}renderCore()});
+  dict.onFinal(({text})=>{
+    if(V.conv&&(V.state==='thinking'||V.state==='idle')){if(!echoOf(text)){V.next=(V.next||'')+text;V.lastHeard=Date.now()}return}
+    if(V.conv&&(V.state==='speaking'||Date.now()<(V.spokeEnd||0)+1300||echoOf(text)))return;
+    if(V.state!=='listening'&&V.state!=='starting')return;V.buf=V.buf?V.buf+text:text.trimStart();V.partial='';V.lastHeard=Date.now();orb.kick(.9);heardMore()});
+  dict.onPartial(({text})=>{if(V.conv&&V.state!=='listening'&&V.state!=='starting')return;if(V.conv&&Date.now()<(V.spokeEnd||0)+1300)return;V.partial=text;if(text){V.lastHeard=Date.now();orb.kick(.5)}renderCore()});
   dict.onState(({state,reason})=>{
     if(state==='listening'){V.lastHeard=Date.now();if(V.state==='starting')setState('listening')}
     else if(state==='idle'&&(V.state==='listening'||V.state==='starting')&&!V.finishing){
-      if(reason==='viewer_stopped'){clearInterval(V.silence);const text=V.buf.replace(STOP,'').trim();V.buf='';V.partial='';V.wantEar=false;if(text){V.state='idle';respond(text,true)}else setState('idle');return}
+      if(reason==='viewer_stopped'){clearInterval(V.silence);const text=V.buf.replace(STOP,'').trim();V.buf='';V.partial='';V.wantEar=false;V.conv=false;if(text){V.state='idle';respond(text,true)}else setState('idle');return}
       const gone=reason==='not_granted'||reason==='unavailable';if(gone)dict=null;
       earLost(gone?'denied':'')}})}
 function srStart(){return new Promise((ok,no)=>{
@@ -1204,25 +1315,33 @@ function srStart(){return new Promise((ok,no)=>{
     r.start()}catch(e){no({code:'unavailable'})}})}
 function srStop(){return new Promise(res=>{const r=rec;if(!r)return res();r.addEventListener('end',()=>res(),{once:true});try{r.stop()}catch(_){res()}setTimeout(res,900)})}
 function listen(){
-  stopSpeak();const viaDict=!!dict;V.buf='';V.partial='';V.hint='';V.finishing=false;V.lastHeard=V.t0=Date.now();V.wantEar=true;V.state='starting';
+  stopSpeak();const viaDict=!!dict;V.buf='';V.next='';V.partial='';V.hint='';V.finishing=false;V.lastHeard=V.t0=Date.now();V.wantEar=true;V.conv=convOn();V.state='starting';
   (viaDict?dict.start():srStart()).catch(er=>{clearInterval(V.silence);const c=er?.code;V.wantEar=false;
-    if(c==='no_gesture'){V.hint='Tap the brain, or press Space, to answer.';setState('idle');return}
+    V.conv=false;if(c==='no_gesture'){V.hint='Tap the brain, or press Space, to answer.';setState('idle');return}
     if(V.state==='starting'||V.state==='listening')setState('idle');
     if(c==='not_granted'||c==='unavailable'){if(viaDict)dict=null;renderCore();toast('The microphone isn’t available here. Type it instead.',4200);$('dump').focus()}
     else if(c!=='stopped'&&c!=='dismissed')toast('The mic isn’t available right now. Typing still works.')});
   renderCore();
   clearInterval(V.silence);V.silence=setInterval(()=>{if(V.state!=='listening')return;const quiet=Date.now()-V.lastHeard,has=V.buf.trim(),el=$('vTime');
     if(el){const n=Math.floor((Date.now()-V.t0)/1000);el.textContent=Math.floor(n/60)+':'+String(n%60).padStart(2,'0')}
-    if(!has&&!V.partial&&quiet>90000){V.handsFree=false;finish(false)}else if(has&&!V.partial&&quiet>300000)finish(false)},500)}
+    const need=endPause(V.buf);
+    if(has&&!V.partial&&need&&quiet>need)finish(true);
+    else if(!has&&!V.partial&&quiet>(V.conv?150000:90000)){V.handsFree=false;if(V.conv)V.say=`Standing by, ${sir()}.`;finish(false)}
+    else if(has&&!V.partial&&quiet>300000)finish(false)},400)}
+/* back to listening after an answer, without a tap */
+function resumeEar(){if(!V.conv||!dict||!dict.active()){V.conv=false;return false}V.buf=(V.next||'').trimStart();V.next='';V.partial='';V.lastHeard=V.t0=Date.now();setState('listening');if(V.buf)heardMore();return true}
 async function finish(send){
-  if(V.finishing)return;V.finishing=true;V.wantEar=false;clearInterval(V.silence);
+  if(V.finishing)return;
+  if(V.conv&&send){const text=V.buf.replace(STOP,'').trim();V.buf='';V.partial='';if(text){V.state='idle';respond(text,true)}else renderCore();return} /* the mic stays open */
+  V.finishing=true;V.wantEar=false;V.conv=false;clearInterval(V.silence);
   try{if(dict)await dict.stop();else await srStop()}catch(e){}
   const text=V.buf.replace(STOP,'').trim();V.buf='';V.partial='';V.finishing=false;
   if(send&&text){V.state='idle';respond(text,true)}else{if(text){$('dump').value=text;grow()}setState('idle')}}
+async function endConv(){if(!V.conv)return;V.conv=false;V.wantEar=false;clearInterval(V.silence);V.next='';try{if(dict)await dict.stop()}catch(e){}}
 function orbTap(){const st=V.state;V.hint='';
   if(st==='thinking')return;
-  if(st==='listening'||st==='starting'){finish(true);return}
-  if(st==='speaking')stopSpeak();
+  if(st==='listening'||st==='starting'){if(V.conv&&!V.buf.trim()&&!V.partial){finish(false);return}finish(true);return}
+  if(st==='speaking'){const was=V.conv;stopSpeak();if(was){V.spokeEnd=Date.now()-900;if(resumeEar())return}}
   if(canHear()){listen();return}
   let typed=false;try{typed=localStorage.getItem('hq.type')==='1'}catch(e){}
   if(voiceLine()&&!typed){sheet(`<h3 style="font:600 18px var(--disp);margin:0 0 6px">Talk to me by voice</h3><p class="why" style="margin:0 0 12px">This phone gives the app no microphone. Your voice line uses Claude’s own mic instead, and everything you say there lands here.</p><div class="row"><a class="btn" href="${esc(voiceLine())}" target="_blank" rel="noopener">Open the voice line</a><button data-act="typeHere">Type here instead</button></div>`);return}
@@ -1321,19 +1440,25 @@ document.addEventListener('click',async e=>{
   if(a==='upSet'){const t=$('upT').value;if(/^\d\d:\d\d$/.test(t)){$('sheet').hidden=true;return markUp(t)}return}
   if(a==='upClear'){const hb={...(S.habits.get(today())||{}),date:today(),up:false};delete hb.upAt;S.habits.set(today(),hb);await db?.doc('habits/'+today()).set(hb).catch(()=>{});$('sheet').hidden=true;V.greeting=true;renderToday();return}
   if(a==='habit'){const hb={...(S.habits.get(today())||{}),date:today()},h=b.dataset.h;hb[h]=!hb[h];S.habits.set(today(),hb);renderToday();await db?.doc('habits/'+today()).set(hb).catch(()=>{});if(hb[h]){logEv('workout','');say(`Logged, ${sir()}. Good work.`,true)}return}
-  if(a==='plan')return makePlan('He asked to replan from the current time. Keep earlier picks where they still fit.',true);
+  if(a==='plan'){if(weekItems().length){await applyWeek(true);say(daySay(),true);return}return weekAsk()}
   if(a==='row'){S.rowSel=S.rowEx===id?'':id;renderToday();return}
-  if(a==='undone'){S.rowSel=null;return undoTask(id)}
+  if(a==='undone'){S.rowSel=null;$('sheet').hidden=true;return undoTask(id)}
   if(a==='howSheet')return howSheet();
   if(a==='typeHere'){try{localStorage.setItem('hq.type','1')}catch(e){}$('sheet').hidden=true;const el=$('dump');el.focus();return}
   if(a==='goCal')return show('cal');
   if(a==='goCentre')return show('centre');
   if(a==='goMem')return show('mem');
   if(a==='calDay'){S.calDay=b.dataset.d;renderCal();return}
-  if(a==='done'){S.rowSel=null;const t=S.tasks.get(id);if(!t)return;const wasPick=(S.plan?.picks||[]).some(k=>k.id===id)&&S.view==='today',nx=openPicks(id)[0];
+  if(a==='done'){S.rowSel=null;$('sheet').hidden=true;const t=S.tasks.get(id);if(!t)return;const wasPick=(S.plan?.picks||[]).some(k=>k.id===id)&&S.view==='today',nx=openPicks(id)[0];
     await finishTask(id,'tapped Done');
     if(wasPick)say(nx?`Done, ${sir()}. Next: ${T(nx.t)}.`:`Done, ${sir()}. That clears today’s list.`,true);else toast('Done: '+t.t);return}
   if(a==='set'){await up(id,{s:b.dataset.s});return}
+  if(a==='mark'&&b.dataset.m==='skip'&&S.tasks.get(id)?.wk===wkKey()){S.rowSel=null;return pushItem(id)}
+  if(a==='wkItem')return wkSheet(id);
+  if(a==='wkMove'){$('sheet').hidden=true;if(await pinItem(id,b.dataset.d)){await applyWeek(false);toast('Moved to '+dayWord(b.dataset.d)+'.',1800)}return}
+  if(a==='wkFloat'){$('sheet').hidden=true;const c={pin:false,day:null};S.tasks.set(id,{...S.tasks.get(id),...c});await up(id,c);await applyWeek(false);return}
+  if(a==='wkOff'){$('sheet').hidden=true;const c={wk:null,day:null,pin:false};S.tasks.set(id,{...S.tasks.get(id),...c});await up(id,c);await applyWeek(false);toast('Off this week’s list.',1800);return}
+  if(a==='weekAsk')return weekAsk();
   if(a==='mark'){S.rowSel=null;const t=S.tasks.get(id),mk=b.dataset.m,marks={...(S.plan?.marks||{}),[id]:mk},nx=openPicks(id)[0];
     if(S.plan)S.plan={...S.plan,marks};await db.doc('plans/'+today()).update({marks}).catch(()=>{});if(t){await up(id,{defer:(t.defer||0)+1});logEv(mk==='stuck'?'stuck':'skip',T(t))}
     if(mk==='stuck'){V.ctx={stuck:id};say(`What’s in the way, ${sir()}? Tell me and I’ll sort it out.`,true);if(!canHear())$('dump').focus()}
@@ -1361,14 +1486,14 @@ document.addEventListener('click',async e=>{
   if(a==='redo'){const d=S.drafts.find(x=>x.id===id);if(d)runJob(d.ask,d.taskId,d.id);return}
   if(a==='delDraft'){db.doc('drafts/'+id).delete().catch(()=>{});return}
   if(a==='copy'){const el=$(b.dataset.from);try{await navigator.clipboard.writeText(el.textContent);toast('Copied')}catch(e){const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);toast('Selected. Copy it from here.')}return}
-  if(a==='week')return makeWeek('He tapped to have the week laid out.',true);
+  if(a==='week'){if(weekItems().length){await applyWeek(true);toast('Rearranged.',1600);return}return weekAsk()}
   if(a==='memAdd'){const el=$('memAdd'),x=el.value.trim();if(x){el.value='';await saveMem([{x,k:'you'}],'typed');toast('I’ll remember that.',1800)}return}
   if(a==='memDel'){await db.doc('mem/'+id).update({on:false}).catch(()=>{});toast('Forgotten.',1500);return}
   if(a==='settings')return settingsSheet();
   if(a==='testVoice'){if(tts)tts.speak(`Good day, ${$('s_address').value||'sir'}. Everything is ready.`,{voice:$('s_voice').value,rate:1.05}).catch(()=>{});return}
   if(a==='close'){$('sheet').hidden=true;return}
   if(a==='saveSettings'){const n={...S.settings};for(const k of['address','wake','workStart','teachStart','teachEnd','protect'])n[k]=$('s_'+k).value||DEF[k];n.capacity=+$('s_capacity').value;
-    if($('s_voice'))n.voice=$('s_voice').value;if($('s_autoSend'))n.autoSend=$('s_autoSend').checked;
+    if($('s_voice'))n.voice=$('s_voice').value;if($('s_conv'))n.handsFree=$('s_conv').value==='1';if($('s_pause'))n.pause=+$('s_pause').value;if($('s_autoSend'))n.autoSend=$('s_autoSend').checked;
     await db?.doc('settings/main').set(n).catch(()=>toast('Could not save'));$('sheet').hidden=true;toast('Saved',1600);return}
 });
 renderAll();orb.sync();boot();

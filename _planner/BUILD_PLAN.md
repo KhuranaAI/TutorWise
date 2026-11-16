@@ -210,3 +210,36 @@ and a list of things for the day. What changed:
   sheet), "Don't forget", and links to the week and the centre. Tabs: Today, Calendar (week strip + next 3 weeks),
   Tasks (projects, old items, list), Centre (fees, who owes, lessons), More (AI help, Memory, settings, reports).
 - Finishing a task whose title mentions a workout also ticks the workout habit.
+
+## 2026-11-16, midday: what real voice use showed (app v16)
+He used the app by voice on a computer for twenty minutes. Dictation worked. What went wrong, in his words and in the
+log: it kept bringing up items from the old list (fees, a trip, students), it asked "which day?" and "how long?",
+it wrote a name the way speech-to-text heard it, it put message drafts into task titles, and it stopped listening
+after every answer. He wants "the native talking feature" and a week list that is kept arranged for him.
+- **The week list is the plan.** Tasks carry `wk` (that week's Monday), `wkN`, `day`, `pin`, `est`, `carried`, `msg`.
+  `layoutWeek()` places open items on days (kept where they are; unfinished days roll forward; new ones fill from
+  today up to a per-day target), `applyWeek()` writes changed days and `syncPlan()` writes `plans/{today}` with
+  `by:'week'` (picks = items pinned to today). No model call in the shuffling. "Not today" moves an item to the next
+  day. The Calendar tab shows the week as a board; tapping an item moves it. `rollWeek()` carries last week's
+  leftovers. `weeks/current` and the AI day/week planners are no longer used when a week list exists, and there is no
+  automatic AI plan any more.
+- **Intake rules.** Whatever he says he has to do goes on the week list (`add` with `week:true`, or `week_add`); never
+  ask which day or how long (guess `est`); never raise older-list items; `pin`, `unpin`, `week_remove`, `rebalance`,
+  `show_week`; a reply of a few words while he is listing; names spelled as in his records; "no reply needed" is
+  honoured. After the model's reply the app itself adds where new items landed (`pinnedSay`).
+- **Messages.** A message he has to send is a task with a short title and the wording in `msg`, shown with a Copy
+  button. Longer pieces go through `draft` to AI help. Formats he dictates are kept whole as `mem` kind `style`
+  (`t` = what it is for) and are passed to both the intake prompt and the drafting prompt.
+- **Conversation voice (platform dictation).** One tap opens the mic and it stays open (`V.conv`). A turn ends on a
+  pause (`settings.pause`, default 3 s; longer when the sentence is plainly unfinished), on "I'm done", or on a tap.
+  Words spoken while it thinks are kept for the next turn. Because the platform voice cannot speak while the platform
+  dictation is listening, answers in a conversation use the browser voice, and input is ignored while it speaks
+  (plus an echo check against the last answer). "That's all" or "stop listening" ends it. Settings offer the old
+  one-answer-at-a-time mode with the platform voice.
+- Checked: scenarios 12 (conversation) and 13 (week list) in the harness; eight real-style messages through the new
+  intake prompt on a Sonnet-class model with a copy of his records. The conversation loop has not been heard on his
+  computer yet: echo handling and the browser voice are the parts to watch.
+- **Scheduler.** He wants the assistant to read and edit his lesson scheduler. The clean route is a remote MCP server
+  for the scheduler, added to Claude as a custom connector; the app then calls it through the `mcp` capability
+  (declare it with the tool list its builder returns; do not guess argument names), and agent sessions get it too.
+  A brief for the scheduler's own builder was handed to him. This replaces the Apps Script export idea.
