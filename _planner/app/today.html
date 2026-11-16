@@ -579,14 +579,36 @@ async function undoPaid(s){
 const norm=x=>String(x||'').toLowerCase().replace(/[^a-z0-9]/g,'');
 const newStuId=(name,used)=>{const b=norm(name)||'s';let id=b,i=2;while(S.students.has(id)||used.has(id))id=b+'-'+(i++);used.add(id);return id};
 const mondayOf=()=>{const d=new Date(today()+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+1-(d.getUTCDay()||7));return d.toISOString().slice(0,10)};
-const linked=()=>!!S.settings.schedSheetId;
+const linked=()=>!!(S.settings.schedSheetId||S.settings.schedConn);
 const schedLive=()=>linked()&&S.sched&&S.sched.week===mondayOf();
 async function sheetVals(id,range){
   const r=await mcp.callTool('Google Sheets','get_values',{spreadsheetId:id,range},{cache:false});
   let v=r?.payload?.values||r?.structuredContent?.values;
   if(!v){const t=(r?.content||[]).find(c=>c.type==='text')?.text;try{const j=JSON.parse(t||'{}');v=j.values||j.content?.values}catch(e){}}
   return Array.isArray(v)?v:[]}
+/* the scheduler's own connector (TutorWise Scheduler): read the live week, students and timetable */
+const SCH='TutorWise Scheduler';
+async function schCall(tool,input){const r=await mcp.callTool(SCH,tool,input||{},{cache:false});let j=r?.payload??r?.structuredContent;
+  if(!j){const t=(r?.content||[]).find(c=>c.type==='text')?.text;try{j=JSON.parse(t||'{}')}catch(e){}}
+  return j?.content&&!j.sessions&&!j.students&&!j.slots?j.content:j||{}}
+async function connSync(){if(!mcp||!db)return{ok:false,msg:'Open this in Claude to read the scheduler.'};if(S.syncing)return{ok:false,msg:'Already syncing.'};S.syncing=true;renderCentre();
+  try{const[wk,st,tt]=await Promise.all([schCall('get_week'),schCall('list_students'),schCall('get_timetable')]);
+    if(!Array.isArray(wk.sessions)||!Array.isArray(st.students))throw new Error('The scheduler answered in a shape I did not expect.');
+    try{localStorage.setItem('hq.sheets','1')}catch(e){}
+    const hq=[...S.students.values()],find=n=>hq.find(x=>x.sched&&norm(x.sched)===norm(n))||hq.find(x=>!x.sched&&norm(x.name)===norm(n))||null;
+    const D2={monday:1,tuesday:2,wednesday:3,thursday:4,friday:5},used=new Set();let changed=0,added=0;
+    for(const r of st.students){const cur=find(r.name);
+      const slots=(tt.slots||[]).filter(x=>x.student===r.name&&D2[String(x.day).toLowerCase()]).map(x=>({d:D2[String(x.day).toLowerCase()],s:x.start,e:x.end,t:x.teacher||''}));
+      const patch={sched:r.name,slots,slotsOk:true,owed:Math.max(0,+r.makeup_hours_owed||0),lpw:+r.lessons_per_week||null};
+      if(cur){if(JSON.stringify([cur.sched,cur.slots,cur.slotsOk,cur.owed||0,cur.lpw||null])!==JSON.stringify([patch.sched,patch.slots,true,patch.owed,patch.lpw])){await upStu(cur.id,patch);changed++}}
+      else if(r.active!==false){await db.doc('students/'+newStuId(r.name,used)).set({name:r.name,active:true,fromSched:true,...patch});added++}}
+    const sess=wk.sessions.map(x=>({d:x.date,n:x.student,t:x.teacher,s:x.start,e:x.end,st:x.status==='unmarked'?'':x.status,k:x.kind})),
+      unmarked=wk.sessions.filter(x=>x.date<today()&&x.status==='unmarked').length;
+    await db.doc('sched/week').set({week:wk.week_start||mondayOf(),at:stamp(),exportedAt:'live',sessions:sess,unmarked,month:S.sched?.month||{m:today().slice(0,7),by:{}},conn:true});
+    S.syncing=false;renderAll();return{ok:true,msg:`Scheduler synced: ${st.students.length} students, ${sess.length} lessons this week${added?', '+added+' new student'+(added>1?'s':''):''}.`}}
+  catch(e){S.syncing=false;renderCentre();return{ok:false,msg:e?.code==='not_granted'?'The TutorWise Scheduler isn’t allowed for this page yet.':String(e?.message||e?.code||'Could not read the scheduler.').slice(0,200)}}}
 async function schedSync(){
+  if(S.settings.schedConn)return connSync();
   const id=S.settings.schedSheetId;if(!mcp||!id||!db)return{ok:false,msg:'Open this in Claude with Google Sheets connected.'};
   if(S.syncing)return{ok:false,msg:'Already syncing.'};S.syncing=true;renderCentre();
   try{

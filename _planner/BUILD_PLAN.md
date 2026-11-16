@@ -291,3 +291,13 @@ after every answer. He wants "the native talking feature" and a week list that i
   anything he says in HQ, without voice or screen changes), then writes "Done hh:mm" and the reply.
 - Limits: changes from Jarvis apply only while HQ is open somewhere; the board is as fresh as HQ's last sync. The
   overnight agent has no Google tools, so it cannot refresh the board.
+
+## 2026-11-17: live scheduler connector (app v22)
+- The scheduler's builder shipped a remote MCP connector ("TutorWise Scheduler": get_week, list_students, get_timetable,
+  get_makeups, list_teachers, month_summary, find_free_slots, resolve_name, mark_attendance, add_session, move_session,
+  cancel_session, set_timetable, undo; writes take dry_run and return a change_id). Replaces the Apps Script export idea.
+- HQ: `settings.schedConn:true` makes `schedSync()` call `connSync()`: get_week, list_students and get_timetable fill
+  `sched/week` (sessions with status and kind), each student's slots, owed hours and lessons per week. The page declares
+  the server with those three read tools only. Writes are not wired into HQ yet; Jarvis (a normal Claude chat with the
+  connector) can already call the write tools, per the new About rows on the Jarvis Board.
+- Not yet: scheduler writes from HQ's own intake, month totals from month_summary, free-slot search for makeups.
