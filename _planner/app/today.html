@@ -515,7 +515,7 @@ async function boot(){
   db.collection('tasks').onSnapshot(q=>{S.tasks=new Map(q.docs.map(d=>[d.id,{id:d.id,...d.data()}]));S.loaded=true;clearTimeout(slow);renderAll();maybeAuto()},err);
   db.collection('students').onSnapshot(q=>{S.students=new Map(q.docs.map(d=>[d.id,{id:d.id,...d.data()}]));renderAll();autoFees()},err);
   db.collection('drafts').orderBy('at','desc').limit(20).onSnapshot(q=>{S.drafts=q.docs.map(d=>({id:d.id,...d.data()}));renderAI();renderToday()},err);
-  db.collection('dumps').orderBy('at','desc').limit(12).onSnapshot(q=>{S.dumps=q.docs.map(d=>({id:d.id,...d.data()}));renderToday()},err);
+  db.collection('dumps').orderBy('at','desc').limit(30).onSnapshot(q=>{S.dumps=q.docs.map(d=>({id:d.id,...d.data()}));renderToday()},err);
   db.doc('settings/main').onSnapshot(d=>{S.settings={...DEF,...(d.exists?d.data():{})};S.setKnown=true;renderAll();autoSync();autoFees()},err);
   db.doc('sched/week').onSnapshot(d=>{S.sched=d.exists?d.data():null;S.schedKnown=true;renderAll();autoSync()},err);
   db.doc('plans/'+today()).onSnapshot(d=>{S.plan=d.exists?d.data():null;S.planKnown=true;renderToday();maybeAuto();trackPlan()},err);
@@ -1096,7 +1096,7 @@ ${calLines(60)||'nothing on it'}
 Week plan: ${(S.week?.days||[]).filter(d=>d.date>=today()).map(d=>DN[dowOf(d.date)]+' '+d.theme).join('; ')||'none yet'}
 Projects (id|name|status|next step): ${S.projects.map(p=>`${p.id}|${p.name}|${p.status||'active'}|${p.next||'none'}`).join('; ')||'none listed yet'}
 ${recallText()}
-${styleText().slice(0,1800)}Recent conversation: ${S.dumps.slice(0,4).reverse().map(d=>'He: "'+String(d.text).slice(0,160)+'" You: "'+String(d.reply||'').slice(0,160)+'"').join(' | ')||'none'}
+${styleText().slice(0,1800)}The conversation so far today, oldest first (he talks to you continuously, so treat this message as the next turn of it, and if your last reply asked him something, this message is probably the answer): ${S.dumps.filter(d=>Date.now()-Date.parse(d.at)<6*36e5).slice(0,10).reverse().map(d=>'He: "'+String(d.text).slice(0,260)+'" You: "'+String(d.reply||'').slice(0,220)+'"').join(' | ')||'none yet'}
 His older list (id|area|status|title). It is only here so you can recognise things he mentions. Never bring these up, add them to the week or recommend them on your own:
 ${lines}
 Message: """${text}"""
