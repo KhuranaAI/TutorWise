@@ -895,7 +895,7 @@ async function applyText(text,src){if(!sample||!db)return'';const ref=db.collect
   V.bg=true;let reply='';
   try{const r=await sample.json(intakePrompt(text),{modelTier:'default',cache:false});const applied=await applyOps(Array.isArray(r?.ops)?r.ops:[],text,false);
     await saveMem(r?.remember,src);for(const id of (Array.isArray(r?.forget)?r.forget:[]).slice(0,3))if(S.mem.some(m=>m.id===id))await db.doc('mem/'+id).update({on:false}).catch(()=>{});
-    reply=String(r?.reply||'Noted.')+(V.pinSay||'');ref.update({reply,ops:applied}).catch(()=>{});if(V.jobs){await V.jobs.catch(()=>{});V.jobs=null}}
+    reply=V.schSay?V.schSay.trim()+(V.pinSay||''):String(r?.reply||'Noted.')+(V.pinSay||'');ref.update({reply,ops:applied}).catch(()=>{});if(V.jobs){await V.jobs.catch(()=>{});V.jobs=null}}
   catch(e){if(e?.code==='not_granted')sample=null}
   V.bg=false;return reply}
 async function inboxPoll(){if(inboxBusy||!boardId()||!mcp||!sample||!S.loaded||!S.daysKnown||S.boardOff||document.visibilityState!=='visible')return;inboxBusy=true;
@@ -1168,7 +1168,7 @@ async function respond(text,byVoice){
     const r=await sample.json(prompt,{modelTier:'default',cache:false});
     applied=await applyOps(Array.isArray(r?.ops)?r.ops:[],text,wasCheck);
     await saveMem(r?.remember,'said');for(const id of (Array.isArray(r?.forget)?r.forget:[]).slice(0,3))if(S.mem.some(m=>m.id===id))await db.doc('mem/'+id).update({on:false}).catch(()=>{});
-    reply=String(r?.reply||`Understood, ${sir()}.`)+(V.pinSay||'');
+    reply=V.schSay?V.schSay.trim()+(V.pinSay||''):String(r?.reply||`Understood, ${sir()}.`)+(V.pinSay||'');
     const cl=applied.filter(x=>x.includes('(clashes with ')).map(x=>x.slice(x.indexOf('(clashes with ')+14,-1));
     if(cl.length&&!/clash|conflict|overlap|teaching|same time/i.test(reply))reply+=` Heads up: that overlaps ${cl.join(', ')}.`;
     if(applied.some(x=>x.includes('(fee sheet updated)')))reply+=' Your fee sheet is updated too.';
@@ -1190,7 +1190,7 @@ async function respond(text,byVoice){
     else if(dict){V.hint='Press Space or tap the brain to answer.';renderCore()}}
 }
 async function applyOps(ops,src,wasCheck){
-  const out=[],newIds=[];let schAfter=false,n=0,re='',wk='',cal=false,full=!!wasCheck,touched=false,wkFull=false,wkShow=false;V.pinSay='';
+  const out=[],newIds=[];let schAfter=false,schSay='',n=0,re='',wk='',cal=false,full=!!wasCheck,touched=false,wkFull=false,wkShow=false;V.pinSay='';V.schSay='';
   for(const o of ops.slice(0,25)){try{
     if(o.op==='add'&&o.title){const id='t'+Date.now().toString(36)+(n++);
       const due=isDate(o.due)?o.due:null,onWk=o.week!==false&&o.kind!=='idea'&&!(due&&due>addD(wkKey(),6));
@@ -1204,8 +1204,8 @@ async function applyOps(ops,src,wasCheck){
     else if(o.op==='draft'&&o.ask){const tid=S.tasks.has(o.task)?o.task:null;setTimeout(()=>runJob(String(o.ask).slice(0,1500),tid),400);out.push('drafting')}
     else if(o.op==='counts'&&o.id){const t=S.tasks.get(o.id);if(t&&!(S.days.get(today())||{}).pl?.[o.id]){await exMark(o.id,{imp:true});out.push('counts fully: '+t.t)}else if(t)out.push('already planned: '+t.t)}
     else if(o.op==='credit'&&o.title){const id='c'+Date.now().toString(36)+(n++);await exMark(id,{t:String(o.title).slice(0,120),min:minOf(o.minutes),manual:true,at:nowHM()});logEv('did',String(o.title));out.push(`counted: ${o.title} (${durS(minOf(o.minutes))})`)}
-    else if(SCHW.includes(o.op)){try{const m=await schWrite(o);out.push('scheduler: '+m);V.pinSay=(V.pinSay||'')+' '+m;schAfter=true}catch(e){const m=String(e?.message||e?.code||'The scheduler refused that.').slice(0,200);out.push('scheduler: '+m);V.pinSay=(V.pinSay||'')+' Not done: '+m}}
-    else if(o.op==='sch_free'){try{const m=await schFree(o);out.push('scheduler: '+m);V.pinSay=(V.pinSay||'')+' '+m}catch(e){const m=String(e?.message||'I couldn’t check the scheduler.').slice(0,200);out.push('scheduler: '+m);V.pinSay=(V.pinSay||'')+' '+m}}
+    else if(SCHW.includes(o.op)){try{const m=await schWrite(o);out.push('scheduler: '+m);schSay+=' '+m;schAfter=true}catch(e){const m=String(e?.message||e?.code||'The scheduler refused that.').slice(0,200);out.push('scheduler: '+m);schSay+=' Not done: '+m}}
+    else if(o.op==='sch_free'){try{const m=await schFree(o);out.push('scheduler: '+m);schSay+=' '+m}catch(e){const m=String(e?.message||'I couldn’t check the scheduler.').slice(0,200);out.push('scheduler: '+m);schSay+=' '+m}}
     else if(o.op==='rebalance'){wkFull=true;out.push('rearranging the week')}
     else if(o.op==='show_week'){wkShow=true}
     else if(o.op==='update'&&S.tasks.has(o.id)){const a={};const st=o.set||{};
@@ -1239,6 +1239,7 @@ async function applyOps(ops,src,wasCheck){
       if(ex){await db.doc('projects/'+ex.id).update(pt);S.projects=S.projects.map(x=>x.id===ex.id?{...x,...pt}:x)}else{const rf=db.collection('projects').doc();await rf.set(pt);S.projects=[...S.projects,{id:rf.id,...pt}]}
       out.push('project: '+nm)}
   }catch(e){console.warn(e)}}
+  if(schSay)V.schSay=schSay;
   if(schAfter){connSync().then(()=>{if(!V.bg&&S.lastSch)toast(S.lastSch.msg.slice(0,90),6000,{label:'Undo',fn:async()=>{try{const m=await schWrite({op:'sch_undo'});toast(m,3000);connSync()}catch(e){toast(String(e.message||e).slice(0,100),4000)}}})})}
   /* the week list is the plan: re-pin instead of asking the AI for a new one */
   if(weekItems().length){if(touched||wkFull||re||wk||full)await applyWeek(wkFull||!!re||!!wk||full);V.pinSay=pinnedSay(newIds)+(full||wkFull||wk?' '+daySay():'');if(!V.bg){if(wkShow||wk)show('cal');else if(cal)show('cal')}}
