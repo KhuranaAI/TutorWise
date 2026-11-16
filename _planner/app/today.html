@@ -607,7 +607,7 @@ function facts(){const all=[...S.tasks.values()],wk=addD(today(),-7),marks=S.pla
     else if(d!==null&&d<0)slip.push(`${T(t)} (${-d} days past its date)`);
     else if(d!==null&&d<=2)slip.push(`${T(t)} (due ${d===0?'today':d===1?'tomorrow':'in 2 days'})`);
     else if(d!==null&&d<=14)track.push(`${T(t)} (due in ${d} days)`);
-    if(t.s==='waiting'&&String(t.up||'').slice(0,10)<=wk)forget.push(`${T(t)} (waiting on ${t.wait||'someone'} for over a week)`)}
+    if(t.s==='waiting'&&t.up&&String(t.up).slice(0,10)<=wk)forget.push(`${T(t)} (waiting on ${t.wait||'someone'} for over a week)`)}
   for(const w of (S.week?.days||[]).filter(x=>x.date<today()))for(const i of w.items||[]){const t=S.tasks.get(i);if(t&&(t.s==='ready'||t.s==='waiting')&&!slip.some(x=>x.startsWith(T(t))))slip.push(`${T(t)} (planned for ${DNL[dowOf(w.date)]}, not done)`)}
   const f=feeTot();if(f.sum)forget.push(`${money(f.sum)} in fees still unpaid`);
   for(let k=0;k<4;k++)for(const e of evOn(addD(today(),k)))forget.push(`${e.t} (${dayName(addD(today(),k)).toLowerCase()}${e.s?' at '+t12(e.s):''})`);
