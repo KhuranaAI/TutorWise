@@ -791,6 +791,66 @@ function scoreSheet(){const sc=scoreOf(today()),a=scoreAvg(),h=pastScores(7);
   <h2>Last 7 days${a!=null?` · average ${a}`:''}</h2><div class="card">${h.length?h.map(x=>`<div class="item row" style="flex-wrap:nowrap"><span class="grow">${esc(dayName(x.d))}</span><span class="num" style="font-weight:600">${x.s}</span></div>`).join(''):'<div class="m">Scores start building from today.</div>'}</div>
   <div class="row" style="margin-top:14px"><button class="pri sm" data-act="creditAsk">Add something that counted</button><button class="sm ghost" data-act="close">Close</button></div>`)}
 
+/* ---------- Jarvis board ----------
+   A Google Sheet shared with Jarvis, a normal Claude chat he talks to in voice mode. HQ writes what Jarvis needs
+   (today, the week, the calendar, what it knows about him) and applies what Jarvis adds to the Inbox tab, through the
+   same understanding as anything he says here. */
+const boardId=()=>/^[\w-]{25,}$/.test(S.settings.boardSheetId||'')?S.settings.boardSheetId:'';
+const boardUrl=()=>boardId()?'https://docs.google.com/spreadsheets/d/'+boardId()+'/edit':'';
+const sheetPut=(id,range,values)=>mcp.callTool('Google Sheets','update_values',{spreadsheetId:id,range,values});
+const devId=Math.random().toString(36).slice(2,7);
+let boardSig={},boardTimer=0,boardLast=0,boardBusy=false,inboxBusy=false;
+const padRows=(rows,n,w)=>{const out=rows.slice(0,n).map(r=>{const x=r.slice(0,w).map(v=>v==null?'':String(v));while(x.length<w)x.push('');return x});while(out.length<n)out.push(Array(w).fill(''));return out};
+function boardTabs(){const td=today(),sc=scoreOf(td),wp=weekPace(),ag=agenda(),marks=S.plan?.marks||{};
+  const stOf=t=>isDone(t)||marks[t.id]==='done'?'done':marks[t.id]==='skip'?'not today':marks[t.id]==='stuck'?'stuck':'open';
+  const hm2=n=>String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
+  let i=0;const todayRows=ag.rows.map(r=>r.fx?['',r.t,'', 'fixed time',hm2(r.s)+'–'+hm2(r.e),'']:[++i,T(r.t),r.k.min||estOf(r.t),stOf(r.t),r.ev?.s||'',r.t.id]);
+  const Today=[['Today',td,DNL[dow()],'HQ updated '+nowHM(),'',''],['Score',sc?sc.s:'',sc?(nowHM()>=(S.settings.teachEnd||'20:00')?scoreLevel(sc.s)[0]:'so far'):'no plan yet',sc?`${sc.nd} of ${sc.np} planned done`:'','',''],
+    ['This week',`${wp.done} of ${wp.all} done`,wp.all?(wp.ok?'on pace':'more than fits before Friday'):'week list empty','','',''],['','','','','',''],['#','Item','Minutes','Status','Time','ID'],...todayRows];
+  const wk=weekItems(),days=[...new Set([...horizon(),...wk.map(t=>t.day).filter(Boolean)])].sort();
+  const Week=[['Day','Date','Item','Minutes','Status','ID']];
+  for(const d of days)for(const t of wk.filter(x=>x.day===d))Week.push([d===td?'Today':DNL[dowOf(d)],d,T(t),estOf(t),isDone(t)?'done':t.pin?'open (his day)':'open',t.id]);
+  for(const t of wk.filter(x=>!x.day&&!isDone(x)))Week.push(['Not placed','',T(t),estOf(t),'open',t.id]);
+  for(const t of dailies())Week.push(['Every day','',T(t),estOf(t),'daily',t.id]);
+  const Calendar=[['Date','Day','Time','What']];
+  for(const {d,ev,du} of calDays(21)){for(const e of ev)Calendar.push([d,DNL[dowOf(d)],e.s?e.s+(e.e?'–'+e.e:''):e.approx?'around this date':'all day',e.t+(e.rep?` (every ${({weekly:'week',daily:'day',monthly:'month'})[e.rep]||e.rep})`:'')+(e.where?' @ '+e.where:'')]);for(const t of du)Calendar.push([d,DNL[dowOf(d)],'due',T(t)])}
+  for(const e of S.events.filter(e=>!e.rep&&e.date>addD(td,20)).sort((a,b)=>a.date.localeCompare(b.date)))Calendar.push([e.date,DNL[dowOf(e.date)],e.s||(e.approx?'around this date':'all day'),e.t]);
+  const K={you:'About him',pref:'How he likes things',pattern:'Pattern',person:'Person',style:'His format'};
+  const Memory=[['Kind','What HQ knows about him','For']].concat(S.mem.map(m=>[K[m.k]||'About him',String(m.x).slice(0,1500),m.k==='style'?(m.t||''):'']));
+  return{Today:['Today!A1:F45',padRows(Today,45,6)],Week:['Week!A1:F80',padRows(Week,80,6)],Calendar:['Calendar!A1:D60',padRows(Calendar,60,4)],Memory:['Memory!A1:C110',padRows(Memory,110,3)]}}
+function boardSoon(){if(!boardId()||!mcp||S.boardOff)return;clearTimeout(boardTimer);boardTimer=setTimeout(boardSync,Math.max(4000,20000-(Date.now()-boardLast)))}
+async function boardSync(){if(boardBusy||!boardId()||!mcp||!S.loaded||!S.daysKnown||S.boardOff)return;boardBusy=true;
+  try{const tabs=boardTabs();for(const [k,[range,values]] of Object.entries(tabs)){const sig=JSON.stringify(k==='Today'?values.map((r,i)=>i===0?r.slice(0,3):r):values);if(boardSig[k]===sig)continue;await sheetPut(boardId(),range,values);boardSig[k]=sig}
+    boardLast=Date.now();S.boardAt=nowHM();try{localStorage.setItem('hq.sheets','1')}catch(e){}}
+  catch(e){if(e?.code==='not_granted'||e?.code==='blocked_by_policy')S.boardOff=true;console.warn('board',e)}
+  boardBusy=false}
+/* what Jarvis added: apply each new row the same way as something he said here */
+async function applyText(text,src){if(!sample||!db)return'';const ref=db.collection('dumps').doc();ref.set({text,at:stamp(),reply:'',src}).catch(()=>{});logEv('said','('+src+') '+text);
+  V.bg=true;let reply='';
+  try{const r=await sample.json(intakePrompt(text),{modelTier:'default',cache:false});const applied=await applyOps(Array.isArray(r?.ops)?r.ops:[],text,false);
+    await saveMem(r?.remember,src);for(const id of (Array.isArray(r?.forget)?r.forget:[]).slice(0,3))if(S.mem.some(m=>m.id===id))await db.doc('mem/'+id).update({on:false}).catch(()=>{});
+    reply=String(r?.reply||'Noted.')+(V.pinSay||'');ref.update({reply,ops:applied}).catch(()=>{});if(V.jobs){await V.jobs.catch(()=>{});V.jobs=null}}
+  catch(e){if(e?.code==='not_granted')sample=null}
+  V.bg=false;return reply}
+async function inboxPoll(){if(inboxBusy||!boardId()||!mcp||!sample||!S.loaded||!S.daysKnown||S.boardOff||document.visibilityState!=='visible')return;inboxBusy=true;
+  try{const rows=await sheetVals(boardId(),'Inbox!A2:D400');let n=0;
+    for(let i=0;i<rows.length;i++){const [,what,st]=rows[i]||[];const text=String(what||'').trim();if(!text||String(st||'').trim())continue;const row=i+2;
+      await sheetPut(boardId(),`Inbox!C${row}`,[['Working '+devId]]);const chk=await sheetVals(boardId(),`Inbox!C${row}`);if(String(chk?.[0]?.[0]||'')!=='Working '+devId)continue; /* another open HQ took it */
+      const reply=await applyText(text,'Jarvis');await sheetPut(boardId(),`Inbox!C${row}:D${row}`,[[reply?'Done '+nowHM():'Could not apply',reply||'HQ could not understand this one. Say it again in HQ.']]);n++;
+      toast('From Jarvis: '+text.slice(0,80),2600)}
+    if(n){renderAll();boardSoon()}}
+  catch(e){if(e?.code==='not_granted'||e?.code==='blocked_by_policy')S.boardOff=true;console.warn('inbox',e)}
+  inboxBusy=false}
+setInterval(inboxPoll,40000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(inboxPoll,1500)});
+const jarvisInstr=()=>`You are Jarvis, my personal assistant. At the start of every conversation, open my Google Sheet "Jarvis Board" (${boardUrl()}), read its About tab and follow it exactly. Then read the Memory, Today and Week tabs before you answer me.`;
+function jarvisSheet(){const ok=!!boardId();
+  sheet(`<h3 style="font:600 18px var(--disp);margin:0">Jarvis by voice</h3><p class="why" style="margin:4px 0 0">Talk to Jarvis in a normal Claude chat with voice mode on. It reads your day from your Jarvis Board sheet, and what you ask it to change lands here within a minute while HQ is open.</p>
+  ${ok?`<h2>One-time setup</h2><div class="card"><div class="m" style="font-size:14px">1. In Claude, create a project called <b>Jarvis</b>.<br>2. Paste this into the project’s instructions:</div><p class="first" id="jInstr" style="margin-top:8px;white-space:pre-wrap">${esc(jarvisInstr())}</p><div class="row"><button class="sm pri" data-act="copy" data-from="jInstr">Copy</button><a class="m" href="${esc(boardUrl())}" target="_blank" rel="noopener" style="color:var(--acc);font-weight:600">Open the Jarvis Board</a></div>
+  <div class="m" style="font-size:14px;margin-top:10px">3. To talk: open a chat in the Jarvis project and tap the voice button.</div></div>
+  <h2>Status</h2><div class="card"><div class="m">${S.boardOff?'HQ can’t reach your Google Sheets here. Allow the Google Sheets connector for this page.':S.boardAt?'Board last updated at '+esc(t12(S.boardAt))+'.':'Board updates when something changes here.'}</div><div class="row" style="margin-top:8px"><button class="sm" data-act="boardNow">Sync now</button></div></div>`:'<p class="m">The Jarvis Board isn’t set up yet.</p>'}
+  <div class="row" style="margin-top:14px"><button class="sm ghost" data-act="close">Close</button></div>`)}
+
 /* what is done, slipping and on track, and what he may be forgetting: facts for the planner to choose from */
 function facts(){const all=[...S.tasks.values()],wk=addD(today(),-7),marks=S.plan?.marks||{},done=[],slip=[],track=[],forget=[];
   for(const t of all)if(t.s==='done'&&String(t.doneAt||'').slice(0,10)>=wk)done.push(T(t));
@@ -1109,8 +1169,8 @@ async function applyOps(ops,src,wasCheck){
       out.push('project: '+nm)}
   }catch(e){console.warn(e)}}
   /* the week list is the plan: re-pin instead of asking the AI for a new one */
-  if(weekItems().length){if(touched||wkFull||re||wk||full)await applyWeek(wkFull||!!re||!!wk||full);V.pinSay=pinnedSay(newIds)+(full||wkFull||wk?' '+daySay():'');if(wkShow||wk)show('cal');else if(cal)show('cal')}
-  else{if(cal||wkShow)show('cal')}
+  if(weekItems().length){if(touched||wkFull||re||wk||full)await applyWeek(wkFull||!!re||!!wk||full);V.pinSay=pinnedSay(newIds)+(full||wkFull||wk?' '+daySay():'');if(!V.bg){if(wkShow||wk)show('cal');else if(cal)show('cal')}}
+  else{if((cal||wkShow)&&!V.bg)show('cal')}
   return out}
 /* One record per student per day (and one more for a makeup), so tapping twice never double-counts. */
 async function logAtt(s,status,hours){
@@ -1181,7 +1241,7 @@ function renderToday(){
   const s=S.settings,m=modeNow(),now=toM(nowHM());
   $('hSub').textContent=new Date(today()+'T12:00:00Z').toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric',timeZone:'UTC'});
   if(S.loaded&&!S.secInit){S.secInit=true;for(const k of['sec:tonight','sec:money'])S.open.add(k);if(m==='eve')S.open.add('sec:close')}
-  renderCore();clearTimeout(S.scT);S.scT=setTimeout(scoreSync,1200);
+  renderCore();clearTimeout(S.scT);S.scT=setTimeout(()=>{scoreSync();boardSoon();if(!S.inboxFirst&&S.loaded&&S.daysKnown){S.inboxFirst=true;setTimeout(inboxPoll,2500)}},1200);
   /* the docket: today's list as one checklist, fixed times in their place */
   const p=S.plan,dkt=agenda(),picks=dkt.rows.filter(r=>!r.fx),op=openPicks(),cur=op[0],bz=busyNow(),free=freeMinutes(),dn=picks.filter(r=>r.st==='done').length;
   const ids=picks.filter(r=>r.st!=='done').map(r=>r.k.id),ex=S.rowSel===''?null:S.rowSel&&ids.includes(S.rowSel)?S.rowSel:cur?cur.k.id:null;S.rowEx=ex;
@@ -1219,7 +1279,7 @@ function renderToday(){
   const tonightS=isWk()?sec('sec:tonight',`Tonight’s lessons${tn.length?' · '+tn.length:''}`,tb):'';
   $('topBox').innerHTML=m==='eve'?sec('sec:close','Close the day',closeB)+tonightS:m==='teach'?tonightS:'';
   $('cenBox').innerHTML=(m==='work'?tonightS:'')+sec('sec:money',`Who owes · ${money(f.sum)}`,moneyB);
-  $('moreBox').innerHTML=`<button class="lnk" data-act="goAI" style="margin-top:4px"><span class="grow">AI help<small>${nd?nd+' draft'+(nd>1?'s':'')+' ready to review':'Hand something off'}</small></span></button><button class="lnk" data-act="goMem"><span class="grow">Memory<small>${S.mem.length} things I know about you</small></span></button><button class="lnk" data-act="settings"><span class="grow">Settings<small>What it calls you, your hours, voice check</small></span></button>`
+  $('moreBox').innerHTML=`<button class="lnk" data-act="goAI" style="margin-top:4px"><span class="grow">AI help<small>${nd?nd+' draft'+(nd>1?'s':'')+' ready to review':'Hand something off'}</small></span></button><button class="lnk" data-act="jarvis"><span class="grow">Jarvis by voice<small>${boardId()?'Talk to Jarvis in a Claude voice chat':'Not set up yet'}</small></span></button><button class="lnk" data-act="goMem"><span class="grow">Memory<small>${S.mem.length} things I know about you</small></span></button><button class="lnk" data-act="settings"><span class="grow">Settings<small>What it calls you, your hours, voice check</small></span></button>`
     +sec('sec:report','Overnight report',repB)+sec('sec:week','Wake-ups and workouts',weekBody())+sec('sec:hist','What you’ve told me',histB)+sec('sec:help','How to use this',`<div class="m" style="display:flex;flex-direction:column;gap:8px;font-size:14px"><div><b>Talk to it.</b> On a computer, press Space (or tap the brain) and talk as long as you like. When you stop, it answers out loud. Press Space again to say more. On a phone, type in the box. New tasks, things you finished, who paid, who missed.</div><div><b>Work down today’s docket.</b> Tap the circle when something is done. Tap a line for Not now or Stuck.</div><div><b>Tell it when you get up, and tap Workout.</b> It plans from your real day and tracks your week.</div><div><b>Calendar</b> has your week and the next three weeks. <b>Centre</b> has fees, makeups and every student.</div><div><b>Today’s score.</b> Out of 100: the planned work you finished, plus half credit for unplanned work, or full credit when you tell it that work mattered. Tap the score for the details.</div><div><b>It remembers.</b> What you tell it and what you do is kept, and it brings it back on the same weekday. See and fix what it knows under Memory.</div><div><b>AI help</b> (under More) holds finished drafts. Copy them, or hit Redo if they’re off.</div></div>`);
   renderCal();
 }
@@ -1505,6 +1565,8 @@ document.addEventListener('click',async e=>{
   if(a==='undone'){S.rowSel=null;$('sheet').hidden=true;return undoTask(id)}
   if(a==='howSheet')return howSheet();
   if(a==='scoreSheet')return scoreSheet();
+  if(a==='jarvis')return jarvisSheet();
+  if(a==='boardNow'){boardSig={};await boardSync();await inboxPoll();jarvisSheet();toast(S.boardOff?'Couldn’t reach the sheet.':'Synced.',1600);return}
   if(a==='xImp'){const x=(S.days.get(today())||{}).ex?.[id];await exMark(id,{imp:!x?.imp});scoreSheet();renderToday();return}
   if(a==='creditAsk'){$('sheet').hidden=true;show('today');say(`What else did you get done that counted, ${sir()}? Say how long it took.`,true);if(!canHear())$('dump').focus();return}
   if(a==='typeHere'){try{localStorage.setItem('hq.type','1')}catch(e){}$('sheet').hidden=true;const el=$('dump');el.focus();return}

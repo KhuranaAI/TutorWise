@@ -277,3 +277,17 @@ after every answer. He wants "the native talking feature" and a week list that i
   planned work, and its minutes come off each day's budget for the week list. His study block (chemistry, physics,
   grade 12 functions, about 90 minutes a day) was converted from an all-day repeating event into `tasks/d_study`.
 - Seeded today's `pl` from the current docket (with the done flags) so today's score is right from the start.
+
+## 2026-11-16, night: Jarvis by voice through a shared Google Sheet (app v21)
+- Claude's voice mode exists only in normal Claude chats, not in Claude Code sessions (the "Jarvis line" was
+  dictation only and is no longer linked from HQ). He confirmed that a normal Claude chat in voice mode can read his
+  Google Sheets through his connector, so Jarvis is now: a Claude project "Jarvis" whose instructions point at a
+  Google Sheet "Jarvis Board" in his Drive (id in `settings/main.boardSheetId`, not in this repo).
+- Tabs: About (Jarvis's operating rules, written once), Today, Week, Calendar, Memory (written by HQ), Inbox (Jarvis
+  appends one row per change: time, his words; HQ fills status and answer).
+- HQ: `boardSync()` writes the four tabs a few seconds after changes (at most every 20 s, unchanged tabs skipped);
+  `inboxPoll()` runs every 40 s while HQ is visible, claims each new row (writes "Working <device>", re-reads it so two
+  open copies of HQ don't both apply it), applies it with `applyText()` (the same intake prompt and operations as
+  anything he says in HQ, without voice or screen changes), then writes "Done hh:mm" and the reply.
+- Limits: changes from Jarvis apply only while HQ is open somewhere; the board is as fresh as HQ's last sync. The
+  overnight agent has no Google tools, so it cannot refresh the board.
