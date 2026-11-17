@@ -763,8 +763,8 @@
       const t = $("gift-title");
       if (reward.kind === "phrase") {
         t.textContent = "New phrase card!";
-        card.append(h("div", { class: "hi gift-phrase" }, W(reward.p[0], reward.p[1])), h("div", { class: "muted" }, reward.p[2]), audioBtn(reward.p[1], true),
-          h("p", { class: "small muted", style: "margin-top:8px" }, `🃏 ${S.phrases.length}/${PHRASES.length} phrase cards collected — try it on the family!`));
+        card.append(...[h("div", { class: "hi gift-phrase" }, W(reward.p[0], reward.p[1])), h("div", { class: "muted" }, reward.p[2]), audioBtn(reward.p[1], true),
+          h("p", { class: "small muted", style: "margin-top:8px" }, `🃏 ${S.phrases.length}/${PHRASES.length} phrase cards collected — try it on the family!`)].filter(Boolean));
         award(5);
       } else if (reward.kind === "freeze") {
         t.textContent = "A streak freeze! 🧊";
@@ -824,12 +824,7 @@
         st.freezes ? h("div", { class: "freeze", title: "Streak freezes" }, "🧊×" + st.freezes) : null),
       h("div", { class: "goal-bar" }, h("i", { style: `width:${pct}%` })),
       h("div", { class: "goal-text" }, `Today: ${Math.min(today, goalXP())}/${goalXP()} XP` + (st.best > 1 ? ` · Best streak: ${st.best} days` : "")),
-      giftReady() ? h("button", { class: "btn small-btn gift-btn", onclick: () => openGift(() => showStart()) }, "🎁 Today's gift is waiting — open it!") : null,
       goalPicker(),
-      (S.phrases || []).length ? h("button", { class: "link-btn", style: "padding-left:0", onclick: showPhrases }, `🃏 Phrase cards: ${S.phrases.length}/${PHRASES.length}`) : null,
-      FILMI.length ? h("button", { class: "link-btn", style: "padding-left:0;display:block", onclick: showFilmiList }, `🎬 Filmi moments: ${S.filmi.length}/${FILMI.length}`) : null,
-      reviewPool().length ? h("button", { class: "btn small-btn review-btn", onclick: startReview }, "⚡ 5-minute review",
-        h("span", { class: "review-sub" }, (() => { const n = reviewPool().filter((k) => weakScore(k) > 0).length; return n ? ` · ${n} weak spot${n > 1 ? "s" : ""}` : " · mixed practice"; })())) : null,
       n && n.kind === "froze" ? h("p", { class: "small", style: "margin-top:6px" }, `🧊 A streak freeze saved your streak while you were away!`) : null,
       n && n.kind === "lost" ? h("p", { class: "small", style: "margin-top:6px" }, `Your ${n.n}-day streak ended — no worries, start a new one today 💪`) : null);
   }
@@ -2867,7 +2862,7 @@
      Start screen
      ===================================================== */
   function toggle(label, key, onChange) {
-    const b = h("button", { class: "toggle", role: "switch", "aria-checked": String(!!S.settings[key]) }, h("span", { class: "sw" }), label);
+    const b = h("button", { class: "toggle" + (label ? "" : " bare"), role: "switch", "aria-checked": String(!!S.settings[key]), "aria-label": label || key }, h("span", { class: "sw" }), label || null);
     b.addEventListener("click", () => {
       S.settings[key] = !S.settings[key];
       b.setAttribute("aria-checked", String(S.settings[key]));
@@ -3072,6 +3067,62 @@
 
   // Home: all modules, unlocked in order.
   let logoTaps = 0;
+  // Which module "Continue" opens: where she left off, else the next unfinished one.
+  function homeTarget() {
+    const mods = C.modules;
+    const last = MODS[S.lastModule] && moduleUnlocked(mods.indexOf(MODS[S.lastModule])) ? S.lastModule : null;
+    const withRun = mods.filter((m) => S.modules[m.id].run).sort((x, y) => (S.modules[y.id].run.savedAt || 0) - (S.modules[x.id].run.savedAt || 0));
+    return (last && (S.modules[last].run || !moduleDone(last)) ? last : null)
+      || (withRun[0] && withRun[0].id)
+      || (mods.find((m, idx) => moduleUnlocked(idx) && !moduleDone(m.id)) || {}).id || mods[0].id;
+  }
+  // "Up next" card: exactly which module and stage Continue opens.
+  function upNextCard(id, fresh) {
+    const m = MODS[id], st = stagesFor(m), prog = S.modules[id];
+    const runSt = prog.run && st.find((x) => x.id === prog.run.stageId);
+    const next = runSt || st.find((x) => !prog.done[x.id]) || st[0];
+    const doneN = st.filter((x) => prog.done[x.id]).length;
+    const b = h("button", { class: "card upnext" },
+      h("span", { class: "upnext-ic" }, m.icon || "📘"),
+      h("span", { class: "mod-txt" },
+        h("span", { class: "mod-num" }, fresh ? "Start here" : runSt ? "Pick up where you left off" : "Up next"),
+        h("b", {}, `Module ${m.number} · ${m.title}`),
+        h("span", { class: "d" }, `${next.icon} Stage ${st.indexOf(next) + 1} of ${st.length}: ${next.title}`),
+        h("span", { class: "prog" }, h("i", { style: `width:${Math.round((doneN / st.length) * 100)}%` }))),
+      h("span", { class: "upnext-go" }, "▶"));
+    b.addEventListener("click", () => { Sound.play("tap"); playModule(id); });
+    return b;
+  }
+  // Big tiles so every feature is easy to find (locked ones say how to unlock them).
+  function homeTiles() {
+    const today = S.daily.date === dayStr() ? S.daily.xp : 0;
+    const pool = reviewPool(), weakN = pool.filter((k) => weakScore(k) > 0).length;
+    const openedToday = (S.chest || {}).date === dayStr();
+    const tile = (cls, icon, title, sub, onClick) => {
+      const b = h("button", { class: "home-tile " + cls }, h("span", { class: "tile-ic" }, icon), h("b", {}, title), h("span", { class: "tile-sub" }, sub));
+      if (onClick) b.addEventListener("click", () => { Sound.play("tap"); onClick(); });
+      return b;
+    };
+    return h("div", { class: "home-tiles" },
+      pool.length ? tile("review", "⚡", "5-minute review", weakN ? `${weakN} weak spot${weakN > 1 ? "s" : ""} to fix` : "Quick mixed practice", startReview)
+        : tile("locked", "⚡", "5-minute review", "Finish a stage to unlock"),
+      giftReady() ? tile("gift ready", "🎁", "Daily gift", "Ready — tap to open!", () => openGift(() => showStart()))
+        : tile("gift locked", "🎁", "Daily gift", openedToday ? "Opened ✓ — new one tomorrow" : `Hit today's goal to unlock (${Math.min(today, goalXP())}/${goalXP()} XP)`),
+      tile("phrases", "🃏", "Phrase cards", `${(S.phrases || []).length}/${PHRASES.length} collected`, showPhrases),
+      tile("filmi", "🎬", "Filmi moments", `${S.filmi.length}/${FILMI.length} SRK classics`, showFilmiList));
+  }
+  // Settings as labelled rows, so each option says what it does.
+  function settingsCard() {
+    const row = (icon, label, desc, key, onChange) => h("div", { class: "set-row" },
+      h("span", { class: "set-ic" }, icon), h("span", { class: "set-txt" }, h("b", {}, label), h("span", { class: "d" }, desc)), toggle("", key, onChange));
+    return h("div", { class: "card mt settings-card" }, h("div", { class: "section-title" }, "⚙️ Settings"),
+      row("अ", "Devanagari script", "Show Hindi letters under the words", "deva", applySettings),
+      row("🤫", "Quiet mode", "Type instead of speaking; no automatic audio", "quiet"),
+      row("🌙", "Dark mode", "Easier on the eyes at night", "dark", applySettings),
+      row("🔔", "Sound effects", "Dings, pops and celebrations", "sound"),
+      Speech.supported ? row("🗣️", "Hindi voice", "Read Hindi out loud on your phone", "voice") : h("p", { class: "small muted", style: "margin-top:8px" }, "🗣️ Hindi voice: download a Hindi voice in iPhone Settings → Accessibility → Spoken Content → Voices to hear Hindi read aloud."));
+  }
+
   function showStart() {
     run = null;
     view = "start";
@@ -3096,24 +3147,19 @@
     logo.addEventListener("click", () => { // tap 5× to unlock every module (for testing; this session only)
       if (++logoTaps === 5) { session.unlockAll = true; Sound.play("done"); showStart(); }
     });
+    const target = homeTarget();
     screen(
-      h("div", { class: "hero" },
+      h("div", { class: "home-head" },
         logo,
-        h("p", { class: "greet" }, `Namaste, ${SP.name}! 👋`),
-        streakCard(),
-        h("p", { class: "subtitle" }, "Hindi for chatting with the family — one real sentence at a time.")),
-      h("div", { class: "card" }, h("div", { class: "section-title" }, "Your modules"), list,
-        S.xp ? h("p", { class: "small muted mt" }, `★ ${S.xp} XP so far`) : null),
+        h("div", { class: "home-hello" }, h("p", { class: "greet" }, `Namaste, ${SP.name}! 👋`), h("p", { class: "small muted" }, S.xp ? `★ ${S.xp} XP so far` : "Hindi for chatting with the family"))),
+      streakCard(),
+      upNextCard(target, !anyProgress),
+      homeTiles(),
+      h("div", { class: "card mt" }, h("div", { class: "section-title" }, "📚 Your modules"), list),
       session.unlockAll ? h("p", { class: "center small muted mt" }, "🔓 All modules unlocked for testing (until the app is closed).") : null,
-      h("div", { class: "settings-row" },
-        toggle("देवनागरी script", "deva", applySettings),
-        toggle("Sound effects", "sound"),
-        toggle("🌙 Dark mode", "dark", applySettings),
-        toggle("🤫 Quiet mode", "quiet"),
-        Speech.supported ? toggle("🔊 Hindi voice", "voice") : null),
+      settingsCard(),
       cloudCard(),
       installTip(),
-      !Speech.supported ? h("p", { class: "center small muted mt" }, "Tip: pronunciation audio appears automatically on devices with a Hindi voice installed.") : null,
       anyProgress ? h("p", { class: "center mt" }, h("button", {
         class: "link-btn", onclick: () => {
           askConfirm({
@@ -3124,11 +3170,6 @@
         }
       }, "Reset progress")) : null);
     // Main button: carry on where she left off.
-    const last = MODS[S.lastModule] && moduleUnlocked(mods.indexOf(MODS[S.lastModule])) ? S.lastModule : null;
-    const withRun = mods.filter((m) => S.modules[m.id].run).sort((x, y) => (S.modules[y.id].run.savedAt || 0) - (S.modules[x.id].run.savedAt || 0));
-    const target = (last && (S.modules[last].run || !moduleDone(last)) ? last : null)
-      || (withRun[0] && withRun[0].id)
-      || (mods.find((m, idx) => moduleUnlocked(idx) && !moduleDone(m.id)) || {}).id || mods[0].id;
     const allDone = mods.every((m) => moduleDone(m.id));
     actions([{
       label: !anyProgress ? "Start learning" : allDone ? "Play Module 1 again" : `Continue · Module ${MODS[target].number}`,

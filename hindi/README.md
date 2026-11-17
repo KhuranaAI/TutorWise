@@ -96,15 +96,22 @@ Progress is stored separately from the app files, so pushing a new version never
 5. Updates reach installed phones the next time the app is opened online (the service worker always fetches fresh
    files when it can, and falls back to the cached copy offline).
 
+## Home screen
+
+Top to bottom: greeting → **streak card** (flame, today's goal bar, goal setting) → **Up next** (the exact module and
+stage Continue opens) → four tiles that are always shown, even before they unlock (**⚡ 5-minute review**,
+**🎁 Daily gift**, **🃏 Phrase cards**, **🎬 Filmi moments**) → **Your modules** → **Settings** (Devanagari, quiet
+mode, dark mode, sound, Hindi voice, each with a one-line description) → account / cloud save.
+
 ## Speaking, review and themes
 
 - **Speak It! 🎙️** (every module except "What Am I Doing?"): she answers out loud with no tiles, typing or English sentence — Aunty
   asks a Hindi question (`ask` on an item) or she gets a picture cue (`cue`). Where the browser supports speech
   recognition, 🎤 listens in Hindi (hi-IN) and checks the answer; otherwise she reveals the answer and rates herself.
-- **Daily 5-minute review ⚡** (home screen): every answer updates `weak` (misses / first-try wins per sentence); the
+- **Daily 5-minute review ⚡** (home-screen tile): every answer updates `weak` (misses / first-try wins per sentence); the
   review mixes her weakest sentences with others from modules she has started — mostly spoken.
 - **Daily streak 🔥**: a day counts at 30 XP; a streak freeze is earned every 7 days.
-- **Dark mode 🌙**: toggle on the home screen (`body.dark` overrides the colour tokens in `app.css`).
+- **Dark mode 🌙**: in Settings on the home screen (`body.dark` overrides the colour tokens in `app.css`).
 - **🎬 Filmi moments** (`filmi.js`): famous Shah Rukh Khan lines that use what she just learned, unlocked when she
   finishes a stage (`after: "moduleId:stageId"`), collected on a home-screen shelf. Only short lines are quoted; the
   scene opens on YouTube (a search by default, or a specific official clip with `yt` + `start`).
