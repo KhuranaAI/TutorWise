@@ -964,12 +964,14 @@
     back.addEventListener("click", () => showStart());
     screen(back, h("h2", { class: "title" }, "🎬 Filmi moments"),
       h("p", { class: "subtitle" }, `${S.filmi.length} of ${FILMI.length} Shah Rukh Khan classics unlocked — each one uses Hindi you've learned.`),
+      session.unlockAll ? h("p", { class: "small muted mt" }, "🔓 Test mode: every moment opens, and plays as if just unlocked.") : null,
       h("div", { class: "filmi-list mt" }, FILMI.map((m) => {
-        const open = S.filmi.includes(m.id);
+        const open = S.filmi.includes(m.id) || session.unlockAll;
         const b = h("button", { class: "filmi-row" + (open ? "" : " locked"), disabled: !open },
           h("span", { class: "filmi-row-ic" }, open ? "🎬" : "🔒"),
           h("span", {}, h("b", {}, open ? "“" + m.line.split(/[.…!?]/)[0] + "…”" : "A Shah Rukh classic"), h("span", { class: "d" }, open ? `${m.film} (${m.year})` : "Keep learning to unlock")));
-        if (open) b.addEventListener("click", () => showFilmi(m, showFilmiList, false));
+        if (open) b.addEventListener("click", () => showFilmi(m, showFilmiList, !!session.unlockAll));
+        if (open && m.yt) b.querySelector(".d").append(" · ▶ clip");
         return b;
       })));
     actions([{ label: "Back home", onClick: () => showStart() }]);
