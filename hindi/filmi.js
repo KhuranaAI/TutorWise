@@ -12,7 +12,8 @@ window.BOLO_FILMI = [
     line: "Main hoon na!", dv: "मैं हूँ ना!", en: "I'm here for you, aren't I?",
     know: ["Main = I", "hoon = am"],
     note: "The title of SRK's 2004 hit — and it's your class's “Main … hoon”! The “na” at the end means “right?”.",
-    q: "Main Hoon Na title song Shah Rukh Khan"
+    q: "Main Hoon Na title song Shah Rukh Khan",
+    yt: "DIJW7rWPkSw", start: 0, end: 90 // T-Series official upload; the opening line is "Kiska hai yeh tumko intezaar, main hoon na"
   },
   {
     id: "badebade", after: "class1:challenge", film: "Dilwale Dulhania Le Jayenge", year: 1995,
