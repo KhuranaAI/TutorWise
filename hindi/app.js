@@ -101,7 +101,8 @@
     s.streak = Object.assign({ count: 0, last: null, best: 0, freezes: 0 }, s.streak); // daily streak
     s.daily = Object.assign({ date: null, xp: 0 }, s.daily);                          // today's XP toward the goal
     s.weak = s.weak && typeof s.weak === "object" ? s.weak : {};                       // per sentence: misses / first-try wins
-    s.filmi = Array.isArray(s.filmi) ? s.filmi : [];                                    // unlocked Filmi moments
+    s.filmi = Array.isArray(s.filmi) ? s.filmi : [];                                    // unlocked Filmi cards
+    s.badges = Array.isArray(s.badges) ? s.badges : [];                                 // Filmi album badges earned
     s.modules.review = Object.assign(freshModule(), s.modules.review);
     return s;
   }
@@ -741,15 +742,27 @@
     ["Ekdum perfect!", "एकदम परफ़ेक्ट!", "Absolutely perfect!"]
   ];
   const giftReady = () => S.daily.date === dayStr() && S.daily.xp >= goalXP() && (S.chest || {}).date !== dayStr();
+  // The gift box opens into a Filmi card.
+  function showGiftCard(m, cont) {
+    Clip.prepare(m.yt);
+    const box = h("div", { class: "gift-box shake" }, "🎁");
+    screen(h("div", { class: "stage-hero" }, box, h("h1", {}, "Your daily gift…")));
+    actions([]);
+    Sound.play("flip");
+    setTimeout(() => { box.classList.remove("shake"); box.classList.add("open"); box.textContent = "🎬"; Sound.play("combo"); }, 1100);
+    setTimeout(() => showFilmi(m, cont, true, { kicker: "🎁 Daily gift — a new Filmi card!" }), 1900);
+  }
   function openGift(cont) {
     S.chest = { date: dayStr() };
     S.phrases = S.phrases || [];
     const left = PHRASES.map((p, i) => i).filter((i) => !S.phrases.includes(i));
     const roll = Math.random();
     let reward;
-    if (left.length && roll < 0.4) { const i = pick(left); S.phrases.push(i); reward = { kind: "phrase", p: PHRASES[i] }; }
-    else if (roll < 0.55 && (S.streak.freezes || 0) < 2) { S.streak.freezes = (S.streak.freezes || 0) + 1; reward = { kind: "freeze" }; }
-    else if (roll < 0.7) reward = { kind: "xp", n: 30 };
+    const bonusCard = pickBonus();
+    if (bonusCard && roll < 0.45) { unlockCard(bonusCard); return showGiftCard(bonusCard, cont); }
+    if (left.length && roll < 0.7) { const i = pick(left); S.phrases.push(i); reward = { kind: "phrase", p: PHRASES[i] }; }
+    else if (roll < 0.8 && (S.streak.freezes || 0) < 2) { S.streak.freezes = (S.streak.freezes || 0) + 1; reward = { kind: "freeze" }; }
+    else if (roll < 0.9) reward = { kind: "xp", n: 30 };
     else reward = { kind: "xp", n: 15 };
     save();
     const box = h("div", { class: "gift-box shake" }, "🎁");
@@ -968,46 +981,128 @@
     };
     return { el, start: () => Clip.play(m, spot, ui) };
   }
-  function showFilmi(m, cont, fresh) {
+  /* ---------- 🎬 Filmi Album: cards, rarities, categories, badges ---------- */
+  const FCATS = window.BOLO_FILMI_CATS || [];
+  const FMILES = window.BOLO_FILMI_MILESTONES || [];
+  const RARITY = { common: { name: "Common", icon: "⭐", w: 6 }, rare: { name: "Rare", icon: "💎", w: 3 }, legendary: { name: "Legendary", icon: "✨", w: 1 } };
+  const catOf = (m) => FCATS.find((c) => c.id === m.cat) || { id: "other", icon: "🎬", name: "Classics" };
+  const hasCard = (m) => S.filmi.includes(m.id);
+  // Badges: bronze / silver / gold for each category, plus card-count milestones.
+  function badgeList() {
+    const out = [];
+    FCATS.forEach((c) => {
+      const all = FILMI.filter((m) => m.cat === c.id).length;
+      [["bronze", "🥉", 2], ["silver", "🥈", 4], ["gold", "🥇", all]].forEach(([tier, medal, need]) => {
+        if (need > all && tier !== "gold") return;
+        out.push({ id: c.id + ":" + tier, icon: c.badgeIcon, medal, name: `${c.badge}`, tier, need, cat: c,
+          have: FILMI.filter((m) => m.cat === c.id && hasCard(m)).length, desc: `${need} ${c.name} card${need > 1 ? "s" : ""}` });
+      });
+    });
+    FMILES.forEach((ms) => out.push({ id: "n:" + ms.n, icon: ms.icon, medal: "", name: ms.name, need: ms.n, have: S.filmi.length, desc: `${ms.n} cards collected` }));
+    return out;
+  }
+  function checkBadges() { // returns badges earned just now
+    const fresh = badgeList().filter((b) => b.have >= b.need && !S.badges.includes(b.id));
+    fresh.forEach((b) => S.badges.push(b.id));
+    if (fresh.length) save();
+    return fresh;
+  }
+  function unlockCard(m) {
+    if (!hasCard(m)) S.filmi.push(m.id);
+    save();
+    session.newBadges = (session.newBadges || []).concat(checkBadges());
+  }
+  // A surprise card for a great run, the daily gift or the daily review (common cards come up most).
+  function pickBonus() {
+    const left = FILMI.filter((m) => m.bonus && !hasCard(m));
+    if (!left.length) return null;
+    const total = left.reduce((t, m) => t + (RARITY[m.rarity] || RARITY.common).w, 0);
+    let r = Math.random() * total;
+    return left.find((m) => (r -= (RARITY[m.rarity] || RARITY.common).w) < 0) || left[0];
+  }
+  function showBadge(b, cont) {
+    view = "badge";
+    Sound.play("streak"); confetti(70);
+    screen(h("div", { class: "stage-hero badge-hero" },
+      h("div", { class: "kicker" }, "🏅 New badge!"),
+      h("div", { class: "badge-big tier-" + (b.tier || "mile") }, h("span", {}, b.icon), b.medal ? h("i", {}, b.medal) : null),
+      h("h1", {}, b.name + (b.tier ? ` · ${b.tier[0].toUpperCase() + b.tier.slice(1)}` : "")),
+      h("p", {}, `For collecting ${b.desc}.`),
+      h("p", { class: "small muted" }, `🎬 ${S.filmi.length}/${FILMI.length} cards · 🏅 ${S.badges.length} badges`)));
+    actions([shareAction(`🏅 I just earned the “${b.name}” badge on Bolo! — learning Hindi one filmi line at a time 🎬`), { label: "Continue", onClick: cont }]);
+  }
+  function afterCard(cont) {
+    const b = (session.newBadges || []).shift();
+    if (b) return showBadge(b, () => afterCard(cont));
+    cont();
+  }
+  function showFilmi(m, cont, fresh, opts) {
+    opts = opts || {};
     view = "filmi";
-    if (fresh) { Sound.play("streak"); confetti(50); }
-    // With a clip id (yt) the scene plays right here, by itself, and stops at `end`; otherwise it opens a YouTube search.
+    const cat = catOf(m), rar = RARITY[m.rarity] || RARITY.common;
+    if (fresh) { Sound.play("streak"); confetti(m.rarity === "legendary" ? 110 : 50); }
     const player = m.yt ? filmiPlayer(m) : null;
     const watch = m.yt ? null : h("a", { class: "btn watch-btn", href: sceneUrl(m), target: "_blank", rel: "noopener" }, "▶ Watch the scene");
     screen(h("div", { class: "filmi-wrap" },
-      h("div", { class: "prompt-kicker center" }, fresh ? "🎬 Filmi moment unlocked!" : "🎬 Filmi moment"),
+      h("div", { class: "prompt-kicker center" }, opts.kicker || (fresh ? "🎬 New card unlocked!" : "🎬 Filmi album")),
       player ? player.el : null,
-      h("div", { class: "filmi-card" },
-        h("div", { class: "filmi-reel" }, "🎞️"),
+      h("div", { class: `filmi-card cat-${cat.id} rar-${m.rarity || "common"}${fresh ? " reveal" : ""}` },
+        h("div", { class: "card-tags" }, h("span", { class: "cat-tag" }, cat.icon + " " + cat.name), h("span", { class: "rar-tag" }, rar.icon + " " + rar.name)),
         h("div", { class: "filmi-film" }, m.film, h("span", {}, " · " + m.year)),
-        h("div", { class: "filmi-line" }, TW("“" + m.line + "”", m.dv), audioBtn(m.dv)),
-        h("div", { class: "filmi-en" }, m.en),
+        h("div", { class: "filmi-line" }, TW("“" + m.line + "”", m.dv), m.dv ? audioBtn(m.dv) : null),
+        m.en && m.en !== m.line ? h("div", { class: "filmi-en" }, m.en) : null,
         h("div", { class: "filmi-know" }, (m.know || []).map((k) => h("span", { class: "know-chip" }, "✨ " + k))),
         h("p", { class: "filmi-note" }, m.note)),
       watch,
       m.yt ? null : h("p", { class: "small muted center", style: "margin-top:6px" }, "Opens YouTube")));
     if (fresh && m.dv && !m.yt) setTimeout(() => Speech.say(m.dv), 600);
     if (player) player.start();
-    actions([shareAction(`🎬 I just unlocked “${m.line}” — ${m.film} — while learning Hindi on Bolo!`), { label: "Continue", onClick: cont }]);
+    actions([shareAction(`🎬 I just unlocked “${m.line}” — ${m.film} — while learning Hindi on Bolo!`), { label: "Continue", onClick: () => afterCard(cont) }]);
+  }
+  function whereFrom(m) {
+    if (m.bonus) return "🎁 Bonus drop";
+    const [mid, sid] = String(m.after || "").split(":");
+    const mod = MODS[mid];
+    if (!mod) return "Keep learning";
+    const st = stagesFor(mod), i = st.findIndex((x) => x.id === sid);
+    return `Module ${mod.number}` + (i >= 0 ? ` · Stage ${i + 1}` : "");
   }
   function showFilmiList() {
+    const owed = checkBadges(); // badges already earned (e.g. cards collected before badges existed)
+    if (owed.length) { session.newBadges = (session.newBadges || []).concat(owed); return afterCard(showFilmiList); }
     view = "start";
     Clip.stop();
-    Clip.prepare((FILMI.find((f) => f.yt && (S.filmi.includes(f.id) || session.unlockAll)) || {}).yt);
+    Clip.prepare((FILMI.find((f) => f.yt && (hasCard(f) || session.unlockAll)) || {}).yt);
     const back = h("button", { class: "link-btn back-link" }, "‹ Home");
     back.addEventListener("click", () => showStart());
-    screen(back, h("h2", { class: "title" }, "🎬 Filmi moments"),
-      h("p", { class: "subtitle" }, `${S.filmi.length} of ${FILMI.length} Shah Rukh Khan classics unlocked — each one uses Hindi you've learned.`),
-      session.unlockAll ? h("p", { class: "small muted mt" }, "🔓 Test mode: every moment opens, and plays as if just unlocked.") : null,
-      h("div", { class: "filmi-list mt" }, FILMI.map((m) => {
-        const open = S.filmi.includes(m.id) || session.unlockAll;
-        const b = h("button", { class: "filmi-row" + (open ? "" : " locked"), disabled: !open },
-          h("span", { class: "filmi-row-ic" }, open ? "🎬" : "🔒"),
-          h("span", {}, h("b", {}, open ? "“" + m.line.split(/[.…!?]/)[0] + "…”" : "A Shah Rukh classic"), h("span", { class: "d" }, open ? `${m.film} (${m.year})` : "Keep learning to unlock")));
-        if (open) b.addEventListener("click", () => showFilmi(m, showFilmiList, !!session.unlockAll));
-        if (open && m.yt) b.querySelector(".d").append(" · ▶ clip");
-        return b;
-      })));
+    const earned = badgeList().filter((b) => S.badges.includes(b.id));
+    const nextBadges = badgeList().filter((b) => !S.badges.includes(b.id)).sort((x, y) => (y.have / y.need) - (x.have / x.need)).slice(0, 3);
+    const badgeRow = h("div", { class: "badge-row" },
+      earned.map((b) => h("div", { class: "badge-chip tier-" + (b.tier || "mile"), title: b.name }, h("span", {}, b.icon), b.medal ? h("i", {}, b.medal) : null)),
+      earned.length ? null : h("p", { class: "small muted", style: "margin:0" }, "No badges yet — collect cards to earn them!"));
+    const sections = FCATS.concat(FILMI.some((m) => !FCATS.find((c) => c.id === m.cat)) ? [{ id: "other", icon: "🎬", name: "Classics" }] : []).map((c) => {
+      const cards = FILMI.filter((m) => catOf(m).id === c.id);
+      if (!cards.length) return null;
+      const got = cards.filter(hasCard).length;
+      return h("div", { class: "album-sec" },
+        h("div", { class: "album-head" }, h("b", {}, c.icon + " " + c.name), h("span", { class: "small muted" }, `${got}/${cards.length}`)),
+        h("div", { class: "album-prog cat-" + c.id }, h("i", { style: `width:${Math.round((got / cards.length) * 100)}%` })),
+        h("div", { class: "album-grid" }, cards.map((m) => {
+          const open = hasCard(m) || session.unlockAll;
+          const b = h("button", { class: `mini-card cat-${c.id} rar-${m.rarity || "common"}${open ? "" : " locked"}`, disabled: !open },
+            open
+              ? [h("span", { class: "mc-rar" }, (RARITY[m.rarity] || RARITY.common).icon), h("b", {}, "“" + m.line.split(/[.…!?,]/)[0].slice(0, 34) + "”"), h("span", { class: "mc-film" }, m.film), m.yt ? h("span", { class: "mc-play" }, "▶") : null]
+              : [h("span", { class: "mc-q" }, "?"), h("span", { class: "mc-film" }, whereFrom(m))]);
+          if (open) b.addEventListener("click", () => showFilmi(m, showFilmiList, !!session.unlockAll));
+          return b;
+        })));
+    });
+    screen(back, h("h2", { class: "title" }, "🎬 My Filmi Album"),
+      h("p", { class: "subtitle" }, `${S.filmi.length} of ${FILMI.length} cards collected. Every stage unlocks one — and great runs, daily gifts and reviews drop bonus cards.`),
+      session.unlockAll ? h("p", { class: "small muted" }, "🔓 Test mode: every card opens, and plays as if just unlocked.") : null,
+      h("div", { class: "card album-badges" }, h("div", { class: "section-title" }, `🏅 Badges · ${earned.length}/${badgeList().length}`), badgeRow,
+        nextBadges.length ? h("div", { class: "next-badges" }, nextBadges.map((b) => h("div", { class: "nb" }, h("span", {}, b.icon), h("span", { class: "nb-txt" }, h("b", {}, b.name + (b.tier ? " " + b.medal : "")), h("span", { class: "small muted" }, `${Math.min(b.have, b.need)}/${b.need} · ${b.desc}`))))) : null),
+      sections);
     actions([{ label: "Back home", onClick: () => showStart() }]);
   }
   // "3 in a row!" banner + bonus.
@@ -1221,16 +1316,28 @@
     P().done[STAGES[i].id] = true;
     P().run = null;
     save();
-    if (CUR.id === "review") return reviewDone();
-    // 🎬 A Shah Rukh Khan moment that uses what she just learned (once each).
-    const fm = FILMI.find((f) => f.after === CUR.id + ":" + STAGES[i].id && (!S.filmi.includes(f.id) || (session.unlockAll && !session.filmiShown)));
+    if (CUR.id === "review") { // the day's first review drops a bonus card
+      if (!run.bonusDone && S.lastReview !== dayStr()) {
+        run.bonusDone = true;
+        const b = pickBonus();
+        if (b) { unlockCard(b); return showFilmi(b, () => reviewDone(), true, { kicker: "⚡ Review reward — bonus card!" }); }
+      }
+      return reviewDone();
+    }
+    // 🎬 A card that uses what she just learned (once each).
+    const fm = FILMI.find((f) => f.after === CUR.id + ":" + STAGES[i].id && (!S.filmi.includes(f.id) || (session.unlockAll && !run.cardShown)));
     if (fm) { // (in test mode — logo tapped 5× — it shows again when the stage is replayed)
-      session.filmiShown = true;
-      if (!S.filmi.includes(fm.id)) S.filmi.push(fm.id);
-      save();
+      run.cardShown = true;
+      unlockCard(fm);
       return showFilmi(fm, () => completeStage(), true);
     }
-    session.filmiShown = false;
+    run.cardShown = true;
+    // 🎁 A bonus card for a great run (90%+ right first time).
+    if (!run.bonusDone && run.stats.graded >= 4 && run.stats.first / run.stats.graded >= 0.9) {
+      run.bonusDone = true;
+      const b = pickBonus();
+      if (b) { unlockCard(b); return showFilmi(b, () => completeStage(), true, { kicker: "🎯 Great run — bonus card!" }); }
+    }
     setFill(100);
     Sound.play("done");
     confetti();
@@ -3301,7 +3408,7 @@
       giftReady() ? tile("gift ready", "🎁", "Daily gift", "Ready — tap to open!", () => openGift(() => showStart()))
         : tile("gift locked", "🎁", "Daily gift", openedToday ? "Opened ✓ — new one tomorrow" : `Hit today's goal to unlock (${Math.min(today, goalXP())}/${goalXP()} XP)`),
       tile("phrases", "🃏", "Phrase cards", `${(S.phrases || []).length}/${PHRASES.length} collected`, showPhrases),
-      tile("filmi", "🎬", "Filmi moments", `${S.filmi.length}/${FILMI.length} SRK classics`, showFilmiList));
+      tile("filmi", "🎬", "Filmi album", `${S.filmi.length}/${FILMI.length} cards · 🏅 ${S.badges.length}`, showFilmiList));
   }
   // Settings as labelled rows, so each option says what it does.
   function settingsCard() {
@@ -3500,7 +3607,7 @@
     texts.forEach((t) => String(t).split(/\s+/).forEach((w) => w.split("/").forEach((x) => { const c = cleanWord(x); if (c && /[a-z]/.test(c) && !glossOf(x)) miss[c] = (miss[c] || 0) + 1; })));
     return miss;
   }
-  window.Bolo = { clip: Clip, glossAudit, glossOf, showFilmi, filmi: () => FILMI, award, startReview, openGift, giftReady, session: () => session, tokenize, diagnose, tokenizeG, checkItem, startStage, showStart, showModule, playModule, mods: MODS, unlockAll: () => { session.unlockAll = true; }, debug: () => dbg, cloud: Cloud, state: () => S, step: () => curStep, mcCorrect: () => (dbg.opts || []).findIndex((o) => o.correct), ctx: () => run && run.ctx };
+  window.Bolo = { testUnlock: (id) => { const m = FILMI.find((x) => x.id === id); unlockCard(m); showFilmi(m, () => showStart(), true); }, badges: () => badgeList(), clip: Clip, glossAudit, glossOf, showFilmi, filmi: () => FILMI, award, startReview, openGift, giftReady, session: () => session, tokenize, diagnose, tokenizeG, checkItem, startStage, showStart, showModule, playModule, mods: MODS, unlockAll: () => { session.unlockAll = true; }, debug: () => dbg, cloud: Cloud, state: () => S, step: () => curStep, mcCorrect: () => (dbg.opts || []).findIndex((o) => o.correct), ctx: () => run && run.ctx };
 
   init();
 })();

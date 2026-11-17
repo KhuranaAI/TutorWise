@@ -112,11 +112,14 @@ mode, dark mode, sound, Hindi voice, each with a one-line description) → accou
   review mixes her weakest sentences with others from modules she has started — mostly spoken.
 - **Daily streak 🔥**: a day counts at 30 XP; a streak freeze is earned every 7 days.
 - **Dark mode 🌙**: in Settings on the home screen (`body.dark` overrides the colour tokens in `app.css`).
-- **🎬 Filmi moments** (`filmi.js`): famous Shah Rukh Khan lines that use what she just learned, unlocked when she
-  finishes a stage (`after: "moduleId:stageId"`), collected on a home-screen shelf. Only short lines are quoted; the
-  scene opens a YouTube search by default. Add `yt: "VIDEO_ID", start: 42, end: 75` (seconds) to a moment and the clip
-  plays inside the card instead. Use an official upload, since some uploaders block embedding. No movie files are stored in
-  the app.
+- **🎬 Filmi Album** (`filmi.js`): collectable cards of famous lines and songs from classic Hindi films, each using
+  Hindi she has just learned. Every stage in Modules 1–3 unlocks one (`after: "moduleId:stageId"`); bonus cards
+  (`bonus: true`) drop for a 90%+ first-try stage, from the daily gift, and for the day's first 5-minute review.
+  Cards have a category (`cat`: romance · comedy · swag · family · songs, each with its own card skin) and a rarity
+  (`common` · `rare` · `legendary` — gold foil). Badges: bronze/silver/gold per category plus card-count milestones
+  (`BOLO_FILMI_CATS`, `BOLO_FILMI_MILESTONES`). `yt` plays an official clip inside the card (one shared player is built
+  ahead of time so the clip can start with sound on her tap); `start`/`end` trim a longer upload. Test mode
+  (logo tapped 5×) opens every card from the album. Card ids are saved in her progress — never rename one.
 - **Tap a word 👆**: every word in chat messages, Speak It questions, example sentences, phrase cards and Filmi lines is
   underlined; tapping it shows the meaning, Devanagari and 🔊. Meanings come from the lexicon, then from `C.gloss` in
   `modules.js` for words that only appear inside sentences. `Bolo.glossAudit()` (browser console) lists any word without

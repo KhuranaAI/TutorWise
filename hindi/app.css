@@ -878,3 +878,64 @@ body.dark .filmi-tap { color: var(--brand); }
 .clip-holder { position: absolute; z-index: 5; border-radius: 16px; overflow: hidden; background: #000; }
 .clip-holder iframe { width: 100%; height: 100%; border: 0; display: block; }
 .clip-holder.off { left: -9999px; top: 0; width: 320px; height: 180px; }
+
+/* ===== Filmi Album: category skins, rarity frames, album, badges ===== */
+.filmi-card.cat-romance { background: radial-gradient(circle at 15% 0%, #c2185b 0, transparent 55%), radial-gradient(circle at 100% 100%, #6a1b4d 0, transparent 55%), #2a0f1f; }
+.filmi-card.cat-comedy  { background: radial-gradient(circle at 15% 0%, #f59e0b 0, transparent 55%), radial-gradient(circle at 100% 100%, #b45309 0, transparent 55%), #2b1a07; }
+.filmi-card.cat-swag    { background: radial-gradient(circle at 15% 0%, #dc2626 0, transparent 55%), radial-gradient(circle at 100% 100%, #7c2d12 0, transparent 55%), #1f0b0b; }
+.filmi-card.cat-family  { background: radial-gradient(circle at 15% 0%, #0f9f8f 0, transparent 55%), radial-gradient(circle at 100% 100%, #155e75 0, transparent 55%), #08201f; }
+.filmi-card.cat-songs   { background: radial-gradient(circle at 15% 0%, #8b5cf6 0, transparent 55%), radial-gradient(circle at 100% 100%, #4338ca 0, transparent 55%), #150f2e; }
+.filmi-card.rar-rare { box-shadow: 0 0 0 3px #7dd3fc, 0 12px 30px rgba(0,0,0,.4); }
+.filmi-card.rar-legendary { box-shadow: 0 0 0 3px #f4c84a, 0 0 26px rgba(244,200,74,.55), 0 12px 30px rgba(0,0,0,.4); }
+.filmi-card.rar-legendary::after {
+  content: ""; position: absolute; inset: -50%; pointer-events: none;
+  background: linear-gradient(115deg, transparent 40%, rgba(255,240,180,.28) 50%, transparent 60%);
+  animation: foil 3.2s ease-in-out infinite;
+}
+@keyframes foil { from { transform: translateX(-40%); } to { transform: translateX(40%); } }
+.filmi-card.reveal { animation: cardFlip .9s cubic-bezier(.2,1.2,.4,1) both; }
+@keyframes cardFlip { 0% { transform: perspective(700px) rotateY(90deg) scale(.8); opacity: 0; } 60% { transform: perspective(700px) rotateY(-12deg) scale(1.03); opacity: 1; } 100% { transform: none; } }
+.card-tags { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; }
+.cat-tag, .rar-tag { font-size: 12px; font-weight: 800; letter-spacing: .03em; padding: 4px 10px; border-radius: 99px; background: rgba(255,255,255,.14); color: #fff; text-transform: uppercase; }
+.rar-legendary .rar-tag { background: linear-gradient(90deg, #f4c84a, #ffe9a8); color: #4a3200; }
+.rar-rare .rar-tag { background: #7dd3fc; color: #08324a; }
+.filmi-card .filmi-film { margin-top: 14px; }
+
+/* album */
+.album-badges { margin-top: 12px; }
+.badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.badge-chip { position: relative; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-size: 24px; background: var(--brand-lt); box-shadow: 0 0 0 2px var(--line); }
+.badge-chip i, .badge-big i { position: absolute; right: -4px; bottom: -4px; font-style: normal; font-size: 16px; }
+.badge-chip.tier-gold, .badge-big.tier-gold { box-shadow: 0 0 0 3px #f4c84a; }
+.badge-chip.tier-silver, .badge-big.tier-silver { box-shadow: 0 0 0 3px #cbd5e1; }
+.badge-chip.tier-bronze, .badge-big.tier-bronze { box-shadow: 0 0 0 3px #d39a6a; }
+.next-badges { margin-top: 12px; display: grid; gap: 8px; }
+.nb { display: flex; gap: 10px; align-items: center; opacity: .8; }
+.nb > span:first-child { font-size: 22px; filter: grayscale(1); }
+.nb-txt { display: flex; flex-direction: column; }
+.nb-txt b { font-size: 14px; }
+.album-sec { margin-top: 18px; }
+.album-head { display: flex; justify-content: space-between; align-items: baseline; }
+.album-head b { font-family: var(--font-fun); font-size: 19px; }
+.album-prog { height: 6px; border-radius: 99px; background: var(--line); margin: 6px 0 10px; overflow: hidden; }
+.album-prog i { display: block; height: 100%; border-radius: 99px; background: var(--brand); }
+.album-prog.cat-romance i { background: #e0457b; } .album-prog.cat-comedy i { background: #f59e0b; }
+.album-prog.cat-swag i { background: #dc2626; } .album-prog.cat-family i { background: #0f9f8f; } .album-prog.cat-songs i { background: #8b5cf6; }
+.album-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mini-card {
+  position: relative; aspect-ratio: 3 / 4; border-radius: 14px; padding: 8px; color: #fff; text-align: left; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: flex-end; gap: 3px; background: #1a1026; box-shadow: 0 3px 0 rgba(0,0,0,.25);
+}
+.mini-card.cat-romance { background: linear-gradient(160deg, #c2185b, #2a0f1f); } .mini-card.cat-comedy { background: linear-gradient(160deg, #f59e0b, #2b1a07); }
+.mini-card.cat-swag { background: linear-gradient(160deg, #dc2626, #1f0b0b); } .mini-card.cat-family { background: linear-gradient(160deg, #0f9f8f, #08201f); }
+.mini-card.cat-songs { background: linear-gradient(160deg, #8b5cf6, #150f2e); }
+.mini-card.rar-rare { box-shadow: 0 0 0 2px #7dd3fc, 0 3px 0 rgba(0,0,0,.25); }
+.mini-card.rar-legendary { box-shadow: 0 0 0 2px #f4c84a, 0 0 12px rgba(244,200,74,.5); }
+.mini-card b { font-family: var(--font-fun); font-size: 13px; line-height: 1.15; }
+.mini-card .mc-film { font-size: 10.5px; opacity: .8; line-height: 1.2; }
+.mini-card .mc-rar { position: absolute; top: 6px; left: 8px; font-size: 13px; }
+.mini-card .mc-play { position: absolute; top: 6px; right: 8px; width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,.9); color: #1a1026; font-size: 9px; display: grid; place-items: center; }
+.mini-card.locked { background: var(--card); color: var(--muted); box-shadow: inset 0 0 0 2px var(--line); justify-content: center; align-items: center; text-align: center; opacity: 1; }
+.mini-card.locked .mc-q { font-family: var(--font-fun); font-size: 30px; font-weight: 800; opacity: .45; }
+.badge-hero .badge-big { position: relative; width: 110px; height: 110px; margin: 10px auto 6px; border-radius: 50%; display: grid; place-items: center; font-size: 58px; background: var(--brand-lt); animation: cardFlip .9s cubic-bezier(.2,1.2,.4,1) both; }
+.badge-hero .badge-big i { font-size: 34px; right: -2px; bottom: -2px; }
