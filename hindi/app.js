@@ -101,6 +101,7 @@
     s.streak = Object.assign({ count: 0, last: null, best: 0, freezes: 0 }, s.streak); // daily streak
     s.daily = Object.assign({ date: null, xp: 0 }, s.daily);                          // today's XP toward the goal
     s.weak = s.weak && typeof s.weak === "object" ? s.weak : {};                       // per sentence: misses / first-try wins
+    s.filmi = Array.isArray(s.filmi) ? s.filmi : [];                                    // unlocked Filmi moments
     s.modules.review = Object.assign(freshModule(), s.modules.review);
     return s;
   }
@@ -826,6 +827,7 @@
       giftReady() ? h("button", { class: "btn small-btn gift-btn", onclick: () => openGift(() => showStart()) }, "🎁 Today's gift is waiting — open it!") : null,
       goalPicker(),
       (S.phrases || []).length ? h("button", { class: "link-btn", style: "padding-left:0", onclick: showPhrases }, `🃏 Phrase cards: ${S.phrases.length}/${PHRASES.length}`) : null,
+      FILMI.length ? h("button", { class: "link-btn", style: "padding-left:0;display:block", onclick: showFilmiList }, `🎬 Filmi moments: ${S.filmi.length}/${FILMI.length}`) : null,
       reviewPool().length ? h("button", { class: "btn small-btn review-btn", onclick: startReview }, "⚡ 5-minute review",
         h("span", { class: "review-sub" }, (() => { const n = reviewPool().filter((k) => weakScore(k) > 0).length; return n ? ` · ${n} weak spot${n > 1 ? "s" : ""}` : " · mixed practice"; })())) : null,
       n && n.kind === "froze" ? h("p", { class: "small", style: "margin-top:6px" }, `🧊 A streak freeze saved your streak while you were away!`) : null,
@@ -856,6 +858,43 @@
       h("ul", { class: "say-list mt" }, PHRASES.map((p, i) => (S.phrases || []).includes(i)
         ? h("li", {}, h("div", {}, h("div", { class: "hi" }, W(p[0], p[1])), h("div", { class: "en" }, p[2])), audioBtn(p[1], true))
         : h("li", { class: "locked" }, h("div", {}, h("div", { class: "hi" }, "🔒 ???"), h("div", { class: "en" }, "Keep your streak going to unlock"))))));
+    actions([{ label: "Back home", onClick: () => showStart() }]);
+  }
+  /* ---------------- 🎬 Filmi moments (filmi.js) ---------------- */
+  const FILMI = window.BOLO_FILMI || [];
+  const sceneUrl = (m) => m.yt ? `https://www.youtube.com/watch?v=${encodeURIComponent(m.yt)}${m.start ? "&t=" + m.start + "s" : ""}` : "https://www.youtube.com/results?search_query=" + encodeURIComponent(m.q || m.film);
+  function showFilmi(m, cont, fresh) {
+    view = "filmi";
+    if (fresh) { Sound.play("streak"); confetti(50); }
+    const watch = h("a", { class: "btn watch-btn", href: sceneUrl(m), target: "_blank", rel: "noopener" }, "▶ Watch the scene");
+    screen(h("div", { class: "filmi-wrap" },
+      h("div", { class: "prompt-kicker center" }, fresh ? "🎬 Filmi moment unlocked!" : "🎬 Filmi moment"),
+      h("div", { class: "filmi-card" },
+        h("div", { class: "filmi-reel" }, "🎞️"),
+        h("div", { class: "filmi-film" }, m.film, h("span", {}, " · " + m.year)),
+        h("div", { class: "filmi-line" }, W("“" + m.line + "”", m.dv), audioBtn(m.dv)),
+        h("div", { class: "filmi-en" }, m.en),
+        h("div", { class: "filmi-know" }, (m.know || []).map((k) => h("span", { class: "know-chip" }, "✨ " + k))),
+        h("p", { class: "filmi-note" }, m.note)),
+      watch,
+      h("p", { class: "small muted center", style: "margin-top:6px" }, "Opens YouTube")));
+    if (fresh && m.dv) setTimeout(() => Speech.say(m.dv), 600);
+    actions([shareAction(`🎬 I just unlocked “${m.line}” — ${m.film} — while learning Hindi on Bolo!`), { label: "Continue", onClick: cont }]);
+  }
+  function showFilmiList() {
+    view = "start";
+    const back = h("button", { class: "link-btn back-link" }, "‹ Home");
+    back.addEventListener("click", () => showStart());
+    screen(back, h("h2", { class: "title" }, "🎬 Filmi moments"),
+      h("p", { class: "subtitle" }, `${S.filmi.length} of ${FILMI.length} Shah Rukh Khan classics unlocked — each one uses Hindi you've learned.`),
+      h("div", { class: "filmi-list mt" }, FILMI.map((m) => {
+        const open = S.filmi.includes(m.id);
+        const b = h("button", { class: "filmi-row" + (open ? "" : " locked"), disabled: !open },
+          h("span", { class: "filmi-row-ic" }, open ? "🎬" : "🔒"),
+          h("span", {}, h("b", {}, open ? "“" + m.line.split(/[.…!?]/)[0] + "…”" : "A Shah Rukh classic"), h("span", { class: "d" }, open ? `${m.film} (${m.year})` : "Keep learning to unlock")));
+        if (open) b.addEventListener("click", () => showFilmi(m, showFilmiList, false));
+        return b;
+      })));
     actions([{ label: "Back home", onClick: () => showStart() }]);
   }
   // "3 in a row!" banner + bonus.
@@ -1068,6 +1107,9 @@
     P().run = null;
     save();
     if (CUR.id === "review") return reviewDone();
+    // 🎬 A Shah Rukh Khan moment that uses what she just learned (once each).
+    const fm = FILMI.find((f) => f.after === CUR.id + ":" + STAGES[i].id && !S.filmi.includes(f.id));
+    if (fm) { S.filmi.push(fm.id); save(); return showFilmi(fm, () => completeStage(), true); }
     setFill(100);
     Sound.play("done");
     confetti();
@@ -3212,7 +3254,7 @@
   }
 
   // Exposed for debugging / automated checks.
-  window.Bolo = { award, startReview, openGift, giftReady, session: () => session, tokenize, diagnose, tokenizeG, checkItem, startStage, showStart, showModule, playModule, mods: MODS, unlockAll: () => { session.unlockAll = true; }, debug: () => dbg, cloud: Cloud, state: () => S, step: () => curStep, mcCorrect: () => (dbg.opts || []).findIndex((o) => o.correct), ctx: () => run && run.ctx };
+  window.Bolo = { showFilmi, filmi: () => FILMI, award, startReview, openGift, giftReady, session: () => session, tokenize, diagnose, tokenizeG, checkItem, startStage, showStart, showModule, playModule, mods: MODS, unlockAll: () => { session.unlockAll = true; }, debug: () => dbg, cloud: Cloud, state: () => S, step: () => curStep, mcCorrect: () => (dbg.opts || []).findIndex((o) => o.correct), ctx: () => run && run.ctx };
 
   init();
 })();

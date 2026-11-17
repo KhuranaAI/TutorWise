@@ -105,3 +105,6 @@ Progress is stored separately from the app files, so pushing a new version never
   review mixes her weakest sentences with others from modules she has started — mostly spoken.
 - **Daily streak 🔥**: a day counts at 30 XP; a streak freeze is earned every 7 days.
 - **Dark mode 🌙**: toggle on the home screen (`body.dark` overrides the colour tokens in `app.css`).
+- **🎬 Filmi moments** (`filmi.js`): famous Shah Rukh Khan lines that use what she just learned, unlocked when she
+  finishes a stage (`after: "moduleId:stageId"`), collected on a home-screen shelf. Only short lines are quoted; the
+  scene opens on YouTube (a search by default, or a specific official clip with `yt` + `start`).
