@@ -176,6 +176,9 @@ nav{position:fixed;inset:auto 0 0 0;z-index:6;background:var(--nav);-webkit-back
 nav button{flex:1;min-width:0;border:0;border-radius:0;background:none;color:var(--dim);padding:9px 2px 8px;font:600 10px var(--disp);letter-spacing:.1em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:4px}
 nav button svg{width:22px;height:22px}
 nav button.on{color:var(--acc)}
+#fab{position:fixed;right:16px;bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:7;width:54px;height:54px;border-radius:50%;border:0;background:var(--acc);color:#04121a;font:600 30px/1 var(--disp);box-shadow:0 6px 22px rgba(0,0,0,.5);display:grid;place-items:center;padding:0}
+#fab[hidden]{display:none}
+#qText{width:100%;min-height:92px;margin-top:10px}
 #sheet{position:fixed;inset:0;z-index:8;background:var(--veil);display:flex;align-items:flex-end}
 #sheetBody{width:100%;max-width:640px;margin:0 auto;border-radius:20px 20px 0 0;max-height:86%;overflow:auto;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:12px;z-index:9;font-size:14px;max-width:90vw;display:flex;gap:12px;align-items:center}
@@ -247,6 +250,7 @@ label{font-size:13px;color:var(--mute);display:block;margin:10px 0 4px}
 
 <nav id="nav"><button data-v="today" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/></svg>Today</button><button data-v="cal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Calendar</button><button data-v="all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10M4 6l1.2 1.2L7.5 5M4 12l1.2 1.2L7.5 11M4 18l1.2 1.2L7.5 17"/></svg>Tasks</button><button data-v="centre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9.5 12 5l9 4.5-9 4.5-9-4.5z"/><path d="M7 12v4.2c3 2.4 7 2.4 10 0V12"/></svg>Centre</button><button data-v="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.7" fill="currentColor" stroke="none"/></svg>More</button></nav>
 
+<button id="fab" data-act="quick" aria-label="Tell HQ something" hidden>+</button>
 <div id="sheet" hidden><div class="card" id="sheetBody"></div></div>
 
 <script type="text/plain" id="gsManifest">
@@ -824,10 +828,25 @@ async function pushItem(id){const t=S.tasks.get(id),nx=horizon()[1];if(!t)return
   if(!nx){say(`It’s the last day of your week, ${sir()}, so it stays on today.`,true);return}
   const c={day:nx,pin:false,defer:(t.defer||0)+1};S.tasks.set(id,{...t,...c});await up(id,c);logEv('skip',T(t));await plMark(id,{pushed:true});await applyWeek(false);V.greeting=false;say(`Moved to ${dayWord(nx)}, ${sir()}.`,true)}
 function weekAsk(){show('today');say(`Tell me everything that has to get done this week, ${sir()}. I’ll pin it into your days.`,true);if(!canHear())$('dump').focus()}
+/* say or type something from anywhere; with an id it is extra info for that one item */
+function quickSheet(id){const t=id&&S.tasks.get(id);V.quickId=t?id:'';
+  sheet(`<h3 style="font:600 18px var(--disp);margin:0">${t?'Add info':'Tell HQ'}</h3>${t?`<div class="m" style="margin-top:4px">${esc(T(t))}</div>${t.n?`<p class="why" style="white-space:pre-wrap;margin:8px 0 0">${esc(t.n)}</p>`:''}`:'<div class="m" style="margin-top:4px">Add something, move something, or ask.</div>'}
+  <textarea id="qText" placeholder="${t?'What should I know about this?':'Type it here'}"></textarea><p class="why" id="qOut" style="margin:6px 0 0">${dict?'':'On the phone, use the microphone on your keyboard to talk.'}</p>
+  <div class="row" style="margin-top:10px"><button class="sm pri" id="qBtn" data-act="qSend">${t?'Add':'Send'}</button>${dict?'<button class="sm" id="qMic" data-act="qMic">Talk</button>':''}<button class="sm ghost" data-act="close">Close</button></div>`);
+  setTimeout(()=>$('qText')?.focus(),60)}
+function qMicUi(){const b=$('qMic');if(b){b.textContent=V.quick?'Stop':'Talk';b.classList.toggle('pri',!!V.quick)}}
+function quickMic(){if(!dict)return;if(V.quick)return quickMicOff();stopSpeak();V.quick=true;qMicUi();Promise.resolve().then(()=>dict.start()).catch(()=>{V.quick=false;qMicUi();toast('The microphone isn’t available here. Type it instead.')})}
+function quickMicOff(){if(V.quick){V.quick=false;try{Promise.resolve(dict.stop()).catch(()=>{})}catch(e){}}qMicUi()}
+async function quickSend(){const el=$('qText'),text=(el?.value||'').trim(),id=V.quickId,t=id&&S.tasks.get(id);if(!text)return;quickMicOff();
+  $('qBtn').disabled=true;$('qOut').textContent='Working…';const before=t?JSON.stringify(t):'';
+  const reply=await applyText(t?`About the item “${T(t)}” (id ${id}): add this to that item with update (notes in "n", and est, due or title only if this says so). Do not add a new item. ${text}`:text,t?'note':'typed');
+  if(t){const now=S.tasks.get(id);if(now&&JSON.stringify(now)===before)await up(id,{n:((now.n||'')+'\n'+today()+': '+text).trim()});$('sheet').hidden=true;toast('Added to '+T(S.tasks.get(id)||t),2200)}
+  else if($('qOut')){$('qOut').textContent=reply||'I couldn’t take that in just now. Try again.';if(reply&&$('qText'))$('qText').value='';if($('qBtn'))$('qBtn').disabled=false}
+  renderAll()}
 function wkSheet(id){const t=S.tasks.get(id);if(!t)return;const days=horizon();
-  sheet(`<h3 style="font:600 18px var(--disp);margin:0 0 4px">${esc(T(t))}</h3><div class="m">${isDone(t)?'Done':t.day?'On '+esc(dayWord(t.day))+(t.pin?', where you put it':''):'Not placed yet'} · about ${durS(estOf(t))}</div>
+  sheet(`<h3 style="font:600 18px var(--disp);margin:0 0 4px">${esc(T(t))}</h3><div class="m">${isDone(t)?'Done':t.day?'On '+esc(dayWord(t.day))+(t.pin?', where you put it':''):'Not placed yet'} · about ${durS(estOf(t))}</div>${t.n?`<p class="why" style="white-space:pre-wrap;margin:8px 0 0">${esc(t.n)}</p>`:''}
   ${isDone(t)?'':`<label>Move it to</label><div class="row">${days.map(d=>`<button class="sm${t.day===d?' pri':''}" data-act="wkMove" data-id="${t.id}" data-d="${d}">${d===today()?'Today':DN[dowOf(d)]}</button>`).join('')}</div>`}
-  <div class="row" style="margin-top:14px">${isDone(t)?`<button class="sm" data-act="undone" data-id="${t.id}">Not done after all</button>`:`<button class="sm pri" data-act="done" data-id="${t.id}">Done</button>${t.pin?`<button class="sm" data-act="wkFloat" data-id="${t.id}">Let me place it</button>`:''}`}<button class="sm" data-act="wkOff" data-id="${t.id}">Take it off this week</button><button class="sm ghost" data-act="close">Close</button></div>`)}
+  <div class="row" style="margin-top:14px">${isDone(t)?`<button class="sm" data-act="undone" data-id="${t.id}">Not done after all</button>`:`<button class="sm pri" data-act="done" data-id="${t.id}">Done</button>${t.pin?`<button class="sm" data-act="wkFloat" data-id="${t.id}">Let me place it</button>`:''}`}<button class="sm" data-act="quick" data-id="${t.id}">Add info</button><button class="sm" data-act="wkOff" data-id="${t.id}">Take it off this week</button><button class="sm ghost" data-act="close">Close</button></div>`)}
 
 /* ---------- productivity score ----------
    Planned = what was on today's docket. Items the app moved off today on its own, or that he took off the week, do not
@@ -1342,7 +1361,7 @@ function renderToday(){
   const row=r=>{
     if(r.fx){const past=r.e<=now,on=r.s<=now&&now<r.e;return `<li class="r fx${past?' past':''}${on?' now':''}"><span class="tm num">${esc(t12(hmOf(r.s)).replace(' ',''))}</span><span class="rt">${on?'<span class="tag">NOW</span>':''}${esc(r.t[0].toUpperCase()+r.t.slice(1))}${r.teach?' until '+esc(t12(s.teachEnd)):''}</span><span class="rm num">${r.teach?'':durS(r.e-r.s)}</span></li>`}
     const{k,t,st}=r,isNow=!bz&&m!=='teach'&&cur&&k.id===cur.k.id,open=ex===k.id;
-    return `<li class="r ${st==='done'?'done':st==='open'?'':'off'}${isNow?' now':''}"><button class="ck" data-act="${st==='done'?'undone':'done'}" data-id="${t.id}" aria-label="${st==='done'?'Not done after all':'Done'}: ${esc(T(t))}">${CHECK}</button><button class="rt" data-act="row" data-id="${t.id}" aria-expanded="${open}">${isNow?'<span class="tag">NOW</span>':''}${esc(T(t))}${st==='skip'?' <span class="pill mute">not today</span>':st==='stuck'?' <span class="pill warn">stuck</span>':''}</button><span class="rm num">${st==='done'?'':(r.ev?esc(t12(r.ev.s).replace(' ',''))+' · ':'')+(t.wk&&!t.est?'~':'')+durS(k.min||t.est||30)}</span>${open?`<div class="rx">${k.why?`<p class="why">${esc(k.why)}</p>`:''}${k.first||t.next?`<p class="first"><b>Start:</b> ${esc(k.first||t.next)}</p>`:''}${t.msg?`<p class="first" id="m_${t.id}" style="white-space:pre-wrap">${esc(t.msg)}</p>`:''}<div class="row">${t.msg?`<button class="sm" data-act="copy" data-from="m_${t.id}">Copy the message</button>`:''}${st==='open'?`<button class="pri sm" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="mark" data-m="skip" data-id="${t.id}">${t.wk===wkKey()?'Not today':'Not now'}</button><button class="sm" data-act="mark" data-m="stuck" data-id="${t.id}">Stuck</button>`:`<button class="pri sm" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="undone" data-id="${t.id}">Back on the list</button>`}${t.out==='ready'?'<button class="sm ghost" data-act="goAI">Open the draft</button>':t.ai?`<button class="sm ghost" data-act="aiTask" data-id="${t.id}">Let AI draft it</button>`:''}</div></div>`:''}</li>`};
+    return `<li class="r ${st==='done'?'done':st==='open'?'':'off'}${isNow?' now':''}"><button class="ck" data-act="${st==='done'?'undone':'done'}" data-id="${t.id}" aria-label="${st==='done'?'Not done after all':'Done'}: ${esc(T(t))}">${CHECK}</button><button class="rt" data-act="row" data-id="${t.id}" aria-expanded="${open}">${isNow?'<span class="tag">NOW</span>':''}${esc(T(t))}${st==='skip'?' <span class="pill mute">not today</span>':st==='stuck'?' <span class="pill warn">stuck</span>':''}</button><span class="rm num">${st==='done'?'':(r.ev?esc(t12(r.ev.s).replace(' ',''))+' · ':'')+(t.wk&&!t.est?'~':'')+durS(k.min||t.est||30)}</span>${open?`<div class="rx">${k.why?`<p class="why">${esc(k.why)}</p>`:''}${k.first||t.next?`<p class="first"><b>Start:</b> ${esc(k.first||t.next)}</p>`:''}${t.msg?`<p class="first" id="m_${t.id}" style="white-space:pre-wrap">${esc(t.msg)}</p>`:''}<div class="row">${t.msg?`<button class="sm" data-act="copy" data-from="m_${t.id}">Copy the message</button>`:''}${st==='open'?`<button class="pri sm" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="mark" data-m="skip" data-id="${t.id}">${t.wk===wkKey()?'Not today':'Not now'}</button><button class="sm" data-act="mark" data-m="stuck" data-id="${t.id}">Stuck</button><button class="sm" data-act="quick" data-id="${t.id}">Add info</button>`:`<button class="pri sm" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="undone" data-id="${t.id}">Back on the list</button>`}${t.out==='ready'?'<button class="sm ghost" data-act="goAI">Open the draft</button>':t.ai?`<button class="sm ghost" data-act="aiTask" data-id="${t.id}">Let AI draft it</button>`:''}</div></div>`:''}</li>`};
   const quick=m!=='work'?[]:(p?.quick||[]).map(id=>S.tasks.get(id)).filter(t=>t&&t.s!=='done'&&!picks.some(r=>r.k.id===t.id));
   const head=bz?`After ${esc(bz.x&&bz.x!=='busy'?bz.x:'this')}`:m==='teach'?'Between lessons':m==='eve'?'Before you switch off':'Today’s docket';
   const over=m==='work'&&op.length>0&&dkt.work>free;
@@ -1437,7 +1456,7 @@ function renderAI(){
   $('drafts').innerHTML=S.drafts.length?S.drafts.map(d=>`<div class="card" data-d="${d.id}"><div class="row"><b class="grow">${esc(d.title)}</b><span class="pill ${d.state==='ready'?'good':d.state==='failed'?'bad':'warn'}">${d.state==='ready'?'Ready to review':d.state==='failed'?'Failed':'Working…'}</span></div><pre class="out" id="o${d.id}">${esc(d.body||'')}</pre>
     <div class="row"><button class="sm pri" data-act="copy" data-from="o${d.id}">Copy</button><button class="sm" data-act="redo" data-id="${d.id}">Redo</button><button class="sm ghost" data-act="delDraft" data-id="${d.id}">Remove</button></div></div>`).join(''):'<div class="empty">Drafts and research land here. Wrong? Hit Redo.</div>';
 }
-function show(v){S.view=v;for(const k of['today','cal','all','centre','more','ai','mem','log'])$('v-'+k).hidden=k!==v;const tab=v==='ai'||v==='mem'||v==='log'?'more':v;if(v==='log')openLog();document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===tab));
+function show(v){S.view=v;$('fab').hidden=v==='today';for(const k of['today','cal','all','centre','more','ai','mem','log'])$('v-'+k).hidden=k!==v;const tab=v==='ai'||v==='mem'||v==='log'?'more':v;if(v==='log')openLog();document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===tab));
   $('hTitle').textContent={today:'Today',cal:'Calendar',all:'Tasks',centre:'Centre',more:'More',ai:'AI help',mem:'Memory',log:'Your messages'}[v];window.scrollTo(0,0);orb.sync()}
 function sheet(html){$('sheetBody').innerHTML=html;$('sheet').hidden=false}
 function settingsSheet(){const s=S.settings;const f=(k,l,t='time')=>`<label for="s_${k}">${l}</label><input id="s_${k}" type="${t}" value="${esc(s[k])}">`;
@@ -1511,11 +1530,13 @@ function earLost(why){clearInterval(V.silence);const text=((V.buf||'')+(V.next||
   else if(text)toast('The mic stopped. Your words are in the box: tap the brain to keep going, or Send.',5200)}
 function wireDict(){
   dict.onFinal(({text})=>{
+    if(V.quick){const el=$('qText');if(el)el.value=(el.value+' '+text).replace(/\s+/g,' ').trimStart();return}
     if(V.conv&&(V.state==='thinking'||V.state==='idle')){if(!echoOf(text)){V.next=(V.next||'')+text;V.lastHeard=Date.now()}return}
     if(V.conv&&(V.state==='speaking'||Date.now()<(V.spokeEnd||0)+1300||echoOf(text)))return;
     if(V.state!=='listening'&&V.state!=='starting')return;V.buf=V.buf?V.buf+text:text.trimStart();V.partial='';V.lastHeard=Date.now();orb.kick(.9);heardMore()});
-  dict.onPartial(({text})=>{if(V.conv&&V.state!=='listening'&&V.state!=='starting')return;if(V.conv&&Date.now()<(V.spokeEnd||0)+1300)return;if(text!==V.partial){V.partial=text;if(text){V.lastHeard=Date.now();orb.kick(.5)}renderCore()}});
+  dict.onPartial(({text})=>{if(V.quick)return;if(V.conv&&V.state!=='listening'&&V.state!=='starting')return;if(V.conv&&Date.now()<(V.spokeEnd||0)+1300)return;if(text!==V.partial){V.partial=text;if(text){V.lastHeard=Date.now();orb.kick(.5)}renderCore()}});
   dict.onState(({state,reason})=>{
+    if(V.quick){if(state==='idle'){V.quick=false;qMicUi()}return}
     if(state==='listening'){V.lastHeard=Date.now();if(V.state==='starting')setState('listening')}
     else if(state==='idle'&&(V.state==='listening'||V.state==='starting')&&!V.finishing){
       if(reason==='viewer_stopped'){clearInterval(V.silence);const text=V.buf.replace(STOP,'').trim();V.buf='';V.partial='';V.wantEar=false;V.conv=false;if(text){V.state='idle';respond(text,true)}else setState('idle');return}
@@ -1722,7 +1743,10 @@ document.addEventListener('click',async e=>{
   if(a==='settings')return settingsSheet();
   if(a==='testSys'){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(`Good day, ${$('s_address')?.value||'sir'}. This is how I sound hands-free.`),v=speechSynthesis.getVoices().find(x=>x.name===$('s_sysVoice').value);if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){}return}
   if(a==='testVoice'){if(tts)tts.speak(`Good day, ${$('s_address').value||'sir'}. Everything is ready.`,{voice:$('s_voice').value,rate:1.05}).catch(()=>{});return}
-  if(a==='close'){$('sheet').hidden=true;return}
+  if(a==='close'){quickMicOff();$('sheet').hidden=true;return}
+  if(a==='quick')return quickSheet(id);
+  if(a==='qSend')return quickSend();
+  if(a==='qMic')return quickMic();
   if(a==='saveSettings'){const n={...S.settings};for(const k of['address','wake','workStart','teachStart','teachEnd','protect'])n[k]=$('s_'+k).value||DEF[k];n.capacity=+$('s_capacity').value;
     if($('s_voice'))n.voice=$('s_voice').value;if($('s_conv'))n.handsFree=$('s_conv').value==='1';if($('s_pause'))n.pause=+$('s_pause').value;if($('s_sysVoice'))try{localStorage.setItem('hq.sysVoice',$('s_sysVoice').value)}catch(e){}if($('s_autoSend'))n.autoSend=$('s_autoSend').checked;
     await db?.doc('settings/main').set(n).catch(()=>toast('Could not save'));$('sheet').hidden=true;toast('Saved',1600);return}
