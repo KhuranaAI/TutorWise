@@ -5,6 +5,7 @@
    something she has just learned. Only short famous lines are quoted; the scene itself
    opens on YouTube (q = search words). To play a specific clip inside the app instead,
    add  yt: "VIDEO_ID", start: seconds, end: seconds  (use an official channel's upload).
+   Movie scenes should be clipped to just the moment (start/end); songs can play whole (yt only).
    ===================================================== */
 window.BOLO_FILMI = [
   {
@@ -13,7 +14,7 @@ window.BOLO_FILMI = [
     know: ["Main = I", "hoon = am"],
     note: "The title of SRK's 2004 hit — and it's your class's “Main … hoon”! The “na” at the end means “right?”.",
     q: "Main Hoon Na title song Shah Rukh Khan",
-    yt: "DIJW7rWPkSw", start: 0, end: 90 // T-Series official upload; the opening line is "Kiska hai yeh tumko intezaar, main hoon na"
+    yt: "DIJW7rWPkSw" // the whole title song (T-Series official upload); it opens with "Kiska hai yeh tumko intezaar, main hoon na"
   },
   {
     id: "badebade", after: "class1:challenge", film: "Dilwale Dulhania Le Jayenge", year: 1995,
@@ -21,7 +22,8 @@ window.BOLO_FILMI = [
     en: "In big countries, little things like this keep happening, Senorita.",
     know: ["mein = in (your “mei”)", "rehti hain — like rehti / rehte"],
     note: "Raj's cheeky line to Simran in Switzerland — one of the most quoted lines in Bollywood.",
-    q: "DDLJ bade bade deshon mein scene"
+    q: "DDLJ bade bade deshon mein scene",
+    yt: "lfuAN-o6H0Q" // YRF's official clip of just this dialogue
   },
   {
     id: "pyaardosti", after: "class2:learn", film: "Kuch Kuch Hota Hai", year: 1998,

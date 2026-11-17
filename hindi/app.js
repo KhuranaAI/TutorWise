@@ -878,38 +878,56 @@
   function filmiPlayer(m) {
     const from = m.start || 0, to = m.end || 0;
     const slot = h("div", {});
-    const box = h("div", { class: "filmi-video" }, slot);
-    const soundBtn = h("button", { class: "btn small-btn filmi-sound", hidden: true }, "🔊 Tap for sound");
+    const soundBtn = h("button", { class: "filmi-sound", hidden: true }, "🔊 Tap for sound");
+    const box = h("div", { class: "filmi-video" }, slot, soundBtn);
     const againBtn = h("button", { class: "btn small-btn ghost filmi-again", hidden: true }, "↺ Watch again");
+    const hint = h("p", { class: "small muted center filmi-hint", hidden: true }, "Tap ▶ on the video to watch with sound.");
     const note = h("p", { class: "small muted center", style: "margin-top:6px" },
       h("a", { href: sceneUrl(m), target: "_blank", rel: "noopener", class: "muted" }, "Not playing? Open it on YouTube"));
-    const el = h("div", { class: "filmi-player" }, box, h("div", { class: "filmi-ctrls" }, soundBtn, againBtn), note);
-    let yt = null, timer = null, started = false;
+    const el = h("div", { class: "filmi-player" }, box, hint, h("div", { class: "filmi-ctrls" }, againBtn), note);
+    let yt = null, timer = null, wantSound = false, tryAt = 0;
+    const call = (fn, ...a) => { try { return yt && yt[fn](...a); } catch (e) { return undefined; } };
     const stopWatch = () => { clearInterval(timer); timer = null; };
-    const finish = () => { stopWatch(); try { yt.pauseVideo(); } catch (e) {} soundBtn.hidden = true; againBtn.hidden = false; };
+    const finish = () => { stopWatch(); call("pauseVideo"); soundBtn.hidden = true; hint.hidden = true; againBtn.hidden = false; };
     const watch = () => {
-      stopWatch();
+      if (timer) return;
       timer = setInterval(() => {
-        if (!el.isConnected) { stopWatch(); try { yt.destroy(); } catch (e) {} return; }
-        try { if (to && yt.getCurrentTime() >= to) finish(); } catch (e) {}
+        if (!el.isConnected) { stopWatch(); call("destroy"); return; }
+        const t = call("getCurrentTime");
+        if (to && t >= to) finish();
       }, 250);
     };
-    soundBtn.addEventListener("click", () => { try { yt.unMute(); yt.setVolume(100); yt.playVideo(); } catch (e) {} soundBtn.hidden = true; });
-    againBtn.addEventListener("click", () => { againBtn.hidden = true; try { yt.seekTo(from, true); yt.playVideo(); } catch (e) {} watch(); });
+    const askSound = () => { soundBtn.hidden = false; };
+    // Turn the sound on; if the phone pauses the clip for it, go back to muted playback and ask for a tap.
+    function trySound() {
+      wantSound = true; tryAt = Date.now();
+      call("unMute"); call("setVolume", 100); call("playVideo");
+      setTimeout(() => {
+        if (!el.isConnected || !againBtn.hidden) return;
+        const st = call("getPlayerState");
+        if (st !== 1 || call("isMuted")) { wantSound = false; call("mute"); call("playVideo"); askSound(); }
+      }, 900);
+    }
+    soundBtn.addEventListener("click", () => {
+      soundBtn.hidden = true;
+      trySound();
+      setTimeout(() => { if (el.isConnected && call("getPlayerState") !== 1) hint.hidden = false; }, 1000);
+    });
+    againBtn.addEventListener("click", () => { againBtn.hidden = true; call("seekTo", from, true); call(wantSound ? "unMute" : "mute"); call("playVideo"); watch(); });
     function start() {
       loadYT().then((YT) => {
         if (!el.isConnected) return;
         yt = new YT.Player(slot, {
           host: "https://www.youtube-nocookie.com", videoId: m.yt, width: "100%", height: "100%",
-          playerVars: Object.assign({ autoplay: 1, playsinline: 1, rel: 0, modestbranding: 1, start: from }, to ? { end: to } : {}),
+          // Phones only autoplay muted videos, so start muted and turn the sound on once it's playing.
+          playerVars: Object.assign({ autoplay: 1, mute: 1, playsinline: 1, rel: 0, modestbranding: 1, start: from }, to ? { end: to } : {}),
           events: {
-            onReady: (e) => {
-              e.target.playVideo();
-              // If the phone blocked sound, play muted and offer a button for sound.
-              setTimeout(() => { if (!started && el.isConnected) { try { e.target.mute(); e.target.playVideo(); soundBtn.hidden = false; } catch (er) {} } }, 1200);
-            },
+            onReady: (e) => { e.target.playVideo(); setTimeout(() => { if (el.isConnected && call("getPlayerState") !== 1) askSound(); }, 2500); },
             onStateChange: (e) => {
-              if (e.data === YT.PlayerState.PLAYING) { started = true; againBtn.hidden = true; watch(); }
+              if (e.data === YT.PlayerState.PLAYING) {
+                hint.hidden = true; againBtn.hidden = true; watch();
+                if (!tryAt) trySound();
+              }
               if (e.data === YT.PlayerState.ENDED) finish();
             }
           }
@@ -1167,8 +1185,14 @@
     save();
     if (CUR.id === "review") return reviewDone();
     // 🎬 A Shah Rukh Khan moment that uses what she just learned (once each).
-    const fm = FILMI.find((f) => f.after === CUR.id + ":" + STAGES[i].id && !S.filmi.includes(f.id));
-    if (fm) { S.filmi.push(fm.id); save(); return showFilmi(fm, () => completeStage(), true); }
+    const fm = FILMI.find((f) => f.after === CUR.id + ":" + STAGES[i].id && (!S.filmi.includes(f.id) || (session.unlockAll && !session.filmiShown)));
+    if (fm) { // (in test mode — logo tapped 5× — it shows again when the stage is replayed)
+      session.filmiShown = true;
+      if (!S.filmi.includes(fm.id)) S.filmi.push(fm.id);
+      save();
+      return showFilmi(fm, () => completeStage(), true);
+    }
+    session.filmiShown = false;
     setFill(100);
     Sound.play("done");
     confetti();
@@ -3254,6 +3278,7 @@
   }
 
   function showStart() {
+    if (FILMI.some((f) => f.yt && S.filmi.includes(f.id))) loadYT().catch(() => {}); // so clips start quickly
     run = null;
     view = "start";
     showChrome(false);
