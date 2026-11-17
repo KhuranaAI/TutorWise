@@ -1326,7 +1326,7 @@
     }
     // 🎬 A card that uses what she just learned (once each).
     const fm = FILMI.find((f) => f.after === CUR.id + ":" + STAGES[i].id && (!S.filmi.includes(f.id) || (session.unlockAll && !run.cardShown)));
-    if (fm) { // (in test mode — logo tapped 5× — it shows again when the stage is replayed)
+    if (fm) { // (in test mode it shows again when the stage is replayed)
       run.cardShown = true;
       unlockCard(fm);
       return showFilmi(fm, () => completeStage(), true);
@@ -2569,7 +2569,7 @@
   }
   const moduleDone = (id) => stagesFor(MODS[id]).every((st) => S.modules[id] && S.modules[id].done[st.id]);
   const hasProgress = (id) => !!(S.modules[id] && (Object.keys(S.modules[id].done).length || S.modules[id].run));
-  const moduleUnlocked = (idx) => idx === 0 || session.unlockAll || moduleDone(C.modules[idx - 1].id) || hasProgress(C.modules[idx].id);
+  const moduleUnlocked = () => true; // every module is open — she can jump ahead any time (stages inside a module still go in order)
 
   function buildG(mod, sid, opts) {
     const m = mod.id;
@@ -3365,7 +3365,26 @@
   }
 
   // Home: all modules, unlocked in order.
-  let logoTaps = 0;
+  // Test mode (every module and Filmi card open, until the app is closed) is hidden from Anissa:
+  // press and hold the "Namaste" greeting for 3 seconds, then type the PIN. Only its SHA-256 is stored here.
+  const TEST_PIN_SHA256 = "0a4e3e70597a358b9447fa8a647aadf5b76dde95c8e4ab02e5f8cee6caa1cd28";
+  async function askTestPin() {
+    const pin = window.prompt("PIN");
+    if (!pin) return;
+    let ok = false;
+    try {
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pin.trim()));
+      ok = [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("") === TEST_PIN_SHA256;
+    } catch (e) { ok = false; }
+    if (ok) { session.unlockAll = true; Sound.play("done"); showStart(); }
+  }
+  function holdToTest(el) {
+    let t = null;
+    const cancel = () => { clearTimeout(t); t = null; };
+    el.addEventListener("pointerdown", () => { cancel(); t = setTimeout(() => { t = null; askTestPin(); }, 3000); });
+    ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => el.addEventListener(ev, cancel));
+    el.addEventListener("contextmenu", (e) => e.preventDefault());
+  }
   // Which module "Continue" opens: where she left off, else the next unfinished one.
   function homeTarget() {
     const mods = C.modules;
@@ -3444,19 +3463,18 @@
       return h("li", {}, b);
     }));
     const logo = h("div", { class: "logo" }, "Bolo!", h("small", { lang: "hi" }, "बोलो · speak!"));
-    logo.addEventListener("click", () => { // tap 5× to unlock every module (for testing; this session only)
-      if (++logoTaps === 5) { session.unlockAll = true; Sound.play("done"); showStart(); }
-    });
+    const greet = h("p", { class: "greet" }, `Namaste, ${SP.name}! 👋`);
+    holdToTest(greet);
     const target = homeTarget();
     screen(
       h("div", { class: "home-head" },
         logo,
-        h("div", { class: "home-hello" }, h("p", { class: "greet" }, `Namaste, ${SP.name}! 👋`), h("p", { class: "small muted" }, S.xp ? `★ ${S.xp} XP so far` : "Hindi for chatting with the family"))),
+        h("div", { class: "home-hello" }, greet, h("p", { class: "small muted" }, S.xp ? `★ ${S.xp} XP so far` : "Hindi for chatting with the family"))),
       streakCard(),
       upNextCard(target, !anyProgress),
       homeTiles(),
       h("div", { class: "card mt" }, h("div", { class: "section-title" }, "📚 Your modules"), list),
-      session.unlockAll ? h("p", { class: "center small muted mt" }, "🔓 All modules unlocked for testing (until the app is closed).") : null,
+      session.unlockAll ? h("p", { class: "center small muted mt" }, "🔓 Test mode: every Filmi card opens (until the app is closed).") : null,
       settingsCard(),
       cloudCard(),
       installTip(),

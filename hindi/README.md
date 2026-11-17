@@ -15,8 +15,10 @@ A static, no-build web app. Open `hindi/index.html` from any static host (it's s
 ## The course (made for Anissa)
 
 She always speaks as herself (female forms: rahi, gayi, aaungi) and uses **aap** + **ji** with Aunty, Uncle and
-other elders. Everyday family Hindi with plenty of Hinglish (e.g. *bhaag* for run, *shopping kar*). Modules unlock in
-order; tap the **Bolo!** logo 5 times on the home screen to unlock all of them for testing (until the app is closed).
+other elders. Everyday family Hindi with plenty of Hinglish (e.g. *bhaag* for run, *shopping kar*). Every module is open from the
+start, so she can jump ahead; stages inside a module go in order. **Test mode** (all Filmi cards open, until the app is
+closed): press and hold the “Namaste” greeting on the home screen for 3 seconds and enter the PIN (only its SHA-256 is in
+`app.js`, `TEST_PIN_SHA256`).
 
 | # | Module | She learns to say |
 | --- | --- | --- |
@@ -119,7 +121,7 @@ mode, dark mode, sound, Hindi voice, each with a one-line description) → accou
   (`common` · `rare` · `legendary` — gold foil). Badges: bronze/silver/gold per category plus card-count milestones
   (`BOLO_FILMI_CATS`, `BOLO_FILMI_MILESTONES`). `yt` plays an official clip inside the card (one shared player is built
   ahead of time so the clip can start with sound on her tap); `start`/`end` trim a longer upload. Test mode
-  (logo tapped 5×) opens every card from the album. Card ids are saved in her progress — never rename one.
+  (see above) opens every card from the album. Card ids are saved in her progress — never rename one.
 - **Tap a word 👆**: every word in chat messages, Speak It questions, example sentences, phrase cards and Filmi lines is
   underlined; tapping it shows the meaning, Devanagari and 🔊. Meanings come from the lexicon, then from `C.gloss` in
   `modules.js` for words that only appear inside sentences. `Bolo.glossAudit()` (browser console) lists any word without
