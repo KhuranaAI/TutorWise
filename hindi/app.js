@@ -763,7 +763,7 @@
       const t = $("gift-title");
       if (reward.kind === "phrase") {
         t.textContent = "New phrase card!";
-        card.append(...[h("div", { class: "hi gift-phrase" }, W(reward.p[0], reward.p[1])), h("div", { class: "muted" }, reward.p[2]), audioBtn(reward.p[1], true),
+        card.append(...[h("div", { class: "hi gift-phrase" }, TW(reward.p[0], reward.p[1])), h("div", { class: "muted" }, reward.p[2]), audioBtn(reward.p[1], true),
           h("p", { class: "small muted", style: "margin-top:8px" }, `🃏 ${S.phrases.length}/${PHRASES.length} phrase cards collected — try it on the family!`)].filter(Boolean));
         award(5);
       } else if (reward.kind === "freeze") {
@@ -851,7 +851,7 @@
     screen(back, h("h2", { class: "title" }, "🃏 My phrase cards"),
       h("p", { class: "subtitle" }, `${(S.phrases || []).length} of ${PHRASES.length} collected — a new one can drop from your daily gift.`),
       h("ul", { class: "say-list mt" }, PHRASES.map((p, i) => (S.phrases || []).includes(i)
-        ? h("li", {}, h("div", {}, h("div", { class: "hi" }, W(p[0], p[1])), h("div", { class: "en" }, p[2])), audioBtn(p[1], true))
+        ? h("li", {}, h("div", {}, h("div", { class: "hi" }, TW(p[0], p[1])), h("div", { class: "en" }, p[2])), audioBtn(p[1], true))
         : h("li", { class: "locked" }, h("div", {}, h("div", { class: "hi" }, "🔒 ???"), h("div", { class: "en" }, "Keep your streak going to unlock"))))));
     actions([{ label: "Back home", onClick: () => showStart() }]);
   }
@@ -861,18 +861,34 @@
   function showFilmi(m, cont, fresh) {
     view = "filmi";
     if (fresh) { Sound.play("streak"); confetti(50); }
-    const watch = h("a", { class: "btn watch-btn", href: sceneUrl(m), target: "_blank", rel: "noopener" }, "▶ Watch the scene");
+    // With a clip id (yt) the scene plays right here; otherwise it opens a YouTube search.
+    const player = h("div", { class: "filmi-video", hidden: true });
+    const watch = m.yt
+      ? h("button", { class: "btn watch-btn", onclick: () => {
+          const q = new URLSearchParams({ autoplay: "1", playsinline: "1", rel: "0", modestbranding: "1" });
+          if (m.start) q.set("start", String(m.start));
+          if (m.end) q.set("end", String(m.end));
+          player.innerHTML = "";
+          player.append(h("iframe", { src: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(m.yt)}?${q}`, title: m.film + " scene",
+            allow: "autoplay; encrypted-media; picture-in-picture; fullscreen", allowfullscreen: "", referrerpolicy: "strict-origin-when-cross-origin" }));
+          player.hidden = false;
+          watch.hidden = true;
+          setTimeout(() => player.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
+        } }, "▶ Play the scene")
+      : h("a", { class: "btn watch-btn", href: sceneUrl(m), target: "_blank", rel: "noopener" }, "▶ Watch the scene");
     screen(h("div", { class: "filmi-wrap" },
       h("div", { class: "prompt-kicker center" }, fresh ? "🎬 Filmi moment unlocked!" : "🎬 Filmi moment"),
       h("div", { class: "filmi-card" },
         h("div", { class: "filmi-reel" }, "🎞️"),
         h("div", { class: "filmi-film" }, m.film, h("span", {}, " · " + m.year)),
-        h("div", { class: "filmi-line" }, W("“" + m.line + "”", m.dv), audioBtn(m.dv)),
+        h("div", { class: "filmi-line" }, TW("“" + m.line + "”", m.dv), audioBtn(m.dv)),
         h("div", { class: "filmi-en" }, m.en),
         h("div", { class: "filmi-know" }, (m.know || []).map((k) => h("span", { class: "know-chip" }, "✨ " + k))),
         h("p", { class: "filmi-note" }, m.note)),
+      player,
       watch,
-      h("p", { class: "small muted center", style: "margin-top:6px" }, "Opens YouTube")));
+      m.yt ? h("p", { class: "small muted center", style: "margin-top:6px" }, h("a", { href: sceneUrl(m), target: "_blank", rel: "noopener", class: "muted" }, "Not playing? Open it on YouTube"))
+        : h("p", { class: "small muted center", style: "margin-top:6px" }, "Opens YouTube")));
     if (fresh && m.dv) setTimeout(() => Speech.say(m.dv), 600);
     actions([shareAction(`🎬 I just unlocked “${m.line}” — ${m.film} — while learning Hindi on Bolo!`), { label: "Continue", onClick: cont }]);
   }
@@ -2086,14 +2102,14 @@
       missedItems.length ? h("div", { class: "card mt" },
         h("div", { class: "section-title" }, "Sentences to review"),
         h("ul", { class: "say-list" }, missedItems.map((it) => h("li", {},
-          h("div", {}, h("div", { class: "hi" }, W(it.roman, it.deva)), h("div", { class: "en" }, it.en)), audioBtn(it.deva, true))))) : null,
+          h("div", {}, h("div", { class: "hi" }, TW(it.roman, it.deva)), h("div", { class: "en" }, it.en)), audioBtn(it.deva, true))))) : null,
       h("div", { class: "card mt" },
         h("div", { class: "section-title" }, "You can now say"),
         h("ul", { class: "say-list" }, isM1 ? VERBS.map((v) => h("li", {},
           h("span", { class: "em" }, v.emoji),
           h("div", {}, h("div", { class: "hi" }, W(romanSentence(v.id), devaSentence(v.id))), h("div", { class: "en" }, english(v))),
           audioBtn(devaSentence(v.id), true))) : CUR.items.slice(0, 12).map((it) => h("li", {},
-          h("div", {}, h("div", { class: "hi" }, W(it.roman, it.deva)), h("div", { class: "en" }, it.en)),
+          h("div", {}, h("div", { class: "hi" }, TW(it.roman, it.deva)), h("div", { class: "en" }, it.en)),
           audioBtn(it.deva, true))))));
     actions([
       { label: "Retake test", cls: "ghost", onClick: () => startStage(STAGES.length - 1, { testOnly: true, skipIntro: true }) },
@@ -2172,6 +2188,72 @@
     return out;
   }
 
+  /* ---------- tap a word to see what it means ---------- */
+  const GLOSS = C.gloss || {}; // extra meanings for words that only appear in sentences (names, filmi lines…)
+  const cleanWord = (w) => String(w).normalize("NFC").toLowerCase().replace(/[.,!?;:"“”'‘’`।|()[\]{}…]+/g, "").replace(/([a-z])-(?=[a-z])/g, "$1");
+  function glossOf(word) {
+    const w = cleanWord(word);
+    if (!w || /^[\d\W]+$/.test(w) && !/[\u0900-\u097F]/.test(w)) return null;
+    const t = LEXG.has(w) ? lookupG(w) : { kind: "unknown" }; // exact course words first (no fuzzy guesses)
+    const ids = t.ids || (t.id ? [t.id] : []);
+    if (!ids.length) {
+      if (!GLOSS[w]) return null;
+      const g = GLOSS[w];
+      return [{ roman: word.replace(/[.,!?;:"“”‘’…]+/g, ""), deva: g[1] || "", en: g[0], same: !!g[2] }];
+    }
+    return ids.map((id) => { const x = LEXI[id]; return { roman: x.roman, deva: x.deva, en: x.en, same: String(x.en).toLowerCase() === String(x.roman).toLowerCase() }; });
+  }
+  // Like W(), but every word can be tapped for its meaning.
+  function TW(roman, deva, cls) {
+    const rom = h("span", { class: "rom" });
+    String(roman).split(/(\s+)/).forEach((part) => {
+      if (!part.trim()) return rom.append(part);
+      const sub = part.split(/(?<=[a-z])\/(?=[a-z])/i); // "rehti/rehte"
+      sub.forEach((piece, i) => {
+        if (i) rom.append("/");
+        const g = glossOf(piece);
+        rom.append(g ? h("span", { class: "tw", role: "button", tabindex: "0", "data-w": piece }, piece) : piece);
+      });
+    });
+    return h("span", { class: "w tws " + (cls || "") }, rom, deva ? h("span", { class: "dev", lang: "hi" }, deva) : null);
+  }
+  let wordPop = null;
+  function closeWordPop() { if (wordPop) { wordPop.remove(); wordPop = null; document.querySelectorAll(".tw.on").forEach((x) => x.classList.remove("on")); } }
+  function openWordPop(el) {
+    const was = el.classList.contains("on");
+    closeWordPop();
+    if (was) return;
+    const g = glossOf(el.dataset.w);
+    if (!g) return;
+    el.classList.add("on");
+    Sound.play("tap");
+    const many = g.length > 1;
+    wordPop = h("div", { class: "word-pop", role: "dialog" },
+      ...g.map((x, i) => h("div", { class: "wp-row" + (i ? " more" : "") },
+        h("div", { class: "wp-top" }, h("b", {}, x.roman), x.deva ? h("span", { class: "dev", lang: "hi" }, x.deva) : null, x.deva ? audioBtn(x.deva, true) : null),
+        h("div", { class: "wp-en" }, many ? (i ? "or: " : "can mean: ") : "= ", x.en, x.same ? h("span", { class: "wp-same" }, " · same word in Hindi!") : null))));
+    document.body.append(wordPop);
+    const r = el.getBoundingClientRect(), pw = wordPop.offsetWidth, ph = wordPop.offsetHeight;
+    let left = r.left + r.width / 2 - pw / 2;
+    left = Math.max(10, Math.min(left, window.innerWidth - pw - 10));
+    let top = r.top - ph - 10;
+    wordPop.classList.toggle("below", top < 8);
+    if (top < 8) top = r.bottom + 10;
+    wordPop.style.left = left + window.scrollX + "px";
+    wordPop.style.top = top + window.scrollY + "px";
+    wordPop.style.setProperty("--ax", r.left + r.width / 2 - left + "px");
+  }
+  document.addEventListener("click", (e) => {
+    const tw = e.target.closest && e.target.closest(".tw");
+    if (tw) { e.stopPropagation(); return openWordPop(tw); }
+    if (wordPop && !wordPop.contains(e.target)) closeWordPop();
+  }, true);
+  document.addEventListener("keydown", (e) => {
+    if ((e.key === "Enter" || e.key === " ") && e.target.classList && e.target.classList.contains("tw")) { e.preventDefault(); openWordPop(e.target); }
+    if (e.key === "Escape") closeWordPop();
+  });
+  window.addEventListener("scroll", closeWordPop, { passive: true });
+
   // Compare what she wrote (or built) with a sentence and explain any mistake kindly.
   function checkItem(toks, item, mod, opts) {
     opts = opts || {};
@@ -2233,7 +2315,7 @@
 
   function itemAnswer(it) {
     return h("div", { class: "answer" },
-      h("div", { style: "display:flex;align-items:center;gap:10px;flex-wrap:wrap" }, W(it.roman, it.deva, "hi"), audioBtn(it.deva, true)),
+      h("div", { style: "display:flex;align-items:center;gap:10px;flex-wrap:wrap" }, TW(it.roman, it.deva, "hi"), audioBtn(it.deva, true)),
       h("div", { class: "small muted", style: "font-family:var(--font);font-weight:500" }, "= " + it.en));
   }
   const blockG = (ids, extra) => h("div", Object.assign({ class: "block " + roleW(ids[0]) }, extra || {}), W(ids.map(RW).join(" "), ids.map(DW).join(" ")));
@@ -2360,7 +2442,7 @@
       return {
         kicker: step.test ? "Real-life moment" : "What would you say?", layout: "list",
         prompt: () => h("div", {}, h("h2", { class: "prompt" }, q.prompt),
-          q.hi ? h("div", { class: "big-sentence", style: "font-size:28px" }, W(q.hi, q.dv || ""), q.dv ? h("div", {}, audioBtn(q.dv, true)) : null) : null),
+          q.hi ? h("div", { class: "big-sentence", style: "font-size:28px" }, TW(q.hi, q.dv || ""), q.dv ? h("div", {}, audioBtn(q.dv, true)) : null) : null),
         onShow: () => { if (q.dv) Speech.say(q.dv); },
         opts: () => shuffle(q.options.map((text, i) => ({ content: () => [h("span", {}, text)], correct: i === q.answer, why: (q.whys || [])[i] || "" }))),
         rightMsg: q.right || ""
@@ -2396,7 +2478,7 @@
       h("h2", { class: "prompt" }, l.title || "Tap each block to see what it means"),
       h("div", { class: "scene" },
         h("div", { class: "avatar" }, SP.avatar, l.emoji ? h("span", { class: "act" }, l.emoji) : null),
-        h("div", { class: "bubble" }, W(l.roman, l.deva), audioBtn(l.deva, true))),
+        h("div", { class: "bubble" }, TW(l.roman, l.deva), audioBtn(l.deva, true))),
       h("div", { class: "blocks mt" }, blocks),
       h("div", { class: "english-line" }, l.en),
       note);
@@ -2404,7 +2486,7 @@
   }
   function exampleList(mod, ids) {
     return h("ul", { class: "say-list mt" }, ids.map((id) => itemOf(mod, id)).filter(Boolean).map((it) => h("li", {},
-      h("div", {}, h("div", { class: "hi" }, W(it.roman, it.deva)), h("div", { class: "en" }, it.en)), audioBtn(it.deva, true))));
+      h("div", {}, h("div", { class: "hi" }, TW(it.roman, it.deva)), h("div", { class: "en" }, it.en)), audioBtn(it.deva, true))));
   }
   function rGTip(step) {
     const mod = MODS[step.mod], l = lessonOf(step);
@@ -2598,7 +2680,7 @@
       showEn.addEventListener("click", () => { en.hidden = false; showEn.remove(); });
       prompt = h("div", {},
         h("div", { class: "msg them", style: "max-width:100%" }, h("div", { class: "av" }, "👩🏽"),
-          h("div", {}, h("div", { class: "who" }, "Aunty asks"), h("div", { class: "bub" }, W(it.ask.hi, it.ask.dv), audioBtn(it.ask.dv, true), en))),
+          h("div", {}, h("div", { class: "who" }, "Aunty asks"), h("div", { class: "bub" }, TW(it.ask.hi, it.ask.dv), audioBtn(it.ask.dv, true), en))),
         it.cue ? h("div", { class: "cue-chip" }, "Hint: " + it.cue) : null, showEn);
     } else if (it.cue) {
       prompt = h("div", { class: "cue-card" }, h("div", { class: "cue-text" }, it.cue), h("p", { class: "small muted" }, S.settings.quiet ? "Write the full sentence in Hindi" : "Say the full sentence in Hindi"));
@@ -2774,12 +2856,12 @@
     const reply = h("div", { class: "reply-box" });
     let li = 0, mistakes = 0;
     const down = () => setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 40);
-    const meMsg = (text) => { log.append(h("div", { class: "msg me" }, h("div", { class: "bub" }, text))); down(); };
+    const meMsg = (text) => { log.append(h("div", { class: "msg me" }, h("div", { class: "bub" }, TW(text)))); down(); };
     function themMsg(line) {
       const p = PEOPLE[line.who || chat.who];
       log.append(h("div", { class: "msg them" }, h("div", { class: "av" }, p.avatar),
         h("div", {}, h("div", { class: "who" }, p.name),
-          h("div", { class: "bub" }, W(line.them, line.dv || ""), audioBtn(line.dv, true), h("span", { class: "tr" }, line.en)))));
+          h("div", { class: "bub" }, TW(line.them, line.dv || ""), audioBtn(line.dv, true), h("span", { class: "tr" }, line.en)))));
       Speech.say(line.dv);
       down();
     }
@@ -2853,7 +2935,7 @@
     screen(
       h("div", { class: "chat-head" }, h("div", { class: "avatar", style: "width:52px;height:52px;font-size:28px" }, host.avatar),
         h("div", {}, h("div", { class: "prompt-kicker", style: "margin:0" }, "Family chat"), h("h2", { class: "title", style: "margin:0;font-size:22px" }, STAGES[run.stage].title))),
-      h("p", { class: "small muted" }, "The English is under each message for now. Reply in Hindi!"),
+      h("p", { class: "small muted" }, "Tap any underlined word to see what it means. Reply in Hindi!"),
       log, reply);
     next();
   }
@@ -3295,7 +3377,19 @@
   }
 
   // Exposed for debugging / automated checks.
-  window.Bolo = { showFilmi, filmi: () => FILMI, award, startReview, openGift, giftReady, session: () => session, tokenize, diagnose, tokenizeG, checkItem, startStage, showStart, showModule, playModule, mods: MODS, unlockAll: () => { session.unlockAll = true; }, debug: () => dbg, cloud: Cloud, state: () => S, step: () => curStep, mcCorrect: () => (dbg.opts || []).findIndex((o) => o.correct), ctx: () => run && run.ctx };
+  function glossAudit() {
+    const texts = [];
+    const walk = (o, k) => {
+      if (typeof o === "string") { if (["roman", "them", "hi", "text", "line"].includes(k)) texts.push(o); return; }
+      if (Array.isArray(o)) return o.forEach((x) => walk(x, k));
+      if (o && typeof o === "object") Object.keys(o).forEach((kk) => walk(o[kk], kk));
+    };
+    walk(C.modules); walk(FILMI); PHRASES.forEach((p) => texts.push(p[0]));
+    const miss = {};
+    texts.forEach((t) => String(t).split(/\s+/).forEach((w) => w.split("/").forEach((x) => { const c = cleanWord(x); if (c && /[a-z]/.test(c) && !glossOf(x)) miss[c] = (miss[c] || 0) + 1; })));
+    return miss;
+  }
+  window.Bolo = { glossAudit, glossOf, showFilmi, filmi: () => FILMI, award, startReview, openGift, giftReady, session: () => session, tokenize, diagnose, tokenizeG, checkItem, startStage, showStart, showModule, playModule, mods: MODS, unlockAll: () => { session.unlockAll = true; }, debug: () => dbg, cloud: Cloud, state: () => S, step: () => curStep, mcCorrect: () => (dbg.opts || []).findIndex((o) => o.correct), ctx: () => run && run.ctx };
 
   init();
 })();

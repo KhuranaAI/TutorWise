@@ -4,7 +4,7 @@
    Each moment unlocks when she finishes a stage (after: "moduleId:stageId") and uses
    something she has just learned. Only short famous lines are quoted; the scene itself
    opens on YouTube (q = search words). To play a specific clip inside the app instead,
-   add  yt: "VIDEO_ID", start: seconds  (use an official channel's upload).
+   add  yt: "VIDEO_ID", start: seconds, end: seconds  (use an official channel's upload).
    ===================================================== */
 window.BOLO_FILMI = [
   {

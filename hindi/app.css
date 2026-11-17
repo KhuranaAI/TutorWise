@@ -838,3 +838,29 @@ body.dark .home-head .logo { text-shadow: 0 3px 0 rgba(0,0,0,.45); }
 .set-txt b { display: block; font-size: 15px; }
 .set-txt .d { font-size: 12.5px; color: var(--muted); }
 .toggle.bare { padding: 6px; box-shadow: none; background: transparent; }
+
+/* ===== Tap a word for its meaning ===== */
+.tw { cursor: pointer; text-decoration: underline dotted; text-decoration-thickness: 2px; text-underline-offset: 4px; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); border-radius: 4px; transition: background .12s; -webkit-tap-highlight-color: transparent; }
+.tw:hover, .tw.on { background: var(--brand-lt); color: var(--brand-dk); text-decoration-color: var(--brand); }
+.tws .rom { line-height: 1.5; }
+.tws .dev { margin-top: 4px; }
+.msg.me .tw:hover, .msg.me .tw.on, .filmi-line .tw.on, .filmi-line .tw:hover { background: rgba(255,255,255,.22); color: inherit; }
+.word-pop {
+  position: absolute; z-index: 60; max-width: min(300px, calc(100vw - 20px)); padding: 10px 14px; border-radius: 14px;
+  background: var(--ink); color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,.25); font-size: 15px; animation: wordPopIn .14s ease-out;
+}
+.word-pop::after { content: ""; position: absolute; left: var(--ax, 50%); bottom: -7px; width: 14px; height: 14px; margin-left: -7px; background: inherit; transform: rotate(45deg); border-radius: 2px; }
+.word-pop.below::after { bottom: auto; top: -7px; }
+.word-pop .wp-row.more { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.18); }
+.word-pop .wp-top { display: flex; align-items: center; gap: 8px; }
+.word-pop .wp-top b { font-family: var(--font-fun); font-size: 19px; }
+.word-pop .wp-top .dev { font-size: 16px; opacity: .85; }
+.word-pop .audio-btn { width: 30px; height: 30px; font-size: 14px; margin-left: auto; }
+.word-pop .wp-en { margin-top: 2px; line-height: 1.35; }
+.word-pop .wp-same { color: #8ee6d9; font-size: 13px; }
+body.dark .word-pop { background: #f3f0ea; color: #1f2a44; }
+body.dark .word-pop .wp-same { color: var(--brand-dk); }
+body.dark .word-pop .wp-row.more { border-top-color: rgba(0,0,0,.12); }
+@keyframes wordPopIn { from { opacity: 0; transform: translateY(4px) scale(.97); } to { opacity: 1; transform: none; } }
+.filmi-video { margin: 14px 0 4px; border-radius: 16px; overflow: hidden; background: #000; aspect-ratio: 16 / 9; box-shadow: var(--shadow); }
+.filmi-video iframe { width: 100%; height: 100%; border: 0; display: block; }

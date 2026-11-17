@@ -114,4 +114,10 @@ mode, dark mode, sound, Hindi voice, each with a one-line description) → accou
 - **Dark mode 🌙**: in Settings on the home screen (`body.dark` overrides the colour tokens in `app.css`).
 - **🎬 Filmi moments** (`filmi.js`): famous Shah Rukh Khan lines that use what she just learned, unlocked when she
   finishes a stage (`after: "moduleId:stageId"`), collected on a home-screen shelf. Only short lines are quoted; the
-  scene opens on YouTube (a search by default, or a specific official clip with `yt` + `start`).
+  scene opens a YouTube search by default. Add `yt: "VIDEO_ID", start: 42, end: 75` (seconds) to a moment and the clip
+  plays inside the card instead. Use an official upload, since some uploaders block embedding. No movie files are stored in
+  the app.
+- **Tap a word 👆**: every word in chat messages, Speak It questions, example sentences, phrase cards and Filmi lines is
+  underlined; tapping it shows the meaning, Devanagari and 🔊. Meanings come from the lexicon, then from `C.gloss` in
+  `modules.js` for words that only appear inside sentences. `Bolo.glossAudit()` (browser console) lists any word without
+  a meaning, so new content can be checked.
