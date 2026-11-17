@@ -597,7 +597,8 @@ async function sheetVals(id,range){
   return Array.isArray(v)?v:[]}
 /* the scheduler's own connector (TutorWise Scheduler): read the live week, students and timetable */
 const SCH='TutorWise Scheduler';
-async function schCall(tool,input){const r=await mcp.callTool(SCH,tool,input||{},{cache:false});let j=r?.payload??r?.structuredContent;
+const plainErr=e=>{let m=String(e?.message||e||'');try{const j=JSON.parse(m);m=j.error||j.message||m}catch(_){const x=m.match(/"error"\s*:\s*"([^"]+)"/);if(x)m=x[1]}return m.replace(/\s+/g,' ').trim()};
+async function schCall(tool,input){let r;try{r=await mcp.callTool(SCH,tool,input||{},{cache:false})}catch(e){throw new Error(plainErr(e))}if(r?.isError){const t=(r?.content||[]).find(c=>c.type==='text')?.text;throw new Error(plainErr(t||'The scheduler refused that.'))}let j=r?.payload??r?.structuredContent;
   if(!j){const t=(r?.content||[]).find(c=>c.type==='text')?.text;try{j=JSON.parse(t||'{}')}catch(e){}}
   return j?.content&&!j.sessions&&!j.students&&!j.slots?j.content:j||{}}
 /* ---- schedule edits: straight to the live scheduler, always reversible ---- */
@@ -621,7 +622,7 @@ async function schWrite(o){if(!mcp)throw new Error('The scheduler isn’t availa
     else if(o.op==='sch_timetable'){const sl=(Array.isArray(o.slots)?o.slots:[]).filter(x=>x.day&&hm(x.start)&&hm(x.end)&&x.teacher);if(!sl.length&&!o.clear)throw new Error('Give me the days, times and teacher.');
       const sl2=[];for(const x of sl)sl2.push({day:x.day,start:x.start,end:x.end,teacher:await schName(x.teacher,'teacher')});tool='set_timetable';input={student:st,slots:sl2,...(isDate(o.apply_from)?{apply_from:o.apply_from}:{})}}
     else throw new Error('Unknown schedule change.')}
-  const r=await schCall(tool,{...input,dry_run:dr}),msg=String(r.summary||r.message||r.result||'Done').replace(/\s+/g,' ').slice(0,240);
+  const r=await schCall(tool,{...input,dry_run:dr});if(r?.error)throw new Error(plainErr(JSON.stringify(r))+(/capacity/i.test(r.error)?' Tell me which student should go to another teacher, or which teacher to add.':''));const msg=String(r.summary||r.message||r.result||'Done').replace(/\s+/g,' ').slice(0,240);
   if(!dr&&r.change_id){S.lastSch={id:r.change_id,msg};logEv('sched',msg)}
   return msg}
 /* who can teach whom: the scheduler doesn't store it, so HQ keeps the rules he states (settings.teachRules) and falls back on precedent (who has taught the student before) */
@@ -801,7 +802,7 @@ function layoutWeek(full){const days=horizon(),last=days[days.length-1],by=new M
   const load=d=>by.get(d).reduce((a,t)=>a+estOf(t),0),left=items.reduce((a,t)=>a+estOf(t),0),tgt=d=>Math.min(dayBudget(d),Math.max(60,Math.round(left/days.length*1.3)));
   wait.sort((a,b)=>String(a.day||'9').localeCompare(String(b.day||'9'))||((a.wkN??999)-(b.wkN??999))||a.id.localeCompare(b.id));
   for(const t of wait){const e=estOf(t),carried=t.day&&t.day<days[0];
-    const d=(carried?days.find(x=>load(x)+e<=dayBudget(x)):days.find(x=>load(x)+e<=tgt(x))||days.find(x=>load(x)+e<=dayBudget(x)))||days.reduce((m,x)=>load(x)-dayBudget(x)<load(m)-dayBudget(m)?x:m,days[0]);
+    const d=days.find(x=>load(x)+e<=dayBudget(x))||days.reduce((m,x)=>load(x)-dayBudget(x)<load(m)-dayBudget(m)?x:m,days[0]);
     by.get(d).push(t)}
   return{days,by}}
 /* today's docket is simply the items pinned to today */
@@ -821,7 +822,7 @@ function weekPace(){const wk=weekItems(),op=wk.filter(t=>!isDone(t)),left=op.red
 function pinnedSay(ids){const ts=ids.map(i=>S.tasks.get(i)).filter(t=>t&&t.day);if(!ts.length)return'';
   if(ts.length<=3)return ' '+ts.map(t=>`${short(T(t))}: ${dayWord(t.day)}`).join('. ')+'.';
   const byD={};for(const t of ts)byD[t.day]=(byD[t.day]||0)+1;return ` ${ts.length} pinned: `+Object.keys(byD).sort().map(d=>`${byD[d]} ${dayWord(d)}`).join(', ')+'.'}
-const daySay=()=>{const op=openPicks(),w=weekPace();return (op.length?`Today: ${op.slice(0,3).map(x=>short(T(x.t))).join(', ')}${op.length>3?', and '+(op.length-3)+' more':''}.`:'Nothing is pinned to today.')+` ${w.done} of ${w.all} done this week${w.ok?'':', and it is more than fits before the week ends, so tell me what can wait'}.`};
+const daySay=()=>{const op=openPicks(),w=weekPace();return (op.length?`Today: ${op.slice(0,3).map(x=>short(T(x.t))).join(', ')}${op.length>3?', and '+(op.length-3)+' more':''}.`:'Nothing is pinned to today.')+` ${w.done} of ${w.all} done this week.`};
 async function pinItem(id,date,at){const t=S.tasks.get(id);if(!t||!isDate(date))return false;const c={wk:monOf(date),day:date,pin:true};if(hm(at))c.at=at;if(t.wk!==c.wk||t.wkN==null)c.wkN=nextN();
   S.tasks.set(id,{...t,...c});await up(id,c);return true}
 async function pushItem(id){const t=S.tasks.get(id),nx=horizon()[1];if(!t)return;
@@ -1171,7 +1172,12 @@ Rules:
 - Daily check-in: if he asks what is on the docket today (or what today looks like, or what he should do today) and today's constraints are "not asked yet today", do not list tasks. Ask ONE spoken question that covers how much time and energy he has, where he is, and anything fixed today, and return the op checkin. If the constraints are already there, answer from today's plan: what is next and how the week is going (so many of so many done).
 - Who can teach whom: when he tells you a teacher cannot (or can only) teach a grade, a subject level or a student, use teach_rule (teacher, can true/false, and grade or student), once per teacher, and student_info to record a grade he states for a student. The scheduler does not know this, so the app keeps it. Otherwise the app falls back on precedent: it only offers teachers who have taught that student before.
 - Availability questions ("can Mia come tomorrow?", "when can I fit Dave this week?", "any time for a makeup?"): use sch_free with the student and the dates. Put minutes only if he gave a length; otherwise leave it out and the app uses that student's usual lesson length, and asks him how long when she has none. The app already looks at who the student is usually with, her usual length and how many students normally overlap with her, so do not ask about those. Overlap between students is normal here. If a detail you really need is missing (how long, which day), ask ONE short question and remember what he said in the next turn. The scheduler's rules decide, not his general hours: "teaching 4 to 8" is when he usually teaches, not a limit on what can be booked, and lessons can run to the scheduler's closing time (8:30). Never answer an availability question from his hours. Your reply is a few words (checking); the app adds the open times.
-- The live lesson schedule (only when the list above is present): when he asks to change it, use sch_attend (status attended, missed_credit = missed and owed a makeup, missed_no_credit = absent but still counted), sch_cancel (credit true = makeup owed), sch_move (date, start, new_date, new_start), sch_add (a single extra or makeup lesson; kind regular, makeup or extra), sch_timetable (permanent weekly slots; the complete new list for that student), sch_undo (reverses the last change). Use the student's name as it appears in the list and a teacher name as he said it. Never guess a time or a day he did not give: ask one short question instead. "Missed" without more means missed_credit only if he says a makeup is owed or the lesson was cancelled in advance; otherwise ask. For sch_* operations your reply says what you are doing in a few words: the app adds the scheduler's own confirmation, and an Undo button appears.
+- The live lesson schedule (only when the list above is present): when he asks to change it, use sch_attend (status attended, missed_credit = missed and owed a makeup, missed_no_credit = absent but still counted), sch_cancel (credit true = makeup owed), sch_move (date, start, new_date, new_start), sch_add (a single extra or makeup lesson; kind regular, makeup or extra), sch_timetable (permanent weekly slots; the complete new list for that student), sch_undo (reverses the last change).
+  - "Cancel" or "he isn't coming" for one day, when he says the student is coming on another day instead, is ONE sch_move to that day and time: never sch_cancel. Use sch_cancel only when the lesson simply is not happening; if he does not say whether it is billed or owed, ask once ("Billed, or owed a makeup?"). "Remove him from the schedule" means move or ask, never mark him absent.
+  - Never repeat a schedule change already made in this conversation (look at the earlier turns and their results above). If one was wrong, undo it once with sch_undo, then do the right single change.
+  - Teachers are only those in the schedule list. If a teacher name he says is not exactly one of them (for example "Nishan"), ask which teacher he means before writing anything.
+  - If a change was refused for capacity, do not try it again unchanged: say who is with that teacher at that time and ask which student goes to which other teacher.
+  Use the student's name as it appears in the list and a teacher name as he said it. Never guess a time or a day he did not give: ask one short question instead. "Missed" without more means missed_credit only if he says a makeup is owed or the lesson was cancelled in advance; otherwise ask. For sch_* operations your reply says what you are doing in a few words: the app adds the scheduler's own confirmation, and an Undo button appears.
 - Student events: missed lesson -> attendance absent; came for a makeup -> attendance makeup; came as normal -> attendance present; money received -> paid; a payment recorded by mistake -> undo_paid; a stated weekly timetable -> schedule (d: 1=Mon..5=Fri, 24h times).
 - A parent's name means their child. If a payment could belong to more than one child and he did not say, ask instead of guessing.
 - If he says when he got up today, use woke. If he lost time or plans changed, use replan. If he says what today is for, or how he wants today to go, use replan and put his own words in the note.
@@ -1241,10 +1247,10 @@ async function applyOps(ops,src,wasCheck){
     else if(o.op==='draft'&&o.ask){const tid=S.tasks.has(o.task)?o.task:null;setTimeout(()=>runJob(String(o.ask).slice(0,1500),tid),400);out.push('drafting')}
     else if(o.op==='counts'&&o.id){const t=S.tasks.get(o.id);if(t&&!(S.days.get(today())||{}).pl?.[o.id]){await exMark(o.id,{imp:true});out.push('counts fully: '+t.t)}else if(t)out.push('already planned: '+t.t)}
     else if(o.op==='credit'&&o.title){const id='c'+Date.now().toString(36)+(n++);await exMark(id,{t:String(o.title).slice(0,120),min:minOf(o.minutes),manual:true,at:nowHM()});logEv('did',String(o.title));out.push(`counted: ${o.title} (${durS(minOf(o.minutes))})`)}
-    else if(SCHW.includes(o.op)){try{const m=await schWrite(o);out.push('scheduler: '+m);schSay+=' '+m;schAfter=true}catch(e){const m=String(e?.message||e?.code||'The scheduler refused that.').slice(0,200);out.push('scheduler: '+m);schSay+=' Not done: '+m}}
+    else if(SCHW.includes(o.op)){try{const m=await schWrite(o);out.push('scheduler: '+m);schSay+=' '+m;schAfter=true}catch(e){const m=plainErr(e)||String(e?.message||e?.code||'The scheduler refused that.').slice(0,200);out.push('scheduler: '+m);schSay+=' Not done: '+m}}
     else if(o.op==='teach_rule'){try{const m=await saveTeachRule(o);out.push('rule: '+m);schSay+=' Noted: '+m+'. I’ll use that from now on.'}catch(e){schSay+=' '+String(e?.message||'I couldn’t save that rule.').slice(0,160)}}
     else if(o.op==='student_info'&&o.student){const st=findStu(o.student);if(st&&o.grade){await upStu(st.id,{grade:String(o.grade).replace(/\D/g,'')||String(o.grade)});out.push(`${st.name}: grade ${o.grade}`)}}
-    else if(o.op==='sch_free'){try{const m=await schFree(o);out.push('scheduler: '+m);schSay+=' '+m}catch(e){const m=String(e?.message||'I couldn’t check the scheduler.').slice(0,200);out.push('scheduler: '+m);schSay+=' '+m}}
+    else if(o.op==='sch_free'){try{const m=await schFree(o);out.push('scheduler: '+m);schSay+=' '+m}catch(e){const m=plainErr(e)||String(e?.message||'I couldn’t check the scheduler.').slice(0,200);out.push('scheduler: '+m);schSay+=' '+m}}
     else if(o.op==='rebalance'){wkFull=true;out.push('rearranging the week')}
     else if(o.op==='show_week'){wkShow=true}
     else if(o.op==='update'&&S.tasks.has(o.id)){const a={};const st=o.set||{};
