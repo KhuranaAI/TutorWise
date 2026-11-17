@@ -70,7 +70,7 @@
     savedAt: 0,      // when progress last changed (used to pick the newer of phone vs cloud)
     cloud: null,     // { code, dirty, syncedAt } once a save code is on
     account: null,   // { uid, email, refresh, idToken, exp, dirty, syncedAt } once she signs in
-    settings: { deva: false, sound: true, voice: true }
+    settings: { deva: false, sound: true, voice: true, quiet: false, goal: 20 }
   });
   // Upgrade any older save to the current shape. Unknown fields are kept, never dropped.
   function migrate(raw) {
@@ -392,8 +392,9 @@
     },
     get supported() { return !!this.voice; },
     get on() { return !!this.voice && S.settings.voice; },
-    say(text) {
+    say(text, manual) {
       if (!this.on || !text) return;
+      if (S.settings.quiet && !manual) return; // quiet mode: only play when she taps 🔊
       try {
         window.speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(text);
@@ -409,7 +410,7 @@
     return h("button", {
       class: "audio-btn" + (dark ? " dark" : ""),
       "aria-label": "Play pronunciation",
-      onclick: (e) => { e.stopPropagation(); Speech.say(text); }
+      onclick: (e) => { e.stopPropagation(); Speech.say(text, true); }
     }, "🔊");
   }
 
@@ -685,9 +686,10 @@
   function waveBlocks(els) { els.forEach((b, i) => { b.style.animationDelay = i * 70 + "ms"; b.classList.remove("wave"); void b.offsetWidth; b.classList.add("wave"); }); }
 
   /* ---------------- daily streak & goal ----------------
-     A day counts once she earns DAILY_GOAL XP. Every 7-day milestone earns a streak freeze (max 2),
+     A day counts once she earns her daily goal (Easy 10 / Regular 20 / Serious 40 XP). Every 7-day milestone earns a streak freeze (max 2),
      which is used automatically if she misses a day. */
-  const DAILY_GOAL = 30;
+  const GOALS = [[10, "Easy"], [20, "Regular"], [40, "Serious"]];
+  const goalXP = () => S.settings.goal || 20;
   const dayStr = (offset) => { const d = new Date(); d.setDate(d.getDate() + (offset || 0)); return d.toLocaleDateString("en-CA"); };
   const dayDiff = (a, b) => Math.round((new Date(b + "T12:00:00") - new Date(a + "T12:00:00")) / 864e5);
   function checkStreak() {
@@ -705,7 +707,7 @@
     if (S.daily.date !== d) S.daily = { date: d, xp: 0 };
     const before = S.daily.xp;
     S.daily.xp += n;
-    if (before < DAILY_GOAL && S.daily.xp >= DAILY_GOAL) goalMet(d);
+    if (before < goalXP() && S.daily.xp >= goalXP()) goalMet(d);
   }
   function goalMet(d) {
     const st = S.streak;
@@ -717,6 +719,74 @@
     let freeze = false;
     if (st.count % 7 === 0 && (st.freezes || 0) < 2) { st.freezes = (st.freezes || 0) + 1; freeze = true; }
     session.celebrate = { count: st.count, freeze };
+  }
+  // Fun everyday phrases she collects from her daily gift.
+  const PHRASES = [
+    ["Arre wah!", "अरे वाह!", "Oh wow! (when something's great)"],
+    ["Kya baat hai!", "क्या बात है!", "How wonderful! / Well said!"],
+    ["Chalo, chai peete hain!", "चलो, चाय पीते हैं!", "Come on, let's have chai!"],
+    ["Koi baat nahin.", "कोई बात नहीं।", "No problem / It's okay."],
+    ["Bas, ho gaya!", "बस, हो गया!", "That's it — done!"],
+    ["Jaldi karo!", "जल्दी करो!", "Hurry up!"],
+    ["Aaram se.", "आराम से।", "Take it easy / No rush."],
+    ["Pakka?", "पक्का?", "For sure? / Promise?"],
+    ["Haan, pakka!", "हाँ, पक्का!", "Yes, for sure!"],
+    ["Mazaa aa gaya!", "मज़ा आ गया!", "That was so much fun!"],
+    ["Khana tayyar hai!", "खाना तैयार है!", "Food is ready!"],
+    ["Main aa gayi!", "मैं आ गई!", "I'm here! (I've arrived)"],
+    ["Kitna pyaara!", "कितना प्यारा!", "How cute!"],
+    ["Thoda sa.", "थोड़ा सा।", "Just a little."],
+    ["Aap bahut acche hain.", "आप बहुत अच्छे हैं।", "You're so kind."],
+    ["Ekdum perfect!", "एकदम परफ़ेक्ट!", "Absolutely perfect!"]
+  ];
+  const giftReady = () => S.daily.date === dayStr() && S.daily.xp >= goalXP() && (S.chest || {}).date !== dayStr();
+  function openGift(cont) {
+    S.chest = { date: dayStr() };
+    S.phrases = S.phrases || [];
+    const left = PHRASES.map((p, i) => i).filter((i) => !S.phrases.includes(i));
+    const roll = Math.random();
+    let reward;
+    if (left.length && roll < 0.4) { const i = pick(left); S.phrases.push(i); reward = { kind: "phrase", p: PHRASES[i] }; }
+    else if (roll < 0.55 && (S.streak.freezes || 0) < 2) { S.streak.freezes = (S.streak.freezes || 0) + 1; reward = { kind: "freeze" }; }
+    else if (roll < 0.7) reward = { kind: "xp", n: 30 };
+    else reward = { kind: "xp", n: 15 };
+    save();
+    const box = h("div", { class: "gift-box shake" }, "🎁");
+    const card = h("div", { class: "gift-card", hidden: true });
+    screen(h("div", { class: "stage-hero" }, box, h("h1", { id: "gift-title" }, "Your daily gift…"), card));
+    actions([]);
+    Sound.play("flip");
+    setTimeout(() => {
+      box.classList.remove("shake"); box.classList.add("open"); box.textContent = reward.kind === "phrase" ? "🃏" : reward.kind === "freeze" ? "🧊" : "💰";
+      Sound.play("combo"); confetti(60);
+      const t = $("gift-title");
+      if (reward.kind === "phrase") {
+        t.textContent = "New phrase card!";
+        card.append(h("div", { class: "hi gift-phrase" }, W(reward.p[0], reward.p[1])), h("div", { class: "muted" }, reward.p[2]), audioBtn(reward.p[1], true),
+          h("p", { class: "small muted", style: "margin-top:8px" }, `🃏 ${S.phrases.length}/${PHRASES.length} phrase cards collected — try it on the family!`));
+        award(5);
+      } else if (reward.kind === "freeze") {
+        t.textContent = "A streak freeze! 🧊";
+        card.append(h("p", {}, "If you ever miss a day, it saves your streak automatically."), h("p", { class: "small muted" }, `You have ${S.streak.freezes}.`));
+      } else {
+        t.textContent = reward.n >= 30 ? "Jackpot! 💰" : "Bonus XP! 💰";
+        card.append(h("div", { class: "streak-num" }, "+" + reward.n + " XP"));
+        award(reward.n);
+      }
+      card.hidden = false;
+      actions([shareAction(`🎁 I opened my daily Hindi gift on Bolo — ${S.streak.count}-day streak 🔥`), { label: "Keep going", onClick: cont }]);
+    }, 1100);
+  }
+  // Share a win (e.g. with her boyfriend) — the phone's share sheet, or copy as a fallback.
+  function shareAction(text) {
+    return { label: "📤 Share", cls: "ghost", onClick: async (e) => {
+      const btn = e.currentTarget, msg = text + " — Anissa";
+      try {
+        if (navigator.share) { await navigator.share({ text: msg }); return; }
+        await navigator.clipboard.writeText(msg);
+        btn.textContent = "Copied ✓";
+      } catch (err) { /* she closed the share sheet */ }
+    } };
   }
   // Full-screen celebration, shown between screens so it never interrupts an answer.
   function showStreakCelebration(c, cont) {
@@ -734,12 +804,13 @@
       days,
       c.freeze ? h("div", { class: "note mt", style: "text-align:left" }, "🧊 ", h("b", {}, "You earned a streak freeze!"), " If you ever miss a day, it saves your streak automatically.") : null));
     setTimeout(() => { num.textContent = String(c.count); num.classList.add("pop"); }, 450);
-    actions([{ label: "Keep going", onClick: cont }]);
+    actions([shareAction(`🔥 ${c.count}-day Hindi streak on Bolo! Hit my goal today 💪`),
+      giftReady() ? { label: "🎁 Open my gift", onClick: () => openGift(cont) } : { label: "Keep going", onClick: cont }]);
   }
   // Home-screen streak + today's goal.
   function streakCard() {
     const st = S.streak, today = S.daily.date === dayStr() ? S.daily.xp : 0;
-    const done = today >= DAILY_GOAL, pct = Math.min(100, Math.round((today / DAILY_GOAL) * 100));
+    const done = today >= goalXP(), pct = Math.min(100, Math.round((today / goalXP()) * 100));
     const atRisk = st.count > 0 && !done;
     const n = session.notice; // cleared once she starts playing
     return h("div", { class: "card streak-card" + (done ? " done" : "") },
@@ -748,14 +819,44 @@
         h("div", {},
           h("div", { class: "streak-line" }, st.count ? `${st.count} day streak` : "Start your streak!"),
           h("div", { class: "small muted" }, done ? "✅ Today's goal done — see you tomorrow!"
-            : atRisk ? `Earn ${DAILY_GOAL - today} more XP today to keep it going` : `Earn ${DAILY_GOAL} XP today to light the flame`)),
+            : atRisk ? `Earn ${goalXP() - today} more XP today to keep it going` : `Earn ${goalXP()} XP today to light the flame`)),
         st.freezes ? h("div", { class: "freeze", title: "Streak freezes" }, "🧊×" + st.freezes) : null),
       h("div", { class: "goal-bar" }, h("i", { style: `width:${pct}%` })),
-      h("div", { class: "goal-text" }, `Today: ${Math.min(today, DAILY_GOAL)}/${DAILY_GOAL} XP` + (st.best > 1 ? ` · Best streak: ${st.best} days` : "")),
+      h("div", { class: "goal-text" }, `Today: ${Math.min(today, goalXP())}/${goalXP()} XP` + (st.best > 1 ? ` · Best streak: ${st.best} days` : "")),
+      giftReady() ? h("button", { class: "btn small-btn gift-btn", onclick: () => openGift(() => showStart()) }, "🎁 Today's gift is waiting — open it!") : null,
+      goalPicker(),
+      (S.phrases || []).length ? h("button", { class: "link-btn", style: "padding-left:0", onclick: showPhrases }, `🃏 Phrase cards: ${S.phrases.length}/${PHRASES.length}`) : null,
       reviewPool().length ? h("button", { class: "btn small-btn review-btn", onclick: startReview }, "⚡ 5-minute review",
         h("span", { class: "review-sub" }, (() => { const n = reviewPool().filter((k) => weakScore(k) > 0).length; return n ? ` · ${n} weak spot${n > 1 ? "s" : ""}` : " · mixed practice"; })())) : null,
       n && n.kind === "froze" ? h("p", { class: "small", style: "margin-top:6px" }, `🧊 A streak freeze saved your streak while you were away!`) : null,
       n && n.kind === "lost" ? h("p", { class: "small", style: "margin-top:6px" }, `Your ${n.n}-day streak ended — no worries, start a new one today 💪`) : null);
+  }
+  function goalPicker() {
+    const cur = GOALS.find(([n]) => n === goalXP()) || GOALS[1];
+    const row = h("div", { class: "goal-picker", hidden: true }, GOALS.map(([n, name]) => {
+      const b = h("button", { class: "chip" + (n === goalXP() ? " selected" : "") }, h("span", {}, h("b", {}, name), h("span", { class: "sub" }, n + " XP / day")));
+      b.addEventListener("click", () => {
+        S.settings.goal = n; save(); Sound.play("tap");
+        const d = dayStr();
+        if (S.daily.date === d && S.daily.xp >= n && S.streak.last !== d) { goalMet(d); const c = session.celebrate; session.celebrate = null; return showStreakCelebration(c, () => showStart()); }
+        showStart();
+      });
+      return b;
+    }));
+    const link = h("button", { class: "link-btn", style: "padding-left:0" }, `🎯 Goal: ${cur[1]} · ${cur[0]} XP/day — change`);
+    link.addEventListener("click", () => { row.hidden = !row.hidden; });
+    return h("div", {}, link, row);
+  }
+  function showPhrases() {
+    view = "start";
+    const back = h("button", { class: "link-btn back-link" }, "‹ Home");
+    back.addEventListener("click", () => showStart());
+    screen(back, h("h2", { class: "title" }, "🃏 My phrase cards"),
+      h("p", { class: "subtitle" }, `${(S.phrases || []).length} of ${PHRASES.length} collected — a new one can drop from your daily gift.`),
+      h("ul", { class: "say-list mt" }, PHRASES.map((p, i) => (S.phrases || []).includes(i)
+        ? h("li", {}, h("div", {}, h("div", { class: "hi" }, W(p[0], p[1])), h("div", { class: "en" }, p[2])), audioBtn(p[1], true))
+        : h("li", { class: "locked" }, h("div", {}, h("div", { class: "hi" }, "🔒 ???"), h("div", { class: "en" }, "Keep your streak going to unlock"))))));
+    actions([{ label: "Back home", onClick: () => showStart() }]);
   }
   // "3 in a row!" banner + bonus.
   function comboBanner(n) {
@@ -983,8 +1084,8 @@
         h("div", { class: "stat" }, h("b", {}, "+" + run.stats.xp), h("span", {}, "XP earned")),
         run.stats.graded ? h("div", { class: "stat" }, h("b", {}, acc + "%"), h("span", {}, "First-try")) : null,
         h("div", { class: "stat" }, h("b", {}, "🔥" + S.streak.count), h("span", {}, "Day streak"))),
-      h("div", { class: "goal-bar", style: "max-width:300px;margin:18px auto 0" }, h("i", { style: `width:${Math.min(100, Math.round(((S.daily.date === dayStr() ? S.daily.xp : 0) / DAILY_GOAL) * 100))}%` })),
-      h("p", { class: "small muted", style: "margin-top:6px" }, (S.daily.date === dayStr() && S.daily.xp >= DAILY_GOAL) ? "✅ Daily goal done!" : `Today: ${S.daily.date === dayStr() ? S.daily.xp : 0}/${DAILY_GOAL} XP`),
+      h("div", { class: "goal-bar", style: "max-width:300px;margin:18px auto 0" }, h("i", { style: `width:${Math.min(100, Math.round(((S.daily.date === dayStr() ? S.daily.xp : 0) / goalXP()) * 100))}%` })),
+      h("p", { class: "small muted", style: "margin-top:6px" }, (S.daily.date === dayStr() && S.daily.xp >= goalXP()) ? "✅ Daily goal done!" : `Today: ${S.daily.date === dayStr() ? S.daily.xp : 0}/${goalXP()} XP`),
       h("p", { class: "mt2 small" }, "Up next: ", h("b", {}, next.icon + " " + next.title))));
     actions([{ label: "Continue", onClick: () => startStage(i + 1) }]);
   }
@@ -2463,13 +2564,16 @@
           h("div", {}, h("div", { class: "who" }, "Aunty asks"), h("div", { class: "bub" }, W(it.ask.hi, it.ask.dv), audioBtn(it.ask.dv, true), en))),
         it.cue ? h("div", { class: "cue-chip" }, "Hint: " + it.cue) : null, showEn);
     } else if (it.cue) {
-      prompt = h("div", { class: "cue-card" }, h("div", { class: "cue-text" }, it.cue), h("p", { class: "small muted" }, "Say the full sentence in Hindi"));
+      prompt = h("div", { class: "cue-card" }, h("div", { class: "cue-text" }, it.cue), h("p", { class: "small muted" }, S.settings.quiet ? "Write the full sentence in Hindi" : "Say the full sentence in Hindi"));
     } else {
       // No picture cue: flash the English, then hide it so she answers from memory.
       const txt = h("div", { class: "cue-text" }, "“" + it.en + "”");
       prompt = h("div", { class: "cue-card" }, txt, h("p", { class: "small muted" }, "Remember it — it disappears in a moment!"));
-      setTimeout(() => { if (!done) { txt.textContent = "🤫 Now say it from memory!"; txt.classList.add("now-flash"); } }, 3500);
+      setTimeout(() => { if (!done) { txt.textContent = S.settings.quiet ? "🤫 Now write it from memory!" : "🤫 Now say it from memory!"; txt.classList.add("now-flash"); } }, 3500);
     }
+    const quiet = !!S.settings.quiet;
+    const switchLink = h("button", { class: "link-btn quiet-link" }, quiet ? "🎙️ Switch back to speaking" : "🤫 Can't talk right now? Type instead");
+    switchLink.addEventListener("click", () => { done = true; S.settings.quiet = !quiet; save(); Sound.play("tap"); RENDER.gspeak(step); });
     const status = h("p", { class: "speak-status" }, SpeechRec ? "Say it out loud — or tap 🎤 and I'll listen." : "Say it out loud, then tap Show answer.");
     const answerBox = h("div", { class: "speak-answer", hidden: true });
     const mic = SpeechRec ? h("button", { class: "mic-btn", "aria-label": "Speak your answer" }, "🎤") : null;
@@ -2508,11 +2612,51 @@
       Speech.say(it.deva);
       answerBox.append(itemAnswer(it));
       answerBox.hidden = false;
+      if (quiet) {
+        status.innerHTML = "Here's the answer — it'll come back later so you can nail it.";
+        actions([{ label: "Got it", onClick: () => { Sound.play("drop"); stepDone(step, { firstTry: false, solved: false }); } }]);
+        return;
+      }
       status.innerHTML = heard ? `I heard “${esc(heard)}”. Did you say it like this?` : "Did you say it like this?";
       actions([
         { label: "😅 Not yet", cls: "ghost", onClick: () => { Sound.play("drop"); stepDone(step, { firstTry: false, solved: false }); } },
         { label: "😎 I said it!", cls: "good", onClick: (e) => { Sound.play("good"); award(10, e.currentTarget); stepDone(step, { firstTry: true, solved: true }); } }
       ]);
+    }
+    if (quiet) {
+      // Same "think on the spot" prompt — but she types the answer instead of saying it.
+      let tries = 0;
+      const input = h("input", { class: "type-box", type: "text", autocomplete: "off", autocapitalize: "off", autocorrect: "off", spellcheck: "false", enterkeyhint: "done", placeholder: "Type your answer in Hindi…", "aria-label": "Your answer" });
+      const checkQ = () => {
+        const v = input.value.trim();
+        if (!v || done) return;
+        tries++;
+        const r = checkItem(tokenizeG(v), it, mod, { allowDrop: true });
+        if (r.ok) {
+          done = true;
+          input.classList.add("ok");
+          Sound.play("good");
+          award(tries === 1 ? 10 : 5, input);
+          const p = praise();
+          showSheet({ ok: true, title: p.title, answer: itemAnswer(it), notes: r.notes || [],
+            buttons: [{ label: "Continue", onClick: () => stepDone(step, { firstTry: tries === 1, solved: true }) }] });
+        } else {
+          Sound.play("bad");
+          input.classList.remove("no"); void input.offsetWidth; input.classList.add("no");
+          status.innerHTML = r.msg + (tries < 2 ? " Try again!" : "");
+          if (tries >= 2) reveal();
+        }
+      };
+      input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); checkQ(); } });
+      status.textContent = "Type it — no tiles, no English to lean on 😉";
+      dbg.typed = it.roman;
+      screen(
+        h("div", { class: "prompt-kicker" }, (CUR.id === "review" ? "⚡ Review · " : "") + "🤫 Quiet mode · type it"),
+        h("h2", { class: "prompt" }, it.ask ? "Answer Aunty — in Hindi" : "Write it in Hindi"),
+        prompt, timer, input, status, answerBox, switchLink);
+      actions([{ label: "Show answer", cls: "ghost", onClick: reveal }, { label: "Check", onClick: checkQ }]);
+      setTimeout(() => input.focus({ preventScroll: true }), 300);
+      return;
     }
     dbg.speak = true;
     screen(
@@ -2520,7 +2664,7 @@
       h("h2", { class: "prompt" }, it.ask ? "Answer Aunty — out loud, in Hindi" : "Say it in Hindi — out loud"),
       prompt, timer,
       h("div", { class: "speak-zone" }, mic, status),
-      answerBox);
+      answerBox, switchLink);
     actions([{ label: "Show answer", cls: "ghost", onClick: reveal }]);
     if (it.ask) setTimeout(() => Speech.say(it.ask.dv), 400);
   }
@@ -2579,10 +2723,10 @@
       h("div", { class: "stat-row" },
         h("div", { class: "stat" }, h("b", {}, "+" + run.stats.xp), h("span", {}, "XP earned")),
         h("div", { class: "stat" }, h("b", {}, "🔥" + S.streak.count), h("span", {}, "Day streak"))),
-      h("div", { class: "goal-bar", style: "max-width:300px;margin:18px auto 0" }, h("i", { style: `width:${Math.min(100, Math.round((today / DAILY_GOAL) * 100))}%` })),
-      h("p", { class: "small muted", style: "margin-top:6px" }, today >= DAILY_GOAL ? "✅ Daily goal done!" : `Today: ${today}/${DAILY_GOAL} XP`)));
+      h("div", { class: "goal-bar", style: "max-width:300px;margin:18px auto 0" }, h("i", { style: `width:${Math.min(100, Math.round((today / goalXP()) * 100))}%` })),
+      h("p", { class: "small muted", style: "margin-top:6px" }, today >= goalXP() ? "✅ Daily goal done!" : `Today: ${today}/${goalXP()} XP`)));
     run = null;
-    actions([{ label: "Back home", onClick: () => showStart() }]);
+    actions([shareAction(`⚡ Just did my 5-minute Hindi review on Bolo! 🔥 ${S.streak.count}-day streak`), { label: "Back home", onClick: () => showStart() }]);
   }
 
   /* ---------- family chat ---------- */
@@ -2923,6 +3067,7 @@
         toggle("देवनागरी script", "deva", applySettings),
         toggle("Sound effects", "sound"),
         toggle("🌙 Dark mode", "dark", applySettings),
+        toggle("🤫 Quiet mode", "quiet"),
         Speech.supported ? toggle("🔊 Hindi voice", "voice") : null),
       cloudCard(),
       installTip(),
@@ -3067,7 +3212,7 @@
   }
 
   // Exposed for debugging / automated checks.
-  window.Bolo = { award, startReview, session: () => session, tokenize, diagnose, tokenizeG, checkItem, startStage, showStart, showModule, playModule, mods: MODS, unlockAll: () => { session.unlockAll = true; }, debug: () => dbg, cloud: Cloud, state: () => S, step: () => curStep, mcCorrect: () => (dbg.opts || []).findIndex((o) => o.correct), ctx: () => run && run.ctx };
+  window.Bolo = { award, startReview, openGift, giftReady, session: () => session, tokenize, diagnose, tokenizeG, checkItem, startStage, showStart, showModule, playModule, mods: MODS, unlockAll: () => { session.unlockAll = true; }, debug: () => dbg, cloud: Cloud, state: () => S, step: () => curStep, mcCorrect: () => (dbg.opts || []).findIndex((o) => o.correct), ctx: () => run && run.ctx };
 
   init();
 })();

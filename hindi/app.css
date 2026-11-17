@@ -763,3 +763,16 @@ body.dark .week .day.lit { background: #3a2616; }
 body.dark .freeze { background: #17304a; color: #9fd1ff; }
 body.dark .mic-btn { box-shadow: 0 6px 0 #1d6f65; }
 body.dark .stage-item.next .stage-num, body.dark .msg.me .bub { color: #fff; }
+
+/* ===== Quiet mode, goal picker, daily gift ===== */
+.quiet-link { display: block; margin: 14px auto 0; }
+.goal-picker { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 4px; }
+.goal-picker .chip { min-height: 44px; padding: 6px 12px; }
+.gift-btn { width: 100%; margin-top: 10px; background: linear-gradient(90deg, #ef4f8b, #f97316); box-shadow: 0 4px 0 #b8325f; animation: bump 1.6s infinite; }
+.gift-box { font-size: 120px; line-height: 1; margin: 0 auto 10px; display: inline-block; }
+.gift-box.shake { animation: giftShake .5s ease-in-out infinite; }
+.gift-box.open { animation: popIn .6s cubic-bezier(.2,1.6,.4,1); }
+@keyframes giftShake { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-10deg) scale(1.05); } 75% { transform: rotate(10deg) scale(1.05); } }
+.gift-card { background: var(--card); border-radius: 20px; box-shadow: var(--shadow); padding: 18px; max-width: 360px; margin: 14px auto 0; animation: enter .4s both; }
+.gift-phrase { font-size: 28px; margin-bottom: 4px; }
+.say-list li.locked { opacity: .55; }
