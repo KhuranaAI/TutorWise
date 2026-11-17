@@ -858,26 +858,75 @@
   /* ---------------- 🎬 Filmi moments (filmi.js) ---------------- */
   const FILMI = window.BOLO_FILMI || [];
   const sceneUrl = (m) => m.yt ? `https://www.youtube.com/watch?v=${encodeURIComponent(m.yt)}${m.start ? "&t=" + m.start + "s" : ""}` : "https://www.youtube.com/results?search_query=" + encodeURIComponent(m.q || m.film);
+  // YouTube player for a Filmi clip: autoplays (muted with a "tap for sound" button if the phone insists),
+  // and stops at m.end itself, because phones ignore the embed's own end time.
+  let ytReady = null;
+  function loadYT() {
+    if (window.YT && window.YT.Player) return Promise.resolve(window.YT);
+    if (ytReady) return ytReady;
+    ytReady = new Promise((res, rej) => {
+      const prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => { if (prev) prev(); res(window.YT); };
+      const sc = document.createElement("script");
+      sc.src = "https://www.youtube.com/iframe_api";
+      sc.onerror = () => { ytReady = null; rej(new Error("YouTube unavailable")); };
+      document.head.append(sc);
+      setTimeout(() => rej(new Error("YouTube timeout")), 12000);
+    });
+    return ytReady;
+  }
+  function filmiPlayer(m) {
+    const from = m.start || 0, to = m.end || 0;
+    const slot = h("div", {});
+    const box = h("div", { class: "filmi-video" }, slot);
+    const soundBtn = h("button", { class: "btn small-btn filmi-sound", hidden: true }, "🔊 Tap for sound");
+    const againBtn = h("button", { class: "btn small-btn ghost filmi-again", hidden: true }, "↺ Watch again");
+    const note = h("p", { class: "small muted center", style: "margin-top:6px" },
+      h("a", { href: sceneUrl(m), target: "_blank", rel: "noopener", class: "muted" }, "Not playing? Open it on YouTube"));
+    const el = h("div", { class: "filmi-player" }, box, h("div", { class: "filmi-ctrls" }, soundBtn, againBtn), note);
+    let yt = null, timer = null, started = false;
+    const stopWatch = () => { clearInterval(timer); timer = null; };
+    const finish = () => { stopWatch(); try { yt.pauseVideo(); } catch (e) {} soundBtn.hidden = true; againBtn.hidden = false; };
+    const watch = () => {
+      stopWatch();
+      timer = setInterval(() => {
+        if (!el.isConnected) { stopWatch(); try { yt.destroy(); } catch (e) {} return; }
+        try { if (to && yt.getCurrentTime() >= to) finish(); } catch (e) {}
+      }, 250);
+    };
+    soundBtn.addEventListener("click", () => { try { yt.unMute(); yt.setVolume(100); yt.playVideo(); } catch (e) {} soundBtn.hidden = true; });
+    againBtn.addEventListener("click", () => { againBtn.hidden = true; try { yt.seekTo(from, true); yt.playVideo(); } catch (e) {} watch(); });
+    function start() {
+      loadYT().then((YT) => {
+        if (!el.isConnected) return;
+        yt = new YT.Player(slot, {
+          host: "https://www.youtube-nocookie.com", videoId: m.yt, width: "100%", height: "100%",
+          playerVars: Object.assign({ autoplay: 1, playsinline: 1, rel: 0, modestbranding: 1, start: from }, to ? { end: to } : {}),
+          events: {
+            onReady: (e) => {
+              e.target.playVideo();
+              // If the phone blocked sound, play muted and offer a button for sound.
+              setTimeout(() => { if (!started && el.isConnected) { try { e.target.mute(); e.target.playVideo(); soundBtn.hidden = false; } catch (er) {} } }, 1200);
+            },
+            onStateChange: (e) => {
+              if (e.data === YT.PlayerState.PLAYING) { started = true; againBtn.hidden = true; watch(); }
+              if (e.data === YT.PlayerState.ENDED) finish();
+            }
+          }
+        });
+      }).catch(() => { box.hidden = true; note.firstChild.textContent = "▶ Watch the scene on YouTube"; });
+    }
+    return { el, start };
+  }
   function showFilmi(m, cont, fresh) {
     view = "filmi";
     if (fresh) { Sound.play("streak"); confetti(50); }
-    // With a clip id (yt) the scene plays right here; otherwise it opens a YouTube search.
-    const player = h("div", { class: "filmi-video", hidden: true });
-    const watch = m.yt
-      ? h("button", { class: "btn watch-btn", onclick: () => {
-          const q = new URLSearchParams({ autoplay: "1", playsinline: "1", rel: "0", modestbranding: "1" });
-          if (m.start) q.set("start", String(m.start));
-          if (m.end) q.set("end", String(m.end));
-          player.innerHTML = "";
-          player.append(h("iframe", { src: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(m.yt)}?${q}`, title: m.film + " scene",
-            allow: "autoplay; encrypted-media; picture-in-picture; fullscreen", allowfullscreen: "", referrerpolicy: "strict-origin-when-cross-origin" }));
-          player.hidden = false;
-          watch.hidden = true;
-          setTimeout(() => player.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
-        } }, "▶ Play the scene")
-      : h("a", { class: "btn watch-btn", href: sceneUrl(m), target: "_blank", rel: "noopener" }, "▶ Watch the scene");
+    // With a clip id (yt) the scene plays right here, by itself, and stops at `end`; otherwise it opens a YouTube search.
+    const player = m.yt ? filmiPlayer(m) : null;
+    const watch = m.yt ? null : h("a", { class: "btn watch-btn", href: sceneUrl(m), target: "_blank", rel: "noopener" }, "▶ Watch the scene");
     screen(h("div", { class: "filmi-wrap" },
       h("div", { class: "prompt-kicker center" }, fresh ? "🎬 Filmi moment unlocked!" : "🎬 Filmi moment"),
+      player ? player.el : null,
       h("div", { class: "filmi-card" },
         h("div", { class: "filmi-reel" }, "🎞️"),
         h("div", { class: "filmi-film" }, m.film, h("span", {}, " · " + m.year)),
@@ -885,11 +934,10 @@
         h("div", { class: "filmi-en" }, m.en),
         h("div", { class: "filmi-know" }, (m.know || []).map((k) => h("span", { class: "know-chip" }, "✨ " + k))),
         h("p", { class: "filmi-note" }, m.note)),
-      player,
       watch,
-      m.yt ? h("p", { class: "small muted center", style: "margin-top:6px" }, h("a", { href: sceneUrl(m), target: "_blank", rel: "noopener", class: "muted" }, "Not playing? Open it on YouTube"))
-        : h("p", { class: "small muted center", style: "margin-top:6px" }, "Opens YouTube")));
-    if (fresh && m.dv) setTimeout(() => Speech.say(m.dv), 600);
+      m.yt ? null : h("p", { class: "small muted center", style: "margin-top:6px" }, "Opens YouTube")));
+    if (fresh && m.dv && !m.yt) setTimeout(() => Speech.say(m.dv), 600);
+    if (player) player.start();
     actions([shareAction(`🎬 I just unlocked “${m.line}” — ${m.film} — while learning Hindi on Bolo!`), { label: "Continue", onClick: cont }]);
   }
   function showFilmiList() {
