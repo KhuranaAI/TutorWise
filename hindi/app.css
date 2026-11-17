@@ -873,3 +873,8 @@ body.dark .word-pop .wp-row.more { border-top-color: rgba(0,0,0,.12); }
 .filmi-tap { margin: 10px 0 0; text-align: center; font-weight: 700; color: var(--brand-dk); }
 body.dark .filmi-tap { color: var(--brand); }
 
+
+/* The one shared clip player, floated over the Filmi card's video box */
+.clip-holder { position: absolute; z-index: 5; border-radius: 16px; overflow: hidden; background: #000; }
+.clip-holder iframe { width: 100%; height: 100%; border: 0; display: block; }
+.clip-holder.off { left: -9999px; top: 0; width: 320px; height: 180px; }

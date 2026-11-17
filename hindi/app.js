@@ -858,8 +858,10 @@
   /* ---------------- 🎬 Filmi moments (filmi.js) ---------------- */
   const FILMI = window.BOLO_FILMI || [];
   const sceneUrl = (m) => m.yt ? `https://www.youtube.com/watch?v=${encodeURIComponent(m.yt)}${m.start ? "&t=" + m.start + "s" : ""}` : "https://www.youtube.com/results?search_query=" + encodeURIComponent(m.q || m.film);
-  // YouTube player for a Filmi clip: autoplays (muted with a "tap for sound" button if the phone insists),
-  // and stops at m.end itself, because phones ignore the embed's own end time.
+  /* ---------- Filmi clips: one YouTube player, kept ready in the background ----------
+     An iPhone only starts a video with sound if "play" is sent during a tap. So the player is built
+     ahead of time (when a stage with a clip starts, or the Filmi list opens) and the clip is started
+     the instant she taps. The player floats over a placeholder box on the Filmi card. */
   let ytReady = null;
   function loadYT() {
     if (window.YT && window.YT.Player) return Promise.resolve(window.YT);
@@ -871,59 +873,100 @@
       sc.src = "https://www.youtube.com/iframe_api";
       sc.onerror = () => { ytReady = null; rej(new Error("YouTube unavailable")); };
       document.head.append(sc);
-      setTimeout(() => rej(new Error("YouTube timeout")), 12000);
+      setTimeout(() => { if (!(window.YT && window.YT.Player)) { ytReady = null; rej(new Error("YouTube timeout")); } }, 12000);
     });
     return ytReady;
   }
+  const Clip = (() => {
+    let yt = null, ready = false, holder = null, cur = null, timer = null, raf = 0;
+    const call = (fn, ...a) => { try { return yt && ready ? yt[fn](...a) : undefined; } catch (e) { return undefined; } };
+    function prepare(id) {
+      if (!id) return;
+      if (holder) { if (ready && !cur) call("cueVideoById", id); return; }
+      holder = h("div", { class: "clip-holder off" }, h("div", {}));
+      document.body.append(holder);
+      loadYT().then((YT) => {
+        yt = new YT.Player(holder.firstChild, {
+          host: "https://www.youtube-nocookie.com", videoId: id, width: "100%", height: "100%",
+          playerVars: { autoplay: 0, playsinline: 1, rel: 0, modestbranding: 1 },
+          events: {
+            onReady: () => { ready = true; if (cur && cur.pending) begin(cur); },
+            onAutoplayBlocked: () => { if (cur) mutedStart(cur); }
+          }
+        });
+      }).catch(() => { if (holder) holder.remove(); holder = null; yt = null; ready = false; if (cur) cur.ui({ failed: true }); });
+    }
+    function mutedStart(c) { // always allowed, even without a tap; she gets a "Turn sound on" button
+      if (c.triedMuted || c.began) return;
+      c.triedMuted = true;
+      call("mute"); call("playVideo");
+    }
+    function begin(c) {
+      c.pending = false;
+      c.t0 = Date.now();
+      const vid = Object.assign({ videoId: c.m.yt, startSeconds: c.from }, c.to ? { endSeconds: c.to } : {});
+      if (S.settings.quiet) { call("cueVideoById", vid); c.quiet = true; return; } // quiet mode: never starts by itself
+      call("unMute"); call("setVolume", 100);
+      call("loadVideoById", vid);
+    }
+    function place() {
+      if (!cur || !holder) return;
+      const r = cur.spot.getBoundingClientRect();
+      const css = `left:${Math.round(r.left + window.scrollX)}px;top:${Math.round(r.top + window.scrollY)}px;width:${Math.round(r.width)}px;height:${Math.round(r.height)}px`;
+      if (holder.style.cssText !== css) holder.style.cssText = css;
+      holder.classList.remove("off");
+    }
+    function frame() { if (!cur) return; if (cur.spot.isConnected) place(); raf = requestAnimationFrame(frame); }
+    function tick() {
+      const c = cur;
+      if (!c) return;
+      if (!c.spot.isConnected) return stop();
+      if (!ready) return;
+      const st = call("getPlayerState"), playing = st === 1, muted = !!call("isMuted"), waited = Date.now() - c.t0;
+      if (playing) c.began = true;
+      if (c.to && !c.ended && playing && call("getCurrentTime") >= c.to) { c.ended = true; call("pauseVideo"); }
+      if (st === 0 && Date.now() > c.noEndUntil) c.ended = true;
+      // Not started 2 seconds after the tap (and not just buffering)? The phone refused sound: start it muted.
+      if (!c.began && !c.quiet && !c.pending && waited > 2000 && st !== 3) mutedStart(c);
+      c.ui({ playing, muted, ended: c.ended, needTap: !c.began && (c.quiet || waited > 4500) });
+    }
+    function play(m, spot, ui) {
+      stop();
+      cur = { m, spot, ui, from: m.start || 0, to: m.end || 0, t0: Date.now(), noEndUntil: 0, pending: true };
+      prepare(m.yt);
+      if (ready) begin(cur);
+      place();
+      raf = requestAnimationFrame(frame);
+      timer = setInterval(tick, 250);
+    }
+    function stop() {
+      clearInterval(timer); cancelAnimationFrame(raf);
+      if (cur) call("stopVideo");
+      cur = null;
+      if (holder) { holder.classList.add("off"); holder.style.cssText = ""; }
+    }
+    // Called from her taps on the buttons under the video.
+    function withSound() { if (!cur) return; cur.noEndUntil = Date.now() + 1500; cur.ended = false; call("unMute"); call("setVolume", 100); call("seekTo", cur.from, true); call("playVideo"); }
+    return { prepare, play, stop, withSound, state: () => ({ ready, playing: call("getPlayerState") === 1, cur: cur && cur.m.id }) };
+  })();
+  const clipFor = (after) => { const f = FILMI.find((x) => x.yt && x.after === after); return f ? f.yt : null; };
   function filmiPlayer(m) {
-    const from = m.start || 0, to = m.end || 0;
-    const slot = h("div", {});
-    const box = h("div", { class: "filmi-video" }, slot);
+    const spot = h("div", { class: "filmi-video" }); // the shared player sits exactly over this box
     const tapNote = h("p", { class: "filmi-tap", hidden: true }, "👆 Tap ▶ on the video to play");
     const soundBtn = h("button", { class: "btn small-btn ghost", hidden: true }, "🔊 Turn sound on");
     const againBtn = h("button", { class: "btn small-btn ghost", hidden: true }, "↺ Watch again");
     const note = h("p", { class: "small muted center", style: "margin-top:6px" },
       h("a", { href: sceneUrl(m), target: "_blank", rel: "noopener", class: "muted" }, "Not playing? Open it on YouTube"));
-    const el = h("div", { class: "filmi-player" }, box, tapNote, h("div", { class: "filmi-ctrls" }, soundBtn, againBtn), note);
-    let yt = null, timer = null, triedSound = false, ended = false;
-    const call = (fn, ...a) => { try { return yt && yt[fn](...a); } catch (e) { return undefined; } };
-    // Keep the buttons in step with what the player is really doing.
-    function sync() {
-      const st = call("getPlayerState"), playing = st === 1, muted = !!call("isMuted");
-      tapNote.hidden = playing || ended;
-      soundBtn.hidden = !(playing && muted);
-      againBtn.hidden = !ended;
-    }
-    const tick = () => {
-      if (!el.isConnected) { clearInterval(timer); call("destroy"); return; }
-      if (to && !ended && call("getPlayerState") === 1 && call("getCurrentTime") >= to) { ended = true; call("pauseVideo"); }
-      sync();
+    const el = h("div", { class: "filmi-player" }, spot, tapNote, h("div", { class: "filmi-ctrls" }, soundBtn, againBtn), note);
+    soundBtn.addEventListener("click", () => Clip.withSound());
+    againBtn.addEventListener("click", () => Clip.withSound());
+    const ui = (x) => {
+      if (x.failed) { spot.hidden = true; note.firstChild.textContent = "▶ Watch the scene on YouTube"; return; }
+      tapNote.hidden = !x.needTap || x.playing || x.ended;
+      soundBtn.hidden = !(x.playing && x.muted);
+      againBtn.hidden = !x.ended;
     };
-    soundBtn.addEventListener("click", () => { call("unMute"); call("setVolume", 100); call("playVideo"); setTimeout(sync, 400); });
-    againBtn.addEventListener("click", () => { ended = false; call("seekTo", from, true); call("playVideo"); setTimeout(sync, 400); });
-    function start() {
-      loadYT().then((YT) => {
-        if (!el.isConnected) return;
-        yt = new YT.Player(slot, {
-          host: "https://www.youtube-nocookie.com", videoId: m.yt, width: "100%", height: "100%",
-          // Muted autoplay works on some phones; on iPhone YouTube needs one tap on the video.
-          playerVars: Object.assign({ autoplay: 1, mute: 1, playsinline: 1, rel: 0, modestbranding: 1, start: from }, to ? { end: to } : {}),
-          events: {
-            onReady: (e) => { e.target.playVideo(); setTimeout(sync, 1500); },
-            onStateChange: (e) => {
-              if (e.data === YT.PlayerState.PLAYING) {
-                ended = false;
-                if (!triedSound) { triedSound = true; call("unMute"); call("setVolume", 100); }
-              }
-              if (e.data === YT.PlayerState.ENDED) ended = true;
-              setTimeout(sync, 300);
-            }
-          }
-        });
-        timer = setInterval(tick, 250);
-      }).catch(() => { box.hidden = true; note.firstChild.textContent = "▶ Watch the scene on YouTube"; });
-    }
-    return { el, start };
+    return { el, start: () => Clip.play(m, spot, ui) };
   }
   function showFilmi(m, cont, fresh) {
     view = "filmi";
@@ -949,6 +992,8 @@
   }
   function showFilmiList() {
     view = "start";
+    Clip.stop();
+    Clip.prepare((FILMI.find((f) => f.yt && (S.filmi.includes(f.id) || session.unlockAll)) || {}).yt);
     const back = h("button", { class: "link-btn back-link" }, "‹ Home");
     back.addEventListener("click", () => showStart());
     screen(back, h("h2", { class: "title" }, "🎬 Filmi moments"),
@@ -1025,6 +1070,7 @@
     view = "stage";
     session.notice = null;
     const st = STAGES[i];
+    Clip.prepare(clipFor(CUR.id + ":" + st.id)); // get this stage's movie clip ready for the end
     run = { stage: i, queue: st.build(opts || {}), pos: 0, stats: { xp: 0, graded: 0, first: 0 }, results: [], ctx: { current: "eat" }, opts: opts || {} };
     P().run = snapshotRun(0);
     save();
@@ -1111,6 +1157,7 @@
       return startStage(i >= 0 ? i : Math.max(0, firstUnfinished()), { updated: true });
     }
     view = "stage";
+    Clip.prepare(clipFor(CUR.id + ":" + STAGES[i].id));
     run = JSON.parse(JSON.stringify(r));
     run.stage = i;
     showChrome(true);
@@ -3269,7 +3316,7 @@
   }
 
   function showStart() {
-    if (FILMI.some((f) => f.yt && S.filmi.includes(f.id))) loadYT().catch(() => {}); // so clips start quickly
+    Clip.stop();
     run = null;
     view = "start";
     showChrome(false);
@@ -3453,7 +3500,7 @@
     texts.forEach((t) => String(t).split(/\s+/).forEach((w) => w.split("/").forEach((x) => { const c = cleanWord(x); if (c && /[a-z]/.test(c) && !glossOf(x)) miss[c] = (miss[c] || 0) + 1; })));
     return miss;
   }
-  window.Bolo = { glossAudit, glossOf, showFilmi, filmi: () => FILMI, award, startReview, openGift, giftReady, session: () => session, tokenize, diagnose, tokenizeG, checkItem, startStage, showStart, showModule, playModule, mods: MODS, unlockAll: () => { session.unlockAll = true; }, debug: () => dbg, cloud: Cloud, state: () => S, step: () => curStep, mcCorrect: () => (dbg.opts || []).findIndex((o) => o.correct), ctx: () => run && run.ctx };
+  window.Bolo = { clip: Clip, glossAudit, glossOf, showFilmi, filmi: () => FILMI, award, startReview, openGift, giftReady, session: () => session, tokenize, diagnose, tokenizeG, checkItem, startStage, showStart, showModule, playModule, mods: MODS, unlockAll: () => { session.unlockAll = true; }, debug: () => dbg, cloud: Cloud, state: () => S, step: () => curStep, mcCorrect: () => (dbg.opts || []).findIndex((o) => o.correct), ctx: () => run && run.ctx };
 
   init();
 })();
