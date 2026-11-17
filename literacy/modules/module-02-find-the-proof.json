@@ -1,0 +1,1210 @@
+{
+  "schemaVersion": 1,
+  "id": "m2-find-the-proof",
+  "number": 2,
+  "title": "Find the proof",
+  "goal": "The answer is in the passage. Find the sentence and tap it before you answer.",
+  "card": {
+    "title": "SEARCH WORD → COUSIN WORD → TAP THE SENTENCE → DOES IT DO THE JOB?",
+    "lines": [
+      "Say the job.",
+      "Pick a search word from the question. Pick a rare one.",
+      "Think of a cousin word: another word that means the same.",
+      "Scan for either word. Read the whole sentence, to the period.",
+      "Ask: does this sentence do the job, or does it only share a word?"
+    ]
+  },
+  "traps": {
+    "O": {
+      "label": "the opposite",
+      "feedback": "The passage says the opposite."
+    },
+    "N": {
+      "label": "not there",
+      "feedback": "It may sound sensible, but it is not in the passage."
+    },
+    "T": {
+      "label": "true, but not what they asked",
+      "feedback": "It is in the passage, but it answers a different question."
+    },
+    "H": {
+      "label": "half right",
+      "feedback": "Part of it is right and part of it is wrong."
+    }
+  },
+  "rubrics": {
+    "sentence2": {
+      "max": 2,
+      "levels": [
+        {
+          "score": 2,
+          "description": "Correct answer in a complete sentence."
+        },
+        {
+          "score": 1,
+          "description": "Correct answer, but not a complete sentence."
+        },
+        {
+          "score": 0,
+          "description": "Incorrect, or does not answer the question."
+        }
+      ]
+    },
+    "twoPart3": {
+      "max": 3,
+      "levels": [
+        {
+          "score": 3,
+          "description": "Both parts answered correctly, in complete sentences."
+        },
+        {
+          "score": 2,
+          "description": "Both parts answered correctly but not in complete sentences, or one part correct in a complete sentence."
+        },
+        {
+          "score": 1,
+          "description": "One part answered correctly, not a complete sentence."
+        },
+        {
+          "score": 0,
+          "description": "Neither part answered correctly."
+        }
+      ]
+    }
+  },
+  "passages": {
+    "milk": {
+      "title": "Why the Milk Is at the Back",
+      "format": "information paragraph",
+      "level": "Foundation",
+      "sentences": [
+        "Most convenience stores keep their milk at the back of the store.",
+        "This is not an accident.",
+        "Milk is the item people buy most often, so stores put it as far from the door as possible.",
+        "Shoppers who come in for milk walk past chips, drinks and candy on the way.",
+        "Many of them pick up something extra.",
+        "Store owners also keep milk near the delivery door, where the big fridges are, so staff do not have to carry heavy crates across the store.",
+        "Both reasons matter, but managers admit the first one is the real reason."
+      ]
+    },
+    "mall": {
+      "title": "Lost Phones at Riverside Mall",
+      "format": "information paragraph",
+      "level": "Developing",
+      "sentences": [
+        "Every week, the lost-and-found office at Riverside Mall takes in about forty phones.",
+        "Most are returned within a day because the owner calls their own number and a staff member answers.",
+        "Phones with a dead battery are harder.",
+        "Staff plug them in and wait, but if the phone is locked, there is no way to find the owner.",
+        "After thirty days, unclaimed phones are wiped and donated to a charity that gives them to people who need a phone for job searches.",
+        "The office manager, Dana Cho, says the busiest day is Saturday, when the food court is full.",
+        "Her advice is simple: write a second phone number on your lock screen, so anyone who finds your phone can call someone you know."
+      ]
+    },
+    "fridge": {
+      "title": "The Community Fridge",
+      "format": "information paragraph",
+      "level": "Developing",
+      "sentences": [
+        "A community fridge stands outside the Parkdale Recreation Centre, and anyone can open it.",
+        "People who have extra food leave it inside, and people who need food take it for free.",
+        "Volunteers check the fridge every morning and throw out anything that is past its date.",
+        "The fridge is busiest at the end of the month, when many families are waiting for their next paycheque.",
+        "Bread and fruit disappear within an hour, but canned soup often sits for days.",
+        "The centre's manager, Luis Ortega, says the fridge has been emptied by vandals only once in two years.",
+        "He asks donors to bring food that is ready to eat, because many visitors have no kitchen."
+      ]
+    },
+    "night": {
+      "title": "Night Buses in Lakeview",
+      "format": "information paragraph",
+      "level": "Developing",
+      "sentences": [
+        "Lakeview Transit started running three night bus routes in September.",
+        "The buses leave every thirty minutes between midnight and 5 a.m.",
+        "Before the change, the last bus left downtown at 11:45 p.m., and people who worked late had to walk or pay for a taxi.",
+        "Most night riders are restaurant and hospital workers heading home after their shifts.",
+        "A night ride costs the same as a daytime ride, and a regular monthly pass works on every route.",
+        "Drivers say the quietest hour is between 3 and 4 a.m., when a bus may carry only two or three people.",
+        "The city will count riders until March and then decide whether to add a fourth route."
+      ]
+    }
+  },
+  "sections": [
+    {
+      "id": "learn",
+      "title": "Proof first",
+      "mode": "tutor",
+      "minutes": 8,
+      "tutorNote": "I DO. Reveal the worked example one step at a time, thinking aloud. Then play the cousin-word match together.",
+      "steps": [
+        {
+          "id": "m2-learn-1",
+          "type": "explain",
+          "text": [
+            "The answer is in the passage. Your job is to find the sentence and prove it.",
+            "Pick a search word from the question. Think of another word that means the same thing: a cousin word.",
+            "Hunt for either one. When you find it, read the whole sentence.",
+            "Then ask: does this sentence do the job, or does it just have the same word in it?",
+            "Tap the proof before you answer."
+          ],
+          "showCard": true
+        },
+        {
+          "id": "m2-learn-2",
+          "type": "worked",
+          "title": "Watch one",
+          "reveals": [
+            {
+              "label": "The job",
+              "text": "A reason, about putting milk far from the entrance. One part."
+            },
+            {
+              "label": "Search word",
+              "text": "MILK is in almost every sentence, so it will not help. ENTRANCE is better."
+            },
+            {
+              "label": "Cousin word",
+              "text": "Another word for entrance: DOOR."
+            },
+            {
+              "label": "Scan",
+              "text": "Here: 'as far from the door as possible.'",
+              "highlight": [
+                3
+              ]
+            },
+            {
+              "label": "Read the whole sentence",
+              "text": "It tells where the milk goes and starts the reason. Read on to be sure."
+            },
+            {
+              "label": "Read on",
+              "text": "Shoppers walk past other things, and many pick up something extra. That is the full reason.",
+              "highlight": [
+                4,
+                5
+              ]
+            },
+            {
+              "label": "What I did not do",
+              "text": "I did not grab the first sentence with MILK in it. I picked a rare search word, thought of its cousin, and read the whole sentence."
+            }
+          ],
+          "question": "Why do stores put milk far from the entrance?",
+          "passage": "milk"
+        },
+        {
+          "id": "m2-learn-3",
+          "type": "match",
+          "prompt": "Match each word from a question to its cousin in a passage.",
+          "pairs": [
+            {
+              "left": "purchase",
+              "right": "buy"
+            },
+            {
+              "left": "entrance",
+              "right": "door"
+            },
+            {
+              "left": "quickly",
+              "right": "within a day"
+            },
+            {
+              "left": "given back",
+              "right": "returned"
+            },
+            {
+              "left": "nobody claims",
+              "right": "unclaimed"
+            },
+            {
+              "left": "a month",
+              "right": "thirty days"
+            },
+            {
+              "left": "customers",
+              "right": "shoppers"
+            },
+            {
+              "left": "recommends",
+              "right": "her advice is"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "together",
+      "title": "Find it together",
+      "mode": "tutor",
+      "minutes": 12,
+      "tutorNote": "WE DO. For each question the student says the job, names a search word and a cousin, taps the sentence, reads it aloud, then answers. Prompts in order: What's your search word? Another word for that? Read me the whole sentence. Does it do the job?",
+      "steps": [
+        {
+          "id": "m2-t1",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "Which item do customers purchase most often?",
+          "passage": "milk",
+          "correct": [
+            3
+          ],
+          "hint2": "The passage may use a different word for 'purchase'. What is another word?",
+          "hint3": "It is sentence 1 or sentence 3.",
+          "near": [
+            {
+              "sentences": [
+                1
+              ],
+              "why": "That sentence has MILK in it, but it tells where milk is kept. Which sentence says what people buy most often?"
+            }
+          ],
+          "then": {
+            "id": "m2-t1a",
+            "type": "mcq",
+            "stem": "Which item do customers purchase most often?",
+            "options": [
+              {
+                "id": "a",
+                "text": "milk",
+                "why": "Right. Sentence 3: milk is the item people buy most often.",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "chips",
+                "why": "Chips are in the passage, but as something shoppers walk past.",
+                "trap": "T"
+              },
+              {
+                "id": "c",
+                "text": "bread",
+                "why": "Bread is not in the passage.",
+                "trap": "N"
+              }
+            ],
+            "passage": "milk"
+          }
+        },
+        {
+          "id": "m2-t2",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "What second reason is given for where the milk is kept?",
+          "passage": "milk",
+          "correct": [
+            6
+          ],
+          "hint2": "A second reason often comes after the word ALSO.",
+          "hint3": "It is sentence 6 or sentence 7.",
+          "near": [
+            {
+              "sentences": [
+                3
+              ],
+              "why": "That is the first reason. Look for a word like ALSO."
+            },
+            {
+              "sentences": [
+                7
+              ],
+              "why": "That sentence talks about both reasons but does not say what the second one is."
+            }
+          ],
+          "then": {
+            "id": "m2-t2a",
+            "type": "text",
+            "stem": "What second reason is given for where the milk is kept?",
+            "model": [
+              "The milk is kept near the delivery door and the big fridges so staff do not have to carry heavy crates across the store."
+            ],
+            "rubric": "sentence2",
+            "prompt": "Answer in a full sentence.",
+            "passage": "milk"
+          }
+        },
+        {
+          "id": "m2-t3",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "Which reason do the managers say is the real one?",
+          "passage": "milk",
+          "correct": [
+            7
+          ],
+          "hint2": "Search for MANAGERS.",
+          "hint3": "It is sentence 6 or sentence 7.",
+          "then": {
+            "id": "m2-t3a",
+            "type": "mcq",
+            "stem": "Sentence 7 says the first reason is the real one. Which is the first reason?",
+            "options": [
+              {
+                "id": "a",
+                "text": "Shoppers walk past other things and buy something extra.",
+                "why": "Right. That is the first reason, in sentences 3 to 5.",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "Staff do not have to carry heavy crates.",
+                "why": "That is in the passage, but it is the second reason.",
+                "trap": "T"
+              },
+              {
+                "id": "c",
+                "text": "Milk has to stay cold.",
+                "why": "It sounds sensible, but the passage does not give it as a reason.",
+                "trap": "N"
+              }
+            ],
+            "passage": "milk"
+          }
+        },
+        {
+          "id": "m2-t4",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "What do many shoppers do on the way to the milk?",
+          "passage": "milk",
+          "correct": [
+            4,
+            5
+          ],
+          "hint2": "Search for SHOPPERS or ON THE WAY.",
+          "hint3": "It is in sentences 4 and 5.",
+          "then": {
+            "id": "m2-t4a",
+            "type": "text",
+            "stem": "What do many shoppers do on the way to the milk?",
+            "model": [
+              "Many shoppers walk past chips, drinks and candy and pick up something extra."
+            ],
+            "rubric": "sentence2",
+            "prompt": "Answer in a full sentence.",
+            "passage": "milk"
+          },
+          "note": "Either sentence counts as correct. After a correct tap, highlight both and say: the proof runs across two sentences."
+        },
+        {
+          "id": "m2-t5",
+          "type": "verify",
+          "prompt": "Which sentence does the job?",
+          "question": "What do staff avoid by keeping milk near the delivery door?",
+          "passage": "milk",
+          "candidates": [
+            {
+              "sentence": 6,
+              "doesJob": true,
+              "why": "Right. It says staff do not have to carry heavy crates across the store."
+            },
+            {
+              "sentence": 3,
+              "doesJob": false,
+              "why": "That sentence has DOOR in it, but it is about customers, not staff. It only shares a word."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "own",
+      "title": "Find it on your own",
+      "mode": "solo",
+      "minutes": 14,
+      "tutorNote": "YOU DO on a new passage. The tapped sentence measures locating; the answer measures verifying. Record them separately. Item o2 tests the cousin-word step (quickly / within a day).",
+      "steps": [
+        {
+          "id": "m2-o1",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "About how many phones arrive at the office each week?",
+          "passage": "mall",
+          "correct": [
+            1
+          ],
+          "hint2": "Search for a number.",
+          "hint3": "It is sentence 1 or sentence 5.",
+          "near": [
+            {
+              "sentences": [
+                5
+              ],
+              "why": "That number is days, not phones."
+            }
+          ],
+          "then": {
+            "id": "m2-o1a",
+            "type": "mcq",
+            "stem": "About how many phones arrive at the office each week?",
+            "options": [
+              {
+                "id": "a",
+                "text": "about forty",
+                "why": "Right. Sentence 1.",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "about thirty",
+                "why": "Thirty is in the passage, but it is the number of days phones are kept.",
+                "trap": "T"
+              },
+              {
+                "id": "c",
+                "text": "about seven",
+                "why": "That number is not in the passage.",
+                "trap": "N"
+              }
+            ],
+            "passage": "mall"
+          }
+        },
+        {
+          "id": "m2-o2",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "Why are most phones given back so quickly?",
+          "passage": "mall",
+          "correct": [
+            2
+          ],
+          "hint2": "The passage may say 'quickly' another way. Look for a time.",
+          "hint3": "It is sentence 1 or sentence 2.",
+          "near": [
+            {
+              "sentences": [
+                1
+              ],
+              "why": "That sentence tells how many phones come in. It does not say why they are returned fast."
+            }
+          ],
+          "then": {
+            "id": "m2-o2a",
+            "type": "text",
+            "stem": "Why are most phones given back so quickly?",
+            "model": [
+              "Most phones are given back quickly because the owner calls their own number and a staff member answers."
+            ],
+            "rubric": "sentence2",
+            "prompt": "Answer in a full sentence.",
+            "passage": "mall"
+          }
+        },
+        {
+          "id": "m2-o3",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "What makes a phone with a dead battery difficult to return?",
+          "passage": "mall",
+          "correct": [
+            4
+          ],
+          "hint2": "Search for DEAD BATTERY, then read the next sentence too.",
+          "hint3": "It is sentence 3 or sentence 4.",
+          "near": [
+            {
+              "sentences": [
+                3
+              ],
+              "why": "That sentence says these phones are harder. Which sentence says what makes them hard?"
+            }
+          ],
+          "then": {
+            "id": "m2-o3a",
+            "type": "mcq",
+            "stem": "What makes a phone with a dead battery difficult to return?",
+            "options": [
+              {
+                "id": "a",
+                "text": "If the phone is locked, staff cannot find the owner.",
+                "why": "Right. Sentence 4.",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "The battery cannot be charged.",
+                "why": "The passage says staff plug the phones in.",
+                "trap": "O"
+              },
+              {
+                "id": "c",
+                "text": "The office is too busy on Saturdays.",
+                "why": "Saturday is in the passage, but it answers a different question.",
+                "trap": "T"
+              }
+            ],
+            "passage": "mall"
+          }
+        },
+        {
+          "id": "m2-o4",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "What happens to a phone that nobody claims after a month?",
+          "passage": "mall",
+          "correct": [
+            5
+          ],
+          "hint2": "'A month' may be written as a number of days.",
+          "hint3": "It is sentence 4 or sentence 5.",
+          "then": {
+            "id": "m2-o4a",
+            "type": "text",
+            "stem": "What happens to a phone that nobody claims after a month?",
+            "model": [
+              "After thirty days, the phone is wiped and donated to a charity that gives phones to people who need one for job searches."
+            ],
+            "rubric": "sentence2",
+            "prompt": "Answer in a full sentence.",
+            "passage": "mall"
+          }
+        },
+        {
+          "id": "m2-o5",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "Which day is the busiest, and why?",
+          "passage": "mall",
+          "correct": [
+            6
+          ],
+          "hint2": "Search for BUSIEST.",
+          "hint3": "It is sentence 6 or sentence 7.",
+          "then": {
+            "id": "m2-o5a",
+            "type": "text",
+            "stem": "Which day is the busiest, and why?",
+            "model": [
+              "Saturday is the busiest day because the food court is full."
+            ],
+            "rubric": "twoPart3",
+            "prompt": "Answer both parts in a full sentence.",
+            "passage": "mall"
+          }
+        },
+        {
+          "id": "m2-o6",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "What does Dana Cho recommend people do?",
+          "passage": "mall",
+          "correct": [
+            7
+          ],
+          "hint2": "'Recommend' means give advice. Search for ADVICE.",
+          "hint3": "It is sentence 6 or sentence 7.",
+          "near": [
+            {
+              "sentences": [
+                6
+              ],
+              "why": "That sentence names Dana Cho, but it is about the busiest day. Which sentence gives her advice?"
+            }
+          ],
+          "then": {
+            "id": "m2-o6a",
+            "type": "mcq",
+            "stem": "What does Dana Cho recommend people do?",
+            "options": [
+              {
+                "id": "a",
+                "text": "Write a second phone number on your lock screen.",
+                "why": "Right. Sentence 7.",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "Keep your phone charged.",
+                "why": "It sounds sensible, but it is not in the passage.",
+                "trap": "N"
+              },
+              {
+                "id": "c",
+                "text": "Call your own number.",
+                "why": "That is in the passage, but it is what owners do, not her advice.",
+                "trap": "T"
+              }
+            ],
+            "passage": "mall"
+          }
+        },
+        {
+          "id": "m2-o7",
+          "type": "verify",
+          "prompt": "Which sentence does the job?",
+          "question": "Why are most phones returned quickly?",
+          "passage": "mall",
+          "candidates": [
+            {
+              "sentence": 2,
+              "doesJob": true,
+              "why": "Right. It gives the reason: the owner calls and staff answer."
+            },
+            {
+              "sentence": 1,
+              "doesJob": false,
+              "why": "That sentence is about the same topic, but it tells how many phones, not why."
+            }
+          ]
+        },
+        {
+          "id": "m2-o8",
+          "type": "verify",
+          "prompt": "Which sentence does the job?",
+          "question": "What happens to phones that nobody claims?",
+          "passage": "mall",
+          "candidates": [
+            {
+              "sentence": 5,
+              "doesJob": true,
+              "why": "Right. Unclaimed phones are wiped and donated."
+            },
+            {
+              "sentence": 4,
+              "doesJob": false,
+              "why": "That sentence is about locked phones. It does not say what happens to them in the end."
+            }
+          ]
+        },
+        {
+          "id": "m2-o9",
+          "type": "verify",
+          "prompt": "Which sentence does the job?",
+          "question": "What should you write on your lock screen?",
+          "passage": "mall",
+          "candidates": [
+            {
+              "sentence": 7,
+              "doesJob": true,
+              "why": "Right. A second phone number."
+            },
+            {
+              "sentence": 4,
+              "doesJob": false,
+              "why": "That sentence has LOCKED in it, but it does not tell you what to write."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "home",
+      "title": "Home practice",
+      "mode": "solo",
+      "minutes": 12,
+      "tutorNote": "Home set on a new passage. Five find-and-answer items and two does-it-do-the-job pairs.",
+      "steps": [
+        {
+          "id": "m2-h1",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "Where is the community fridge located?",
+          "passage": "fridge",
+          "correct": [
+            1
+          ],
+          "hint2": "Search for a place name.",
+          "hint3": "It is sentence 1 or sentence 6.",
+          "near": [
+            {
+              "sentences": [
+                6
+              ],
+              "why": "That sentence names the centre's manager. Which sentence says where the fridge stands?"
+            }
+          ],
+          "then": {
+            "id": "m2-h1a",
+            "type": "mcq",
+            "stem": "Where is the community fridge located?",
+            "options": [
+              {
+                "id": "a",
+                "text": "outside the Parkdale Recreation Centre",
+                "why": "Right. Sentence 1.",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "inside a grocery store",
+                "why": "A grocery store is not in the passage.",
+                "trap": "N"
+              },
+              {
+                "id": "c",
+                "text": "in a visitor's kitchen",
+                "why": "KITCHEN is in the passage, but the fridge is not in one. The passage says many visitors have no kitchen.",
+                "trap": "N"
+              }
+            ],
+            "passage": "fridge"
+          }
+        },
+        {
+          "id": "m2-h2",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "How often is the fridge checked?",
+          "passage": "fridge",
+          "correct": [
+            3
+          ],
+          "hint2": "Search for CHECK.",
+          "hint3": "It is sentence 3 or sentence 5.",
+          "then": {
+            "id": "m2-h2a",
+            "type": "mcq",
+            "stem": "How often is the fridge checked?",
+            "options": [
+              {
+                "id": "a",
+                "text": "every morning",
+                "why": "Right. Sentence 3.",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "once a month",
+                "why": "MONTH is in the passage, but it is about when the fridge is busiest.",
+                "trap": "T"
+              },
+              {
+                "id": "c",
+                "text": "every hour",
+                "why": "HOUR is in the passage, but it is about how fast bread and fruit go.",
+                "trap": "T"
+              }
+            ],
+            "passage": "fridge"
+          }
+        },
+        {
+          "id": "m2-h3",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "When do the most people use the fridge?",
+          "passage": "fridge",
+          "correct": [
+            4
+          ],
+          "hint2": "'The most people use it' may be said in one word. What word means that?",
+          "hint3": "It is sentence 4 or sentence 5.",
+          "near": [
+            {
+              "sentences": [
+                5
+              ],
+              "why": "That sentence is about which food goes fast, not when the fridge is used most."
+            }
+          ],
+          "then": {
+            "id": "m2-h3a",
+            "type": "text",
+            "stem": "When do the most people use the fridge?",
+            "model": [
+              "The most people use the fridge at the end of the month, when many families are waiting for their next paycheque."
+            ],
+            "rubric": "sentence2",
+            "prompt": "Answer in a full sentence.",
+            "passage": "fridge"
+          }
+        },
+        {
+          "id": "m2-h4",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "Which foods are taken fastest?",
+          "passage": "fridge",
+          "correct": [
+            5
+          ],
+          "hint2": "'Taken fastest' may be said another way. Look for a short amount of time.",
+          "hint3": "It is sentence 5 or sentence 7.",
+          "near": [
+            {
+              "sentences": [
+                7
+              ],
+              "why": "That sentence is about what the manager wants people to bring, not what is taken fastest."
+            }
+          ],
+          "then": {
+            "id": "m2-h4a",
+            "type": "mcq",
+            "stem": "Which foods are taken fastest?",
+            "options": [
+              {
+                "id": "a",
+                "text": "bread and fruit",
+                "why": "Right. Sentence 5: they disappear within an hour.",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "canned soup",
+                "why": "The passage says canned soup often sits for days.",
+                "trap": "O"
+              },
+              {
+                "id": "c",
+                "text": "food that is ready to eat",
+                "why": "That is in the passage, but it is what the manager asks for.",
+                "trap": "T"
+              }
+            ],
+            "passage": "fridge"
+          }
+        },
+        {
+          "id": "m2-h5",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "What kind of food does the manager want people to donate, and why?",
+          "passage": "fridge",
+          "correct": [
+            7
+          ],
+          "hint2": "Search for DONORS, the people who donate.",
+          "hint3": "It is sentence 6 or sentence 7.",
+          "near": [
+            {
+              "sentences": [
+                6
+              ],
+              "why": "That sentence names the manager, but it is about vandals. Which sentence says what he asks for?"
+            }
+          ],
+          "then": {
+            "id": "m2-h5a",
+            "type": "text",
+            "stem": "What kind of food does the manager want people to donate, and why?",
+            "model": [
+              "The manager wants people to donate food that is ready to eat, because many visitors have no kitchen."
+            ],
+            "rubric": "twoPart3",
+            "prompt": "Answer both parts in a full sentence.",
+            "passage": "fridge"
+          }
+        },
+        {
+          "id": "m2-h6",
+          "type": "verify",
+          "prompt": "Which sentence does the job?",
+          "question": "Who checks the fridge?",
+          "passage": "fridge",
+          "candidates": [
+            {
+              "sentence": 3,
+              "doesJob": true,
+              "why": "Right. Volunteers check it every morning."
+            },
+            {
+              "sentence": 6,
+              "doesJob": false,
+              "why": "That sentence names a person, but it does not say he checks the fridge."
+            }
+          ]
+        },
+        {
+          "id": "m2-h7",
+          "type": "verify",
+          "prompt": "Which sentence does the job?",
+          "question": "Why does the manager ask for ready-to-eat food?",
+          "passage": "fridge",
+          "candidates": [
+            {
+              "sentence": 7,
+              "doesJob": true,
+              "why": "Right. Because many visitors have no kitchen."
+            },
+            {
+              "sentence": 2,
+              "doesJob": false,
+              "why": "That sentence has FOOD in it, but it explains how the fridge works, not why he asks for ready-to-eat food."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "check",
+      "title": "Check",
+      "mode": "solo",
+      "minutes": 12,
+      "tutorNote": "Mastery check on a new passage. Guide threshold: the correct sentence tapped on first attempt for nine of ten literal questions across two new passages on two days, with no more than one hint in total. This passage plus the home passage give eleven.",
+      "steps": [
+        {
+          "id": "m2-c1",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "How frequently do the night buses run?",
+          "passage": "night",
+          "correct": [
+            2
+          ],
+          "hint2": "'How frequently' means how often. Look for an amount of time.",
+          "hint3": "It is sentence 1 or sentence 2.",
+          "near": [
+            {
+              "sentences": [
+                1
+              ],
+              "why": "That sentence says how many routes there are, not how often the buses run."
+            }
+          ],
+          "then": {
+            "id": "m2-c1a",
+            "type": "mcq",
+            "stem": "How frequently do the night buses run?",
+            "options": [
+              {
+                "id": "a",
+                "text": "every thirty minutes",
+                "why": "Right. Sentence 2.",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "every hour",
+                "why": "That is not in the passage.",
+                "trap": "N"
+              },
+              {
+                "id": "c",
+                "text": "three times a night",
+                "why": "THREE is in the passage, but it is the number of routes.",
+                "trap": "T"
+              }
+            ],
+            "passage": "night"
+          }
+        },
+        {
+          "id": "m2-c2",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "Who uses the night buses most?",
+          "passage": "night",
+          "correct": [
+            4
+          ],
+          "hint2": "People who use a bus are called RIDERS.",
+          "hint3": "It is sentence 4 or sentence 6.",
+          "near": [
+            {
+              "sentences": [
+                6
+              ],
+              "why": "That sentence is about the quietest hour, not who rides most."
+            }
+          ],
+          "then": {
+            "id": "m2-c2a",
+            "type": "mcq",
+            "stem": "Who uses the night buses most?",
+            "options": [
+              {
+                "id": "a",
+                "text": "restaurant and hospital workers",
+                "why": "Right. Sentence 4.",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "students",
+                "why": "Students are not in the passage.",
+                "trap": "N"
+              },
+              {
+                "id": "c",
+                "text": "drivers",
+                "why": "Drivers are in the passage, but they drive the buses.",
+                "trap": "T"
+              }
+            ],
+            "passage": "night"
+          }
+        },
+        {
+          "id": "m2-c3",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "What did late workers have to do before the night buses began?",
+          "passage": "night",
+          "correct": [
+            3
+          ],
+          "hint2": "Search for BEFORE.",
+          "hint3": "It is sentence 1 or sentence 3.",
+          "near": [
+            {
+              "sentences": [
+                1
+              ],
+              "why": "That sentence says when the night buses started. Which sentence tells what people did before?"
+            }
+          ],
+          "then": {
+            "id": "m2-c3a",
+            "type": "text",
+            "stem": "What did late workers have to do before the night buses began?",
+            "model": [
+              "Before the night buses began, people who worked late had to walk or pay for a taxi."
+            ],
+            "rubric": "sentence2",
+            "prompt": "Answer in a full sentence.",
+            "passage": "night"
+          }
+        },
+        {
+          "id": "m2-c4",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "Does a night ride cost more than a daytime ride?",
+          "passage": "night",
+          "correct": [
+            5
+          ],
+          "hint2": "Search for COSTS.",
+          "hint3": "It is sentence 5 or sentence 6.",
+          "then": {
+            "id": "m2-c4a",
+            "type": "mcq",
+            "stem": "Does a night ride cost more than a daytime ride?",
+            "options": [
+              {
+                "id": "a",
+                "text": "No. It costs the same.",
+                "why": "Right. Sentence 5.",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "Yes. It costs more.",
+                "why": "Sentence 5 says a night ride costs the same.",
+                "trap": "O"
+              },
+              {
+                "id": "c",
+                "text": "A monthly pass does not work at night.",
+                "why": "Sentence 5 says a monthly pass works on every route.",
+                "trap": "O"
+              }
+            ],
+            "passage": "night"
+          }
+        },
+        {
+          "id": "m2-c5",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "When is a night bus least busy?",
+          "passage": "night",
+          "correct": [
+            6
+          ],
+          "hint2": "'Least busy' may be said in one word. What word means that?",
+          "hint3": "It is sentence 2 or sentence 6.",
+          "near": [
+            {
+              "sentences": [
+                2
+              ],
+              "why": "That sentence gives the hours the buses run, not the least busy time."
+            }
+          ],
+          "then": {
+            "id": "m2-c5a",
+            "type": "mcq",
+            "stem": "When is a night bus least busy?",
+            "options": [
+              {
+                "id": "a",
+                "text": "between 3 and 4 a.m.",
+                "why": "Right. Sentence 6: the quietest hour.",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "at midnight",
+                "why": "Midnight is in the passage, but it is when the night buses start.",
+                "trap": "T"
+              },
+              {
+                "id": "c",
+                "text": "at 11:45 p.m.",
+                "why": "That time is in the passage, but it is when the last bus used to leave.",
+                "trap": "T"
+              }
+            ],
+            "passage": "night"
+          }
+        },
+        {
+          "id": "m2-c6",
+          "type": "find",
+          "prompt": "Tap the sentence that proves the answer.",
+          "question": "What will the city decide after March?",
+          "passage": "night",
+          "correct": [
+            7
+          ],
+          "hint2": "Search for DECIDE.",
+          "hint3": "It is sentence 5 or sentence 7.",
+          "then": {
+            "id": "m2-c6a",
+            "type": "text",
+            "stem": "What will the city decide after March?",
+            "model": [
+              "After March, the city will decide whether to add a fourth night bus route."
+            ],
+            "rubric": "sentence2",
+            "prompt": "Answer in a full sentence.",
+            "passage": "night"
+          }
+        },
+        {
+          "id": "m2-c7",
+          "type": "verify",
+          "prompt": "Which sentence does the job?",
+          "question": "How many night bus routes are there now?",
+          "passage": "night",
+          "candidates": [
+            {
+              "sentence": 1,
+              "doesJob": true,
+              "why": "Right. Three routes started in September."
+            },
+            {
+              "sentence": 7,
+              "doesJob": false,
+              "why": "That sentence is about a fourth route the city might add later, not how many there are now."
+            }
+          ]
+        },
+        {
+          "id": "m2-c8",
+          "type": "verify",
+          "prompt": "Which sentence does the job?",
+          "question": "When did the last bus leave before the change?",
+          "passage": "night",
+          "candidates": [
+            {
+              "sentence": 3,
+              "doesJob": true,
+              "why": "Right. At 11:45 p.m."
+            },
+            {
+              "sentence": 2,
+              "doesJob": false,
+              "why": "That sentence gives the hours of the new night buses, not the old last bus."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

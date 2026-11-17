@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.cloudfunctions.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; base-uri 'self'; form-action 'self'">
+<link rel="icon" href="../faviconTW.png" type="image/png">
+<title>Literacy | TutorWise</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Poppins:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="app.css?v=3">
+</head>
+<body>
+<div class="app">
+  <aside class="rail" id="rail">
+    <div class="mobile-top">
+      <a href="#home" aria-label="TutorWise Literacy home"><img src="../TW_logo.png" alt="TutorWise"></a>
+      <button class="btn ghost sm" id="menuBtn" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+    </div>
+    <a class="brand desk" href="#home"><img src="../TW_logo.png" alt="TutorWise"><small>Literacy <span>· OSSLT prep</span></small></a>
+    <a class="rail-back" id="railBack" href="#home" hidden>← All modules</a>
+    <div class="rail-mod" id="railMod" hidden></div>
+    <ul class="nav" id="nav"></ul>
+    <div class="rail-foot">
+      <span id="who"></span>
+      <span id="overall"></span>
+      <span id="saveNote" role="status"></span>
+      <button class="linkbtn" id="signOut" type="button" hidden>Sign out</button>
+    </div>
+  </aside>
+  <main id="main"><div class="wrap"><p class="muted">Loading…</p></div></main>
+</div>
+
+<noscript><p style="padding:20px">This page needs JavaScript turned on.</p></noscript>
+<!-- Content first (passages, modules, marking scales), then the page itself. ?v= tags: bump them when files change. -->
+<script src="content/base.js?v=3"></script>
+<script src="content/m1.js?v=3"></script>
+<script src="content/m2.js?v=3"></script>
+<script src="content/m3.js?v=3"></script>
+<script src="content/m4.js?v=3"></script>
+<script src="content/m5.js?v=3"></script>
+<script src="content/m6.js?v=3"></script>
+<script src="student.js?v=3"></script>
+<script src="teacher.js?v=3"></script>
+<script type="module" src="backend.js?v=3"></script>
+</body>
+</html>

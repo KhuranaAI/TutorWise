@@ -1,0 +1,2175 @@
+{
+  "schemaVersion": 1,
+  "id": "m8-sentences-stand-alone",
+  "number": 8,
+  "title": "Sentences that stand alone",
+  "goal": "A sentence has a who and a did, and it can stand alone. Spot fragments and run-ons, and fix them.",
+  "card": {
+    "title": "WHO + DID · STANDS ALONE",
+    "lines": [
+      "A SENTENCE has a WHO and a DID, and it can stand alone.",
+      "The WHO can be a person or a thing. The DID can be an action, or IS or WAS.",
+      "A FRAGMENT is missing a piece, or it leans on another sentence. Watch for BECAUSE, WHEN, IF, ALTHOUGH, WHICH or an -ING word at the start. Then read to the end: does it finish the thought?",
+      "A RUN-ON is two sentences glued together with nothing, or with only a comma.",
+      "Fix a run-on three ways: a period · a comma + AND, BUT or SO · a joining word like BECAUSE.",
+      "A comma alone cannot join two whole sentences. After the comma, use AND, BUT or SO.",
+      "Putting sentences in order: a sentence that starts with THIS, THAT or FOR EXAMPLE points back, so it cannot come first. FINALLY gives the last point.",
+      "Linking words: FOR EXAMPLE = one case · HOWEVER, BUT = the other way · BECAUSE = the reason · SO, AS A RESULT = what happened because of it · ALSO = one more · THEN, NEXT = the next step · FINALLY = the last one."
+    ]
+  },
+  "traps": {
+    "splice": {
+      "label": "comma alone",
+      "feedback": "A comma alone cannot join two whole sentences. It needs a partner word: AND, BUT or SO."
+    },
+    "runon": {
+      "label": "run-on",
+      "feedback": "Two sentences are still glued together."
+    },
+    "frag": {
+      "label": "fragment",
+      "feedback": "That is still not a whole sentence. Who? Did what? Can it stand alone?"
+    },
+    "link": {
+      "label": "wrong linking word",
+      "feedback": "That linking word does not fit how the two ideas connect."
+    },
+    "cap": {
+      "label": "capital letter",
+      "feedback": "Check the capital letters: the first word, names, and the word I."
+    },
+    "punct": {
+      "label": "punctuation",
+      "feedback": "Check the end mark and where the comma sits."
+    }
+  },
+  "rubrics": {
+    "fix2": {
+      "max": 2,
+      "levels": [
+        {
+          "score": 2,
+          "description": "A complete sentence, correctly punctuated, with the meaning kept. Any correct fix counts."
+        },
+        {
+          "score": 1,
+          "description": "The main problem is fixed, but there is another slip (a missing capital or end mark)."
+        },
+        {
+          "score": 0,
+          "description": "Still a fragment or a run-on."
+        }
+      ]
+    }
+  },
+  "passages": {
+    "note": {
+      "title": "A Note About Practice (with five mistakes)",
+      "format": "student writing to edit",
+      "level": "Foundation",
+      "sentences": [
+        "Our team practises on tuesday and Thursday after school.",
+        "The gym was closed last week, so we practised outside.",
+        "it was cold, but nobody complained.",
+        "Coach Bell brought hot chocolate for everyone",
+        "After practice we, picked up the cones.",
+        "The game is on Saturday, we are ready."
+      ],
+      "tutorNote": "The mistakes are planted on purpose: a day without a capital (1), no capital at the start (3), no end mark (4), a comma in the wrong place (5), a comma alone joining two sentences (6). Sentence 2 is correct. There are no spelling mistakes: 'practises' and 'practised' are the verb, 'practice' is the noun."
+    }
+  },
+  "sections": [
+    {
+      "id": "learn",
+      "title": "Who and did",
+      "mode": "tutor",
+      "minutes": 10,
+      "tutorNote": "I DO. A sentence needs a doer and an action and must make sense alone. Reveal the four examples one at a time; the fourth shows that a line can start with WHEN and still be a whole sentence. Then sort the eight lines together; for each one the student asks 'Who? Did what? Can it stand alone?' A capital letter does not make a sentence: a fragment can start with one.",
+      "steps": [
+        {
+          "id": "m8-learn-1",
+          "type": "explain",
+          "text": [
+            "A sentence has a WHO and a DID, and it can stand alone.",
+            "The WHO can be a person or a thing. The DID can be an action, or IS or WAS.",
+            "If it starts with BECAUSE or WHEN and never tells what happened, it is a FRAGMENT. It is leaning on another sentence.",
+            "If two sentences are glued together with nothing, or with only a comma, it is a RUN-ON.",
+            "Test every line: Who? Did what? Can it stand alone?"
+          ],
+          "showCard": true
+        },
+        {
+          "id": "m8-learn-2",
+          "type": "worked",
+          "title": "Watch four",
+          "reveals": [
+            {
+              "label": "Line 1",
+              "text": "The bell rang."
+            },
+            {
+              "label": "Test",
+              "text": "Who? The bell. Did what? Rang. Can it stand alone? Yes. SENTENCE."
+            },
+            {
+              "label": "Line 2",
+              "text": "When the bell rang."
+            },
+            {
+              "label": "Test",
+              "text": "Who? The bell. Did what? Rang. But WHEN makes it lean. When the bell rang… what happened? It cannot stand alone. FRAGMENT."
+            },
+            {
+              "label": "Line 3",
+              "text": "The bell rang, everyone stood up."
+            },
+            {
+              "label": "Test",
+              "text": "'The bell rang' is a sentence. 'Everyone stood up' is another one. Only a comma joins them. RUN-ON."
+            },
+            {
+              "label": "Line 4",
+              "text": "When the bell rang, everyone stood up."
+            },
+            {
+              "label": "Test",
+              "text": "It starts with WHEN, but this time it finishes the thought: everyone stood up. A leaning part, a comma, then a whole sentence. SENTENCE."
+            }
+          ]
+        },
+        {
+          "id": "m8-learn-3",
+          "type": "sort",
+          "prompt": "Sentence, fragment or run-on? Ask: Who? Did what? Can it stand alone?",
+          "categories": [
+            {
+              "id": "s",
+              "label": "SENTENCE"
+            },
+            {
+              "id": "f",
+              "label": "FRAGMENT"
+            },
+            {
+              "id": "r",
+              "label": "RUN-ON"
+            }
+          ],
+          "cards": [
+            {
+              "text": "Because the coach was late.",
+              "category": "f",
+              "why": "BECAUSE makes it lean on another sentence. What happened because he was late?"
+            },
+            {
+              "text": "Priya caught the bus.",
+              "category": "s",
+              "why": "Who? Priya. Did what? Caught the bus. It stands alone."
+            },
+            {
+              "text": "The stand holds a pump and wrenches people use it every day.",
+              "category": "r",
+              "why": "Two sentences with nothing between them. The second one starts at PEOPLE."
+            },
+            {
+              "text": "Running to the stop with her bag open.",
+              "category": "f",
+              "why": "There is no WHO. Who was running?"
+            },
+            {
+              "text": "After the survey, the school opened a quiet room.",
+              "category": "s",
+              "why": "Who? The school. Did what? Opened a quiet room. It stands alone."
+            },
+            {
+              "text": "Marcus grinned, the coach did not notice.",
+              "category": "r",
+              "why": "Two sentences joined by only a comma."
+            },
+            {
+              "text": "Which is why the snack counter matters.",
+              "category": "f",
+              "why": "WHICH makes it lean on the sentence before it."
+            },
+            {
+              "text": "The driver waited.",
+              "category": "s",
+              "why": "Who? The driver. Did what? Waited. Short, but it stands alone."
+            }
+          ],
+          "hint2": "Is the WHO or the DID missing? Or does it start with a leaning word, like BECAUSE or WHEN, and never finish the thought? Then it is a FRAGMENT.",
+          "hint3": "Are two whole sentences glued together with nothing, or with only a comma? Then it is a RUN-ON."
+        }
+      ]
+    },
+    {
+      "id": "fix",
+      "title": "Fix it",
+      "mode": "tutor",
+      "minutes": 12,
+      "tutorNote": "WE DO. A fragment is fixed by adding the missing piece or joining it to a full sentence. A run-on is fixed three ways: a period; a comma with AND, BUT or SO; or a joining word like BECAUSE. The student reads each fixed sentence aloud to hear that it stands alone. Adding a comma alone is the error to expect. Typed fixes go to the review queue; score 0 to 2, and accept any correct fix, not only the one shown.",
+      "steps": [
+        {
+          "id": "m8-f0",
+          "type": "explain",
+          "text": [
+            "To fix a FRAGMENT, add the missing piece, or join it to a full sentence.",
+            "To fix a RUN-ON, cut it or join it properly.",
+            "Cut it with a period.",
+            "Or join it with a comma and a partner word: AND, BUT or SO.",
+            "Or join it with a word like BECAUSE.",
+            "A comma alone cannot join two whole sentences."
+          ],
+          "showCard": true
+        },
+        {
+          "id": "m8-f1",
+          "type": "mcq",
+          "stem": "Fix the fragment: \"Because the coach was late.\" Which one is a whole sentence?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Because the coach was late, practice started at 7:05.",
+              "why": "Right. Now it tells what happened because he was late.",
+              "correct": true
+            },
+            {
+              "id": "b",
+              "text": "Because the coach was very late.",
+              "why": "It is longer, but it still leans. What happened because he was late?",
+              "trap": "frag"
+            },
+            {
+              "id": "c",
+              "text": "Because, the coach was late.",
+              "why": "A comma does not help. BECAUSE still makes it lean.",
+              "trap": "frag"
+            }
+          ],
+          "hint2": "Read each one alone. Who? Did what? Can it stand alone?",
+          "hint3": "It is (a) or (b). Which one tells what happened?"
+        },
+        {
+          "id": "m8-f2",
+          "type": "mcq",
+          "stem": "Fix the run-on: \"The stand holds a pump and wrenches people use it every day.\" Which one is correct?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The stand holds a pump and wrenches, people use it every day.",
+              "why": "A comma alone cannot join two whole sentences. It needs a partner word.",
+              "trap": "splice"
+            },
+            {
+              "id": "b",
+              "text": "The stand holds a pump and wrenches. People use it every day.",
+              "why": "Right. A period cuts it into two sentences.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "The stand holds a pump and wrenches people, use it every day.",
+              "why": "The comma is in the wrong place, and the two sentences are still glued together.",
+              "trap": "runon"
+            }
+          ],
+          "hint2": "A comma alone cannot join two whole sentences. Look for a period, or a comma with AND, BUT or SO, or a joining word like BECAUSE.",
+          "hint3": "It is (a) or (b). Which one has a period between the two sentences?"
+        },
+        {
+          "id": "m8-f3",
+          "type": "mcq",
+          "stem": "Fix the run-on: \"Marcus grinned, the coach did not notice.\" Which one is correct?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Marcus grinned the coach did not notice.",
+              "why": "Taking the comma out leaves two sentences glued together.",
+              "trap": "runon"
+            },
+            {
+              "id": "b",
+              "text": "Marcus grinned, but the coach did not notice.",
+              "why": "Right. A comma and BUT join the two sentences.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "Marcus grinned, the coach, did not notice.",
+              "why": "More commas do not help. A comma needs a partner word.",
+              "trap": "splice"
+            }
+          ],
+          "hint2": "A comma alone cannot join two whole sentences. Look for a period, or a comma with AND, BUT or SO, or a joining word like BECAUSE.",
+          "hint3": "It is (a) or (b). Which one has a partner word?"
+        },
+        {
+          "id": "m8-f4",
+          "type": "text",
+          "prompt": "Say it out loud first, then type it.",
+          "stem": "Fix this fragment so it can stand alone.",
+          "original": "Running to the stop with her bag open.",
+          "originalLabel": "Fix this",
+          "model": [
+            "Priya was running to the stop with her bag open."
+          ],
+          "rubric": "fix2"
+        },
+        {
+          "id": "m8-f5",
+          "type": "text",
+          "prompt": "Say it out loud first, then type it.",
+          "stem": "The second part is a fragment. Join the two parts into one sentence.",
+          "original": "Tickets earn a theatre very little. Which is why the snack counter matters.",
+          "originalLabel": "Fix this",
+          "model": [
+            "Tickets earn a theatre very little, which is why the snack counter matters."
+          ],
+          "rubric": "fix2"
+        },
+        {
+          "id": "m8-f6",
+          "type": "text",
+          "prompt": "Say it out loud first, then type it.",
+          "stem": "Fix this run-on. Use a period, or a comma with AND, BUT or SO.",
+          "original": "The room was quiet students could finally relax.",
+          "originalLabel": "Fix this",
+          "model": [
+            "The room was quiet, and students could finally relax.",
+            "This works too: The room was quiet. Students could finally relax."
+          ],
+          "rubric": "fix2"
+        }
+      ]
+    },
+    {
+      "id": "own",
+      "title": "Sort and fix on your own",
+      "mode": "solo",
+      "minutes": 12,
+      "tutorNote": "YOU DO: ten new lines to sort, then five to fix. Guide threshold: nine of ten sorted correctly and four of five fixed. One line starts with BECAUSE and is still a whole sentence; notice whether the student reads to the end before deciding.",
+      "steps": [
+        {
+          "id": "m8-o1",
+          "type": "sort",
+          "prompt": "Sentence, fragment or run-on? Ask: Who? Did what? Can it stand alone?",
+          "categories": [
+            {
+              "id": "s",
+              "label": "SENTENCE"
+            },
+            {
+              "id": "f",
+              "label": "FRAGMENT"
+            },
+            {
+              "id": "r",
+              "label": "RUN-ON"
+            }
+          ],
+          "cards": [
+            {
+              "text": "The cart rolls down the front hall every morning.",
+              "category": "s",
+              "why": "Who? The cart. Did what? Rolls down the hall. It stands alone."
+            },
+            {
+              "text": "When the bell rang at 8:15.",
+              "category": "f",
+              "why": "WHEN makes it lean. What happened when the bell rang?"
+            },
+            {
+              "text": "The geese flew south, the lake was already frozen.",
+              "category": "r",
+              "why": "Two sentences joined by only a comma."
+            },
+            {
+              "text": "After practice, we ate pizza.",
+              "category": "s",
+              "why": "Who? We. Did what? Ate pizza. The opening words are fine."
+            },
+            {
+              "text": "The girl with the red backpack.",
+              "category": "f",
+              "why": "There is a WHO but no DID. What did she do?"
+            },
+            {
+              "text": "I missed the bus I had to walk.",
+              "category": "r",
+              "why": "Two sentences with nothing between them. The second starts at the second I."
+            },
+            {
+              "text": "Although the store was closing.",
+              "category": "f",
+              "why": "ALTHOUGH makes it lean. What happened although it was closing?"
+            },
+            {
+              "text": "She laughed.",
+              "category": "s",
+              "why": "Who? She. Did what? Laughed. Two words, and it stands alone."
+            },
+            {
+              "text": "The test was hard, nobody finished early.",
+              "category": "r",
+              "why": "Two sentences joined by only a comma."
+            },
+            {
+              "text": "Because it was raining, the game was moved indoors.",
+              "category": "s",
+              "why": "It starts with BECAUSE, but it finishes the thought: the game was moved indoors."
+            }
+          ],
+          "hint2": "Is the WHO or the DID missing? Or does it start with a leaning word, like BECAUSE or WHEN, and never finish the thought? Then it is a FRAGMENT.",
+          "hint3": "Are two whole sentences glued together with nothing, or with only a comma? Then it is a RUN-ON."
+        },
+        {
+          "id": "m8-o2",
+          "type": "mcq",
+          "stem": "Fix the fragment: \"When the bell rang at 8:15.\" Which one is a whole sentence?",
+          "options": [
+            {
+              "id": "a",
+              "text": "When the loud bell rang at 8:15.",
+              "why": "It is longer, but it still leans. What happened when the bell rang?",
+              "trap": "frag"
+            },
+            {
+              "id": "b",
+              "text": "When the bell rang at 8:15, everyone was already in class.",
+              "why": "Right. Now it tells what happened when the bell rang.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "When the bell rang. At 8:15.",
+              "why": "Now there are two pieces, and neither one can stand alone.",
+              "trap": "frag"
+            }
+          ],
+          "hint2": "Read each one alone. Who? Did what? Can it stand alone?",
+          "hint3": "It is (a) or (b). Which one tells what happened?"
+        },
+        {
+          "id": "m8-o3",
+          "type": "mcq",
+          "stem": "Fix the run-on: \"I missed the bus I had to walk.\" Which one is correct?",
+          "options": [
+            {
+              "id": "a",
+              "text": "I missed the bus, I had to walk.",
+              "why": "A comma alone cannot join two whole sentences. It needs a partner word.",
+              "trap": "splice"
+            },
+            {
+              "id": "b",
+              "text": "I missed the bus I, had to walk.",
+              "why": "The comma is in the wrong place, and the two sentences are still glued together.",
+              "trap": "runon"
+            },
+            {
+              "id": "c",
+              "text": "I missed the bus, so I had to walk.",
+              "why": "Right. A comma and SO join the two sentences.",
+              "correct": true
+            }
+          ],
+          "hint2": "A comma alone cannot join two whole sentences. Look for a period, or a comma with AND, BUT or SO, or a joining word like BECAUSE.",
+          "hint3": "It is (a) or (c). Which one has a partner word?"
+        },
+        {
+          "id": "m8-o4",
+          "type": "mcq",
+          "stem": "Fix the run-on: \"The test was hard, nobody finished early.\" Which one is correct?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The test was hard, so nobody finished early.",
+              "why": "Right. A comma and SO join the two sentences.",
+              "correct": true
+            },
+            {
+              "id": "b",
+              "text": "The test was hard nobody finished early.",
+              "why": "Taking the comma out leaves two sentences glued together.",
+              "trap": "runon"
+            },
+            {
+              "id": "c",
+              "text": "The test was hard, nobody, finished early.",
+              "why": "More commas do not help. A comma needs a partner word.",
+              "trap": "splice"
+            }
+          ],
+          "hint2": "A comma alone cannot join two whole sentences. Look for a period, or a comma with AND, BUT or SO, or a joining word like BECAUSE.",
+          "hint3": "It is (a) or (b). Which one has a partner word?"
+        },
+        {
+          "id": "m8-o5",
+          "type": "text",
+          "prompt": "Say it out loud first, then type it.",
+          "stem": "Fix this fragment so it can stand alone.",
+          "original": "The girl with the red backpack.",
+          "originalLabel": "Fix this",
+          "model": [
+            "The girl with the red backpack sat beside me."
+          ],
+          "rubric": "fix2"
+        },
+        {
+          "id": "m8-o6",
+          "type": "text",
+          "prompt": "Say it out loud first, then type it.",
+          "stem": "Fix this run-on. Use a period, or a comma with AND, BUT or SO.",
+          "original": "The geese flew south, the lake was already frozen.",
+          "originalLabel": "Fix this",
+          "model": [
+            "The geese flew south. The lake was already frozen.",
+            "This works too: The geese flew south because the lake was already frozen."
+          ],
+          "rubric": "fix2"
+        }
+      ]
+    },
+    {
+      "id": "commas",
+      "title": "Capitals, periods and commas",
+      "mode": "tutor",
+      "minutes": 10,
+      "tutorNote": "WE DO. A few small rules that earn sure points: a capital at the start of every sentence, for names and for I; an end mark on every sentence; a comma before AND, BUT or SO when it joins two whole sentences, after opening words that tell when or where, and between the things in a list. Spelling is not the issue here; sentences and punctuation are.",
+      "steps": [
+        {
+          "id": "m8-k0",
+          "type": "explain",
+          "text": [
+            "A few small rules.",
+            "CAPITALS: the first word of a sentence, the names of people, places and days, and the word I.",
+            "END MARKS: every sentence ends with a period, a question mark or an exclamation mark.",
+            "A COMMA THAT JOINS: put one before AND, BUT or SO when it joins two whole sentences.",
+            "A COMMA AFTER OPENING WORDS: put one after opening words that tell when or where, like 'After the game,'.",
+            "COMMAS IN A LIST: put them between the things, like 'milk, bread and eggs'."
+          ],
+          "showCard": false
+        },
+        {
+          "id": "m8-k1",
+          "type": "mcq",
+          "stem": "Which one is written correctly?",
+          "options": [
+            {
+              "id": "a",
+              "text": "my brother and i took the bus to Lakeview.",
+              "why": "The first word and the word I both need capitals.",
+              "trap": "cap"
+            },
+            {
+              "id": "b",
+              "text": "My brother and I took the bus to Lakeview.",
+              "why": "Right. Capitals for the first word, for I and for the name of the place.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "My brother and I took the bus to lakeview.",
+              "why": "Lakeview is the name of a place. It needs a capital.",
+              "trap": "cap"
+            }
+          ],
+          "hint2": "Check the capitals, the end mark and the comma.",
+          "hint3": "It is (b) or (c). Look at the name of the place."
+        },
+        {
+          "id": "m8-k2",
+          "type": "mcq",
+          "stem": "Which one is written correctly?",
+          "options": [
+            {
+              "id": "a",
+              "text": "After the game, we walked home.",
+              "why": "Right. The comma comes after the opening words.",
+              "correct": true
+            },
+            {
+              "id": "b",
+              "text": "After the game we, walked home.",
+              "why": "The comma splits WE from WALKED. It belongs after the opening words.",
+              "trap": "punct"
+            },
+            {
+              "id": "c",
+              "text": "After, the game we walked home.",
+              "why": "The comma comes too early. The opening words are 'After the game'.",
+              "trap": "punct"
+            }
+          ],
+          "hint2": "Check the capitals, the end mark and the comma.",
+          "hint3": "The opening words are 'After the game'. Where do they end?"
+        },
+        {
+          "id": "m8-k3",
+          "type": "mcq",
+          "stem": "Which one is written correctly?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The store was closing but, the clerk let Ana in.",
+              "why": "The comma goes BEFORE the partner word, not after it.",
+              "trap": "punct"
+            },
+            {
+              "id": "b",
+              "text": "The store was closing, the clerk let Ana in.",
+              "why": "A comma alone cannot join two whole sentences. It needs a partner word.",
+              "trap": "splice"
+            },
+            {
+              "id": "c",
+              "text": "The store was closing, but the clerk let Ana in.",
+              "why": "Right. A comma, then BUT, joins the two sentences.",
+              "correct": true
+            }
+          ],
+          "hint2": "Check the capitals, the end mark and the comma.",
+          "hint3": "It is (a) or (c). Does the comma come before BUT or after it?"
+        },
+        {
+          "id": "m8-k4",
+          "type": "mcq",
+          "stem": "Which one is written correctly?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Where did Priya work.",
+              "why": "It is a question. It needs a question mark.",
+              "trap": "punct"
+            },
+            {
+              "id": "b",
+              "text": "Where did Priya work?",
+              "why": "Right. A capital to start, and a question mark to end.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "where did Priya work?",
+              "why": "The first word needs a capital.",
+              "trap": "cap"
+            }
+          ],
+          "hint2": "Check the capitals, the end mark and the comma.",
+          "hint3": "It is (a) or (b). Is it a question?"
+        },
+        {
+          "id": "m8-k5",
+          "type": "mcq",
+          "stem": "Which one is written correctly?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The stand holds a pump, wrenches and screwdrivers.",
+              "why": "Right. A comma separates the things in a list.",
+              "correct": true
+            },
+            {
+              "id": "b",
+              "text": "The stand holds a pump wrenches and screwdrivers.",
+              "why": "A list needs a comma between PUMP and WRENCHES.",
+              "trap": "punct"
+            },
+            {
+              "id": "c",
+              "text": "The stand holds, a pump wrenches and screwdrivers.",
+              "why": "The comma is in the wrong place. It goes between the things in the list.",
+              "trap": "punct"
+            }
+          ],
+          "hint2": "Check the capitals, the end mark and the comma.",
+          "hint3": "It is (a) or (b). Where does a list need a comma?"
+        },
+        {
+          "id": "m8-k6",
+          "type": "mcq",
+          "stem": "Which one is written correctly?",
+          "options": [
+            {
+              "id": "a",
+              "text": "It was raining so, the game was moved indoors.",
+              "why": "The comma goes BEFORE the partner word, not after it.",
+              "trap": "punct"
+            },
+            {
+              "id": "b",
+              "text": "It was raining, so the game was moved indoors.",
+              "why": "Right. A comma, then SO, joins the two sentences.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "It was raining, So the game was moved indoors.",
+              "why": "SO is in the middle of the sentence. It does not need a capital.",
+              "trap": "cap"
+            }
+          ],
+          "hint2": "Check the capitals, the end mark and the comma.",
+          "hint3": "It is (a) or (b). Does the comma come before SO or after it?"
+        }
+      ]
+    },
+    {
+      "id": "test-style",
+      "title": "Test-style questions",
+      "mode": "tutor",
+      "minutes": 14,
+      "tutorNote": "WE DO. Four kinds of writing question that come up often: which version is correct, the best way to join two sentences, putting sentences in order, and choosing the linking word. For the ordering question, find the sentence that starts with THIS and the one that starts with FINALLY first; neither can come first. For the linking word, ask how the second sentence connects to the first: an example, the other way, a reason, a result.",
+      "steps": [
+        {
+          "id": "m8-ts0",
+          "type": "explain",
+          "text": [
+            "Here are four kinds of writing question you will often see.",
+            "Which one is written correctly?",
+            "What is the best way to join two sentences?",
+            "What order do the sentences go in?",
+            "Which linking word fits?",
+            "The first two use the rules you know. The last two are about how ideas connect."
+          ],
+          "showCard": false
+        },
+        {
+          "id": "m8-ts1",
+          "type": "mcq",
+          "stem": "Which one is punctuated correctly?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The room was busy, students used it 62 times.",
+              "why": "A comma alone cannot join two whole sentences.",
+              "trap": "splice"
+            },
+            {
+              "id": "b",
+              "text": "The room was busy. Students used it 62 times.",
+              "why": "Right. Two sentences, each with its own period.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "The room was busy students used it 62 times.",
+              "why": "Two sentences with nothing between them.",
+              "trap": "runon"
+            },
+            {
+              "id": "d",
+              "text": "The room was busy, and used it 62 times.",
+              "why": "After AND there is no WHO. Who used it 62 times?",
+              "trap": "frag"
+            }
+          ],
+          "hint2": "A comma alone cannot join two whole sentences. Look for a period, or a comma with AND, BUT or SO, or a joining word like BECAUSE.",
+          "hint3": "It is (a) or (b). Which one cuts the two sentences apart?"
+        },
+        {
+          "id": "m8-ts2",
+          "type": "mcq",
+          "stem": "Choose the best way to join these two sentences: \"The repair shop is far away. Many students ride with flat tires.\"",
+          "options": [
+            {
+              "id": "a",
+              "text": "The repair shop is far away, many students ride with flat tires.",
+              "why": "A comma alone cannot join two whole sentences.",
+              "trap": "splice"
+            },
+            {
+              "id": "b",
+              "text": "Because the repair shop is far away, many students ride with flat tires.",
+              "why": "Right. BECAUSE shows that the first idea is the reason for the second.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "The repair shop is far away many students ride with flat tires.",
+              "why": "Two sentences with nothing between them.",
+              "trap": "runon"
+            },
+            {
+              "id": "d",
+              "text": "The repair shop is far away and flat tires.",
+              "why": "The second half has no WHO and no DID. It is not a complete idea.",
+              "trap": "frag"
+            }
+          ],
+          "hint2": "A comma alone cannot join two whole sentences. Look for a period, or a comma with AND, BUT or SO, or a joining word like BECAUSE.",
+          "hint3": "It is (a) or (b). Which one uses a joining word?"
+        },
+        {
+          "id": "m8-ts3",
+          "type": "explain",
+          "text": [
+            "To put sentences in order, look for the pointing words.",
+            "THIS and THAT point back to something. They cannot come first.",
+            "FOR EXAMPLE gives an example of the sentence before it. So it cannot come first.",
+            "FINALLY gives the last point.",
+            "Time words help too: AT FIRST, THEN, AFTER THAT, IN THE END."
+          ],
+          "showCard": false
+        },
+        {
+          "id": "m8-ts4",
+          "type": "order",
+          "prompt": "Put these four sentences in order.",
+          "sentences": [
+            {
+              "text": "Theatres pop fresh popcorn even when they have enough."
+            },
+            {
+              "text": "The smell fills the lobby, and people line up to buy some.",
+              "why": "THE SMELL has to come from somewhere. Which sentence tells where the smell comes from?"
+            },
+            {
+              "text": "This shows that the smell works like an ad.",
+              "why": "THIS points back to the smell and the line-up. They have to come first."
+            },
+            {
+              "text": "Finally, the theatre makes more money from snacks than from tickets.",
+              "why": "FINALLY gives the last point. And THIS SHOWS has to come right after the smell and the line-up it explains."
+            }
+          ],
+          "after": "Right. THIS SHOWS comes right after what it explains, and FINALLY gives the last point.",
+          "hint2": "Find the sentence that starts with THIS and the one that starts with FINALLY. Neither can come first.",
+          "hint3": "Start with the sentence about popping the popcorn."
+        },
+        {
+          "id": "m8-ts6",
+          "type": "explain",
+          "text": [
+            "A linking word tells the reader how two ideas connect.",
+            "FOR EXAMPLE: here is one case.",
+            "HOWEVER and BUT: this goes the other way.",
+            "BECAUSE: here is the reason.",
+            "SO and AS A RESULT: here is what happened because of it.",
+            "They are all on the card."
+          ],
+          "showCard": false
+        },
+        {
+          "id": "m8-ts5",
+          "type": "mcq",
+          "stem": "Choose the linking word or words that fit: \"Thrift shopping takes patience. _____, many teens say the hunt is the best part.\"",
+          "options": [
+            {
+              "id": "a",
+              "text": "For example",
+              "why": "The second sentence is not an example of patience. It goes the other way.",
+              "trap": "link"
+            },
+            {
+              "id": "b",
+              "text": "However",
+              "why": "Right. The second sentence goes the other way: it takes patience, but teens like the hunt.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "Because",
+              "why": "BECAUSE gives a reason. The second sentence is not the reason for the first.",
+              "trap": "link"
+            },
+            {
+              "id": "d",
+              "text": "Finally",
+              "why": "FINALLY is for the last point in a list. This is not a list.",
+              "trap": "link"
+            }
+          ],
+          "hint2": "How does the second idea connect to the first: an example, the other way, a reason, a result, one more point, or the next step? The card lists the words.",
+          "hint3": "It is (a) or (b). Is the second sentence an example of the first, or the opposite of what you expect?"
+        }
+      ]
+    },
+    {
+      "id": "order",
+      "title": "Put it in order",
+      "mode": "solo",
+      "minutes": 12,
+      "tutorNote": "YOU DO: five sets of four sentences. Guide threshold: four of five sets with every sentence placed right the first time. The pointing words and the time words are the clue each time.",
+      "steps": [
+        {
+          "id": "m8-or1",
+          "type": "order",
+          "prompt": "Put these four sentences in order.",
+          "sentences": [
+            {
+              "text": "Our school started a recycling club last fall."
+            },
+            {
+              "text": "At first, only six students joined.",
+              "why": "AT FIRST tells how the club began. The club has to be named before it."
+            },
+            {
+              "text": "Then the club put a bin in every classroom, and more students signed up.",
+              "why": "THEN comes after AT FIRST. And MORE students needs the first six before it."
+            },
+            {
+              "text": "Now the club has forty members.",
+              "why": "NOW is the end of the story. It comes last."
+            }
+          ],
+          "hint2": "Look for AT FIRST, THEN and NOW.",
+          "hint3": "Start with the sentence that says the club started."
+        },
+        {
+          "id": "m8-or2",
+          "type": "order",
+          "prompt": "Put these four sentences in order.",
+          "sentences": [
+            {
+              "text": "Many teenagers do not get enough sleep."
+            },
+            {
+              "text": "One reason is that they use their phones late at night.",
+              "why": "ONE REASON needs a problem before it. Which sentence states the problem?"
+            },
+            {
+              "text": "For example, my sister is often on her phone until midnight.",
+              "why": "The example is about a phone. The sentence about phones comes first."
+            },
+            {
+              "text": "As a result, she is tired in every morning class.",
+              "why": "SHE needs 'my sister' first, and AS A RESULT comes after the thing that causes it."
+            }
+          ],
+          "hint2": "Look for ONE REASON, FOR EXAMPLE and AS A RESULT.",
+          "hint3": "Start with the sentence that states the problem."
+        },
+        {
+          "id": "m8-or3",
+          "type": "order",
+          "prompt": "Put these four sentences in order.",
+          "sentences": [
+            {
+              "text": "The library has a new rule about phones."
+            },
+            {
+              "text": "The rule says that every phone must be on silent.",
+              "why": "THE RULE points back. The new rule has to be mentioned first."
+            },
+            {
+              "text": "A student who forgets gets one reminder.",
+              "why": "FORGETS what? The sentence about phones on silent has to come first."
+            },
+            {
+              "text": "After a second ring, that student has to leave.",
+              "why": "THAT STUDENT points back to the student who forgot. And a SECOND ring comes after the first reminder."
+            }
+          ],
+          "hint2": "Look for THE RULE, FORGETS and THAT STUDENT.",
+          "hint3": "Start with the sentence that says there is a new rule."
+        },
+        {
+          "id": "m8-or4",
+          "type": "order",
+          "prompt": "Put these four sentences in order.",
+          "sentences": [
+            {
+              "text": "Jordan's alarm did not go off on Monday."
+            },
+            {
+              "text": "Because of that, he woke up at 8:10.",
+              "why": "THAT points back. What happened first?"
+            },
+            {
+              "text": "He ran to the stop, but the bus had already left.",
+              "why": "He has to wake up before he can run to the stop."
+            },
+            {
+              "text": "In the end, his mother drove him to school.",
+              "why": "IN THE END comes last."
+            }
+          ],
+          "hint2": "Put the events in the order they happened.",
+          "hint3": "Start with the alarm."
+        },
+        {
+          "id": "m8-or5",
+          "type": "order",
+          "prompt": "Put these four sentences in order.",
+          "sentences": [
+            {
+              "text": "I think our 30-minute lunch should be longer."
+            },
+            {
+              "text": "One reason is that the cafeteria line takes twenty minutes.",
+              "why": "ONE REASON needs an opinion before it. Which sentence gives the opinion?"
+            },
+            {
+              "text": "This leaves only ten minutes to eat.",
+              "why": "THIS points back to the twenty-minute line."
+            },
+            {
+              "text": "That is why lunch should be at least forty-five minutes.",
+              "why": "THAT IS WHY gives the ending. It comes last."
+            }
+          ],
+          "hint2": "Look for ONE REASON, THIS and THAT IS WHY.",
+          "hint3": "Start with the sentence that begins I THINK."
+        }
+      ]
+    },
+    {
+      "id": "linking",
+      "title": "Pick the linking word",
+      "mode": "solo",
+      "minutes": 10,
+      "tutorNote": "YOU DO: ten linking-word questions. Ask each time how the second idea connects to the first: an example, the other way, a reason, a result, one more point, the next step, the last point. Guide threshold: eight of ten. Do 'Test-style questions' first; it introduces the first four kinds.",
+      "steps": [
+        {
+          "id": "m8-tr0",
+          "type": "explain",
+          "text": [
+            "You know four kinds of linking word: an example, the other way, a reason, a result.",
+            "Here are three more.",
+            "ALSO: here is one more point.",
+            "THEN and NEXT: here is the next step.",
+            "FINALLY: here is the last one.",
+            "HOWEVER starts a new sentence. BUT joins two sentences after a comma.",
+            "They are all on the card."
+          ],
+          "showCard": false
+        },
+        {
+          "id": "m8-tr1",
+          "type": "mcq",
+          "stem": "Choose the linking word or words that fit: \"The bus was twenty minutes late. _____, I missed the start of first period.\"",
+          "options": [
+            {
+              "id": "a",
+              "text": "As a result",
+              "why": "Right. Missing the start of class is what happened because the bus was late.",
+              "correct": true
+            },
+            {
+              "id": "b",
+              "text": "However",
+              "why": "HOWEVER goes the other way. Missing class is what you would expect, not a surprise.",
+              "trap": "link"
+            },
+            {
+              "id": "c",
+              "text": "For example",
+              "why": "The second sentence is not an example of the first. It is the result.",
+              "trap": "link"
+            },
+            {
+              "id": "d",
+              "text": "Finally",
+              "why": "FINALLY is for the last point in a list. This is not a list.",
+              "trap": "link"
+            }
+          ],
+          "hint2": "How does the second idea connect to the first: an example, the other way, a reason, a result, one more point, or the next step? The card lists the words.",
+          "hint3": "It is (a) or (b). Did the late bus cause it, or is it a surprise?"
+        },
+        {
+          "id": "m8-tr2",
+          "type": "mcq",
+          "stem": "Choose the linking word or words that fit: \"Our team lost its first three games. _____, we won the next five.\"",
+          "options": [
+            {
+              "id": "a",
+              "text": "Because",
+              "why": "BECAUSE gives a reason. Winning is not the reason the team lost.",
+              "trap": "link"
+            },
+            {
+              "id": "b",
+              "text": "For example",
+              "why": "Winning five games is not an example of losing three.",
+              "trap": "link"
+            },
+            {
+              "id": "c",
+              "text": "However",
+              "why": "Right. The second sentence goes the other way: lost, then won.",
+              "correct": true
+            },
+            {
+              "id": "d",
+              "text": "As a result",
+              "why": "Losing did not cause the wins. The second sentence goes the other way.",
+              "trap": "link"
+            }
+          ],
+          "hint2": "How does the second idea connect to the first: an example, the other way, a reason, a result, one more point, or the next step? The card lists the words.",
+          "hint3": "It is (c) or (d). Is winning a result of losing, or the opposite of what you expect?"
+        },
+        {
+          "id": "m8-tr3",
+          "type": "mcq",
+          "stem": "Choose the linking word or words that fit: \"A part-time job can teach useful skills. _____, working at a store teaches you to handle money.\"",
+          "options": [
+            {
+              "id": "a",
+              "text": "However",
+              "why": "HOWEVER goes the other way. The second sentence agrees with the first.",
+              "trap": "link"
+            },
+            {
+              "id": "b",
+              "text": "For example",
+              "why": "Right. Handling money is one example of a useful skill.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "Finally",
+              "why": "FINALLY is for the last point in a list. This is not a list.",
+              "trap": "link"
+            },
+            {
+              "id": "d",
+              "text": "As a result",
+              "why": "The second sentence is not a result. It is one case of the first idea.",
+              "trap": "link"
+            }
+          ],
+          "hint2": "How does the second idea connect to the first: an example, the other way, a reason, a result, one more point, or the next step? The card lists the words.",
+          "hint3": "It is (a) or (b). Does the second sentence agree with the first?"
+        },
+        {
+          "id": "m8-tr4",
+          "type": "mcq",
+          "stem": "Choose the linking word or words that fit: \"I stayed up too late on Sunday, _____ I was tired all day Monday.\"",
+          "options": [
+            {
+              "id": "a",
+              "text": "but",
+              "why": "BUT goes the other way. Being tired is what you would expect.",
+              "trap": "link"
+            },
+            {
+              "id": "b",
+              "text": "because",
+              "why": "BECAUSE would make Monday the reason for Sunday. It is the other way around.",
+              "trap": "link"
+            },
+            {
+              "id": "c",
+              "text": "so",
+              "why": "Right. Being tired is what happened because of the late night.",
+              "correct": true
+            },
+            {
+              "id": "d",
+              "text": "for example",
+              "why": "Being tired is not an example. It is the result.",
+              "trap": "link"
+            }
+          ],
+          "hint2": "How does the second idea connect to the first: an example, the other way, a reason, a result, one more point, or the next step? The card lists the words.",
+          "hint3": "It is (b) or (c). Which idea is the cause, and which is the result?"
+        },
+        {
+          "id": "m8-tr5",
+          "type": "mcq",
+          "stem": "Choose the linking word or words that fit: \"I wanted to go to the game, _____ I had to stay home and finish my project.\"",
+          "options": [
+            {
+              "id": "a",
+              "text": "so",
+              "why": "SO gives a result. Staying home is not a result of wanting to go.",
+              "trap": "link"
+            },
+            {
+              "id": "b",
+              "text": "but",
+              "why": "Right. The second idea goes against the first: wanted to go, had to stay home.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "because",
+              "why": "BECAUSE gives a reason. Staying home is not the reason for wanting to go.",
+              "trap": "link"
+            },
+            {
+              "id": "d",
+              "text": "for example",
+              "why": "Staying home is not an example of wanting to go to the game.",
+              "trap": "link"
+            }
+          ],
+          "hint2": "How does the second idea connect to the first: an example, the other way, a reason, a result, one more point, or the next step? The card lists the words.",
+          "hint3": "It is (a) or (b). Did the writer get to go to the game?"
+        },
+        {
+          "id": "m8-tr6",
+          "type": "mcq",
+          "stem": "Choose the linking word or words that fit: \"The game was moved indoors _____ it was raining.\"",
+          "options": [
+            {
+              "id": "a",
+              "text": "so",
+              "why": "SO gives a result. Rain is not the result of moving indoors.",
+              "trap": "link"
+            },
+            {
+              "id": "b",
+              "text": "but",
+              "why": "BUT goes the other way. Rain is the reason for the move.",
+              "trap": "link"
+            },
+            {
+              "id": "c",
+              "text": "because",
+              "why": "Right. The rain is the reason the game was moved.",
+              "correct": true
+            },
+            {
+              "id": "d",
+              "text": "however",
+              "why": "HOWEVER goes the other way. Rain is the reason for the move.",
+              "trap": "link"
+            }
+          ],
+          "hint2": "How does the second idea connect to the first: an example, the other way, a reason, a result, one more point, or the next step? The card lists the words.",
+          "hint3": "It is (a) or (c). Is the rain the reason or the result?"
+        },
+        {
+          "id": "m8-tr7",
+          "type": "mcq",
+          "stem": "Choose the linking word or words that fit: \"First, fill the pot with water. _____, put it on the stove.\"",
+          "options": [
+            {
+              "id": "a",
+              "text": "However",
+              "why": "HOWEVER goes the other way. This is simply the next step.",
+              "trap": "link"
+            },
+            {
+              "id": "b",
+              "text": "For example",
+              "why": "Putting the pot on the stove is not an example. It is the next step.",
+              "trap": "link"
+            },
+            {
+              "id": "c",
+              "text": "Because",
+              "why": "BECAUSE gives a reason. This is the next step.",
+              "trap": "link"
+            },
+            {
+              "id": "d",
+              "text": "Next",
+              "why": "Right. NEXT gives the next step.",
+              "correct": true
+            }
+          ],
+          "hint2": "How does the second idea connect to the first: an example, the other way, a reason, a result, one more point, or the next step? The card lists the words.",
+          "hint3": "The first sentence starts with FIRST. What comes after a first step?"
+        },
+        {
+          "id": "m8-tr8",
+          "type": "mcq",
+          "stem": "Choose the linking word or words that fit: \"The library has free computers. _____, it lends out board games.\"",
+          "options": [
+            {
+              "id": "a",
+              "text": "Also",
+              "why": "Right. Board games are one more good thing about the library.",
+              "correct": true
+            },
+            {
+              "id": "b",
+              "text": "However",
+              "why": "HOWEVER goes the other way. Both sentences are good things about the library.",
+              "trap": "link"
+            },
+            {
+              "id": "c",
+              "text": "As a result",
+              "why": "Lending games is not a result of having computers.",
+              "trap": "link"
+            },
+            {
+              "id": "d",
+              "text": "Because",
+              "why": "BECAUSE gives a reason. Lending games is not the reason for the computers.",
+              "trap": "link"
+            }
+          ],
+          "hint2": "How does the second idea connect to the first: an example, the other way, a reason, a result, one more point, or the next step? The card lists the words.",
+          "hint3": "It is (a) or (b). Do the two sentences point the same way?"
+        },
+        {
+          "id": "m8-tr9",
+          "type": "mcq",
+          "stem": "Choose the linking word or words that fit: \"First, we planned the essay. Next, we wrote it. _____, we checked every sentence.\"",
+          "options": [
+            {
+              "id": "a",
+              "text": "However",
+              "why": "HOWEVER goes the other way. This is the last step.",
+              "trap": "link"
+            },
+            {
+              "id": "b",
+              "text": "Finally",
+              "why": "Right. FINALLY gives the last step.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "For example",
+              "why": "Checking is not an example. It is the last step.",
+              "trap": "link"
+            },
+            {
+              "id": "d",
+              "text": "Because",
+              "why": "BECAUSE gives a reason. This is the last step.",
+              "trap": "link"
+            }
+          ],
+          "hint2": "How does the second idea connect to the first: an example, the other way, a reason, a result, one more point, or the next step? The card lists the words.",
+          "hint3": "FIRST, NEXT… what word gives the last step?"
+        },
+        {
+          "id": "m8-tr10",
+          "type": "mcq",
+          "stem": "Choose the linking word or words that fit: \"Many students wanted a later start. _____, the school kept the old schedule.\"",
+          "options": [
+            {
+              "id": "a",
+              "text": "So",
+              "why": "SO gives a result. Keeping the old schedule is the opposite of what students wanted.",
+              "trap": "link"
+            },
+            {
+              "id": "b",
+              "text": "For example",
+              "why": "Keeping the old schedule is not an example of wanting a later start.",
+              "trap": "link"
+            },
+            {
+              "id": "c",
+              "text": "Also",
+              "why": "ALSO adds one more point the same way. This sentence goes the other way.",
+              "trap": "link"
+            },
+            {
+              "id": "d",
+              "text": "However",
+              "why": "Right. The school did the opposite of what students wanted.",
+              "correct": true
+            }
+          ],
+          "hint2": "How does the second idea connect to the first: an example, the other way, a reason, a result, one more point, or the next step? The card lists the words.",
+          "hint3": "It is (a) or (d). Did the school do what students wanted?"
+        }
+      ]
+    },
+    {
+      "id": "home",
+      "title": "Home practice",
+      "mode": "solo",
+      "minutes": 14,
+      "tutorNote": "Home set: eight lines to sort, two to fix, one pair to join, one set to put in order and two linking words. Assign after 'Sort and fix on your own', 'Put it in order' and 'Pick the linking word'.",
+      "steps": [
+        {
+          "id": "m8-h1",
+          "type": "sort",
+          "prompt": "Sentence, fragment or run-on? Ask: Who? Did what? Can it stand alone?",
+          "categories": [
+            {
+              "id": "s",
+              "label": "SENTENCE"
+            },
+            {
+              "id": "f",
+              "label": "FRAGMENT"
+            },
+            {
+              "id": "r",
+              "label": "RUN-ON"
+            }
+          ],
+          "cards": [
+            {
+              "text": "My cousin fixed the flat tire.",
+              "category": "s",
+              "why": "Who? My cousin. Did what? Fixed the tire. It stands alone."
+            },
+            {
+              "text": "Before the first bell.",
+              "category": "f",
+              "why": "No WHO and no DID. What happened before the bell?"
+            },
+            {
+              "text": "The line was long we waited ten minutes.",
+              "category": "r",
+              "why": "Two sentences with nothing between them. The second starts at WE."
+            },
+            {
+              "text": "Laughing at the video on her phone.",
+              "category": "f",
+              "why": "There is no WHO. Who was laughing?"
+            },
+            {
+              "text": "When the rain stopped, we went outside.",
+              "category": "s",
+              "why": "It starts with WHEN, but it finishes the thought: we went outside."
+            },
+            {
+              "text": "The rink was full, we skated anyway.",
+              "category": "r",
+              "why": "Two sentences joined by only a comma."
+            },
+            {
+              "text": "If you forget your pass.",
+              "category": "f",
+              "why": "IF makes it lean. What happens if you forget it?"
+            },
+            {
+              "text": "Maria comes every Friday.",
+              "category": "s",
+              "why": "Who? Maria. Did what? Comes every Friday. It stands alone."
+            }
+          ],
+          "hint2": "Is the WHO or the DID missing? Or does it start with a leaning word, like BECAUSE or WHEN, and never finish the thought? Then it is a FRAGMENT.",
+          "hint3": "Are two whole sentences glued together with nothing, or with only a comma? Then it is a RUN-ON."
+        },
+        {
+          "id": "m8-h2",
+          "type": "mcq",
+          "stem": "Fix the fragment: \"If you forget your pass.\" Which one is a whole sentence?",
+          "options": [
+            {
+              "id": "a",
+              "text": "If you forget your pass, you can get a new one at the office.",
+              "why": "Right. Now it tells what happens if you forget it.",
+              "correct": true
+            },
+            {
+              "id": "b",
+              "text": "If you forget your bus pass.",
+              "why": "It is longer, but it still leans. What happens if you forget it?",
+              "trap": "frag"
+            },
+            {
+              "id": "c",
+              "text": "If you forget. Your pass.",
+              "why": "Now there are two pieces, and neither one can stand alone.",
+              "trap": "frag"
+            }
+          ],
+          "hint2": "Read each one alone. Who? Did what? Can it stand alone?",
+          "hint3": "It is (a) or (b). Which one tells what happens?"
+        },
+        {
+          "id": "m8-h3",
+          "type": "mcq",
+          "stem": "Fix the run-on: \"The rink was full, we skated anyway.\" Which one is correct?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The rink was full we skated anyway.",
+              "why": "Taking the comma out leaves two sentences glued together.",
+              "trap": "runon"
+            },
+            {
+              "id": "b",
+              "text": "The rink was full, but we skated anyway.",
+              "why": "Right. A comma and BUT join the two sentences.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "The rink was full, we skated, anyway.",
+              "why": "More commas do not help. A comma needs a partner word.",
+              "trap": "splice"
+            }
+          ],
+          "hint2": "A comma alone cannot join two whole sentences. Look for a period, or a comma with AND, BUT or SO, or a joining word like BECAUSE.",
+          "hint3": "It is (a) or (b). Which one has a partner word?"
+        },
+        {
+          "id": "m8-h4",
+          "type": "mcq",
+          "stem": "Choose the best way to join these two sentences: \"The line was long. We waited ten minutes.\"",
+          "options": [
+            {
+              "id": "a",
+              "text": "The line was long, we waited ten minutes.",
+              "why": "A comma alone cannot join two whole sentences.",
+              "trap": "splice"
+            },
+            {
+              "id": "b",
+              "text": "The line was long, so we waited ten minutes.",
+              "why": "Right. A comma, then SO, joins the two sentences. The wait is the result of the long line.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "The line was long we waited ten minutes.",
+              "why": "Two sentences with nothing between them.",
+              "trap": "runon"
+            },
+            {
+              "id": "d",
+              "text": "The line was long so, we waited ten minutes.",
+              "why": "The comma goes BEFORE the partner word, not after it.",
+              "trap": "punct"
+            }
+          ],
+          "hint2": "A comma alone cannot join two whole sentences. Look for a period, or a comma with AND, BUT or SO, or a joining word like BECAUSE.",
+          "hint3": "It is (b) or (d). Does the comma come before SO or after it?"
+        },
+        {
+          "id": "m8-h5",
+          "type": "order",
+          "prompt": "Put these four sentences in order.",
+          "sentences": [
+            {
+              "text": "Last Saturday, our class cleaned up the park."
+            },
+            {
+              "text": "First, we picked up the garbage near the pond.",
+              "why": "FIRST here means the first job. The clean-up has to be mentioned before it."
+            },
+            {
+              "text": "After that, we painted two benches.",
+              "why": "AFTER THAT comes after the FIRST job."
+            },
+            {
+              "text": "By noon, the whole park looked new.",
+              "why": "This is how it ended. It comes last."
+            }
+          ],
+          "hint2": "FIRST here means the first job, not the first sentence.",
+          "hint3": "Start with the sentence that says when and where: last Saturday, the park."
+        },
+        {
+          "id": "m8-h6",
+          "type": "mcq",
+          "stem": "Choose the linking word or words that fit: \"The park has many problems. _____, three of the benches are broken.\"",
+          "options": [
+            {
+              "id": "a",
+              "text": "However",
+              "why": "HOWEVER goes the other way. Broken benches agree with the first sentence.",
+              "trap": "link"
+            },
+            {
+              "id": "b",
+              "text": "As a result",
+              "why": "Broken benches are not a result of the problems. They are one of the problems.",
+              "trap": "link"
+            },
+            {
+              "id": "c",
+              "text": "For example",
+              "why": "Right. The broken benches are one example of the problems.",
+              "correct": true
+            },
+            {
+              "id": "d",
+              "text": "Finally",
+              "why": "FINALLY is for the last point in a list. This is the first example.",
+              "trap": "link"
+            }
+          ],
+          "hint2": "How does the second idea connect to the first: an example, the other way, a reason, a result, one more point, or the next step? The card lists the words.",
+          "hint3": "It is (b) or (c). Are the benches a result of the problems, or one of them?"
+        },
+        {
+          "id": "m8-h7",
+          "type": "mcq",
+          "stem": "Choose the linking word or words that fit: \"It snowed all night. _____, the buses were cancelled.\"",
+          "options": [
+            {
+              "id": "a",
+              "text": "As a result",
+              "why": "Right. The buses were cancelled because of the snow.",
+              "correct": true
+            },
+            {
+              "id": "b",
+              "text": "However",
+              "why": "HOWEVER goes the other way. Cancelled buses are what you would expect.",
+              "trap": "link"
+            },
+            {
+              "id": "c",
+              "text": "For example",
+              "why": "Cancelled buses are not an example of snow. They are the result.",
+              "trap": "link"
+            },
+            {
+              "id": "d",
+              "text": "Also",
+              "why": "ALSO adds one more point. The cancelled buses were CAUSED by the snow.",
+              "trap": "link"
+            }
+          ],
+          "hint2": "How does the second idea connect to the first: an example, the other way, a reason, a result, one more point, or the next step? The card lists the words.",
+          "hint3": "It is (a) or (d). Did the snow cause it?"
+        }
+      ]
+    },
+    {
+      "id": "check",
+      "title": "Check: sentences",
+      "mode": "solo",
+      "minutes": 12,
+      "tutorNote": "Mastery check, part one: ten new lines to sort and five to fix. Guide threshold: nine of ten sorted correctly on the first try and four of five fixed. Typed fixes go to the review queue; score 0 to 2, and accept any correct fix.",
+      "steps": [
+        {
+          "id": "m8-c1",
+          "type": "sort",
+          "prompt": "Sentence, fragment or run-on? Ask: Who? Did what? Can it stand alone?",
+          "categories": [
+            {
+              "id": "s",
+              "label": "SENTENCE"
+            },
+            {
+              "id": "f",
+              "label": "FRAGMENT"
+            },
+            {
+              "id": "r",
+              "label": "RUN-ON"
+            }
+          ],
+          "cards": [
+            {
+              "text": "The bus stopped in front of the library.",
+              "category": "s",
+              "why": "Who? The bus. Did what? Stopped. It stands alone."
+            },
+            {
+              "text": "Because the gym was locked.",
+              "category": "f",
+              "why": "BECAUSE makes it lean. What happened because it was locked?"
+            },
+            {
+              "text": "We ran out of skates everyone still had fun.",
+              "category": "r",
+              "why": "Two sentences with nothing between them. The second starts at EVERYONE."
+            },
+            {
+              "text": "Waiting for the doors to open.",
+              "category": "f",
+              "why": "There is no WHO. Who was waiting?"
+            },
+            {
+              "text": "Although it was late, Dad made rice.",
+              "category": "s",
+              "why": "It starts with ALTHOUGH, but it finishes the thought: Dad made rice."
+            },
+            {
+              "text": "The coach was late, the players sat on the steps.",
+              "category": "r",
+              "why": "Two sentences joined by only a comma."
+            },
+            {
+              "text": "The teacher at the front of the room.",
+              "category": "f",
+              "why": "There is a WHO but no DID. What did the teacher do?"
+            },
+            {
+              "text": "Everyone clapped.",
+              "category": "s",
+              "why": "Who? Everyone. Did what? Clapped. It stands alone."
+            },
+            {
+              "text": "I like the new rule it makes lunch longer.",
+              "category": "r",
+              "why": "Two sentences with nothing between them. The second starts at IT."
+            },
+            {
+              "text": "Which made everyone laugh.",
+              "category": "f",
+              "why": "WHICH makes it lean on the sentence before it."
+            }
+          ],
+          "hint2": "Is the WHO or the DID missing? Or does it start with a leaning word, like BECAUSE or WHEN, and never finish the thought? Then it is a FRAGMENT.",
+          "hint3": "Are two whole sentences glued together with nothing, or with only a comma? Then it is a RUN-ON."
+        },
+        {
+          "id": "m8-c2",
+          "type": "mcq",
+          "stem": "Fix the fragment: \"Because the gym was locked.\" Which one is a whole sentence?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Because the big gym was locked.",
+              "why": "It is longer, but it still leans. What happened because it was locked?",
+              "trap": "frag"
+            },
+            {
+              "id": "b",
+              "text": "Because the gym. Was locked.",
+              "why": "Now there are two pieces, and neither one can stand alone.",
+              "trap": "frag"
+            },
+            {
+              "id": "c",
+              "text": "Because the gym was locked, the team waited outside.",
+              "why": "Right. Now it tells what happened because the gym was locked.",
+              "correct": true
+            }
+          ],
+          "hint2": "Read each one alone. Who? Did what? Can it stand alone?",
+          "hint3": "It is (a) or (c). Which one tells what happened?"
+        },
+        {
+          "id": "m8-c3",
+          "type": "mcq",
+          "stem": "Fix the run-on: \"The coach was late, the players sat on the steps.\" Which one is correct?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The coach was late, so the players sat on the steps.",
+              "why": "Right. A comma and SO join the two sentences.",
+              "correct": true
+            },
+            {
+              "id": "b",
+              "text": "The coach was late the players sat on the steps.",
+              "why": "Taking the comma out leaves two sentences glued together.",
+              "trap": "runon"
+            },
+            {
+              "id": "c",
+              "text": "The coach was late, the players, sat on the steps.",
+              "why": "More commas do not help. A comma needs a partner word.",
+              "trap": "splice"
+            }
+          ],
+          "hint2": "A comma alone cannot join two whole sentences. Look for a period, or a comma with AND, BUT or SO, or a joining word like BECAUSE.",
+          "hint3": "It is (a) or (b). Which one has a partner word?"
+        },
+        {
+          "id": "m8-c4",
+          "type": "mcq",
+          "stem": "Fix the run-on: \"I like the new rule it makes lunch longer.\" Which one is correct?",
+          "options": [
+            {
+              "id": "a",
+              "text": "I like the new rule, it makes lunch longer.",
+              "why": "A comma alone cannot join two whole sentences. It needs a partner word.",
+              "trap": "splice"
+            },
+            {
+              "id": "b",
+              "text": "I like the new rule it, makes lunch longer.",
+              "why": "The comma is in the wrong place, and the two sentences are still glued together.",
+              "trap": "runon"
+            },
+            {
+              "id": "c",
+              "text": "I like the new rule because it makes lunch longer.",
+              "why": "Right. BECAUSE joins the two ideas and shows the reason.",
+              "correct": true
+            }
+          ],
+          "hint2": "A comma alone cannot join two whole sentences. Look for a period, or a comma with AND, BUT or SO, or a joining word like BECAUSE.",
+          "hint3": "It is (a) or (c). Which one uses a joining word?"
+        },
+        {
+          "id": "m8-c5",
+          "type": "text",
+          "prompt": "Say it out loud first, then type it.",
+          "stem": "Fix this fragment so it can stand alone.",
+          "original": "Waiting for the doors to open.",
+          "originalLabel": "Fix this",
+          "model": [
+            "We were waiting for the doors to open."
+          ],
+          "rubric": "fix2"
+        },
+        {
+          "id": "m8-c6",
+          "type": "text",
+          "prompt": "Say it out loud first, then type it.",
+          "stem": "Fix this run-on. Use a period, or a comma with AND, BUT or SO.",
+          "original": "We ran out of skates everyone still had fun.",
+          "originalLabel": "Fix this",
+          "model": [
+            "We ran out of skates, but everyone still had fun.",
+            "This works too: We ran out of skates. Everyone still had fun."
+          ],
+          "rubric": "fix2"
+        }
+      ]
+    },
+    {
+      "id": "check-2",
+      "title": "Check: test-style questions",
+      "mode": "solo",
+      "minutes": 12,
+      "tutorNote": "Mastery check, part two: five planted mistakes to find in a six-sentence note (one sentence is correct), then joining, ordering and three linking words. Guide threshold: four of the five mistakes found on the first tap, the set ordered correctly, and the linking words right.",
+      "steps": [
+        {
+          "id": "m8-d0",
+          "type": "explain",
+          "text": [
+            "This note has five mistakes in it. One sentence is correct.",
+            "The mistakes are in capitals, end marks and commas. There are no spelling mistakes.",
+            "Each question tells you what kind of mistake to look for.",
+            "Tap the sentence that has it."
+          ],
+          "showCard": false,
+          "passage": "note"
+        },
+        {
+          "id": "m8-d1",
+          "type": "find",
+          "prompt": "Tap the sentence with the mistake.",
+          "question": "One sentence does not start with a capital letter. Which one?",
+          "passage": "note",
+          "correct": [
+            3
+          ],
+          "found": "Right. Sentence 3 starts with a small letter. It should start: It was cold.",
+          "other": "That sentence starts with a capital letter. Keep looking.",
+          "hint2": "Look at the first letter of every sentence.",
+          "hint3": "It is sentence 2 or sentence 3.",
+          "near": [
+            {
+              "sentences": [
+                1
+              ],
+              "why": "That sentence starts with a capital O. Look only at the FIRST letter of each sentence."
+            }
+          ]
+        },
+        {
+          "id": "m8-d2",
+          "type": "find",
+          "prompt": "Tap the sentence with the mistake.",
+          "question": "One sentence has no end mark. Which one?",
+          "passage": "note",
+          "correct": [
+            4
+          ],
+          "found": "Right. Sentence 4 has no period at the end.",
+          "other": "That sentence has an end mark. Look at the very end of each sentence.",
+          "hint2": "Look at the last word of every sentence. Is there a period after it?",
+          "hint3": "It is sentence 4 or sentence 5."
+        },
+        {
+          "id": "m8-d3",
+          "type": "find",
+          "prompt": "Tap the sentence with the mistake.",
+          "question": "The name of a day needs a capital letter. One sentence gets it wrong. Which one?",
+          "passage": "note",
+          "correct": [
+            1
+          ],
+          "found": "Right. In sentence 1, Tuesday needs a capital T.",
+          "other": "There is no day of the week in that sentence. Keep looking.",
+          "hint2": "Find every day of the week in the note.",
+          "hint3": "It is sentence 1 or sentence 6.",
+          "near": [
+            {
+              "sentences": [
+                6
+              ],
+              "why": "Saturday has its capital there. Look at the other sentence with days in it."
+            },
+            {
+              "sentences": [
+                3
+              ],
+              "why": "That sentence has a capital mistake, but not in the name of a day. Look for a day of the week."
+            }
+          ]
+        },
+        {
+          "id": "m8-d4",
+          "type": "find",
+          "prompt": "Tap the sentence with the mistake.",
+          "question": "One sentence is a run-on: two sentences joined by only a comma. Which one?",
+          "passage": "note",
+          "correct": [
+            6
+          ],
+          "found": "Right. In sentence 6, only a comma joins two sentences.",
+          "other": "There is no comma in that sentence. Keep looking.",
+          "hint2": "Find the sentences with a comma. Which one has a whole sentence on each side of the comma, and no AND, BUT or SO?",
+          "hint3": "It is sentence 2 or sentence 6.",
+          "near": [
+            {
+              "sentences": [
+                2
+              ],
+              "why": "That one has a comma AND a partner word: SO. It is correct."
+            },
+            {
+              "sentences": [
+                3
+              ],
+              "why": "That one has a comma and a partner word: BUT. The joining is fine."
+            },
+            {
+              "sentences": [
+                5
+              ],
+              "why": "That comma is in the wrong place, but it does not join two sentences. Look for a whole sentence on each side of a comma."
+            },
+            {
+              "sentences": [
+                4
+              ],
+              "why": "That sentence is missing its period, but it is one sentence, not two."
+            }
+          ],
+          "then": {
+            "id": "m8-d4a",
+            "type": "mcq",
+            "stem": "Which one fixes it?",
+            "options": [
+              {
+                "id": "a",
+                "text": "The game is on Saturday we are ready.",
+                "why": "Taking the comma out leaves two sentences glued together.",
+                "trap": "runon"
+              },
+              {
+                "id": "b",
+                "text": "The game is on Saturday, and we are ready.",
+                "why": "Right. A comma and AND join the two sentences.",
+                "correct": true
+              },
+              {
+                "id": "c",
+                "text": "The game is on Saturday, we, are ready.",
+                "why": "More commas do not help. A comma needs a partner word.",
+                "trap": "splice"
+              }
+            ],
+            "passage": "note"
+          }
+        },
+        {
+          "id": "m8-d5",
+          "type": "find",
+          "prompt": "Tap the sentence with the mistake.",
+          "question": "One sentence has a comma in the wrong place. Which one?",
+          "passage": "note",
+          "correct": [
+            5
+          ],
+          "found": "Right. In sentence 5, the comma splits WE from PICKED.",
+          "other": "There is no comma in that sentence. Keep looking.",
+          "hint2": "Look for a comma that splits a WHO from its DID.",
+          "hint3": "It is sentence 3 or sentence 5.",
+          "near": [
+            {
+              "sentences": [
+                6
+              ],
+              "why": "That comma is in a sensible place. It just needs a partner word. Look for a comma that splits WE from what we did."
+            },
+            {
+              "sentences": [
+                2
+              ],
+              "why": "That comma is in the right place: before SO."
+            },
+            {
+              "sentences": [
+                3
+              ],
+              "why": "That comma is in the right place: before BUT."
+            }
+          ],
+          "then": {
+            "id": "m8-d5a",
+            "type": "mcq",
+            "stem": "Which one fixes it?",
+            "options": [
+              {
+                "id": "a",
+                "text": "After practice, we picked up the cones.",
+                "why": "Right. The comma comes after the opening words.",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "After, practice we picked up the cones.",
+                "why": "The comma comes too early. The opening words are 'After practice'.",
+                "trap": "punct"
+              },
+              {
+                "id": "c",
+                "text": "After practice we picked, up the cones.",
+                "why": "The comma splits PICKED from UP. It belongs after the opening words.",
+                "trap": "punct"
+              }
+            ],
+            "passage": "note"
+          }
+        },
+        {
+          "id": "m8-d6",
+          "type": "mcq",
+          "stem": "Choose the best way to join these two sentences: \"The granola bars are popular. They are gone by 8:20.\"",
+          "options": [
+            {
+              "id": "a",
+              "text": "The granola bars are popular, they are gone by 8:20.",
+              "why": "A comma alone cannot join two whole sentences.",
+              "trap": "splice"
+            },
+            {
+              "id": "b",
+              "text": "The granola bars are popular they are gone by 8:20.",
+              "why": "Two sentences with nothing between them.",
+              "trap": "runon"
+            },
+            {
+              "id": "c",
+              "text": "The granola bars are popular so, they are gone by 8:20.",
+              "why": "The comma goes BEFORE the partner word, not after it.",
+              "trap": "punct"
+            },
+            {
+              "id": "d",
+              "text": "The granola bars are popular, so they are gone by 8:20.",
+              "why": "Right. A comma, then SO, joins the two sentences. Running out is the result of being popular.",
+              "correct": true
+            }
+          ],
+          "hint2": "A comma alone cannot join two whole sentences. Look for a period, or a comma with AND, BUT or SO, or a joining word like BECAUSE.",
+          "hint3": "It is (c) or (d). Does the comma come before SO or after it?"
+        },
+        {
+          "id": "m8-d7",
+          "type": "order",
+          "prompt": "Put these four sentences in order.",
+          "sentences": [
+            {
+              "text": "Many cities spread salt on icy roads."
+            },
+            {
+              "text": "However, salt can rust cars and bridges.",
+              "why": "HOWEVER goes the other way from something. What does it turn away from?"
+            },
+            {
+              "text": "Because of this damage, some cities mix the salt with beet juice.",
+              "why": "THIS DAMAGE points back to the rust."
+            },
+            {
+              "text": "As a result, they need less salt.",
+              "why": "THEY needs 'some cities' first, and AS A RESULT comes after the thing that causes it."
+            }
+          ],
+          "hint2": "Look for HOWEVER, THIS DAMAGE and AS A RESULT.",
+          "hint3": "Start with the sentence about spreading salt."
+        },
+        {
+          "id": "m8-d8",
+          "type": "mcq",
+          "stem": "Choose the linking word or words that fit: \"The breakfast cart is popular. _____, it gives out about 150 items a day.\"",
+          "options": [
+            {
+              "id": "a",
+              "text": "However",
+              "why": "HOWEVER goes the other way. Giving out 150 items agrees with being popular.",
+              "trap": "link"
+            },
+            {
+              "id": "b",
+              "text": "For example",
+              "why": "Right. Giving out 150 items a day is one example of how popular the cart is.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "Because",
+              "why": "BECAUSE gives a reason. The 150 items are an example, not the reason.",
+              "trap": "link"
+            },
+            {
+              "id": "d",
+              "text": "Finally",
+              "why": "FINALLY is for the last point in a list. This is not a list.",
+              "trap": "link"
+            }
+          ],
+          "hint2": "How does the second idea connect to the first: an example, the other way, a reason, a result, one more point, or the next step? The card lists the words.",
+          "hint3": "It is (a) or (b). Does the second sentence agree with the first?"
+        },
+        {
+          "id": "m8-d9",
+          "type": "mcq",
+          "stem": "Choose the linking word or words that fit: \"The arena ran out of skates. _____, the teens kept coming every week.\"",
+          "options": [
+            {
+              "id": "a",
+              "text": "As a result",
+              "why": "Running out of skates did not cause the teens to come. The second sentence goes the other way.",
+              "trap": "link"
+            },
+            {
+              "id": "b",
+              "text": "For example",
+              "why": "Coming every week is not an example of running out of skates.",
+              "trap": "link"
+            },
+            {
+              "id": "c",
+              "text": "Also",
+              "why": "ALSO adds a point the same way. This sentence goes the other way.",
+              "trap": "link"
+            },
+            {
+              "id": "d",
+              "text": "However",
+              "why": "Right. You might expect teens to stop coming, but they kept coming.",
+              "correct": true
+            }
+          ],
+          "hint2": "How does the second idea connect to the first: an example, the other way, a reason, a result, one more point, or the next step? The card lists the words.",
+          "hint3": "It is (a) or (d). No skates left. Would you expect teens to keep coming, or to stop?"
+        },
+        {
+          "id": "m8-d10",
+          "type": "mcq",
+          "stem": "Choose the linking word or words that fit: \"The repair shop is far away. _____, many students ride with flat tires.\"",
+          "options": [
+            {
+              "id": "a",
+              "text": "However",
+              "why": "HOWEVER goes the other way. Flat tires are what you would expect.",
+              "trap": "link"
+            },
+            {
+              "id": "b",
+              "text": "As a result",
+              "why": "Right. The flat tires are the result of the shop being far away.",
+              "correct": true
+            },
+            {
+              "id": "c",
+              "text": "For example",
+              "why": "Flat tires are not an example of a shop being far away. They are the result.",
+              "trap": "link"
+            },
+            {
+              "id": "d",
+              "text": "Finally",
+              "why": "FINALLY is for the last point in a list. This is not a list.",
+              "trap": "link"
+            }
+          ],
+          "hint2": "How does the second idea connect to the first: an example, the other way, a reason, a result, one more point, or the next step? The card lists the words.",
+          "hint3": "It is (a) or (b). Did the far-away shop cause it?"
+        }
+      ]
+    }
+  ]
+}
