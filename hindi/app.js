@@ -878,60 +878,49 @@
   function filmiPlayer(m) {
     const from = m.start || 0, to = m.end || 0;
     const slot = h("div", {});
-    const soundBtn = h("button", { class: "filmi-sound", hidden: true }, "🔊 Tap for sound");
-    const box = h("div", { class: "filmi-video" }, slot, soundBtn);
-    const againBtn = h("button", { class: "btn small-btn ghost filmi-again", hidden: true }, "↺ Watch again");
-    const hint = h("p", { class: "small muted center filmi-hint", hidden: true }, "Tap ▶ on the video to watch with sound.");
+    const box = h("div", { class: "filmi-video" }, slot);
+    const tapNote = h("p", { class: "filmi-tap", hidden: true }, "👆 Tap ▶ on the video to play");
+    const soundBtn = h("button", { class: "btn small-btn ghost", hidden: true }, "🔊 Turn sound on");
+    const againBtn = h("button", { class: "btn small-btn ghost", hidden: true }, "↺ Watch again");
     const note = h("p", { class: "small muted center", style: "margin-top:6px" },
       h("a", { href: sceneUrl(m), target: "_blank", rel: "noopener", class: "muted" }, "Not playing? Open it on YouTube"));
-    const el = h("div", { class: "filmi-player" }, box, hint, h("div", { class: "filmi-ctrls" }, againBtn), note);
-    let yt = null, timer = null, wantSound = false, tryAt = 0;
+    const el = h("div", { class: "filmi-player" }, box, tapNote, h("div", { class: "filmi-ctrls" }, soundBtn, againBtn), note);
+    let yt = null, timer = null, triedSound = false, ended = false;
     const call = (fn, ...a) => { try { return yt && yt[fn](...a); } catch (e) { return undefined; } };
-    const stopWatch = () => { clearInterval(timer); timer = null; };
-    const finish = () => { stopWatch(); call("pauseVideo"); soundBtn.hidden = true; hint.hidden = true; againBtn.hidden = false; };
-    const watch = () => {
-      if (timer) return;
-      timer = setInterval(() => {
-        if (!el.isConnected) { stopWatch(); call("destroy"); return; }
-        const t = call("getCurrentTime");
-        if (to && t >= to) finish();
-      }, 250);
-    };
-    const askSound = () => { soundBtn.hidden = false; };
-    // Turn the sound on; if the phone pauses the clip for it, go back to muted playback and ask for a tap.
-    function trySound() {
-      wantSound = true; tryAt = Date.now();
-      call("unMute"); call("setVolume", 100); call("playVideo");
-      setTimeout(() => {
-        if (!el.isConnected || !againBtn.hidden) return;
-        const st = call("getPlayerState");
-        if (st !== 1 || call("isMuted")) { wantSound = false; call("mute"); call("playVideo"); askSound(); }
-      }, 900);
+    // Keep the buttons in step with what the player is really doing.
+    function sync() {
+      const st = call("getPlayerState"), playing = st === 1, muted = !!call("isMuted");
+      tapNote.hidden = playing || ended;
+      soundBtn.hidden = !(playing && muted);
+      againBtn.hidden = !ended;
     }
-    soundBtn.addEventListener("click", () => {
-      soundBtn.hidden = true;
-      trySound();
-      setTimeout(() => { if (el.isConnected && call("getPlayerState") !== 1) hint.hidden = false; }, 1000);
-    });
-    againBtn.addEventListener("click", () => { againBtn.hidden = true; call("seekTo", from, true); call(wantSound ? "unMute" : "mute"); call("playVideo"); watch(); });
+    const tick = () => {
+      if (!el.isConnected) { clearInterval(timer); call("destroy"); return; }
+      if (to && !ended && call("getPlayerState") === 1 && call("getCurrentTime") >= to) { ended = true; call("pauseVideo"); }
+      sync();
+    };
+    soundBtn.addEventListener("click", () => { call("unMute"); call("setVolume", 100); call("playVideo"); setTimeout(sync, 400); });
+    againBtn.addEventListener("click", () => { ended = false; call("seekTo", from, true); call("playVideo"); setTimeout(sync, 400); });
     function start() {
       loadYT().then((YT) => {
         if (!el.isConnected) return;
         yt = new YT.Player(slot, {
           host: "https://www.youtube-nocookie.com", videoId: m.yt, width: "100%", height: "100%",
-          // Phones only autoplay muted videos, so start muted and turn the sound on once it's playing.
+          // Muted autoplay works on some phones; on iPhone YouTube needs one tap on the video.
           playerVars: Object.assign({ autoplay: 1, mute: 1, playsinline: 1, rel: 0, modestbranding: 1, start: from }, to ? { end: to } : {}),
           events: {
-            onReady: (e) => { e.target.playVideo(); setTimeout(() => { if (el.isConnected && call("getPlayerState") !== 1) askSound(); }, 2500); },
+            onReady: (e) => { e.target.playVideo(); setTimeout(sync, 1500); },
             onStateChange: (e) => {
               if (e.data === YT.PlayerState.PLAYING) {
-                hint.hidden = true; againBtn.hidden = true; watch();
-                if (!tryAt) trySound();
+                ended = false;
+                if (!triedSound) { triedSound = true; call("unMute"); call("setVolume", 100); }
               }
-              if (e.data === YT.PlayerState.ENDED) finish();
+              if (e.data === YT.PlayerState.ENDED) ended = true;
+              setTimeout(sync, 300);
             }
           }
         });
+        timer = setInterval(tick, 250);
       }).catch(() => { box.hidden = true; note.firstChild.textContent = "▶ Watch the scene on YouTube"; });
     }
     return { el, start };
