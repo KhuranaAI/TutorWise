@@ -1,4 +1,4 @@
-<title>Nimish HQ</title>
+<title>JARVIS</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Chakra+Petch:wght@500;600;700&display=swap">
 <style>
@@ -250,7 +250,7 @@ label{font-size:13px;color:var(--mute);display:block;margin:10px 0 4px}
 
 <nav id="nav"><button data-v="today" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/></svg>Today</button><button data-v="cal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Calendar</button><button data-v="all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10M4 6l1.2 1.2L7.5 5M4 12l1.2 1.2L7.5 11M4 18l1.2 1.2L7.5 17"/></svg>Tasks</button><button data-v="centre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9.5 12 5l9 4.5-9 4.5-9-4.5z"/><path d="M7 12v4.2c3 2.4 7 2.4 10 0V12"/></svg>Centre</button><button data-v="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.7" fill="currentColor" stroke="none"/></svg>More</button></nav>
 
-<button id="fab" data-act="quick" aria-label="Tell HQ something" hidden>+</button>
+<button id="fab" data-act="quick" aria-label="Tell Jarvis something" hidden>+</button>
 <div id="sheet" hidden><div class="card" id="sheetBody"></div></div>
 
 <script type="text/plain" id="gsManifest">
@@ -540,6 +540,7 @@ async function boot(){
   db.doc('agent/latest').onSnapshot(d=>{S.agent=d.exists?d.data():null;renderToday()},err);
   db.doc('stats/revenue').onSnapshot(d=>{S.stats=d.exists?d.data():null;renderCentre()},err);
 }
+const upL=(id,patch)=>{const t=S.tasks.get(id);if(t)S.tasks.set(id,{...t,...patch});return up(id,patch)};
 const up=(id,patch)=>db?.doc('tasks/'+id).update({...patch,up:stamp()}).catch(e=>toast('Could not save: '+(e.message||e.code)));
 const upStu=(id,patch)=>db?.doc('students/'+id).update(patch).catch(e=>toast('Could not save: '+(e.message||e.code)));
 const first=x=>String(x||'').toLowerCase().trim().split(/[ (]/)[0];
@@ -763,7 +764,7 @@ const evOn=d=>S.events.filter(e=>isDate(e.date)&&occurs(e,d)).sort((a,b)=>(a.s||
 const addMin=(t,n)=>{const m=Math.max(0,Math.min(toM(t)+n,23*60+59));return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
 const busyOn=d=>[...((S.days.get(d)||{}).busy||[]),...evOn(d).filter(e=>hm(e.s)).map(e=>({s:e.s,e:hm(e.e)&&e.e>e.s?e.e:addMin(e.s,60),x:e.t,id:e.id}))].filter(b=>hm(b.s)&&hm(b.e)&&b.e>b.s).sort((a,b)=>a.s.localeCompare(b.s));
 function clashes(date,s,e,skip){const out=[];
-  if(hm(s)){const en=hm(e)&&e>s?e:addMin(s,60),w=dowOf(date);if(w>=1&&w<=5&&s<S.settings.teachEnd&&en>S.settings.teachStart)out.push('teaching');
+  if(hm(s)){const en=hm(e)&&e>s?e:addMin(s,60),w=dowOf(date);{const tt=teachOf(date);if(tt&&s<tt.e&&en>tt.s)out.push('teaching')}
     for(const b of busyOn(date))if(b.id!==skip&&b.s<en&&b.e>s)out.push(b.x||'something else')}
   else for(const x of evOn(date))if(x.id!==skip)out.push(x.t);
   return [...new Set(out)]}
@@ -783,6 +784,13 @@ const mineToday=()=>[...S.tasks.values()].filter(t=>t.today===today()&&t.s!=='do
    What he says must get done this week. Every item is pinned to a day, and the pins are redone whenever something is
    added, finished, pushed or carried over, so the whole list is done by the end of the week. No AI in the shuffling: it is instant. */
 const wkKey=()=>mondayOf();
+/* the hours he actually teaches on a day: his own lessons in the live scheduler (first start to last end), else settings */
+function teachOf(d){d=d||today();const st=S.settings,w=dowOf(d);if(w<1||w>5)return null;
+  if(S.sched&&Array.isArray(S.sched.sessions)&&S.sched.week===monOfX(d)){const me=norm(st.name||'Nimish'),all=S.sched.sessions.filter(x=>x.d===d&&!/^missed/.test(x.st||'')),mine=all.filter(x=>norm(x.t)===me),l=mine.length?mine:all;
+    if(!l.length)return null;return{s:l.map(x=>x.s).sort()[0],e:l.map(x=>x.e).sort().pop(),live:true,n:mine.length}}
+  return{s:st.teachStart,e:st.teachEnd}}
+const tStr=d=>{const t=teachOf(d);return t?`${t.s}-${t.e}${t.live?' (from the scheduler)':''}`:'no teaching'};
+const monOfX=d=>{const x=new Date(d+'T12:00:00Z');x.setUTCDate(x.getUTCDate()+1-(x.getUTCDay()||7));return x.toISOString().slice(0,10)};
 const monOf=d=>{const x=new Date(d+'T12:00:00Z');x.setUTCDate(x.getUTCDate()+1-(x.getUTCDay()||7));return x.toISOString().slice(0,10)};
 const isDone=t=>t.s==='done';
 const estOf=t=>+t.est||30;
@@ -792,9 +800,11 @@ const dayWord=d=>d===today()?'today':dayDiff(d)===1?'tomorrow':DNL[dowOf(d)];
 const short=x=>{x=String(x);return x.length>44?x.slice(0,42).replace(/\s+\S*$/,'')+'…':x};
 function horizon(){const out=[],end=dow()>=1&&dow()<=5?5:0;let d=today();for(let i=0;i<8;i++){out.push(d);if(dowOf(d)===end)break;d=addD(d,1)}return out}
 const dailies=()=>[...S.tasks.values()].filter(t=>t.s==='recurring'&&t.daily);
+const fw=x=>norm(String(x||'').split(/[:\s,]/)[0]);
+const dailiesOn=d=>dailies().filter(t=>!(t.skip||[]).includes(d)&&!weekItems().some(w=>w.day===d&&!w.daily&&fw(w.t)===fw(t.t)));
 const dailyLoad=()=>dailies().reduce((a,t)=>a+estOf(t),0);
 function dayBudget(d){const s=S.settings,cap=+s.capacity||.65,base=+s.dayBudget||180;if(d===today())return Math.max(20,Math.round(freeMinutes()*cap)-dailyLoad());
-  const wk=dowOf(d)>=1&&dowOf(d)<=5,a=toM(s.workStart),b=toM(wk?s.teachStart:'22:00');let blocked=0;for(const e of busyOn(d))blocked+=Math.max(0,Math.min(b,toM(e.e))-Math.max(a,toM(e.s)));
+  const wk=dowOf(d)>=1&&dowOf(d)<=5,a=toM(s.workStart),tt=teachOf(d),b=toM(tt?tt.s:'22:00');let blocked=0;for(const e of busyOn(d))blocked+=Math.max(0,Math.min(b,toM(e.e))-Math.max(a,toM(e.s)));
   return Math.max(30,Math.min(base,Math.round((b-a-blocked)*cap))-dailyLoad())}
 /* which day each open item sits on. Placed items stay put (unless `full`), unfinished days roll forward, new ones fill from today. */
 function layoutWeek(full){const days=horizon(),last=days[days.length-1],by=new Map(days.map(d=>[d,[]])),wait=[],items=weekItems().filter(t=>!isDone(t));
@@ -807,12 +817,12 @@ function layoutWeek(full){const days=horizon(),last=days[days.length-1],by=new M
   return{days,by}}
 /* today's docket is simply the items pinned to today */
 async function syncPlan(){const wk=weekItems(),td=today();if((!wk.length&&!dailies().length)||!db)return;
-  const picks=wk.filter(t=>t.day===td).map(t=>({id:t.id,why:t.pin?'You put this on today.':t.carried?'Carried over.':'',first:t.next||'',min:estOf(t)})).concat(dailies().map(t=>({id:t.id,why:'Every day.',first:t.next||'',min:estOf(t)}))),cur=S.plan,sig=x=>JSON.stringify((x||[]).map(k=>[k.id,k.min]));
+  const picks=wk.filter(t=>t.day===td).map(t=>({id:t.id,why:t.pin?'You put this on today.':t.carried?'Carried over.':'',first:t.next||'',min:estOf(t)})).concat(dailiesOn(td).map(t=>({id:t.id,why:'Every day.',first:t.next||'',min:estOf(t)}))),cur=S.plan,sig=x=>JSON.stringify((x||[]).map(k=>[k.id,k.min]));
   if(cur&&cur.by==='week'&&sig(cur.picks)===sig(picks)){trackPlan();return}
   const plan={headline:picks.length?`${picks.length} from your week list today.`:'Nothing pinned to today.',picks,quick:[],leftOut:'',by:'week',at:stamp(),marks:cur?.marks||{},how:`${wk.filter(isDone).length} of ${wk.length} done this week.`,forgot:[]};
   S.plan=plan;await db.doc('plans/'+td).set(plan).catch(()=>{});trackPlan()}
 async function applyWeek(full){if(!db)return[];if(!weekItems().length){if(dailies().length){await syncPlan();renderAll()}return[]}const L=layoutWeek(full),moved=[];
-  for(const [d,list] of L.by)for(const t of list)if(t.day!==d){moved.push(t.id);S.tasks.set(t.id,{...S.tasks.get(t.id),day:d});await db.doc('tasks/'+t.id).update({day:d,up:stamp()}).catch(()=>{})}
+  for(const [d,list] of L.by)for(const t of list)if(t.day!==d){moved.push(t.id);const c={day:d,...(t.day&&t.day<today()?{carried:true,pin:false}:{})};S.tasks.set(t.id,{...S.tasks.get(t.id),...c});await db.doc('tasks/'+t.id).update({...c,up:stamp()}).catch(()=>{})}
   await syncPlan();renderAll();return moved}
 /* a new day or a new week: what was not finished comes along */
 async function rollWeek(){const k=wkKey(),old=[...S.tasks.values()].filter(t=>t.wk&&t.wk<k&&!isDone(t)&&t.s!=='parked'&&t.s!=='idea');let n=nextN();
@@ -831,7 +841,7 @@ async function pushItem(id){const t=S.tasks.get(id),nx=horizon()[1];if(!t)return
 function weekAsk(){show('today');say(`Tell me everything that has to get done this week, ${sir()}. I’ll pin it into your days.`,true);if(!canHear())$('dump').focus()}
 /* say or type something from anywhere; with an id it is extra info for that one item */
 function quickSheet(id){const t=id&&S.tasks.get(id);V.quickId=t?id:'';
-  sheet(`<h3 style="font:600 18px var(--disp);margin:0">${t?'Add info':'Tell HQ'}</h3>${t?`<div class="m" style="margin-top:4px">${esc(T(t))}</div>${t.n?`<p class="why" style="white-space:pre-wrap;margin:8px 0 0">${esc(t.n)}</p>`:''}`:'<div class="m" style="margin-top:4px">Add something, move something, or ask.</div>'}
+  sheet(`<h3 style="font:600 18px var(--disp);margin:0">${t?'Add info':'Tell Jarvis'}</h3>${t?`<div class="m" style="margin-top:4px">${esc(T(t))}</div>${t.n?`<p class="why" style="white-space:pre-wrap;margin:8px 0 0">${esc(t.n)}</p>`:''}`:'<div class="m" style="margin-top:4px">Add something, move something, or ask.</div>'}
   <textarea id="qText" placeholder="${t?'What should I know about this?':'Type it here'}"></textarea><p class="why" id="qOut" style="margin:6px 0 0">${dict?'':'On the phone, use the microphone on your keyboard to talk.'}</p>
   <div class="row" style="margin-top:10px"><button class="sm pri" id="qBtn" data-act="qSend">${t?'Add':'Send'}</button>${dict?'<button class="sm" id="qMic" data-act="qMic">Talk</button>':''}<button class="sm ghost" data-act="close">Close</button></div>`);
   setTimeout(()=>$('qText')?.focus(),60)}
@@ -857,14 +867,39 @@ const dayOf=iso=>{if(!iso)return'';try{return new Intl.DateTimeFormat('en-CA',{t
 const minOf=x=>Math.max(5,Math.round(+x)||30);
 const doneOn=(t,d)=>!!t&&((t.s==='done'&&dayOf(t.doneAt)===d)||(t.s==='recurring'&&t.last===d));
 const scoreLevel=n=>n>=90?['Excellent','good']:n>=75?['Strong','good']:n>=55?['Solid','']:n>=35?['Light','warn']:['Slow day','warn'];
-function scoreOf(d){const day=S.days.get(d)||{},live=d===today();if(!live)return day.score||null;
-  const pl=day.pl||{},ex=day.ex||{},marks=S.plan?.marks||{};
+function scoreOf(d){const day=S.days.get(d)||{},live=d===today();if(!live&&!day.rv)return day.score||null;
+  const pl=day.pl||{},ex=day.ex||{},marks=live?S.plan?.marks||{}:{};
   const plan=Object.entries(pl).map(([id,x])=>({id,...x,done:!!x.done||doneOn(S.tasks.get(id),d)||marks[id]==='done'}));
   const extras=[...S.tasks.values()].filter(t=>!pl[t.id]&&doneOn(t,d)).map(t=>({id:t.id,t:T(t),min:minOf(t.est),imp:!!ex[t.id]?.imp}))
     .concat(Object.entries(ex).filter(([,x])=>x.manual).map(([id,x])=>({id,t:x.t,min:minOf(x.min),imp:true,manual:true})));
   const pm=plan.reduce((a,x)=>a+minOf(x.min),0),dm=plan.filter(x=>x.done).reduce((a,x)=>a+minOf(x.min),0),xm=Math.round(extras.reduce((a,x)=>a+minOf(x.min)*(x.imp?1:.5),0));
   if(!pm&&!xm)return null;
   return{s:Math.round(Math.min(100,(dm+xm)/(pm||120)*100)),pm,dm,xm,np:plan.length,nd:plan.filter(x=>x.done).length,nx:extras.length,ni:extras.filter(x=>x.imp).length,np2:plan.filter(x=>x.pushed&&!x.done).length,plan,extras}}
+/* catching up on a past day: what got done is recorded on that day, and its score is worked out again */
+const isoOn=d=>new Date(d+'T17:00:00Z').toISOString();
+async function doneBack(id,d){const t=S.tasks.get(id);if(!t||!isDate(d))return;
+  if(t.s==='recurring'||t.daily){if(!t.last||t.last<d)await upL(id,{last:d})}
+  else{const c={s:'done',doneAt:isoOn(d),ev:'caught up',...(t.wk?{day:d}:{})};S.tasks.set(id,{...t,...c});await up(id,c)}
+  await dayWrite(d,cur=>{const pl={...(cur.pl||{})};if(pl[id])pl[id]={...pl[id],done:true};else{cur={...cur,ex:{...(cur.ex||{}),[id]:{imp:true}}}}return{...cur,pl,rv:true}});
+  await rescore(d);if(t.wk)await applyWeek(false)}
+async function undoneBack(id,d){const t=S.tasks.get(id);if(!t)return;
+  if(t.s==='done'&&dayOf(t.doneAt)===d){const c={s:'ready',doneAt:null};S.tasks.set(id,{...t,...c});await up(id,c)}
+  if((t.s==='recurring'||t.daily)&&t.last===d)await upL(id,{last:null});
+  await dayWrite(d,cur=>{const pl={...(cur.pl||{})};if(pl[id])pl[id]={...pl[id],done:false};return{...cur,pl,rv:true}});await rescore(d);if(t.wk)await applyWeek(false)}
+async function rescore(d){const day=S.days.get(d);if(!day)return;const sc=scoreOf(d),small=sc?{s:sc.s,pm:sc.pm,dm:sc.dm,xm:sc.xm,np:sc.np,nd:sc.nd,nx:sc.nx,ni:sc.ni,final:d<today()}:null;await dayWrite(d,cur=>({...cur,score:small}))}
+/* the most recent earlier day (last 4) with a plan he hasn't caught up on yet */
+function catchUpDay(){for(let k=1;k<=4;k++){const d=addD(today(),-k),day=S.days.get(d);if(!day||!day.pl||day.rv||day.rvSkip)continue;
+  const sc=scoreOf(d)||{},ids=Object.keys(day.pl);if(ids.length&&(sc.nd||0)<ids.length)return d}return''}
+const sinceOf=t=>t.since||(String(t.src||'').match(/\d{4}-\d\d-\d\d/)||[])[0]||dayOf(t.up)||today();
+function laterPick(){const td=today(),k=wkKey();const l=[...S.tasks.values()].filter(t=>t.s==='ready'&&!(t.wk===k)&&!t.daily&&!(t.snz&&t.snz>td)&&(t.p||3)>=2)
+    .map(t=>({t,age:Math.round((new Date(td)-new Date(sinceOf(t)))/864e5)})).filter(x=>x.age>=5).sort((a,b)=>b.age-a.age);
+  return l[0]||null}
+function reviewSheet(d){const day=S.days.get(d)||{},pl=day.pl||{},ids=Object.keys(pl),sc=scoreOf(d)||{plan:[]};
+  const isD=id=>!!(sc.plan||[]).find(x=>x.id===id&&x.done);
+  sheet(`<h3 style="font:600 18px var(--disp);margin:0">${esc(dayName(d))}${sc.s!=null?` · score ${sc.s}`:''}</h3><p class="why" style="margin:4px 0 0">Tap what got done. Anything not done is already carried forward to your coming days.</p>
+  <div class="card" style="margin-top:10px">${ids.map(id=>{const x=pl[id],dn=isD(id);return `<div class="item row" style="flex-wrap:nowrap"><div class="grow"${dn?'':' style="color:var(--mute)"'}>${esc(x.t)}</div>${dn?`<button class="sm pri" data-act="rvNo" data-id="${id}" data-d="${d}">Done</button>`:`<button class="sm" data-act="rvYes" data-id="${id}" data-d="${d}">Did it</button>`}</div>`}).join('')||'<div class="m">Nothing was planned that day.</div>'}</div>
+  <label>Something else you got done that day</label><textarea id="rvText" placeholder="e.g. paid Saira, cleaned the back room"></textarea>
+  <div class="row" style="margin-top:10px"><button class="sm" data-act="rvMore" data-d="${d}">Add it</button><button class="sm pri" data-act="rvAll" data-d="${d}">That’s everything</button><button class="sm ghost" data-act="close">Close</button></div>`)}
 const pastScores=n=>{const out=[];for(let k=n;k>=1;k--){const d=addD(today(),-k),sc=(S.days.get(d)||{}).score;if(sc&&Number.isFinite(sc.s))out.push({d,s:sc.s})}return out};
 const scoreAvg=()=>{const h=pastScores(7);return h.length?Math.round(h.reduce((a,x)=>a+x.s,0)/h.length):null};
 function scoreLine(){const sc=scoreOf(today());if(!sc)return'no plan yet today, so no score';const a=scoreAvg();
@@ -880,7 +915,7 @@ function scoreSync(){if(!S.daysKnown||!db)return;const sc=scoreOf(today()),small
   if(JSON.stringify((S.days.get(today())||{}).score||null)!==JSON.stringify(small))dayWrite(today(),cur=>({...cur,score:small}))}
 function scoreCard(){if(!S.loaded)return'';const sc=scoreOf(today()),a=scoreAvg(),h=pastScores(6);
   if(!sc)return '<button class="lnk" data-act="scoreSheet"><span class="grow">Today’s score<small>It starts once today has a plan</small></span></button>';
-  const fin=nowHM()>=(S.settings.teachEnd||'20:00'),lv=fin||sc.s>=75?scoreLevel(sc.s):['So far','mute'],dif=a==null?null:sc.s-a,days=[...h,{d:today(),s:sc.s}];
+  const fin=nowHM()>=(teachOf()?.e||'20:00'),lv=fin||sc.s>=75?scoreLevel(sc.s):['So far','mute'],dif=a==null?null:sc.s-a,days=[...h,{d:today(),s:sc.s}];
   return `<button class="sc" data-act="scoreSheet" aria-label="Today’s score ${sc.s} out of 100, ${lv[0]}"><span class="scn"><span class="lbl">Today’s score</span><b class="num">${sc.s}</b><span class="pill ${lv[1]}">${lv[0]}</span></span>
     <span class="scm"><span>${sc.nd} of ${sc.np} planned done${sc.nx?` · ${sc.nx} extra`:''}</span><span class="num">${a==null?'Your average starts building tomorrow':fin?`${dif>=0?'+':'−'}${Math.abs(dif)} vs your 7-day average (${a})`:`Your 7-day average is ${a}`}</span></span>
     <span class="spark" aria-hidden="true">${days.map(x=>`<i class="${x.d===today()?'t':''}" style="height:${Math.max(8,x.s)}%" title="${esc(dayName(x.d))}: ${x.s}"></i>`).join('')}</span></button>`}
@@ -890,7 +925,7 @@ function scoreSheet(){const sc=scoreOf(today()),a=scoreAvg(),h=pastScores(7);
   <p class="why" style="margin:4px 0 0">Planned work you finish earns its minutes. Unplanned work counts half, or fully when you say it mattered. Your score is what you earned out of what you planned.</p>
   ${sc?`<h2>Planned · ${durS(sc.dm)} of ${durS(sc.pm)}</h2><div class="card">${sc.plan.map(x=>row(x,`<span class="pill ${x.done?'good':x.pushed?'warn':'mute'}">${x.done?'Done':x.pushed?'Pushed':'Not yet'}</span>`)).join('')||'<div class="m">Nothing was planned.</div>'}</div>
   <h2>Extras · ${durS(sc.xm)} counted</h2><div class="card">${sc.extras.map(x=>row(x,x.manual?'<span class="pill good">Counts</span>':`<button class="sm${x.imp?' pri':''}" data-act="xImp" data-id="${x.id}" aria-pressed="${x.imp}">${x.imp?'Counts fully':'Counts half'}</button>`)).join('')||'<div class="m">Nothing unplanned yet. Tell me when you do something that mattered.</div>'}</div>`:'<p class="m">Your score starts once today has a plan.</p>'}
-  <h2>Last 7 days${a!=null?` · average ${a}`:''}</h2><div class="card">${h.length?h.map(x=>`<div class="item row" style="flex-wrap:nowrap"><span class="grow">${esc(dayName(x.d))}</span><span class="num" style="font-weight:600">${x.s}</span></div>`).join(''):'<div class="m">Scores start building from today.</div>'}</div>
+  <h2>Last 7 days${a!=null?` · average ${a}`:''}</h2><div class="card">${h.length?h.map(x=>`<button class="item row lnk" style="flex-wrap:nowrap;width:100%" data-act="review" data-d="${x.d}"><span class="grow">${esc(dayName(x.d))}<small>Tap to fix what got done</small></span><span class="num" style="font-weight:600">${x.s}</span></button>`).join(''):'<div class="m">Scores start building from today.</div>'}</div>
   <div class="row" style="margin-top:14px"><button class="pri sm" data-act="creditAsk">Add something that counted</button><button class="sm ghost" data-act="close">Close</button></div>`)}
 
 /* ---------- Jarvis board ----------
@@ -907,7 +942,7 @@ function boardTabs(){const td=today(),sc=scoreOf(td),wp=weekPace(),ag=agenda(),m
   const stOf=t=>isDone(t)||marks[t.id]==='done'?'done':marks[t.id]==='skip'?'not today':marks[t.id]==='stuck'?'stuck':'open';
   const hm2=n=>String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
   let i=0;const todayRows=ag.rows.map(r=>r.fx?['',r.t,'', 'fixed time',hm2(r.s)+'–'+hm2(r.e),'']:[++i,T(r.t),r.k.min||estOf(r.t),stOf(r.t),r.ev?.s||'',r.t.id]);
-  const Today=[['Today',td,DNL[dow()],'HQ updated '+nowHM(),'',''],['Score',sc?sc.s:'',sc?(nowHM()>=(S.settings.teachEnd||'20:00')?scoreLevel(sc.s)[0]:'so far'):'no plan yet',sc?`${sc.nd} of ${sc.np} planned done`:'','',''],
+  const Today=[['Today',td,DNL[dow()],'Jarvis app updated '+nowHM(),'',''],['Score',sc?sc.s:'',sc?(nowHM()>=(teachOf()?.e||'20:00')?scoreLevel(sc.s)[0]:'so far'):'no plan yet',sc?`${sc.nd} of ${sc.np} planned done`:'','',''],
     ['This week',`${wp.done} of ${wp.all} done`,wp.all?(wp.ok?'on pace':'more than fits before Friday'):'week list empty','','',''],['','','','','',''],['#','Item','Minutes','Status','Time','ID'],...todayRows];
   const wk=weekItems(),days=[...new Set([...horizon(),...wk.map(t=>t.day).filter(Boolean)])].sort();
   const Week=[['Day','Date','Item','Minutes','Status','ID']];
@@ -918,7 +953,7 @@ function boardTabs(){const td=today(),sc=scoreOf(td),wp=weekPace(),ag=agenda(),m
   for(const {d,ev,du} of calDays(21)){for(const e of ev)Calendar.push([d,DNL[dowOf(d)],e.s?e.s+(e.e?'–'+e.e:''):e.approx?'around this date':'all day',e.t+(e.rep?` (every ${({weekly:'week',daily:'day',monthly:'month'})[e.rep]||e.rep})`:'')+(e.where?' @ '+e.where:'')]);for(const t of du)Calendar.push([d,DNL[dowOf(d)],'due',T(t)])}
   for(const e of S.events.filter(e=>!e.rep&&e.date>addD(td,20)).sort((a,b)=>a.date.localeCompare(b.date)))Calendar.push([e.date,DNL[dowOf(e.date)],e.s||(e.approx?'around this date':'all day'),e.t]);
   const K={you:'About him',pref:'How he likes things',pattern:'Pattern',person:'Person',style:'His format'};
-  const Memory=[['Kind','What HQ knows about him','For']].concat(S.mem.map(m=>[K[m.k]||'About him',String(m.x).slice(0,1500),m.k==='style'?(m.t||''):'']));
+  const Memory=[['Kind','What Jarvis knows about him','For']].concat(S.mem.map(m=>[K[m.k]||'About him',String(m.x).slice(0,1500),m.k==='style'?(m.t||''):'']));
   return{Today:['Today!A1:F45',padRows(Today,45,6)],Week:['Week!A1:F80',padRows(Week,80,6)],Calendar:['Calendar!A1:D60',padRows(Calendar,60,4)],Memory:['Memory!A1:C110',padRows(Memory,110,3)]}}
 function boardSoon(){if(!boardId()||!mcp||S.boardOff)return;clearTimeout(boardTimer);boardTimer=setTimeout(boardSync,Math.max(4000,20000-(Date.now()-boardLast)))}
 async function boardSync(){if(boardBusy||!boardId()||!mcp||!S.loaded||!S.daysKnown||S.boardOff)return;boardBusy=true;
@@ -938,7 +973,7 @@ async function inboxPoll(){if(inboxBusy||!boardId()||!mcp||!sample||!S.loaded||!
   try{const rows=await sheetVals(boardId(),'Inbox!A2:D400');let n=0;
     for(let i=0;i<rows.length;i++){const [,what,st]=rows[i]||[];const text=String(what||'').trim();if(!text||String(st||'').trim())continue;const row=i+2;
       await sheetPut(boardId(),`Inbox!C${row}`,[['Working '+devId]]);const chk=await sheetVals(boardId(),`Inbox!C${row}`);if(String(chk?.[0]?.[0]||'')!=='Working '+devId)continue; /* another open HQ took it */
-      const reply=await applyText(text,'Jarvis');await sheetPut(boardId(),`Inbox!C${row}:D${row}`,[[reply?'Done '+nowHM():'Could not apply',reply||'HQ could not understand this one. Say it again in HQ.']]);n++;
+      const reply=await applyText(text,'Jarvis');await sheetPut(boardId(),`Inbox!C${row}:D${row}`,[[reply?'Done '+nowHM():'Could not apply',reply||'The app could not understand this one. Say it again in the app.']]);n++;
       toast('From Jarvis: '+text.slice(0,80),2600)}
     if(n){renderAll();boardSoon()}}
   catch(e){if(e?.code==='not_granted'||e?.code==='blocked_by_policy')S.boardOff=true;console.warn('inbox',e)}
@@ -947,10 +982,10 @@ setInterval(inboxPoll,40000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(inboxPoll,1500)});
 const jarvisInstr=()=>`You are Jarvis, my personal assistant. At the start of every conversation, open my Google Sheet "Jarvis Board" (${boardUrl()}), read its About tab and follow it exactly. Then read the Memory, Today and Week tabs before you answer me.`;
 function jarvisSheet(){const ok=!!boardId();
-  sheet(`<h3 style="font:600 18px var(--disp);margin:0">Jarvis by voice</h3><p class="why" style="margin:4px 0 0">Talk to Jarvis in a normal Claude chat with voice mode on. It reads your day from your Jarvis Board sheet, and what you ask it to change lands here within a minute while HQ is open.</p>
+  sheet(`<h3 style="font:600 18px var(--disp);margin:0">Jarvis by voice</h3><p class="why" style="margin:4px 0 0">Talk to Jarvis in a normal Claude chat with voice mode on. It reads your day from your Jarvis Board sheet, and what you ask it to change lands here within a minute while this app is open.</p>
   ${ok?`<h2>One-time setup</h2><div class="card"><div class="m" style="font-size:14px">1. In Claude, create a project called <b>Jarvis</b>.<br>2. Paste this into the project’s instructions:</div><p class="first" id="jInstr" style="margin-top:8px;white-space:pre-wrap">${esc(jarvisInstr())}</p><div class="row"><button class="sm pri" data-act="copy" data-from="jInstr">Copy</button><a class="m" href="${esc(boardUrl())}" target="_blank" rel="noopener" style="color:var(--acc);font-weight:600">Open the Jarvis Board</a></div>
   <div class="m" style="font-size:14px;margin-top:10px">3. To talk: open a chat in the Jarvis project and tap the voice button.</div></div>
-  <h2>Status</h2><div class="card"><div class="m">${S.boardOff?'HQ can’t reach your Google Sheets here. Allow the Google Sheets connector for this page.':S.boardAt?'Board last updated at '+esc(t12(S.boardAt))+'.':'Board updates when something changes here.'}</div><div class="row" style="margin-top:8px"><button class="sm" data-act="boardNow">Sync now</button></div></div>`:'<p class="m">The Jarvis Board isn’t set up yet.</p>'}
+  <h2>Status</h2><div class="card"><div class="m">${S.boardOff?'The app can’t reach your Google Sheets here. Allow the Google Sheets connector for this page.':S.boardAt?'Board last updated at '+esc(t12(S.boardAt))+'.':'Board updates when something changes here.'}</div><div class="row" style="margin-top:8px"><button class="sm" data-act="boardNow">Sync now</button></div></div>`:'<p class="m">The Jarvis Board isn’t set up yet.</p>'}
   <div class="row" style="margin-top:14px"><button class="sm ghost" data-act="close">Close</button></div>`)}
 
 /* what is done, slipping and on track, and what he may be forgetting: facts for the planner to choose from */
@@ -1027,8 +1062,8 @@ function makeupBody(){const m=makeupIdeas();if(!m)return'';
   return m.list.map(({s,opts})=>`<div class="item"><div class="row"><div class="grow"><span class="t">${esc(s.name)}</span> <span class="m num">owed ${s.owed} h</span><div class="m">${opts.length?'Quietest: '+opts.map(o=>slotTxt(o)+' ('+o.n+' booked)').join(', '):'No free hour found this week'}</div></div>${opts.length?`<button class="sm" data-act="aiMakeup" data-id="${s.id}" data-slot="${esc(slotTxt(opts[0]))}">Draft the ask</button>`:''}</div></div>`).join('')}
 
 /* ---------- planning ---------- */
-function freeMinutes(){const s=S.settings,now=toM(nowHM()),wk=isWk();let a,b,cap=600;
-  if(wk&&now>=toM(s.teachEnd)){a=now;b=toM('23:00');cap=120}else{a=Math.max(now,toM(s.workStart));b=toM(wk?s.teachStart:'22:00');if(!wk)cap=300}
+function freeMinutes(){const s=S.settings,now=toM(nowHM()),tt=teachOf(),wk=!!tt;let a,b,cap=600;
+  if(wk&&now>=toM(tt.e)){a=now;b=toM('23:00');cap=120}else{a=Math.max(now,toM(s.workStart));b=toM(wk?tt.s:'22:00');if(!wk)cap=300}
   let free=Math.max(0,b-a),end=a;
   for(const k of busyOn(today())){const x=Math.max(end,toM(k.s)),y=Math.min(b,toM(k.e));if(y>x){free-=y-x;end=y}}
   return Math.max(0,Math.min(cap,free))}
@@ -1039,7 +1074,7 @@ function fallbackPlan(note){const budget=Math.floor(freeMinutes()*S.settings.cap
   for(const t of open().filter(t=>(t.s==='ready'||mine.includes(t.id))&&!aside[t.id]).sort((a,b)=>mine.includes(b.id)-mine.includes(a.id)||(mine.includes(a.id)?mine.indexOf(a.id)-mine.indexOf(b.id):rank(b)-rank(a)))){const est=t.est||45,m=mine.includes(t.id);if(picks.length>=(mine.length?6:3))break;if(!m&&used+est>budget&&picks.length)continue;used+=est;
     picks.push({id:t.id,why:m?'You said today.':t.due?`Due ${t.due}${t.hard?' (fixed date)':''}.`:'High priority on your list.',first:t.next||t.t,min:est})}
   return {headline:mine.length?'Your list for today, in your order.':'Picked by priority and dates.',picks,leftOut:'Everything else can wait today.',by:'rules',how:`${pf.done.length} done this week.${pf.slip[0]?' Slipping: '+pf.slip[0]+'.':''}`,forgot:pf.forget.slice(0,3)}}
-const modeNow=()=>{const s=S.settings,n=nowHM();if(isWk()&&n>=s.teachStart&&n<s.teachEnd)return'teach';if(isWk()&&n>=s.teachEnd)return'eve';return'work'};
+const modeNow=()=>{const n=nowHM(),tt=teachOf();if(tt&&n>=tt.s&&n<tt.e)return'teach';if(tt&&n>=tt.e)return'eve';if(!tt&&isWk()&&n>='20:00')return'eve';return'work'};
 function openPicks(skipId){const p=S.plan,marks=p?.marks||{};return (p?.picks||[]).map(k=>({k,t:S.tasks.get(k.id)})).filter(x=>x.t&&x.t.s!=='done'&&!marks[x.k.id]&&x.k.id!==skipId)}
 async function makePlan(note,announce){
   if(!db)return;if(S.planning){S.planNext={note,announce};return}
@@ -1050,7 +1085,7 @@ async function makePlan(note,announce){
     const lines=open().sort((a,b)=>rank(b)-rank(a)).slice(0,70).map(t=>`${t.id}|${t.a}|${t.s}|P${t.p||3}|${t.due?('due '+t.due+(t.hard?' HARD':'')):'no date'}|${t.est||'?'}m|${T(t)}${t.next&&t.next!==t.t?' -> next: '+t.next:''}${t.wait?' (waiting on '+t.wait+')':''}`).join('\n');
     const hb=S.habits.get(today())||{},bz=busyTxt(today()),saidT=saidToday(),wd=(S.week?.days||[]).find(d=>d.date===today()),cx=(S.days.get(today())||{}).cx,mine=mineToday(),pf=facts();
     plan=await sample.json(`You plan one day for ${s.name}, who runs a tutoring centre and has many other responsibilities. Be decisive, like a chief of staff.
-Today is ${today()} (${DN[dow()]}), time now ${nowHM()} Toronto.${hb.upAt?` He got up at ${hb.upAt}.`:''} Teaching is ${s.teachStart}-${s.teachEnd} on weekdays. Always protect: ${s.protect}.
+Today is ${today()} (${DN[dow()]}), time now ${nowHM()} Toronto.${hb.upAt?` He got up at ${hb.upAt}.`:''} Teaching today: ${tStr(today())}. Teaching hours come only from the scheduler; never say 8 pm unless that is what it shows. Always protect: ${s.protect}.
 Free focused minutes left today, outside teaching and anything he is busy with: ${free}. Plan at most ${budget} minutes of it (leave slack for interruptions).
 ${bz?`He is busy today: ${bz}. Plan nothing inside those times, and say in the headline what the day really looks like.\n`:''}${saidT?`What he has told you today, in his own words. This outranks every preference below: if he said what today is for, today is for that, and anything else needs a very good reason.\n${saidT}\n`:''}${wd?`His week plan gives today: "${wd.theme}"${(wd.items||[]).length?' with items '+wd.items.join(', '):''}${wd.note?' ('+wd.note+')':''}. Start from it unless what he said today or the time left says otherwise.\n`:''}${cx&&cxTxt(cx)?`His constraints today, from his own mouth: ${cxTxt(cx)}. Respect them: low energy means fewer and lighter items, a place means only what can be done there, a stop time is a hard stop.\n`:''}${mine.length?`He said these are for today, in this order: ${mine.map(t=>t.id).join(', ')}. Plan them first and keep his order unless a fixed time forces a change. Leave one out only if the day truly cannot hold it, and name it in leftOut.\n`:''}${note?'Note: '+note+'\n':''}${Object.keys(marks).length?'He already set these aside today, so do not pick them again: '+Object.keys(marks).join(', ')+'.\n':''}Unpaid fees this month: ${feeTot().ow.map(x=>`${x.name} ${money(owes(x))}`).join(', ')||'none'}.
 ${recallText()}
@@ -1079,7 +1114,7 @@ async function makeWeek(note,announce){
   S.weeking=true;S.open.add('sec:wk7');renderToday();
   try{const s=S.settings,days=[...Array(7)].map((_,k)=>addD(today(),k)),saidT=saidToday();
     const lines=open().sort((a,b)=>rank(b)-rank(a)).slice(0,80).map(t=>`${t.id}|${t.a}|${t.s}|P${t.p||3}|${t.due?('due '+t.due+(t.hard?' HARD':'')):'no date'}|${t.est||'?'}m|${T(t)}${t.wait?' (waiting on '+t.wait+')':''}`).join('\n');
-    const cal=days.map(d=>{const w=dowOf(d),b=busyTxt(d);return `${d} ${DNL[w]}${d===today()?' (today, now '+nowHM()+')':''}: ${w>=1&&w<=5?`teaches ${s.teachStart}-${s.teachEnd}`:'no teaching'}${b?'; busy '+b:''}`}).join('\n');
+    const cal=days.map(d=>{const w=dowOf(d),b=busyTxt(d);return `${d} ${DNL[w]}${d===today()?' (today, now '+nowHM()+')':''}: ${w>=1&&w<=5?(teachOf(d)?`teaches ${tStr(d)}`:'no lessons'):'no teaching'}${b?'; busy '+b:''}`}).join('\n');
     const ask=`You lay out the next 7 days for ${s.name}, who runs a tutoring centre and has many other responsibilities. Be decisive, like a chief of staff who knows him.
 The days:
 ${cal}
@@ -1108,7 +1143,7 @@ function greet(spoken){
   if(!S.loaded)return hi;
   const hb=S.habits.get(today())||{},m=modeNow(),cur=openPicks()[0],bz=busyNow(),nb=busyOn(today()).find(b=>b.s>nowHM());
   if(bz)return `${hi} ${bz.x&&bz.x!=='busy'?bz.x[0].toUpperCase()+bz.x.slice(1)+' runs':'You’re busy'} until ${t12(bz.e)}. I’ll hold everything else.`;
-  if(m==='teach')return `${hi} You’re teaching until ${t12(s.teachEnd)}. I’ll hold everything else.`;
+  if(m==='teach')return `${hi} You’re teaching until ${t12(teachOf()?.e||s.teachEnd)}. I’ll hold everything else.`;
   if(m==='eve')return `${hi} Teaching’s done. Two minutes to close the day, then you’re off.`;
   if(!hb.up)return `${hi} When did you get up today?`;
   const free=freeMinutes(),lead=free>0?` You have ${dur(free)} ${isWk()?'before teaching':'to work with'}.`:'';
@@ -1135,7 +1170,7 @@ function intakePrompt(text){
   const lines=[...S.tasks.values()].filter(t=>t.s!=='done'&&t.s!=='parked'&&t.wk!==wkKey()).map(t=>`${t.id}|${t.a}|${t.s}|${T(t)}`).join('\n');
   const ct=V.ctx?.stuck&&S.tasks.get(V.ctx.stuck);
   return `You are ${s.name}'s personal assistant inside his planner app. He just said the message below. It came through speech-to-text and he talks freely, so expect rambling, filler words and mishearings, especially of names: match them to the people and items listed here (a name split in two or spelled oddly still means the closest person on the list). Work out what he means, turn it into operations on his records, and answer him.
-Now: ${today()} (${DNL[dow()]}), ${nowHM()} Toronto. He teaches ${s.teachStart}-${s.teachEnd} on weekdays.
+Now: ${today()} (${DNL[dow()]}), ${nowHM()} Toronto. Teaching today: ${tStr(today())}. Teaching hours come only from the scheduler.
 ${ct?`Context: he just marked "${T(ct)}" (id ${ct.id}) as stuck, and this message is probably the reason. Record the reason on that item, set a smaller next step if one is obvious, or set it to waiting if he is waiting on someone.\n`:''}${V.ctx?.checkin&&Date.now()-(V.ctx.at||0)<12e5?`Context: you just asked him for today's constraints as part of his daily check-in. This message is his answer, probably with what he feels has to get done. Record it: constraints; an event for each fixed commitment that has a time (if he only has until some time, an event from that time until teaching starts, titled "Not available"); add with "week":true for anything new he names, plus "today":true if it has to be today; today for listed things he wants today; then rebalance. Your reply is one short sentence saying you are building his day: the app then tells him the plan, how he is doing and what he is forgetting.\n`:''}Areas: ${Object.keys(AREAS).join(', ')}.
 Students: ${stu}.
 Unpaid fees this month: ${f.ow.map(x=>`${x.name} ${money(owes(x))}`).join(', ')||'none'}.
@@ -1163,7 +1198,13 @@ Rules:
 - His week: whatever he says he has to do goes on this week's list, unless he gives a day after this week or calls it a someday idea. Use add with "week":true for something new, or week_add for things already on his older list. Do NOT ask which day and do NOT ask how long: the app pins every item to a day, Monday to Friday around his teaching, and keeps rearranging as things get done or slip. Put your best guess of the minutes in "est" when he did not say. When he gives several things in one breath, add every one of them.
 - A day he names is fixed. If he says when something has to happen ("tomorrow", "today", "Thursday"), put that date in "day" on the add, for every item it covers; the app never moves those. If he then says the things he just listed (or "all of this") are for a certain day, use pin with that date for each of those items by id: they are the ones added in his last messages above. Never answer that they are already on the list without pinning them.
 - Moving things: when he names a day for something ("do the resumes Wednesday"), use pin with that date (and "at" only if he gave a time). "Not today" or "push it" means pin to the next day. unpin lets the app place it again. week_remove takes it off this week. If he says he only has until some time today, or will be away for part of a day, add an event titled "Not available" for the time he is not free (up to the start of teaching if he gave no end) and use rebalance. If he just asks you to rearrange, use rebalance.
-- The week list is the plan. Never add to it yourself, and never bring up, recommend or remind him of anything from his older list unless he asks what else there is.
+- The week list is the plan. Never add to it yourself, and never bring up, recommend or remind him of anything from his older list unless he asks what else there is (the app itself shows him one long-waiting item a day; that is not your job).
+- Not urgent: when he says something is not a priority, "at some point", "within the next couple of months", "eventually", or that he is just telling you so it isn't forgotten, add it with "week":false (and "due" only if he gave a by-date). Those go on his later list, not this week. "Within the next week" or a day this week is this week.
+- Daily items (marked "every day" in the list) such as study: if he says he is not doing it on a day ("not studying today"), use daily_skip with its id and that date. Never use week_remove on it and never re-add it. If he says what he will study on a day, add that as its own item for that day: the app then drops the daily item that day by itself.
+- Earlier days: if he says he did something yesterday or on an earlier day, use done with "on" set to that date (and add with "done_on" if there is no matching item). Never mark today's copy done instead.
+- Unfinished items from earlier days are carried forward by the app automatically onto today and the next days, and never marked done. If he asks, say exactly that.
+- "What could I get done in 20 minutes?" or similar: answer from today's and tomorrow's open items whose minutes fit, naming up to three, and pin them to today only if he says yes.
+- Names: spell names exactly as in memory, even when the words he sends are a mishearing. "Corona", "Kurana" or "Piranha" Holdings is Khurana Holdings. "Munder" is mandir. "Tudorize" is TutorWise.
 - While he is listing things and says he will keep going, keep your reply to a few words ("Got it, sir. Keep going.").
 - Your reply never says which day an added item landed on: the app tells him that itself, right after your reply. Just say how many you added.
 - Calendar: anything with a day or a time is an event (appointments, visits, games, trips, time he is out). Use the date he gave; "around the 4th" means that date with "approx":true. Give "from" and "to" only if he gave times. First check the calendar above and his teaching hours for a clash, and tell him in a few words if there is one. If the same thing is already on the calendar, do not add it again: say it is there. To move or cancel something use event_change or event_cancel with its id. If he asks what is coming up, or to see his calendar, use show_calendar and sum up the next two to three weeks in one or two short sentences.
@@ -1194,7 +1235,7 @@ Rules:
 - If he says no reply is needed, reply with two or three words.
 - remember: durable things about HIM that this message reveals: a preference, a routine he says he has, a person in his life, how he likes things done, whether something repeats. Not tasks, not one-off details, nothing already in the learned list. Usually empty. "d" is the weekday number (0=Sunday..6=Saturday) only when the fact is about one weekday, else null. forget: ids from the learned list that this message shows are wrong or no longer true.
 - reply: it is read aloud to him. One or two short sentences, under 35 words, plain spoken English, no lists or symbols. Open with a brief acknowledgement and address him as "${a}" once (for example "Understood, ${a}." or "Done, ${a}."). Say exactly what you did: "added to your list" for something new; if it was already on his list, say so and say what you updated. Confirm a calendar change in a few words: what, and which day. When you mention a date, give the date (Nov 24), not only a weekday name, unless it is today or tomorrow. Ask at most one short question, only if something important is unclear, and never while a question of yours in the recent conversation is still unanswered. Never lecture and never guilt him.
-Return JSON only: {"reply":"...","remember":[{"x":"short fact, third person","k":"you|pref|pattern|person|style","d":null,"t":"only for style: what the format is for"}],"forget":["id"],"ops":[{"op":"add","title":"","area":"","kind":"task","pri":3,"due":null,"hard":false,"est":null,"next":"","ai":false,"notes":"","msg":"","week":true,"day":null,"today":false},{"op":"week_add","ids":["ids from his older list that he wants done this week"]},{"op":"pin","id":"","date":"YYYY-MM-DD","at":null},{"op":"unpin","id":""},{"op":"week_remove","id":""},{"op":"rebalance"},{"op":"show_week"},{"op":"counts","id":""},{"op":"sch_attend","student":"","date":"YYYY-MM-DD","start":null,"status":"attended"},{"op":"sch_cancel","student":"","date":"","start":null,"credit":true,"reason":""},{"op":"sch_move","student":"","date":"","start":null,"new_date":"","new_start":"","new_end":null,"new_teacher":null},{"op":"sch_add","student":"","date":"","start":"","end":"","teacher":"","kind":"extra"},{"op":"sch_timetable","student":"","slots":[{"day":"Monday","start":"17:00","end":"18:00","teacher":""}],"apply_from":null},{"op":"sch_undo"},{"op":"teach_rule","teacher":"","can":false,"grade":"12","student":null},{"op":"student_info","student":"","grade":"12"},{"op":"sch_free","student":"","from":"YYYY-MM-DD","to":"YYYY-MM-DD","minutes":null,"teacher":null},{"op":"credit","title":"","minutes":30},{"op":"draft","ask":"what to write, with every detail he gave","task":null},{"op":"update","id":"","set":{"s":"waiting","wait":"who","due":"YYYY-MM-DD","p":2,"n":"note","est":20,"next":"","t":"new title","msg":"message wording"}},{"op":"done","id":""},{"op":"today","ids":["existing items he wants done today, in his order"]},{"op":"event","title":"","date":"YYYY-MM-DD","from":null,"to":null,"approx":false,"where":"","repeat":null,"notes":""},{"op":"event_change","id":"","date":null,"from":null,"to":null,"title":null},{"op":"event_cancel","id":"","date":null},{"op":"show_calendar"},{"op":"checkin"},{"op":"constraints","time":"","energy":"","where":"","fixed":""},{"op":"project","name":"","status":"active","next":"","notes":""},{"op":"attendance","student":"","status":"absent","hours":1},{"op":"paid","student":"","amount":0,"date":"YYYY-MM-DD the money came in, worked out from what he said, else today"},{"op":"undo_paid","student":""},{"op":"schedule","student":"","slots":[{"d":1,"s":"17:00","e":"18:00"}]},{"op":"setting","key":"teachEnd","value":"20:00"},{"op":"woke","time":"HH:MM he got up today, 24h"},{"op":"replan","note":""},{"op":"plan_week","note":""}]}  (use only the ops needed; "ops" may be empty; times are 24h HH:MM; "repeat" is null, "weekly", "daily" or "monthly")`}
+Return JSON only: {"reply":"...","remember":[{"x":"short fact, third person","k":"you|pref|pattern|person|style","d":null,"t":"only for style: what the format is for"}],"forget":["id"],"ops":[{"op":"add","title":"","area":"","kind":"task","pri":3,"due":null,"hard":false,"est":null,"next":"","ai":false,"notes":"","msg":"","week":true,"day":null,"today":false,"done_on":null},{"op":"week_add","ids":["ids from his older list that he wants done this week"]},{"op":"pin","id":"","date":"YYYY-MM-DD","at":null},{"op":"daily_skip","id":"","date":"YYYY-MM-DD"},{"op":"unpin","id":""},{"op":"week_remove","id":""},{"op":"rebalance"},{"op":"show_week"},{"op":"counts","id":""},{"op":"sch_attend","student":"","date":"YYYY-MM-DD","start":null,"status":"attended"},{"op":"sch_cancel","student":"","date":"","start":null,"credit":true,"reason":""},{"op":"sch_move","student":"","date":"","start":null,"new_date":"","new_start":"","new_end":null,"new_teacher":null},{"op":"sch_add","student":"","date":"","start":"","end":"","teacher":"","kind":"extra"},{"op":"sch_timetable","student":"","slots":[{"day":"Monday","start":"17:00","end":"18:00","teacher":""}],"apply_from":null},{"op":"sch_undo"},{"op":"teach_rule","teacher":"","can":false,"grade":"12","student":null},{"op":"student_info","student":"","grade":"12"},{"op":"sch_free","student":"","from":"YYYY-MM-DD","to":"YYYY-MM-DD","minutes":null,"teacher":null},{"op":"credit","title":"","minutes":30},{"op":"draft","ask":"what to write, with every detail he gave","task":null},{"op":"update","id":"","set":{"s":"waiting","wait":"who","due":"YYYY-MM-DD","p":2,"n":"note","est":20,"next":"","t":"new title","msg":"message wording"}},{"op":"done","id":"","on":null},{"op":"today","ids":["existing items he wants done today, in his order"]},{"op":"event","title":"","date":"YYYY-MM-DD","from":null,"to":null,"approx":false,"where":"","repeat":null,"notes":""},{"op":"event_change","id":"","date":null,"from":null,"to":null,"title":null},{"op":"event_cancel","id":"","date":null},{"op":"show_calendar"},{"op":"checkin"},{"op":"constraints","time":"","energy":"","where":"","fixed":""},{"op":"project","name":"","status":"active","next":"","notes":""},{"op":"attendance","student":"","status":"absent","hours":1},{"op":"paid","student":"","amount":0,"date":"YYYY-MM-DD the money came in, worked out from what he said, else today"},{"op":"undo_paid","student":""},{"op":"schedule","student":"","slots":[{"d":1,"s":"17:00","e":"18:00"}]},{"op":"setting","key":"teachEnd","value":"20:00"},{"op":"woke","time":"HH:MM he got up today, 24h"},{"op":"replan","note":""},{"op":"plan_week","note":""}]}  (use only the ops needed; "ops" may be empty; times are 24h HH:MM; "repeat" is null, "weekly", "daily" or "monthly")`}
 
 /* ---------- talk ---------- */
 async function respond(text,byVoice){
@@ -1238,8 +1279,8 @@ async function applyOps(ops,src,wasCheck){
     if(o.op==='add'&&o.title){const id='t'+Date.now().toString(36)+(n++);
       const due=isDate(o.due)?o.due:null,onWk=o.week!==false&&o.kind!=='idea'&&!(due&&due>addD(wkKey(),6));
       const doc={t:String(o.title).slice(0,200),a:AREAS[o.area]?o.area:'other',s:o.kind==='idea'?'idea':'ready',p:[1,2,3,4].includes(o.pri)?o.pri:3,due,hard:!!o.hard&&!!due,
-        est:+o.est||null,next:o.next||'',ai:!!o.ai,n:o.notes||'',...(o.msg?{msg:String(o.msg).slice(0,1500)}:{}),src:'talk '+today(),up:stamp(),...(onWk?{wk:wkKey(),wkN:nextN(),day:o.today?today():null,pin:!!o.today}:{})};
-      S.tasks.set(id,{id,...doc});await db.doc('tasks/'+id).set(doc);out.push('added: '+o.title);if(onWk){newIds.push(id);touched=true;const dd=isDate(o.day)&&o.day>=today()?o.day:saidDay;if(dd)await pinItem(id,dd).catch(()=>{})}}
+        est:+o.est||null,next:o.next||'',ai:!!o.ai,n:o.notes||'',...(o.msg?{msg:String(o.msg).slice(0,1500)}:{}),src:'talk '+today(),since:today(),up:stamp(),...(onWk?{wk:wkKey(),wkN:nextN(),day:o.today?today():null,pin:!!o.today}:{})};
+      S.tasks.set(id,{id,...doc});await db.doc('tasks/'+id).set(doc);out.push('added: '+o.title);if(isDate(o.done_on)&&o.done_on<today()){await doneBack(id,o.done_on)}else if(onWk){newIds.push(id);touched=true;const dd=isDate(o.day)&&o.day>=today()?o.day:saidDay;if(dd)await pinItem(id,dd).catch(()=>{})}}
     else if(o.op==='week_add'){for(const i of (Array.isArray(o.ids)?o.ids:[]).slice(0,12)){const t=S.tasks.get(i);if(t&&t.wk!==wkKey()&&t.s!=='done'){const c={wk:wkKey(),wkN:nextN(),day:null,pin:false,s:t.s==='verify'||t.s==='idea'||t.s==='parked'?'ready':t.s};S.tasks.set(i,{...t,...c});await up(i,c);newIds.push(i);touched=true;out.push('this week: '+t.t)}}}
     else if(o.op==='pin'&&S.tasks.has(o.id)){if(await pinItem(o.id,o.date,o.at)){touched=true;out.push(`pinned: ${S.tasks.get(o.id).t}, ${dayName(o.date)}`)}}
     else if(o.op==='unpin'&&S.tasks.has(o.id)){const c={pin:false,day:null};S.tasks.set(o.id,{...S.tasks.get(o.id),...c});await up(o.id,c);touched=true;out.push('unpinned: '+S.tasks.get(o.id).t)}
@@ -1256,6 +1297,8 @@ async function applyOps(ops,src,wasCheck){
     else if(o.op==='update'&&S.tasks.has(o.id)){const a={};const st=o.set||{};
       if(STAT[st.s]&&st.s!=='done')a.s=st.s;if(st.wait)a.wait=String(st.wait);if(/^\d{4}-\d\d-\d\d$/.test(st.due||''))a.due=st.due;if([1,2,3,4].includes(st.p))a.p=st.p;if(+st.est)a.est=+st.est;if(st.next)a.next=String(st.next);if(st.msg)a.msg=String(st.msg).slice(0,1500);if(st.t)a.t=String(st.t).slice(0,200);
       if(st.n)a.n=((S.tasks.get(o.id).n||'')+'\n'+today()+': '+st.n).trim();if(Object.keys(a).length){await up(o.id,a);out.push('updated: '+S.tasks.get(o.id).t)}}
+    else if(o.op==='done'&&S.tasks.has(o.id)&&isDate(o.on)&&o.on<today()){await doneBack(o.id,o.on);out.push(`done ${dayName(o.on).toLowerCase()}: `+S.tasks.get(o.id).t)}
+    else if(o.op==='daily_skip'&&S.tasks.has(o.id)){const t=S.tasks.get(o.id),d=isDate(o.date)?o.date:today();await upL(o.id,{skip:[...new Set([...(t.skip||[]).filter(x=>x>=today()),d])]});touched=true;out.push(`no ${T(t)} ${dayName(d).toLowerCase()}`);if(d===today())await syncPlan()}
     else if(o.op==='done'&&S.tasks.has(o.id)){await finishTask(o.id,'he said so: '+src.slice(0,80));out.push('done: '+S.tasks.get(o.id).t)}
     else if(o.op==='attendance'){const s=findStu(o.student);if(s){const st=o.status==='makeup'?'makeup':o.status==='present'?'present':'absent';await logAtt(s,st,+o.hours||1);out.push(st+': '+s.name)}}
     else if(o.op==='paid'){const s=findStu(o.student);if(s&&+o.amount>0){const ok=await recordPaid(s,(s.fee?.paid||0)+ +o.amount,/^\d{4}-\d\d-\d\d$/.test(o.date||'')?o.date:today());out.push('paid '+money(+o.amount)+': '+s.name+(ok?' (fee sheet updated)':' (fee sheet: overnight)'))}}
@@ -1367,7 +1410,7 @@ function renderToday(){
   const row=r=>{
     if(r.fx){const past=r.e<=now,on=r.s<=now&&now<r.e;return `<li class="r fx${past?' past':''}${on?' now':''}"><span class="tm num">${esc(t12(hmOf(r.s)).replace(' ',''))}</span><span class="rt">${on?'<span class="tag">NOW</span>':''}${esc(r.t[0].toUpperCase()+r.t.slice(1))}${r.teach?' until '+esc(t12(s.teachEnd)):''}</span><span class="rm num">${r.teach?'':durS(r.e-r.s)}</span></li>`}
     const{k,t,st}=r,isNow=!bz&&m!=='teach'&&cur&&k.id===cur.k.id,open=ex===k.id;
-    return `<li class="r ${st==='done'?'done':st==='open'?'':'off'}${isNow?' now':''}"><button class="ck" data-act="${st==='done'?'undone':'done'}" data-id="${t.id}" aria-label="${st==='done'?'Not done after all':'Done'}: ${esc(T(t))}">${CHECK}</button><button class="rt" data-act="row" data-id="${t.id}" aria-expanded="${open}">${isNow?'<span class="tag">NOW</span>':''}${esc(T(t))}${st==='skip'?' <span class="pill mute">not today</span>':st==='stuck'?' <span class="pill warn">stuck</span>':''}</button><span class="rm num">${st==='done'?'':(r.ev?esc(t12(r.ev.s).replace(' ',''))+' · ':'')+(t.wk&&!t.est?'~':'')+durS(k.min||t.est||30)}</span>${open?`<div class="rx">${k.why?`<p class="why">${esc(k.why)}</p>`:''}${k.first||t.next?`<p class="first"><b>Start:</b> ${esc(k.first||t.next)}</p>`:''}${t.msg?`<p class="first" id="m_${t.id}" style="white-space:pre-wrap">${esc(t.msg)}</p>`:''}<div class="row">${t.msg?`<button class="sm" data-act="copy" data-from="m_${t.id}">Copy the message</button>`:''}${st==='open'?`<button class="pri sm" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="mark" data-m="skip" data-id="${t.id}">${t.wk===wkKey()?'Not today':'Not now'}</button><button class="sm" data-act="mark" data-m="stuck" data-id="${t.id}">Stuck</button><button class="sm" data-act="quick" data-id="${t.id}">Add info</button>`:`<button class="pri sm" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="undone" data-id="${t.id}">Back on the list</button>`}${t.out==='ready'?'<button class="sm ghost" data-act="goAI">Open the draft</button>':t.ai?`<button class="sm ghost" data-act="aiTask" data-id="${t.id}">Let AI draft it</button>`:''}</div></div>`:''}</li>`};
+    return `<li class="r ${st==='done'?'done':st==='open'?'':'off'}${isNow?' now':''}"><button class="ck" data-act="${st==='done'?'undone':'done'}" data-id="${t.id}" aria-label="${st==='done'?'Not done after all':'Done'}: ${esc(T(t))}">${CHECK}</button><button class="rt" data-act="row" data-id="${t.id}" aria-expanded="${open}">${isNow?'<span class="tag">NOW</span>':''}${esc(T(t))}${t.carried&&st==='open'?' <span class="pill mute">carried</span>':''}${st==='skip'?' <span class="pill mute">not today</span>':st==='stuck'?' <span class="pill warn">stuck</span>':''}</button><span class="rm num">${st==='done'?'':(r.ev?esc(t12(r.ev.s).replace(' ',''))+' · ':'')+(t.wk&&!t.est?'~':'')+durS(k.min||t.est||30)}</span>${open?`<div class="rx">${k.why?`<p class="why">${esc(k.why)}</p>`:''}${k.first||t.next?`<p class="first"><b>Start:</b> ${esc(k.first||t.next)}</p>`:''}${t.msg?`<p class="first" id="m_${t.id}" style="white-space:pre-wrap">${esc(t.msg)}</p>`:''}<div class="row">${t.msg?`<button class="sm" data-act="copy" data-from="m_${t.id}">Copy the message</button>`:''}${st==='open'?`<button class="pri sm" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="mark" data-m="skip" data-id="${t.id}">${t.wk===wkKey()?'Not today':'Not now'}</button><button class="sm" data-act="mark" data-m="stuck" data-id="${t.id}">Stuck</button><button class="sm" data-act="quick" data-id="${t.id}">Add info</button>`:`<button class="pri sm" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="undone" data-id="${t.id}">Back on the list</button>`}${t.out==='ready'?'<button class="sm ghost" data-act="goAI">Open the draft</button>':t.ai?`<button class="sm ghost" data-act="aiTask" data-id="${t.id}">Let AI draft it</button>`:''}</div></div>`:''}</li>`};
   const quick=m!=='work'?[]:(p?.quick||[]).map(id=>S.tasks.get(id)).filter(t=>t&&t.s!=='done'&&!picks.some(r=>r.k.id===t.id));
   const head=bz?`After ${esc(bz.x&&bz.x!=='busy'?bz.x:'this')}`:m==='teach'?'Between lessons':m==='eve'?'Before you switch off':'Today’s docket';
   const over=m==='work'&&op.length>0&&dkt.work>free;
@@ -1395,7 +1438,9 @@ function renderToday(){
   const ag=S.agent,repB=ag&&ag.date===today()&&ag.brief?`<div class="why" style="white-space:pre-wrap;margin:0">${esc(ag.brief)}</div>${(ag.flags||[]).map(x=>`<div class="m" style="margin-top:6px">• ${esc(x)}</div>`).join('')}`:'';
   const histB=S.dumps.length?`<div class="stack">${S.dumps.map(d=>`<div class="bub me">${esc(d.text)}</div>${d.reply?`<div class="bub ai">${esc(d.reply)}${d.ops?.length?`<div class="m" style="margin-top:6px">${d.ops.map(esc).join(' · ')}</div>`:''}</div>`:''}`).join('')}</div>`:'';
   const tonightS=isWk()?sec('sec:tonight',`Tonight’s lessons${tn.length?' · '+tn.length:''}`,tb):'';
-  $('topBox').innerHTML=m==='eve'?sec('sec:close','Close the day',closeB)+tonightS:m==='teach'?tonightS:'';
+  const cu=S.daysKnown?catchUpDay():'',cuB=cu?(()=>{const pl=(S.days.get(cu)||{}).pl||{},sc=scoreOf(cu)||{};return `<div class="card" style="margin-bottom:12px"><div class="t" style="font-size:15px">${esc(dayName(cu))}: ${sc.nd||0} of ${Object.keys(pl).length} marked done</div><div class="m">Catch up on what you actually got done, so it isn’t carried forward and your score is right.</div><div class="row" style="margin-top:8px"><button class="sm pri" data-act="review" data-d="${cu}">Catch up</button><button class="sm ghost" data-act="rvSkip" data-d="${cu}">It’s right</button></div></div>`})():'';
+  const lt=laterPick(),ltB=lt?`<div class="card" style="margin-bottom:12px"><div class="m">On your list ${lt.age} days</div><div class="t" style="font-size:15px">${esc(T(lt.t))}</div><div class="row" style="margin-top:8px"><button class="sm" data-act="ltToday" data-id="${lt.t.id}">Do it today</button><button class="sm" data-act="ltWeek" data-id="${lt.t.id}">This week</button><button class="sm ghost" data-act="ltSnooze" data-id="${lt.t.id}">Not yet</button></div></div>`:'';
+  $('topBox').innerHTML=cuB+ltB+(m==='eve'?sec('sec:close','Close the day',closeB)+tonightS:m==='teach'?tonightS:'');
   $('cenBox').innerHTML=(m==='work'?tonightS:'')+sec('sec:money',`Who owes · ${money(f.sum)}`,moneyB);
   $('moreBox').innerHTML=`<button class="lnk" data-act="goAI" style="margin-top:4px"><span class="grow">AI help<small>${nd?nd+' draft'+(nd>1?'s':'')+' ready to review':'Hand something off'}</small></span></button><button class="lnk" data-act="jarvis"><span class="grow">Jarvis by voice<small>${boardId()?'Talk to Jarvis in a Claude voice chat':'Not set up yet'}</small></span></button><button class="lnk" data-act="goLog"><span class="grow">Your messages<small>Everything you’ve told me, searchable</small></span></button><button class="lnk" data-act="goMem"><span class="grow">Memory<small>${S.mem.length} things I know about you</small></span></button><button class="lnk" data-act="settings"><span class="grow">Settings<small>What it calls you, your hours, voice check</small></span></button>`
     +sec('sec:report','Overnight report',repB)+sec('sec:week','Wake-ups and workouts',weekBody())+sec('sec:hist','What you’ve told me',histB)+sec('sec:help','How to use this',`<div class="m" style="display:flex;flex-direction:column;gap:8px;font-size:14px"><div><b>Talk to it.</b> On a computer, press Space (or tap the brain) and talk as long as you like. When you stop, it answers out loud. Press Space again to say more. On a phone, type in the box. New tasks, things you finished, who paid, who missed.</div><div><b>Work down today’s docket.</b> Tap the circle when something is done. Tap a line for Not now or Stuck.</div><div><b>Tell it when you get up, and tap Workout.</b> It plans from your real day and tracks your week.</div><div><b>Calendar</b> has your week and the next three weeks. <b>Centre</b> has fees, makeups and every student.</div><div><b>Today’s score.</b> Out of 100: the planned work you finished, plus half credit for unplanned work, or full credit when you tell it that work mattered. Tap the score for the details.</div><div><b>It remembers.</b> What you tell it and what you do is kept, and it brings it back on the same weekday. See and fix what it knows under Memory.</div><div><b>AI help</b> (under More) holds finished drafts. Copy them, or hit Redo if they’re off.</div></div>`);
@@ -1422,7 +1467,7 @@ function howSheet(){const pf=facts(),p=S.plan,L=(t,a)=>a.length?`<h2>${t}</h2><d
 /* today's picks in his order, with the fixed times (calendar, teaching) dropped in where they fall */
 function agenda(){const p=S.plan,marks=p?.marks||{},s=S.settings,own=new Map(evOn(today()).filter(e=>e.task&&hm(e.s)&&(p?.picks||[]).some(k=>k.id===e.task)).map(e=>[e.id,e]));
   const timed=new Map([...own.values()].map(e=>[e.task,e])),fixed=busyOn(today()).filter(b=>!own.has(b.id)).map(b=>({fx:1,s:toM(b.s),e:toM(b.e),t:b.x||'Busy'}));
-  if(isWk())fixed.push({fx:1,s:toM(s.teachStart),e:toM(s.teachEnd),t:'Teaching',teach:1});
+  {const tt=teachOf();if(tt)fixed.push({fx:1,s:toM(tt.s),e:toM(tt.e),t:'Teaching',teach:1})}
   fixed.sort((a,b)=>a.s-b.s);
   const rows=[];let at=Math.max(toM(nowHM()),toM(s.workStart)),fi=0,work=0;
   const flush=lim=>{while(fi<fixed.length&&fixed[fi].s<=lim){const f=fixed[fi++];rows.push(f);if(f.e>at)at=f.e}};
@@ -1749,6 +1794,15 @@ document.addEventListener('click',async e=>{
   if(a==='settings')return settingsSheet();
   if(a==='testSys'){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(`Good day, ${$('s_address')?.value||'sir'}. This is how I sound hands-free.`),v=speechSynthesis.getVoices().find(x=>x.name===$('s_sysVoice').value);if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){}return}
   if(a==='testVoice'){if(tts)tts.speak(`Good day, ${$('s_address').value||'sir'}. Everything is ready.`,{voice:$('s_voice').value,rate:1.05}).catch(()=>{});return}
+  if(a==='review'){reviewSheet(b.dataset.d);return}
+  if(a==='rvYes'){await doneBack(id,b.dataset.d);reviewSheet(b.dataset.d);renderAll();return}
+  if(a==='rvNo'){await undoneBack(id,b.dataset.d);reviewSheet(b.dataset.d);renderAll();return}
+  if(a==='rvAll'){const d=b.dataset.d;await dayWrite(d,cur=>({...cur,rv:true}));await rescore(d);$('sheet').hidden=true;renderAll();toast('Got it. '+dayName(d)+' is up to date.',2200);return}
+  if(a==='rvSkip'){const d=b.dataset.d;await dayWrite(d,cur=>({...cur,rvSkip:true}));renderAll();return}
+  if(a==='rvMore'){const d=b.dataset.d,tx=($('rvText')?.value||'').trim();if(!tx)return;b.disabled=true;await applyText(`On ${d} (${dayName(d)}) I got this done: ${tx}. Mark matching items done with "on":"${d}"; anything with no matching item, add with "done_on":"${d}".`,'caught up');reviewSheet(d);renderAll();return}
+  if(a==='ltToday'){await pinItem(id,today());await applyWeek(false);renderAll();toast('On today.',1600);return}
+  if(a==='ltWeek'){const t=S.tasks.get(id);if(t){const c={wk:wkKey(),wkN:nextN(),day:null,pin:false};S.tasks.set(id,{...t,...c});await up(id,c);await applyWeek(false);renderAll();toast('On this week.',1600)}return}
+  if(a==='ltSnooze'){await upL(id,{snz:addD(today(),7)});renderAll();return}
   if(a==='close'){quickMicOff();$('sheet').hidden=true;return}
   if(a==='quick')return quickSheet(id);
   if(a==='qSend')return quickSend();
