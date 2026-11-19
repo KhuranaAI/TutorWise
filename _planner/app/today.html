@@ -9,10 +9,15 @@
   --good:#6fdc9c;--warn:#f5b85c;--bad:#ff8f85;--warn-bg:rgba(245,184,92,.14);--bad-bg:rgba(255,143,133,.14);--good-bg:rgba(111,220,156,.14);
   --disp:"Chakra Petch","Space Grotesk",system-ui,sans-serif;--body:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;--r:16px;color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--body);-webkit-font-smoothing:antialiased}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
-.wrap{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 104px}
-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px 8px;display:flex;align-items:center;gap:6px}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--body);-webkit-font-smoothing:antialiased;overflow:hidden;overscroll-behavior:none;-webkit-text-size-adjust:100%}
+/* the app frame: one scrolling area, and the bars are part of the layout (nothing floats over the page, so nothing jumps on phones) */
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;padding-top:env(safe-area-inset-top,0px)}
+#scr{flex:1 1 0;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+[hidden]{display:none!important}
+button,a,summary{touch-action:manipulation}
+.wrap{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 28px}
+header{position:sticky;top:0;z-index:5;background:var(--bg);padding-block:10px 8px;display:flex;align-items:center;gap:6px}
 header h1{font:700 20px/1.1 var(--disp);margin:0;letter-spacing:.02em}
 header small{display:block;font:500 12px var(--body);color:var(--mute);margin-top:3px}
 header .hg{flex:1;min-width:0}
@@ -26,6 +31,7 @@ button{font:600 14px var(--body);border-radius:12px;border:1px solid var(--line2
 button.pri{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
 button.ghost{border-color:transparent;background:transparent;color:var(--acc);padding:6px 8px}
 button.sm{padding:6px 10px;font-size:13px}
+@media (pointer:coarse){button.sm{min-height:36px;padding:7px 12px}.chips button{min-height:36px}}
 button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 button:disabled{opacity:.5}
 
@@ -36,6 +42,10 @@ button:disabled{opacity:.5}
   -webkit-mask-image:radial-gradient(62% 72% at 50% 44%,#000 28%,transparent 76%);mask-image:radial-gradient(62% 72% at 50% 44%,#000 28%,transparent 76%)}
 .orbBtn{background:none;border:0;padding:0;border-radius:28px;line-height:0}
 .orbBtn canvas{width:232px;height:184px;max-width:100%;display:block}
+body.nomic .orbBtn canvas{width:126px;height:100px}
+body.nomic .core::before{height:150px}
+body.nomic .state{display:none}
+@media (max-height:700px){.orbBtn canvas{width:170px;height:135px}}
 .state{font:600 11px var(--disp);letter-spacing:.3em;text-transform:uppercase;color:var(--acc);min-height:16px;margin-top:-8px}
 .state[data-s="thinking"]{color:var(--think)}
 .say{font:600 19px/1.3 var(--disp);text-align:center;margin:2px 0 0;text-wrap:balance;max-width:32ch}
@@ -172,30 +182,41 @@ details.sec[open]>summary::after{transform:rotate(225deg)}
 .bub{border-radius:12px;padding:9px 11px;max-width:92%;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}
 .bub.me{align-self:flex-end;background:var(--soft)}
 .bub.ai{align-self:flex-start;background:var(--bg);border:1px solid var(--line)}
-nav{position:fixed;inset:auto 0 0 0;z-index:6;background:var(--nav);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-nav button{flex:1;min-width:0;border:0;border-radius:0;background:none;color:var(--dim);padding:9px 2px 8px;font:600 10px var(--disp);letter-spacing:.1em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:4px}
-nav button svg{width:22px;height:22px}
+nav{flex:none;position:relative;z-index:6;background:#080f15;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav button{flex:1 1 0;min-width:0;min-height:54px;border:0;border-radius:0;background:none;color:var(--dim);padding:8px 0 7px;font:600 10px/1 var(--body);letter-spacing:.02em;white-space:nowrap;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;-webkit-user-select:none;user-select:none}
+nav button svg{width:22px;height:22px;flex:none;pointer-events:none}
 nav button.on{color:var(--acc)}
-#chatList{display:flex;flex-direction:column;gap:8px;padding-bottom:190px}
-.bub{max-width:86%;padding:10px 13px;border-radius:16px;white-space:pre-wrap;font-size:15px;line-height:1.45}
-.bub.me{align-self:flex-end;background:var(--acc);color:#04121a;border-bottom-right-radius:5px}
-.bub.ai{align-self:flex-start;background:var(--card,rgba(255,255,255,.06));border:1px solid var(--line);border-bottom-left-radius:5px}
+nav button:active{background:var(--soft)}
+@media (min-width:700px){nav{justify-content:center}nav button{flex:0 1 104px}#app .chatbar{padding-inline:calc(50% - 304px)}#app #fab{right:calc(50% - 320px)}}
+body.kb nav,body.kb #fabw{display:none}
+#chatList{display:flex;flex-direction:column;gap:8px;padding:6px 0 4px}
+.bub{max-width:86%;padding:10px 13px;border-radius:16px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px;line-height:1.45}
+.bub.me{align-self:flex-end;background:var(--acc);color:var(--acc-ink);border-bottom-right-radius:5px}
+.bub.ai{align-self:flex-start;background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:5px}
 .bub.dim{color:var(--dim)}
-.chatbar{position:fixed;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom,0px));z-index:6;padding:10px 16px;background:var(--nav);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
-.chatbar textarea{width:100%;min-height:52px}
-.tlc{margin:0 0 8px;flex-wrap:nowrap;overflow-x:auto}
+.bday{align-self:center;font:600 10px var(--disp);letter-spacing:.18em;text-transform:uppercase;color:var(--dim);padding:8px 0 2px}
+.chatbar{flex:none;display:flex;gap:8px;align-items:flex-end;padding:8px max(12px,env(safe-area-inset-left,0px)) 8px max(12px,env(safe-area-inset-right,0px));background:#080f15;border-top:1px solid var(--line)}
+.chatbar textarea{flex:1;min-width:0;height:44px;min-height:44px;max-height:132px;resize:none;border-radius:22px;padding:11px 16px}
+.chatbar button{flex:none;width:44px;height:44px;border-radius:50%;padding:0;display:grid;place-items:center}
+.chatbar button.rec{background:var(--bad);border-color:var(--bad);color:#2a0704}
+.dchips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}.dchips::-webkit-scrollbar{display:none}
+.dchip{flex:none;min-width:68px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:8px 11px;border-radius:12px;background:var(--panel);border:1px solid var(--line)}
+.dchip b{font:600 13px var(--body)}.dchip small{font:500 11px var(--body);color:var(--mute)}
+.dchip.on{border-color:var(--acc);background:var(--soft)}.dchip.on b{color:var(--acc)}.dchip.ov small{color:var(--warn)}
+.due{display:flex;width:100%;gap:10px;align-items:flex-start;background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:10px 0;text-align:left;font:500 15px/1.35 var(--body);color:var(--ink)}
+.due:last-child{border-bottom:0;padding-bottom:2px}.due:first-child{padding-top:2px}.due .pill{flex:none;margin-top:2px;min-width:68px;text-align:center}.due small{display:block;color:var(--mute);font-size:13px}
 .tlw{display:flex;flex-direction:column;gap:4px}
 .tl{display:flex;gap:12px;align-items:baseline;text-align:left;width:100%;background:none;border:0;border-left:3px solid var(--line);border-radius:0;padding:7px 10px;color:inherit;font:inherit}
 .tl .tm{min-width:66px;color:var(--dim);font-size:13px}.tl .tx{flex:1;font-size:15px}.tl small{display:block;color:var(--dim);font-size:12px;margin-top:2px}
 .tl.fx{border-left-color:var(--dim);color:var(--dim)}.tl.foc{border-left-color:var(--acc);color:var(--acc);font-weight:600;padding-top:10px}.tl.foc .tx{font-size:12px;letter-spacing:.08em;text-transform:uppercase}
 .tl.dp{border-left-color:var(--acc)}.tl.ov{opacity:.6}
 .warnc{border-color:var(--warn,#e0a040)}
-#fab{position:fixed;right:16px;bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:7;width:54px;height:54px;border-radius:50%;border:0;background:var(--acc);color:#04121a;font:600 30px/1 var(--disp);box-shadow:0 6px 22px rgba(0,0,0,.5);display:grid;place-items:center;padding:0}
-#fab[hidden]{display:none}
+#fabw{flex:none;position:relative;height:0;z-index:6}
+#fab{position:absolute;right:max(14px,env(safe-area-inset-right,0px));bottom:14px;width:52px;height:52px;border-radius:50%;border:0;background:var(--acc);color:var(--acc-ink);font:600 28px/1 var(--disp);box-shadow:0 6px 22px rgba(0,0,0,.5);display:grid;place-items:center;padding:0}
 #qText{width:100%;min-height:92px;margin-top:10px}
-#sheet{position:fixed;inset:0;z-index:8;background:var(--veil);display:flex;align-items:flex-end}
-#sheetBody{width:100%;max-width:640px;margin:0 auto;border-radius:20px 20px 0 0;max-height:86%;overflow:auto;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:12px;z-index:9;font-size:14px;max-width:90vw;display:flex;gap:12px;align-items:center}
+#sheet{position:fixed;inset:0;z-index:8;background:var(--veil);display:flex;align-items:flex-end;overscroll-behavior:contain;touch-action:none}
+#sheetBody{width:100%;max-width:640px;margin:0 auto;border-radius:20px 20px 0 0;max-height:88%;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+.toast{position:fixed;left:50%;transform:translateX(-50%);width:max-content;max-width:min(92vw,420px);max-height:30vh;overflow:hidden;bottom:calc(76px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:12px;z-index:9;font-size:14px;max-width:90vw;display:flex;gap:12px;align-items:center}
 .toast button{background:none;border:0;color:var(--bg);text-decoration:underline;padding:0;font-size:14px}
 .empty{color:var(--mute);text-align:center;padding:22px 8px}
 pre.out{white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.5 var(--body);margin:8px 0;background:var(--bg);border-radius:10px;padding:10px;max-height:340px;overflow:auto}
@@ -203,7 +224,7 @@ label{font-size:13px;color:var(--mute);display:block;margin:10px 0 4px}
 @media (prefers-reduced-motion:no-preference){.ck,.bar i,.rt{transition:background-color .2s,border-color .2s,color .2s,box-shadow .2s}}
 </style>
 
-<div class="wrap">
+<div id="app"><div id="scr"><div class="wrap">
 <header><div class="hg"><h1 id="hTitle">Today</h1><small id="hSub">Loading your day…</small></div>
   <button id="btnVoice" data-act="voice" hidden></button>
   <button data-act="settings" aria-label="Settings"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2.2"/><circle cx="9" cy="12" r="2.2"/><circle cx="17" cy="18" r="2.2"/></svg></button></header>
@@ -220,14 +241,16 @@ label{font-size:13px;color:var(--mute);display:block;margin:10px 0 4px}
   <div id="brainBox"></div>
   <div id="topBox"></div>
   <div id="nowBox"></div>
+  <div id="brainBox2"></div>
   <div id="statBox"></div>
 </section>
 
-<section id="v-chat" hidden><div id="chatList"></div><div class="chatbar"><button class="sm" data-act="next">What’s next?</button><textarea id="chatIn" rows="2" placeholder="Talk to Jarvis…" aria-label="Message Jarvis"></textarea><div class="row" style="flex-wrap:nowrap;gap:6px"><button class="sm" data-act="chatMic" id="qMic" aria-label="Talk">Talk</button><button class="pri" data-act="chatSend" aria-label="Send">Send</button></div></div></section>
+<section id="v-chat" hidden><div id="chatList"></div></section>
 
 <section id="v-cal" hidden><div id="calBox"></div></section>
 
 <section id="v-all" hidden>
+  <input id="taskQ" type="search" placeholder="Search everything…" aria-label="Search tasks" style="margin-bottom:10px">
   <div id="projBox"></div>
   <div id="chkBox"></div>
   <div class="chips" id="areaChips"></div>
@@ -236,7 +259,7 @@ label{font-size:13px;color:var(--mute);display:block;margin:10px 0 4px}
 </section>
 
 <section id="v-centre" hidden>
-  <div class="card"><div class="row"><div class="grow"><div class="why" style="margin:0">Fees still to collect this month</div><div class="big" id="owedTotal">–</div></div>
+  <div class="card"><div class="row"><div class="grow" style="min-width:150px"><div class="why" style="margin:0">Fees still to collect this month</div><div class="big" id="owedTotal">–</div></div>
     <button data-act="feeNotes">Next month’s fee notes</button></div><div style="margin-top:6px"><button class="ghost sm" data-act="feeSync" style="padding-left:0">Check my fee sheet now</button></div></div>
   <div id="cenBox"></div>
   <div class="card" id="schedCard" style="margin-top:10px"></div>
@@ -263,11 +286,12 @@ label{font-size:13px;color:var(--mute);display:block;margin:10px 0 4px}
     <div class="row" style="flex-wrap:nowrap"><input id="memAdd" placeholder="Remember that…" aria-label="Something to remember"><button class="pri" data-act="memAdd">Add</button></div></div>
   <div id="memList"></div><div id="memDays"></div>
 </section>
+</div></div>
+<div id="fabw"><button id="fab" data-act="quick" aria-label="Tell Jarvis something" hidden>+</button></div>
+<div class="chatbar" id="chatbar" hidden><textarea id="chatIn" rows="1" placeholder="Message Jarvis…" aria-label="Message Jarvis"></textarea><button data-act="chatMic" id="chatMic" aria-label="Talk" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button><button class="pri" data-act="chatSend" aria-label="Send"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></div>
+<nav id="nav"><button data-v="today" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/></svg>Today</button><button data-v="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 15a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/></svg>Chat</button><button data-v="cal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Plan</button><button data-v="all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10M4 6l1.2 1.2L7.5 5M4 12l1.2 1.2L7.5 11M4 18l1.2 1.2L7.5 17"/></svg>Tasks</button><button data-v="centre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9.5 12 5l9 4.5-9 4.5-9-4.5z"/><path d="M7 12v4.2c3 2.4 7 2.4 10 0V12"/></svg>Centre</button><button data-v="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.7" fill="currentColor" stroke="none"/></svg>More</button></nav>
 </div>
 
-<nav id="nav"><button data-v="today" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/></svg>Today</button><button data-v="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 15a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/></svg>Chat</button><button data-v="cal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Calendar</button><button data-v="all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10M4 6l1.2 1.2L7.5 5M4 12l1.2 1.2L7.5 11M4 18l1.2 1.2L7.5 17"/></svg>Tasks</button><button data-v="centre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9.5 12 5l9 4.5-9 4.5-9-4.5z"/><path d="M7 12v4.2c3 2.4 7 2.4 10 0V12"/></svg>Centre</button><button data-v="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.7" fill="currentColor" stroke="none"/></svg>More</button></nav>
-
-<button id="fab" data-act="quick" aria-label="Tell Jarvis something" hidden>+</button>
 <div id="sheet" hidden><div class="card" id="sheetBody"></div></div>
 
 <script type="text/plain" id="gsManifest">
@@ -508,7 +532,7 @@ const isWk=()=>[1,2,3,4,5].includes(dow());
 const AREAS={centre:'TutorWise ops',students:'Students',staff:'Hiring & staff',materials:'Teaching materials',reno:'Centre renovation',growth:'Marketing & money',party:'Christmas party',
   corona:'Corona Holdings',judah:'Judah Rise',brother:'Brother’s business',car:'Cars & dispute',home:'Home & errands',finance:'Personal finance',travel:'Trips & gifts',health:'Routine & health',tech:'Tech & ideas',planner:'This planner',other:'Other'};
 const STAT={ready:'To do',verify:'Check if still open',waiting:'Waiting',recurring:'Repeats',idea:'Idea',done:'Done',parked:'Parked'};
-const DEF={name:'Nimish',address:'sir',voice:'buttery',autoSend:true,handsFree:true,pause:3,wake:'07:00',workout:'07:30',workStart:'09:00',teachStart:'16:00',teachEnd:'20:00',capacity:0.65,protect:'Workout',schedSheetId:''};
+const DEF={name:'Nimish',address:'sir',voice:'buttery',autoSend:true,handsFree:true,pause:3,wake:'07:00',workout:'07:30',workStart:'09:00',teachStart:'16:00',teachEnd:'20:00',planAt:'21:00',capacity:0.65,protect:'Workout',schedSheetId:''};
 const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const ICON={on:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
   off:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="m16 9 5 6m0-6-5 6"/></svg>'};
@@ -1163,7 +1187,6 @@ function greet(spoken){
   if(bz)return `${hi} ${bz.x&&bz.x!=='busy'?bz.x[0].toUpperCase()+bz.x.slice(1)+' runs':'You’re busy'} until ${t12(bz.e)}. I’ll hold everything else.`;
   if(m==='teach')return `${hi} You’re teaching until ${t12(teachOf()?.e||s.teachEnd)}. I’ll hold everything else.`;
   if(m==='eve')return `${hi} Teaching’s done. Two minutes to close the day, then you’re off.`;
-  if(!hb.up)return `${hi} When did you get up today?`;
   const free=freeMinutes(),lead=free>0?` You have ${dur(free)} ${isWk()?'before teaching':'to work with'}.`:'';
   if(nb){const gap=toM(nb.s)-toM(nowHM()),nm=nb.x&&nb.x!=='busy'?nb.x[0].toUpperCase()+nb.x.slice(1):'Blocked time';
     if(gap<45)return `${hi} ${nm} in ${dur(gap)}. I’ll hold the rest until then.`;
@@ -1349,6 +1372,7 @@ async function applyOps(ops,src,wasCheck){
   if(schSay)V.schSay=schSay;
   if(schAfter){connSync().then(()=>{if(!V.bg&&S.lastSch)toast(S.lastSch.msg.slice(0,90),6000,{label:'Undo',fn:async()=>{try{const m=await schWrite({op:'sch_undo'});toast(m,3000);connSync()}catch(e){toast(String(e.message||e).slice(0,100),4000)}}})})}
   /* the week list is the plan: re-pin instead of asking the AI for a new one */
+  if(S.touch3){S.touch3=false;touched=true}
   if(weekItems().length){if(touched||wkFull||re||wk||full)await applyWeek(wkFull||!!re||!!wk||full);V.pinSay=pinnedSay(newIds)+(full||wkFull||wk?' '+daySay():'');if(!V.bg){if(wkShow||wk)show('cal');else if(cal)show('cal')}}
   else{if((cal||wkShow)&&!V.bg)show('cal')}
   return out}
@@ -1403,7 +1427,8 @@ function renderCore(){
   const hb=S.habits.get(today())||{};
   $('quick').innerHTML=live?`<button class="on" data-act="sendNow">I’m done, send it</button><button data-act="cancelListen">${V.conv?'Stop listening':'Cancel'}</button>`
     :st==='speaking'?'<button data-act="stopSpeak">Stop</button>':st==='thinking'?''
-    :`<button data-act="docket" class="go">What’s on the docket?</button>${hb.up?`<button data-act="up" class="ok">Up${hb.upAt?' '+esc(t12(hb.upAt)):''} ✓</button>`:modeNow()==='work'?'<button data-act="upNow">I’m up</button><button data-act="up">Up earlier…</button>':'<button data-act="up">I’m up</button>'}<button data-act="habit" data-h="workout" class="${hb.workout?'ok':''}">Workout${hb.workout?' ✓':''}</button>${!hear&&voiceLine()?`<a class="chip" href="${esc(voiceLine())}" target="_blank" rel="noopener">Talk by voice</a>`:''}${canSpeak()?'<button data-act="brief">Brief me</button>':''}`;
+    :`<button data-act="next" class="go">What’s next?</button>${hb.up?`<button data-act="up" class="ok">Up${hb.upAt?' '+esc(t12(hb.upAt)):''} ✓</button>`:modeNow()==='work'?'<button data-act="upNow">I’m up</button><button data-act="up">Up earlier…</button>':'<button data-act="up">I’m up</button>'}${!hear&&voiceLine()?`<a class="chip" href="${esc(voiceLine())}" target="_blank" rel="noopener">Talk by voice</a>`:''}${canSpeak()?'<button data-act="brief">Brief me</button>':''}`;
+  document.body.classList.toggle('nomic',!hear);
   const vb=$('btnVoice');vb.hidden=!canSpeak();vb.innerHTML=V.voiceOn?ICON.on:ICON.off;vb.setAttribute('aria-pressed',String(V.voiceOn));vb.setAttribute('aria-label',V.voiceOn?'Spoken replies are on':'Spoken replies are off');
   orb.set(st);
 }
@@ -1427,17 +1452,17 @@ function renderToday(){
   const ids=picks.filter(r=>r.st!=='done').map(r=>r.k.id),ex=S.rowSel===''?null:S.rowSel&&ids.includes(S.rowSel)?S.rowSel:cur?cur.k.id:null;S.rowEx=ex;
   const hmOf=n=>String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
   const row=r=>{
-    if(r.fx){const past=r.e<=now,on=r.s<=now&&now<r.e;return `<li class="r fx${past?' past':''}${on?' now':''}"><span class="tm num">${esc(t12(hmOf(r.s)).replace(' ',''))}</span><span class="rt">${on?'<span class="tag">NOW</span>':''}${esc(r.t[0].toUpperCase()+r.t.slice(1))}${r.teach?' until '+esc(t12(s.teachEnd)):''}</span><span class="rm num">${r.teach?'':durS(r.e-r.s)}</span></li>`}
+    if(r.fx){const past=r.e<=now,on=r.s<=now&&now<r.e;return `<li class="r fx${past?' past':''}${on?' now':''}"><span class="tm num">${esc(t12(hmOf(r.s)).replace(' ',''))}</span><span class="rt">${on?'<span class="tag">NOW</span>':''}${esc(r.t[0].toUpperCase()+r.t.slice(1))}${r.teach?' until '+esc(t12(hmOf(r.e))):''}</span><span class="rm num">${r.teach?'':durS(r.e-r.s)}</span></li>`}
     const{k,t,st}=r,isNow=!bz&&m!=='teach'&&cur&&k.id===cur.k.id,open=ex===k.id;
-    return `<li class="r ${st==='done'?'done':st==='open'?'':'off'}${isNow?' now':''}"><button class="ck" data-act="${st==='done'?'undone':'done'}" data-id="${t.id}" aria-label="${st==='done'?'Not done after all':'Done'}: ${esc(T(t))}">${CHECK}</button><button class="rt" data-act="row" data-id="${t.id}" aria-expanded="${open}">${isNow?'<span class="tag">NOW</span>':''}${esc(T(t))}${t.carried&&st==='open'?' <span class="pill mute">carried</span>':''}${st==='skip'?' <span class="pill mute">not today</span>':st==='stuck'?' <span class="pill warn">stuck</span>':''}</button><span class="rm num">${st==='done'?'':(r.ev?esc(t12(r.ev.s).replace(' ',''))+' · ':'')+(t.wk&&!t.est?'~':'')+durS(k.min||t.est||30)}</span>${open?`<div class="rx">${k.why?`<p class="why">${esc(k.why)}</p>`:''}${k.first||t.next?`<p class="first"><b>Start:</b> ${esc(k.first||t.next)}</p>`:''}${t.msg?`<p class="first" id="m_${t.id}" style="white-space:pre-wrap">${esc(t.msg)}</p>`:''}<div class="row">${t.msg?`<button class="sm" data-act="copy" data-from="m_${t.id}">Copy the message</button>`:''}${st==='open'?`<button class="pri sm" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="mark" data-m="skip" data-id="${t.id}">${t.wk===wkKey()?'Not today':'Not now'}</button><button class="sm" data-act="mark" data-m="stuck" data-id="${t.id}">Stuck</button><button class="sm" data-act="quick" data-id="${t.id}">Add info</button>`:`<button class="pri sm" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="undone" data-id="${t.id}">Back on the list</button>`}${t.out==='ready'?'<button class="sm ghost" data-act="goAI">Open the draft</button>':t.ai?`<button class="sm ghost" data-act="aiTask" data-id="${t.id}">Let AI draft it</button>`:''}</div></div>`:''}</li>`};
+    return `<li class="r ${st==='done'?'done':st==='open'?'':'off'}${isNow?' now':''}"><button class="ck" data-act="${st==='done'?'undone':'done'}" data-id="${t.id}" aria-label="${st==='done'?'Not done after all':'Done'}: ${esc(T(t))}">${CHECK}</button><button class="rt" data-act="row" data-id="${t.id}" aria-expanded="${open}">${isNow?'<span class="tag">NOW</span>':''}${esc(T(t))}${st==='open'&&typeof dueP==='function'?dueP(t):''}${t.carried&&st==='open'?' <span class="pill mute">carried</span>':''}${st==='skip'?' <span class="pill mute">not today</span>':st==='stuck'?' <span class="pill warn">stuck</span>':''}</button><span class="rm num">${st==='done'?'':(r.over?'no room · ':r.ev?esc(t12(r.ev.s).replace(' ',''))+' · ':'')+(t.wk&&!t.est?'~':'')+durS(k.min||t.est||30)}</span>${open?`<div class="rx">${k.why?`<p class="why">${esc(k.why)}</p>`:''}${k.first||t.next?`<p class="first"><b>Start:</b> ${esc(k.first||t.next)}</p>`:''}${t.msg?`<p class="first" id="m_${t.id}" style="white-space:pre-wrap">${esc(t.msg)}</p>`:''}<div class="row">${t.msg?`<button class="sm" data-act="copy" data-from="m_${t.id}">Copy the message</button>`:''}${st==='open'?`<button class="pri sm" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="mark" data-m="skip" data-id="${t.id}">Not today</button><button class="sm" data-act="mark" data-m="stuck" data-id="${t.id}">Stuck</button><button class="sm" data-act="quick" data-id="${t.id}">Add info</button>`:`<button class="pri sm" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="undone" data-id="${t.id}">Back on the list</button>`}${t.out==='ready'?'<button class="sm ghost" data-act="goAI">Open the draft</button>':t.ai?`<button class="sm ghost" data-act="aiTask" data-id="${t.id}">Let AI draft it</button>`:''}</div></div>`:''}</li>`};
   const quick=m!=='work'?[]:(p?.quick||[]).map(id=>S.tasks.get(id)).filter(t=>t&&t.s!=='done'&&!picks.some(r=>r.k.id===t.id));
   const head=bz?`After ${esc(bz.x&&bz.x!=='busy'?bz.x:'this')}`:m==='teach'?'Between lessons':m==='eve'?'Before you switch off':'Today’s docket';
   const over=m==='work'&&op.length>0&&dkt.work>free;
-  const fit=!op.length?(dn===picks.length?`All ${picks.length} done. Nice work.`:'Nothing left open.'):m==='work'?`${durS(dkt.work)} of work left · ${durS(free)} free ${isWk()?'before teaching':'today'}${over?'. It won’t all fit, so the last ones can move.':''}`:`${durS(dkt.work)} left on today’s list`;
+  const fit=!op.length?(dn===picks.length?`All ${picks.length} done. Nice work.`:'Nothing left open.'):m==='work'?`${durS(dkt.work)} of work left · ${durS(free)} free ${isWk()?'before teaching':'today'}`:`${durS(dkt.work)} left on today’s list`;
   $('nowBox').innerHTML=picks.length?`<div class="dk"><div class="dkh"><span class="lbl">${head}</span><span class="cnt num">${dn}<small>/${picks.length}</small></span></div>
     <div class="bar" aria-hidden="true">${picks.map(r=>`<i class="${r.st==='done'?'on':r.st==='open'?'':'off'}"></i>`).join('')}</div><div class="fit${over?' over':''}">${fit}</div>
     <ol class="rows">${dkt.rows.map(row).join('')}${quick.length?`<li class="r sep">If you have five minutes</li>${quick.map(t=>`<li class="r"><button class="ck" data-act="done" data-id="${t.id}" aria-label="Done: ${esc(T(t))}">${CHECK}</button><span class="rt">${esc(T(t))}</span><span class="rm num">5m</span></li>`).join('')}`:''}</ol>
-    <div class="dkf">${p?.leftOut?`<span class="m">${esc(p.leftOut)}</span>`:''}<button class="ghost sm" data-act="plan" ${S.planning?'disabled':''}>${S.planning?'Planning…':op.length?'Replan from now':'Plan a bit more'}</button></div></div>`
+    ${dkt.rows.some(r=>r.over)?`<div class="dkf"><span class="m">${dkt.rows.filter(r=>r.over).length} won’t fit today.</span><button class="ghost sm" data-act="spill">Move them to tomorrow</button></div>`:''}</div>`
    :`<div class="dk"><div class="dkh"><span class="lbl">Today’s docket</span></div><div class="empty">${!S.loaded?'Loading your day…':S.planning?'Planning your day…':(weekItems().length?'Nothing is pinned to today.':'Tell me what has to get done this week and I’ll pin it into your days.')}${S.loaded&&!S.planning&&!weekItems().length?'<div class="row" style="justify-content:center;margin-top:10px"><button class="pri sm" data-act="weekAsk">Give it my week</button></div>':''}</div></div>`;
   const f=feeTot(),mk=[...S.students.values()].reduce((a,x)=>a+(x.active!==false?(x.owed||0):0),0),ver=[...S.tasks.values()].filter(t=>t.s==='verify').sort((a,b)=>(a.p||3)-(b.p||3)),nd=S.drafts.filter(d=>d.state==='ready').length;
   const wp=weekPace();
@@ -1462,7 +1487,7 @@ function renderToday(){
   $('topBox').innerHTML=cuB+ltB+(m==='eve'?sec('sec:close','Close the day',closeB)+tonightS:m==='teach'?tonightS:'');
   $('cenBox').innerHTML=(m==='work'?tonightS:'')+sec('sec:money',`Who owes · ${money(f.sum)}`,moneyB);
   $('moreBox').innerHTML=`<button class="lnk" data-act="goAI" style="margin-top:4px"><span class="grow">AI help<small>${nd?nd+' draft'+(nd>1?'s':'')+' ready to review':'Hand something off'}</small></span></button><button class="lnk" data-act="jarvis"><span class="grow">Jarvis by voice<small>${boardId()?'Talk to Jarvis in a Claude voice chat':'Not set up yet'}</small></span></button><button class="lnk" data-act="goLog"><span class="grow">Your messages<small>Everything you’ve told me, searchable</small></span></button><button class="lnk" data-act="goMem"><span class="grow">Memory<small>${S.mem.length} things I know about you</small></span></button><button class="lnk" data-act="settings"><span class="grow">Settings<small>What it calls you, your hours, voice check</small></span></button>`
-    +sec('sec:report','Overnight report',repB)+sec('sec:week','Wake-ups and workouts',weekBody())+sec('sec:hist','What you’ve told me',histB)+sec('sec:help','How to use this',`<div class="m" style="display:flex;flex-direction:column;gap:8px;font-size:14px"><div><b>Talk to it.</b> On a computer, press Space (or tap the brain) and talk as long as you like. When you stop, it answers out loud. Press Space again to say more. On a phone, type in the box. New tasks, things you finished, who paid, who missed.</div><div><b>Work down today’s docket.</b> Tap the circle when something is done. Tap a line for Not now or Stuck.</div><div><b>Tell it when you get up, and tap Workout.</b> It plans from your real day and tracks your week.</div><div><b>Calendar</b> has your week and the next three weeks. <b>Centre</b> has fees, makeups and every student.</div><div><b>Today’s score.</b> Out of 100: the planned work you finished, plus half credit for unplanned work, or full credit when you tell it that work mattered. Tap the score for the details.</div><div><b>It remembers.</b> What you tell it and what you do is kept, and it brings it back on the same weekday. See and fix what it knows under Memory.</div><div><b>AI help</b> (under More) holds finished drafts. Copy them, or hit Redo if they’re off.</div></div>`);
+    +sec('sec:report','Overnight report',repB)+sec('sec:week','Wake-ups and workouts',weekBody())+sec('sec:hist','What you’ve told me',histB)+sec('sec:help','How to use this',`<div class="m" style="display:flex;flex-direction:column;gap:8px;font-size:14px"><div><b>Tell it things.</b> On Today or in Chat, type the way you’d talk. On a phone, use the microphone on your keyboard. On a computer, press Space and speak. Tasks, plans, notes, who paid, schedule changes.</div><div><b>Today</b> is your list in the order to do it, with times. Tap the circle when something is done. Tap a line for Not today, Stuck or Add info. “What’s next?” gives you one thing.</div><div><b>Plan</b> shows each of the next 7 days as a timeline. It’s redone whenever something changes, and whatever you don’t finish carries forward.</div><div><b>Tap any item</b> to change its day, priority, length, due date or category.</div><div><b>Tasks</b> is everything, searchable. <b>Centre</b> has fees, makeups and students.</div><div><b>At night</b> it plans tomorrow and goes through your inbox with you. Say “do my planning at 10 tonight” to move it.</div><div><b>Say “Jarvis should…”</b> and the idea is saved under App updates, ready to copy.</div><div><b>Score.</b> Out of 100: planned work you finished, plus credit for unplanned work that mattered. Tap a past day to fix what got done.</div></div>`);
   renderCal();
 }
 function openLog(){if(!S.logOn&&db){S.logOn=true;db.collection('dumps').orderBy('at','desc').limit(1000).onSnapshot(q=>{S.log=q.docs.map(d=>({id:d.id,...d.data()}));renderLog()},e=>console.warn(e))}renderLog()}
@@ -1502,12 +1527,12 @@ function renderList(){
   const all=[...S.tasks.values()];const areas=[...new Set(all.map(t=>t.a))];
   $('areaChips').innerHTML=`<button class="${S.area?'':'on'}" data-act="area" data-a="">All</button>`+Object.keys(AREAS).filter(a=>areas.includes(a)).map(a=>`<button class="${S.area===a?'on':''}" data-act="area" data-a="${a}">${esc(AREAS[a])}</button>`).join('');
   $('statChips').innerHTML=Object.keys(STAT).map(k=>`<button class="${S.stat===k?'on':''}" data-act="stat" data-s="${k}">${STAT[k]} <span class="num">${all.filter(t=>t.s===k&&(!S.area||t.a===S.area)).length}</span></button>`).join('');
-  const list=all.filter(t=>t.s===S.stat&&(!S.area||t.a===S.area)).sort((a,b)=>rank(b)-rank(a));
+  const tq=($('taskQ')?.value||'').toLowerCase().trim(),list=(tq?all.filter(t=>(T(t)+' '+(t.n||'')).toLowerCase().includes(tq)):all.filter(t=>t.s===S.stat&&(!S.area||t.a===S.area))).sort((a,b)=>(a.s==='done')-(b.s==='done')||rank(b)-rank(a));
   $('allList').innerHTML=list.length?list.map(t=>{const dd=t.due?dayDiff(t.due):null;
     return `<div class="item"><div class="row"><div class="grow t">${esc(T(t))}</div>${t.p===1?'<span class="pill bad">Critical</span>':t.p===2?'<span class="pill warn">High</span>':''}${t.due?`<span class="pill ${dd<=2?'bad':dd<=7?'warn':'mute'} num">${dd<0?Math.abs(dd)+'d late':dd===0?'today':dd+'d'}</span>`:''}</div>
     <div class="m">${esc(AREAS[t.a]||t.a)}${t.est?' · '+t.est+' min':''}${t.wait?' · waiting on '+esc(t.wait):''}${t.out==='ready'?' · AI draft ready':''}</div>
     <details data-key="t:${t.id}"${S.open.has('t:'+t.id)?' open':''}><summary>Open</summary>${t.next?`<div class="m"><b>Next:</b> ${esc(t.next)}</div>`:''}${t.n?`<div class="m" style="white-space:pre-wrap">${esc(t.n)}</div>`:''}
-    <div class="row" style="margin-top:8px">${t.s!=='done'?`<button class="sm pri" data-act="done" data-id="${t.id}">Done</button>`:''}${['ready','waiting','parked','idea'].filter(x=>x!==t.s).map(x=>`<button class="sm" data-act="set" data-s="${x}" data-id="${t.id}">${STAT[x]}</button>`).join('')}<button class="sm ghost" data-act="aiTask" data-id="${t.id}">AI: help with this</button></div></details></div>`}).join(''):`<div class="empty">${S.loaded?'Nothing here.':'Loading…'}</div>`;
+    <div class="row" style="margin-top:8px">${t.s!=='done'?`<button class="sm pri" data-act="done" data-id="${t.id}">Done</button>`:''}${['ready','waiting','parked','idea'].filter(x=>x!==t.s).map(x=>`<button class="sm" data-act="set" data-s="${x}" data-id="${t.id}">${STAT[x]}</button>`).join('')}<button class="sm" data-act="wkItem" data-id="${t.id}">Details</button><button class="sm ghost" data-act="aiTask" data-id="${t.id}">AI: help with this</button></div></details></div>`}).join(''):`<div class="empty">${S.loaded?'Nothing here.':'Loading…'}</div>`;
 }
 function renderCentre(){
   const st=[...S.students.values()].sort((a,b)=>owes(b)-owes(a)||a.name.localeCompare(b.name));
@@ -1527,14 +1552,14 @@ function renderAI(){
     <div class="row"><button class="sm pri" data-act="copy" data-from="o${d.id}">Copy</button><button class="sm" data-act="redo" data-id="${d.id}">Redo</button><button class="sm ghost" data-act="delDraft" data-id="${d.id}">Remove</button></div></div>`).join(''):'<div class="empty">Drafts and research land here. Wrong? Hit Redo.</div>';
 }
 function show(v){S.view=v;$('fab').hidden=v==='today'||v==='chat';for(const k of['today','chat','cal','all','centre','more','ai','mem','log'])$('v-'+k).hidden=k!==v;const tab=v==='ai'||v==='mem'||v==='log'?'more':v;if(v==='log')openLog();document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===tab));
-  $('hTitle').textContent={today:'Today',chat:'Chat',cal:'Calendar',all:'Tasks',centre:'Centre',more:'More',ai:'AI help',mem:'Memory',log:'Your messages'}[v];window.scrollTo(0,0);orb.sync();if(v==='chat'&&window.renderChat){renderChat();setTimeout(()=>$('chatIn')?.focus(),80)}}
+  $('hTitle').textContent={today:'Today',chat:'Chat',cal:'Plan',all:'Tasks',centre:'Centre',more:'More',ai:'AI help',mem:'Memory',log:'Your messages'}[v];$('scr').scrollTop=0;$('chatbar').hidden=v!=='chat';orb.sync();if(v==='chat'&&window.renderChat){renderChat();if(!matchMedia('(pointer:coarse)').matches)setTimeout(()=>$('chatIn')?.focus(),80)}}
 function sheet(html){$('sheetBody').innerHTML=html;$('sheet').hidden=false}
 function settingsSheet(){const s=S.settings;const f=(k,l,t='time')=>`<label for="s_${k}">${l}</label><input id="s_${k}" type="${t}" value="${esc(s[k])}">`;
   sheet(`<h3 style="font:600 18px var(--disp);margin:0">Settings</h3>${f('address','What it calls you','text')}
   ${tts?`<label for="s_voice">Its voice</label><div class="row" style="flex-wrap:nowrap"><select id="s_voice">${['buttery','airy','glassy','rounded'].map(v=>`<option ${s.voice===v?'selected':''}>${v}</option>`).join('')}</select><button data-act="testVoice">Test</button></div>`:''}
   ${dict?`<label for="s_pause">It answers when</label><select id="s_pause">${[[2,'I pause for 2 seconds'],[3,'I pause for 3 seconds'],[5,'I pause for 5 seconds'],[0,'only when I say “I’m done”']].map(([v,l])=>`<option value="${v}" ${(+s.pause||0)===v?'selected':''}>${l}</option>`).join('')}</select>`:''}
   <label>Voice in this view</label><div class="row" style="flex-wrap:nowrap;align-items:center"><button data-act="voiceCheck" style="flex:none">Check voice</button><span class="m grow" id="vcOut">Microphone: ${esc(micWord())}. Speaker: ${esc(spkWord())}.</span></div>
-  ${f('wake','Wake-up time you’re aiming for')}${f('workStart','Focused work starts')}${f('teachStart','Teaching starts')}${f('teachEnd','Teaching ends')}${f('protect','Always protect','text')}
+  ${f('planAt','Plan tomorrow each night at')}<label for="s_travel">Travel time between places</label><select id="s_travel">${[10,15,20,30,45].map(v=>`<option value="${v}" ${(+s.travel||20)===v?'selected':''}>${v} minutes</option>`).join('')}</select>${f('wake','Wake-up time you’re aiming for')}${f('workStart','Day starts (until I’ve learned your mornings)')}${linked()?'':f('teachStart','Teaching starts')+f('teachEnd','Teaching ends')}${f('protect','Always protect','text')}
   <label for="s_capacity">How full to plan your free time</label><select id="s_capacity">${[0.5,0.65,0.8].map(v=>`<option value="${v}" ${+s.capacity===v?'selected':''}>${Math.round(v*100)}% ${v===0.5?'(light)':v===0.65?'(realistic)':'(packed)'}</option>`).join('')}</select>
   <div class="row" style="margin-top:14px"><button class="pri" data-act="saveSettings">Save</button><button data-act="close">Cancel</button></div>`)}
 function upSheet(){const hb=S.habits.get(today())||{};
@@ -1600,13 +1625,13 @@ function earLost(why){clearInterval(V.silence);const text=((V.buf||'')+(V.next||
   else if(text)toast('The mic stopped. Your words are in the box: tap the brain to keep going, or Send.',5200)}
 function wireDict(){
   dict.onFinal(({text})=>{
-    if(V.quick){const el=$(V.qEl||'qText');if(el)el.value=(el.value+' '+text).replace(/\s+/g,' ').trimStart();return}
+    if(V.quick){const el=$(V.qEl||'qText');if(el){el.value=(el.value+' '+text).replace(/\s+/g,' ').trimStart();if(V.qEl==='chatIn'&&window.chatGrow)chatGrow()}return}
     if(V.conv&&(V.state==='thinking'||V.state==='idle')){if(!echoOf(text)){V.next=(V.next||'')+text;V.lastHeard=Date.now()}return}
     if(V.conv&&(V.state==='speaking'||Date.now()<(V.spokeEnd||0)+1300||echoOf(text)))return;
     if(V.state!=='listening'&&V.state!=='starting')return;V.buf=V.buf?V.buf+text:text.trimStart();V.partial='';V.lastHeard=Date.now();orb.kick(.9);heardMore()});
   dict.onPartial(({text})=>{if(V.quick)return;if(V.conv&&V.state!=='listening'&&V.state!=='starting')return;if(V.conv&&Date.now()<(V.spokeEnd||0)+1300)return;if(text!==V.partial){V.partial=text;if(text){V.lastHeard=Date.now();orb.kick(.5)}renderCore()}});
   dict.onState(({state,reason})=>{
-    if(V.quick){if(state==='idle'){V.quick=false;qMicUi()}return}
+    if(V.quick){if(state==='idle'){V.quick=false;V.qEl='';qMicUi();if(window.renderChat)renderChat()}return}
     if(state==='listening'){V.lastHeard=Date.now();if(V.state==='starting')setState('listening')}
     else if(state==='idle'&&(V.state==='listening'||V.state==='starting')&&!V.finishing){
       if(reason==='viewer_stopped'){clearInterval(V.silence);const text=V.buf.replace(STOP,'').trim();V.buf='';V.partial='';V.wantEar=false;V.conv=false;if(text){V.state='idle';respond(text,true)}else setState('idle');return}
@@ -1730,6 +1755,7 @@ const orb=(()=>{
 document.addEventListener('toggle',e=>{const k=e.target?.dataset?.key;if(k)e.target.open?S.open.add(k):S.open.delete(k)},true);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&today()!==S.day&&!window.__HQ_DAY){location.reload();return}orb.sync()});
 $('logQ').addEventListener('input',()=>renderLog());
+$('taskQ').addEventListener('input',()=>renderList());
 $('dump').addEventListener('input',()=>{const el=$('dump');grow();orb.kick(.35);
   /* dictating with the phone's keyboard: "you can speak now" sends it, no button needed */
   if(V.state==='idle'&&STOP.test(el.value)){const t=el.value.replace(STOP,'').trim();el.value='';grow();if(t){if(canSpeak()&&V.voiceOn)el.blur();respond(t)}}});
@@ -1774,7 +1800,7 @@ document.addEventListener('click',async e=>{
     await finishTask(id,'tapped Done');
     if(wasPick)say(nx?`Done, ${sir()}. Next: ${T(nx.t)}.`:`Done, ${sir()}. That clears today’s list.`,true);else toast('Done: '+t.t);return}
   if(a==='set'){await up(id,{s:b.dataset.s});return}
-  if(a==='mark'&&b.dataset.m==='skip'&&S.tasks.get(id)?.wk===wkKey()){S.rowSel=null;return pushItem(id)}
+  if(a==='mark'&&b.dataset.m==='skip'&&weekItems().some(x=>x.id===id)){S.rowSel=null;return pushItem(id)}
   if(a==='wkItem')return wkSheet(id);
   if(a==='wkMove'){$('sheet').hidden=true;if(await pinItem(id,b.dataset.d)){await applyWeek(false);toast('Moved to '+dayWord(b.dataset.d)+'.',1800)}return}
   if(a==='wkFloat'){$('sheet').hidden=true;const c={pin:false,day:null};S.tasks.set(id,{...S.tasks.get(id),...c});await up(id,c);await applyWeek(false);return}
@@ -1826,7 +1852,7 @@ document.addEventListener('click',async e=>{
   if(a==='quick')return quickSheet(id);
   if(a==='qSend')return quickSend();
   if(a==='qMic')return quickMic();
-  if(a==='saveSettings'){const n={...S.settings};for(const k of['address','wake','workStart','teachStart','teachEnd','protect'])n[k]=$('s_'+k).value||DEF[k];n.capacity=+$('s_capacity').value;
+  if(a==='saveSettings'){const n={...S.settings};for(const k of['address','wake','workStart','teachStart','teachEnd','protect','planAt'])if($('s_'+k))n[k]=$('s_'+k).value||DEF[k];if($('s_travel'))n.travel=+$('s_travel').value;n.capacity=+$('s_capacity').value;
     if($('s_voice'))n.voice=$('s_voice').value;if($('s_conv'))n.handsFree=$('s_conv').value==='1';if($('s_pause'))n.pause=+$('s_pause').value;if($('s_sysVoice'))try{localStorage.setItem('hq.sysVoice',$('s_sysVoice').value)}catch(e){}if($('s_autoSend'))n.autoSend=$('s_autoSend').checked;
     await db?.doc('settings/main').set(n).catch(()=>toast('Could not save'));$('sheet').hidden=true;toast('Saved',1600);return}
 });
@@ -1848,6 +1874,17 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.tlDay='';S.nextSkip=[];
+const BUILD=36;
+if(matchMedia('(pointer:coarse)').matches&&!window.__HQ_DAY)V.noMic=true; /* a phone gives this page no mic of its own unless Claude's dictation is there (canHear checks that first) */
+/* work done once per screen update, however many parts of the screen ask for it */
+const FM=new Map();function fmemo(k,f){if(FM.has(k))return FM.get(k);const v=f();if(!FM.size)queueMicrotask(()=>FM.clear());FM.set(k,v);return v}
+/* two open copies must never fight over the same record: background saves stop on a stale day, an older build, or a burst */
+const WR=[];function autoOk(){return S.day===today()&&!S.stale&&!(S.hot&&Date.now()<S.hot)}
+{const _dw=dayWrite;dayWrite=function(date,fn){const n=Date.now();WR.push(n);while(WR.length&&n-WR[0]>60000)WR.shift();if(WR.length>45&&!(S.hot&&n<S.hot)){S.hot=n+6e5;console.warn('too many saves: pausing background saves for 10 minutes')}return _dw(date,fn)}}
+{const _tp=trackPlan;trackPlan=function(){if(autoOk())return _tp()}}
+{const _ss=scoreSync;scoreSync=function(){if(autoOk())return _ss()}}
+{const _sp=syncPlan;syncPlan=async function(){if(S.day===today()&&!S.stale)return _sp()}}
+function buildCheck(){const b=+S.settings.build||0;if(b>BUILD&&!S.stale){S.stale=true;renderToday()}else if(b<BUILD&&S.setKnown&&db&&!S.buildSet){S.buildSet=true;db.doc('settings/main').update({build:BUILD}).catch(()=>{})}}
 
 /* ---------- loading ---------- */
 function boot3(){if(!db||S.b3)return;S.b3=true;const err=e=>console.warn(e);
@@ -1886,7 +1923,7 @@ function learnedText(){const p=pat(),L=[];
   return L}
 
 /* ---------- days: start, end, fixed blocks, travel ---------- */
-function dayStart(d){const day=dayDoc(d),p=pat();if(hm(day.start||''))return day.start;
+function dayStart(d){const day=dayDoc(d),p=pat();if(hm(day.start||''))return day.start;if(d===today()){const u=(S.hab.get(d)||S.habits.get(d)||{}).upAt;return hm(u||'')?u:'06:00'}
   const w=isWE(d)?p.wake?.we:p.wake?.wd;return w?hmS(Math.max(toM('07:00'),toM(w)+45)):(S.settings.workStart||'09:00')}
 function dayEnd(d){const tt=teachOf(d);return tt?tt.s:(isWE(d)?'20:00':'21:30')}
 const travelMin=()=>+S.settings.travel||20;
@@ -1911,32 +1948,37 @@ function prio(t){if(!t)return{v:0,why:[]};const why=[];let v=({1:100,2:70,3:40,4
   if(t.carried){v+=6;why.push('carried over')}
   if(t.person)why.push('keeping in touch');if(t.chore)why.push('chore rotation');
   return{v:Math.round(v),why}}
+const grpOf=t=>{const m=String(t.t||'').match(/^([^:]{3,28}):/);return m?norm(m[1]):''};
+/* dusty or dirty jobs: only where there are 2 clear hours before teaching (or no teaching) */
+const messyOk=d=>{const tt=teachOf(d);return !tt||toM(tt.s)-Math.max(toM(dayStart(d)),d===today()?toM(nowHM()):0)>=180};
 const mustDo=t=>t.p===1||!!(t.due&&isDate(t.due)&&dayDiff(t.due)<=1)||!!(t.hard&&t.due&&dayDiff(t.due)<=2)||hm(t.at||'');
 
 /* ---------- the rolling plan: what is in it, and how much fits each day ---------- */
 function inPlan(t){if(['parked','idea','recurring','verify'].includes(t.s))return false;const td=today(),end=addD(td,6);
+  if(t.hold&&t.hold>td&&t.s!=='done')return false;
   if(t.wk===wkKey())return true;
   if(t.s==='done')return !!t.day&&t.day>=wkKey()&&t.day<=end;
   if(t.s!=='ready')return false;
   if(t.day&&t.day>=td&&t.day<=end)return true;
   if(t.due&&isDate(t.due)&&dayDiff(t.due)<=9)return true;
-  return t.p===1||!!t.chore||!!t.person}
+  return !!t.chore||!!t.person}
 function horizon(){const out=[];for(let i=0;i<7;i++)out.push(addD(today(),i));return out}
-function dayBudget(d){const st=S.settings,day=dayDoc(d),cap=+st.capacity||.65;let a=toM(dayStart(d)),b=toM(dayEnd(d));if(d===today())a=Math.max(a,toM(nowHM()));
+function dayBudget(d){return fmemo('db'+d,()=>dayBudget0(d))}
+function dayBudget0(d){const st=S.settings,day=dayDoc(d),cap=+st.capacity||.65;let a=toM(dayStart(d)),b=toM(dayEnd(d));if(d===today())a=Math.max(a,toM(nowHM()));
   let free=Math.max(0,b-a);for(const f of fixedOn(d)){const x=Math.max(a,f.s),y=Math.min(b,f.e);if(y>x)free-=y-x}
   const tt=teachOf(d);let eve=0;if(tt){const ea=Math.max(toM(tt.e)+15,d===today()?toM(nowHM()):0);eve=Math.max(0,Math.min(90,toM('22:30')-ea))}
   let cp=Math.round(free*cap+eve*.5)-dailiesOn(d).reduce((x,t)=>x+estOf(t),0);if(isWE(d))cp=Math.round(cp*.6);
   if(day.low)return 0;return Math.max(20,cp)}
-function layoutWeek(full){const days=horizon(),last=days[days.length-1],by=new Map(days.map(d=>[d,[]])),wait=[],items=weekItems().filter(t=>!isDone(t));S.unplaced=[];
+function layoutWeek(full){FM.clear();const days=horizon(),last=days[days.length-1],by=new Map(days.map(d=>[d,[]])),wait=[],items=weekItems().filter(t=>!isDone(t));S.unplaced=[];
   const lowD=d=>!!dayDoc(d).low;
   for(const t of items){const keep=t.day&&by.has(t.day)&&(t.pin||!full)&&!(lowD(t.day)&&!mustDo(t));if(keep)by.get(t.day).push(t);else if(t.pin&&t.day&&t.day>last)continue;else wait.push(t)}
   const load=d=>by.get(d).reduce((a,t)=>a+estOf(t),0);
   wait.sort((a,b)=>prio(b).v-prio(a).v||((a.wkN??999)-(b.wkN??999))||a.id.localeCompare(b.id));
   for(const t of wait){const e=estOf(t),must=mustDo(t),lim=t.due&&isDate(t.due)&&t.due>=days[0]&&t.due<=last?t.due:last;
-    const ok=days.filter(x=>x<=lim&&!(lowD(x)&&!must));
+    const ok=days.filter(x=>x<=lim&&!(lowD(x)&&!must)&&!(isWE(x)&&catOf(t)==='work'&&!must)&&!(t.messy&&!messyOk(x)));
     let d=ok.find(x=>(must&&lowD(x))||load(x)+e<=dayBudget(x));
     if(!d&&(must||(t.due&&lim<last)))d=ok.length?ok.reduce((m,x)=>load(x)-dayBudget(x)<load(m)-dayBudget(m)?x:m,ok[0]):days[0];
-    if(!d)d=days.filter(x=>!lowD(x)).find(x=>load(x)+e<=dayBudget(x))||null;
+    if(!d)d=days.filter(x=>!lowD(x)&&!(isWE(x)&&catOf(t)==='work')).find(x=>load(x)+e<=dayBudget(x))||null;
     if(d)by.get(d).push(t);else S.unplaced.push(t.id)}
   return{days,by}}
 async function applyWeek(full){if(!db)return[];if(!weekItems().length){if(dailies().length){await syncPlan();renderAll()}return[]}
@@ -1948,34 +1990,46 @@ async function applyWeek(full){if(!db)return[];if(!weekItems().length){if(dailie
 /* what moved, in words */
 async function relayMoves(full){const before=new Map(weekItems().map(t=>[t.id,t.day]));const ids=await applyWeek(full),by={};
   for(const id of ids){const t=S.tasks.get(id);if(!t||before.get(id)===t.day)continue;const k=t.day?dayWord(t.day):'later (no room this week)';(by[k]=by[k]||[]).push(short(T(t)))}
-  const ks=Object.keys(by);return ks.length?' Moved '+ks.map(k=>`${by[k].slice(0,4).join(', ')}${by[k].length>4?' and '+(by[k].length-4)+' more':''} to ${k}`).join('; ')+'.':''}
+  const ks=Object.keys(by),n=ks.reduce((a,k)=>a+by[k].length,0);if(!n)return'';
+  return n<=3?' Moved '+ks.map(k=>`${by[k].join(', ')} to ${k}`).join('; ')+'.':` Moved ${n} things: `+ks.map(k=>`${by[k].length} to ${k}`).join(', ')+'.'}
 
 /* ---------- the timeline of a day ---------- */
-function timeline(d){const live=d===today(),marks=live?(S.plan?.marks||{}):{},p=pat(),low=!!dayDoc(d).low;let a=toM(dayStart(d));if(live)a=Math.max(a,Math.ceil(toM(nowHM())/5)*5);
-  const lim=toM('22:30'),fx=fixedOn(d),out=fx.map(f=>({...f})),taken=fx.map(f=>[f.s,f.e]);
+function timeline(d){return fmemo('tl'+d,()=>timeline0(d))}
+function timeline0(d){const live=d===today(),marks=live?(S.plan?.marks||{}):{},p=pat(),low=!!dayDoc(d).low;let a=toM(dayStart(d));if(live)a=Math.max(a,Math.ceil(toM(nowHM())/5)*5);
+  const tt0=teachOf(d),lim=tt0?Math.min(toM('22:00'),toM(tt0.e)+60):toM('21:30'),fx=fixedOn(d),out=fx.map(f=>({...f})),taken=fx.map(f=>[f.s,f.e]);
   const items=weekItems().filter(t=>t.day===d&&!isDone(t)&&!marks[t.id]).concat(dailiesOn(d).filter(t=>!marks[t.id]&&t.last!==d));
   const deep=t=>catOf(t)==='project'||estOf(t)>=60;
   const order=items.map(t=>({t,pr:prio(t).v,m:estOf(t)})).sort((x,y)=>(mustDo(y.t)-mustDo(x.t))||y.pr-x.pr);
   const fits=(s,m)=>!taken.some(([x,y])=>s<y&&s+m>x);
   const nextFree=(from,m)=>{let s=from;for(let i=0;i<200&&s+m<=lim;i++){const c=taken.find(([x,y])=>s<y&&s+m>x);if(!c)return s;s=c[1]}return null};
   const put=(o,s,extra)=>{taken.push([s,s+o.m]);out.push({s,e:s+o.m,t:T(o.t),id:o.t.id,kind:'task',...extra})},placed=new Set();
-  for(const o of order)if(hm(o.t.at||'')){put(o,toM(o.t.at),{set:true});placed.add(o.t.id)}
+  for(const o of order)if(hm(o.t.at||'')&&!(live&&toM(o.t.at)+o.m<=a)){put(o,Math.max(toM(o.t.at),live?a:0),{set:true});placed.add(o.t.id)}
+  const place=(o,from)=>{if(placed.has(o.t.id))return from;let s=nextFree(from,o.m);
+    if(s!=null&&o.t.messy&&tt0&&s+o.m>toM(tt0.s)-120&&s<toM(tt0.s))s=null; /* never right before teaching */
+    if(s==null){out.push({s:null,t:T(o.t),id:o.t.id,kind:'task',over:true});placed.add(o.t.id);return from}
+    put(o,s,{small:o.m<=20});placed.add(o.t.id);
+    const g=grpOf(o.t);let at=s+o.m;if(g)for(const q of order)if(!placed.has(q.t.id)&&grpOf(q.t)===g&&!hm(q.t.at||''))at=place(q,at); /* same job, same block */
+    return Math.max(from,at)};
+  /* messy jobs first thing, then what must happen today */
+  for(const o of order)if(o.t.messy)place(o,a);
+  let cur=a;for(const o of order)if(mustDo(o.t)&&!deep(o.t))cur=place(o,a);
   const dl=order.filter(o=>!placed.has(o.t.id)&&deep(o.t));
-  if(dl.length&&!low){const pk=p.peak?{s:toM(p.peak.s),e:toM(p.peak.e)}:null;let s=pk&&pk.e>a?nextFree(Math.max(a,pk.s),dl[0].m):null;if(s==null)s=nextFree(a,dl[0].m);
+  if(dl.length&&!low){const pk=p.peak?{s:toM(p.peak.s),e:toM(p.peak.e)}:null,from=pk&&pk.e>a?Math.max(a,pk.s):a;let s=nextFree(from,dl[0].m);if(s==null)s=nextFree(a,dl[0].m);
     if(s!=null){let at=s;for(const o of dl){if(at+o.m>lim||!fits(at,o.m)||at-s>=150)break;put(o,at,{deep:true});placed.add(o.t.id);at+=o.m}
       if(at>s)out.push({s,e:at,t:'Focus block',kind:'focus'})}}
-  for(const o of order){if(placed.has(o.t.id))continue;const s=nextFree(a,o.m);if(s==null){out.push({s:null,t:T(o.t),id:o.t.id,kind:'task',over:true});continue}put(o,s,{small:o.m<=20});placed.add(o.t.id)}
+  for(const o of order)place(o,a);
   return out.sort((x,y)=>(x.s??1e9)-(y.s??1e9)||(x.kind==='focus'?-1:y.kind==='focus'?1:0))}
 /* the docket follows the timeline */
 function agenda(){const p=S.plan,marks=p?.marks||{},tl=timeline(today()),at=new Map(tl.filter(x=>x.id).map(x=>[x.id,x]));
   const fixed=tl.filter(x=>x.kind==='fixed'||x.kind==='teach').map(f=>({fx:1,s:f.es,e:f.ee,t:f.t+(f.travel?` (+${f.travel} min travel)`:''),teach:f.kind==='teach'?1:0,_s:f.es}));
   const picks=(p?.picks||[]).map(k=>{const tk=S.tasks.get(k.id);if(!tk)return null;const st=tk.s==='done'||marks[k.id]==='done'?'done':marks[k.id]||'open',x=at.get(k.id);
-    return{k,t:tk,st,ev:st==='open'&&x&&x.s!=null?{s:hmS(x.s)}:null,deep:!!x?.deep,_s:st==='open'?(x?.s??1e8):2e8}}).filter(Boolean);
+    return{k,t:tk,st,ev:st==='open'&&x&&x.s!=null?{s:hmS(x.s)}:null,over:st==='open'&&!!x&&x.s==null,deep:!!x?.deep,_s:st==='open'?(x?.s??1e8):2e8}}).filter(Boolean);
   const rows=[...picks,...fixed].sort((a,b)=>a._s-b._s);return{rows,work:picks.filter(r=>r.st==='open').reduce((a,r)=>a+(r.k.min||estOf(r.t)),0)}}
 
 /* today's open items in timeline order (the first is "now") */
 function openPicks(skipId){const p=S.plan,marks=p?.marks||{},tl=timeline(today()),pos=new Map(tl.filter(x=>x.id).map((x,i)=>[x.id,x.s??1e6+i]));
   return (p?.picks||[]).map(k=>({k,t:S.tasks.get(k.id)})).filter(x=>x.t&&x.t.s!=='done'&&!marks[x.k.id]&&x.k.id!==skipId).sort((a,b)=>(pos.get(a.k.id)??2e6)-(pos.get(b.k.id)??2e6))}
+const dueP=t=>{if(!t.due||!isDate(t.due))return'';const d=dayDiff(t.due);return d>2?'':` <span class="pill ${d<=0?'bad':'warn'}">${d<0?-d+'d late':d===0?'due today':d===1?'due tomorrow':'due in 2d'}</span>`};
 /* ---------- chores and people become ordinary tasks when due ---------- */
 async function spawnDue(){if(!S.loaded||S.spawnAt===today()||!db)return;S.spawnAt=today();const td=today(),all=[...S.tasks.values()];let n=0;
   const ch=all.filter(t=>t.s==='recurring'&&+t.every>0).map(c=>({c,over:c.last?-dayDiff(c.last)-c.every:999})).filter(x=>x.over>=0).sort((a,b)=>b.over-a.over);
@@ -1994,8 +2048,8 @@ function freeSlot(d,m){const tl=timeline(d),taken=tl.filter(x=>x.s!=null&&x.kind
   for(let i=0;i<100&&s+m<=toM('21:30');i++){const c=taken.find(([x,y])=>s<y&&s+m>x);if(!c)return hmS(s);s=Math.ceil(c[1]/15)*15}return null}
 function habitCard(){const out=[];for(const h of habDefs()){const k=h.k,wc=weekCount(k),st=streak(k),per=h.per||(k==='workout'?Math.round(pat().workout?.perWk||0):0);
   const doneToday=!!(S.hab.get(today())||{})[k],missedY=!(S.hab.get(addD(today(),-1))||{})[k];
-  let fix='';if(!doneToday&&missedY&&per>=3&&!dayDoc(today()).low&&!(dayDoc(today()).habSkip||[]).includes(k)){const sl=freeSlot(today(),45);if(sl)fix=`<div class="m" style="margin-top:6px">${esc(vary([`Missed yesterday. ${t12(sl)} today has 45 free minutes.`,`Yesterday slipped. There’s room at ${t12(sl)} today.`,`No ${h.name.toLowerCase()} yesterday. ${t12(sl)} is open if you want it.`],k))}</div><div class="row" style="margin-top:6px"><button class="sm pri" data-act="habAdd" data-k="${k}" data-at="${sl}">Add it at ${esc(t12(sl))}</button><button class="sm ghost" data-act="habSkip" data-k="${k}">Not today</button></div>`}
-  out.push(`<div class="item"><div class="row" style="flex-wrap:nowrap"><div class="grow"><div class="t" style="font-size:15px">${esc(h.name)}${doneToday?' <span class="pill good">done today</span>':''}</div><div class="m">${wc} this week${per?` of ${per}`:''}${st>1?` · ${st}-day streak`:''}</div></div>${doneToday?'':`<button class="sm" data-act="habDone" data-k="${k}">Done</button>`}</div>${fix}</div>`)}
+  let fix='';if(!doneToday&&missedY&&per>=3&&!dayDoc(today()).low&&!(dayDoc(today()).habSkip||[]).includes(k)){const sl=freeSlot(today(),45);if(sl)fix=`<div class="row" style="margin-top:8px"><span class="m grow">Missed yesterday. ${esc(t12(sl))} is free.</span><button class="sm pri" data-act="habAdd" data-k="${k}" data-at="${sl}">Add it</button><button class="sm ghost" data-act="habSkip" data-k="${k}">Skip</button></div>`}
+  out.push(`<div class="item"><div class="row" style="flex-wrap:nowrap"><div class="grow"><span class="t">${esc(h.name)}</span> <span class="m">${wc}${per?'/'+per:''} this week${st>1?` · ${st}-day streak`:''}</span></div>${doneToday?'<span class="pill good">Done today</span>':`<button class="sm" data-act="habDone" data-k="${k}">Done</button>`}</div>${fix}</div>`)}
   return out.join('')}
 
 /* ---------- projects ---------- */
@@ -2011,7 +2065,7 @@ function nudgeLine(x){const n=short(T(x.t)),when=x.t.day?(x.t.day===today()?'it�
   return `${n} is due ${dayWord(x.t.due)}.`}
 
 /* ---------- what's next ---------- */
-function whatsNext(){const now=toM(nowHM()),td=today(),bz=busyNow(),tt=teachOf();
+function whatsNext(){FM.clear();const now=toM(nowHM()),td=today(),bz=busyNow(),tt=teachOf();
   if(bz)return{txt:`You’re in ${bz.x&&bz.x!=='busy'?bz.x:'something'} until ${t12(bz.e)}. Nothing else until then.`};
   if(tt&&now>=toM(tt.s)&&now<toM(tt.e))return{txt:`You’re teaching until ${t12(tt.e)}. That’s the job right now.`};
   const nf=fixedOn(td).find(f=>f.s>now),room=nf?nf.s-now:240,low=!!dayDoc(td).low,pk=pat().peak,inPk=pk&&now>=toM(pk.s)&&now<toM(pk.e);
@@ -2025,6 +2079,20 @@ function nextSheet(){const n=whatsNext();V.lastNext=n.t?.id||'';
   <div class="row" style="margin-top:14px">${n.t?`<button class="sm pri" data-act="nxStart" data-id="${n.t.id}">Start it</button><button class="sm" data-act="done" data-id="${n.t.id}">Already done</button><button class="sm" data-act="nxOther" data-id="${n.t.id}">Something else</button>`:''}<button class="sm ghost" data-act="close">Close</button></div>`);
   say(n.txt,V.voiceOn&&canSpeak())}
 
+/* ---------- one item: everything about it, editable ---------- */
+const PRI={1:'Critical',2:'High',3:'Normal',4:'Low'};
+function wkSheet(id){const t=S.tasks.get(id);if(!t)return;const days=horizon(),done=isDone(t),pr=prio(t),e=+t.est||30,mins=[...new Set([5,10,15,20,30,45,60,90,120,180,e])].sort((a,b)=>a-b);
+  const where=done?'Done':t.day?(t.day<today()?'Carried over':'On '+dayWord(t.day))+(hm(t.at||'')?' at '+t12(t.at):''):inPlan(t)?'No room in the next 7 days':'On your later list';
+  sheet(`<h3 style="font:600 18px/1.3 var(--disp);margin:0 0 4px">${esc(T(t))}</h3><div class="m">${esc(where)} · ${esc(CATS[catOf(t)])}${t.due?' · due '+esc(dayName(t.due)):''}</div>
+  ${!done&&pr.why.length?`<div class="m" style="margin-top:4px">Why it ranks where it does: ${esc(pr.why.join(', '))}.</div>`:''}
+  ${t.n?`<p class="why" style="white-space:pre-wrap;margin:8px 0 0">${esc(t.n)}</p>`:''}${t.msg?`<p class="first" id="m_s${t.id}" style="white-space:pre-wrap;margin-top:8px">${esc(t.msg)}</p><button class="sm" data-act="copy" data-from="m_s${t.id}">Copy the message</button>`:''}
+  ${done?'':`<label>Do it on</label><div class="chips" style="flex-wrap:wrap">${days.map(d=>`<button class="${t.day===d?'on':''}" data-act="wkMove" data-id="${t.id}" data-d="${d}">${d===today()?'Today':d===addD(today(),1)?'Tomorrow':DN[dowOf(d)]+' '+(+d.slice(8))}</button>`).join('')}</div>
+  <label>Priority</label><div class="chips" style="flex-wrap:wrap">${[1,2,3,4].map(p=>`<button class="${(t.p||3)===p?'on':''}" data-act="tSet" data-id="${t.id}" data-f="p" data-v="${p}">${PRI[p]}</button>`).join('')}</div>
+  <div class="row" style="flex-wrap:nowrap;align-items:flex-end;margin-top:2px"><div class="grow"><label for="tf_est">Takes</label><select id="tf_est" data-tf="est" data-id="${t.id}">${mins.map(m=>`<option value="${m}"${m===e?' selected':''}>${durS(m)}</option>`).join('')}</select></div><div class="grow"><label for="tf_due">Due</label><input id="tf_due" type="date" data-tf="due" data-id="${t.id}" value="${isDate(t.due||'')?t.due:''}"></div></div>
+  <label for="tf_cat">Category</label><select id="tf_cat" data-tf="cat" data-id="${t.id}">${Object.keys(CATS).map(k=>`<option value="${k}"${catOf(t)===k?' selected':''}>${CATS[k]}</option>`).join('')}</select>`}
+  <div class="row" style="margin-top:16px">${done?`<button class="sm" data-act="undone" data-id="${t.id}">Not done after all</button>`:`<button class="sm pri" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="quick" data-id="${t.id}">Add info</button>${t.pin||hm(t.at||'')?`<button class="sm" data-act="wkFloat" data-id="${t.id}">Let Jarvis place it</button>`:''}${inPlan(t)?`<button class="sm" data-act="wkOff" data-id="${t.id}">Not this week</button>`:''}`}<button class="sm ghost" data-act="close">Close</button></div>`)}
+document.addEventListener('change',async e=>{const el=e.target,f=el?.dataset?.tf,id=el?.dataset?.id;if(!f||!S.tasks.has(id))return;
+  const c=f==='est'?{est:+el.value||30}:f==='due'?{due:isDate(el.value)?el.value:null}:f==='cat'?{cat:el.value}:null;if(!c)return;await upL(id,c);await applyWeek(false);toast('Saved.',1200);if(!$('sheet').hidden)wkSheet(id)});
 /* ---------- notes, app updates, inbox ---------- */
 const notesOf=k=>S.notes.filter(n=>n.kind===k&&!n.done);
 async function addNote(kind,text){const k=['note','app','inbox'].includes(kind)?kind:'note',x=String(text||'').trim().slice(0,1500);if(!x||!db)return null;const ref=db.collection('notes').doc();await ref.set({kind:k,text:x,at:stamp()});return k}
@@ -2041,10 +2109,9 @@ function tlHtml(d){const tl=timeline(d),day=dayDoc(d),tw=travelWarn(d),rows=tl.m
     if(x.kind!=='task')return `<div class="tl fx"><span class="tm num">${esc(t12(hmS(x.es)))}</span><span class="tx">${esc(x.t)}${x.travel?` <small>+${x.travel} min travel each way</small>`:''}<small>until ${esc(t12(hmS(x.ee)))}</small></span></div>`;
     if(x.s==null)return `<button class="tl ov" data-act="wkItem" data-id="${x.id}"><span class="tm">—</span><span class="tx">${esc(x.t)}<small>doesn’t fit this day</small></span></button>`;
     return `<button class="tl${x.deep?' dp':''}" data-act="wkItem" data-id="${x.id}"><span class="tm num">${esc(t12(hmS(x.s)))}</span><span class="tx">${esc(x.t)}<small>${durS(x.e-x.s)}${x.set?' · set time':''}</small></span></button>`}).join('');
-  return `<div class="m" style="margin:2px 0 8px">Starts ${esc(t12(dayStart(d)))}${day.low?' · light day: must-dos only':''}</div>${tw.length?`<div class="card warnc" style="margin-bottom:8px">${tw.map(w=>`<div class="m">⚠ ${esc(w)}</div>`).join('')}</div>`:''}<div class="tlw">${rows||'<div class="m">Nothing planned.</div>'}</div>
+  const stl=d===today()&&!hm(day.start||'')?'':`Starts ${esc(t12(dayStart(d)))}`;
+  return `${stl||day.low?`<div class="m" style="margin:2px 0 8px">${[stl,day.low?'Light day: must-dos only':''].filter(Boolean).join(' · ')}</div>`:''}${tw.length?`<div class="card warnc" style="margin-bottom:8px">${tw.map(w=>`<div class="m">⚠ ${esc(w)}</div>`).join('')}</div>`:''}<div class="tlw">${rows||'<div class="m">Nothing planned.</div>'}</div>
   <div class="row" style="margin-top:8px"><button class="sm" data-act="lowDay" data-d="${d}">${day.low?'Back to a normal day':'Make it a light day'}</button></div>`}
-function planHtml(){const days=horizon(),sel=days.includes(S.tlDay)?S.tlDay:(nowHM()>='19:00'?days[1]:days[0]);
-  return `<div class="chips tlc">${days.map(d=>`<button class="${d===sel?'on':''}" data-act="tlDay" data-d="${d}">${d===today()?'Today':d===addD(today(),1)?'Tomorrow':DN[dowOf(d)]+' '+(+d.slice(8))}</button>`).join('')}</div><div class="card">${tlHtml(sel)}</div>`}
 async function nightly(){const tm=addD(today(),1);await applyWeek(true);const tl=timeline(tm),tasks=tl.filter(x=>x.id&&x.s!=null),fx=tl.filter(x=>x.kind==='fixed'),inb=notesOf('inbox'),nd=nudges().filter(x=>x.d<=2&&x.d>=0);
   await dayWrite(today(),cur=>({...cur,night:stamp()}));await dayWrite(tm,cur=>({...cur,draft:{at:stamp(),tl:tl.map(x=>({s:x.s,e:x.e,t:x.t,id:x.id||null,k:x.kind}))}}));
   const first=tasks[0],open=vary(['Tomorrow’s ready.','Here’s tomorrow.','Tomorrow is mapped out.','Tomorrow’s plan is set.'],'night');
@@ -2069,18 +2136,22 @@ function weekReviewSheet(){const mon=reviewWeekOf(),sun=addD(mon,6),wins=winsSin
   <div class="row" style="margin-top:14px"><button class="sm pri" data-act="wrDone">Done reviewing</button><button class="sm ghost" data-act="close">Close</button></div>`)}
 
 /* ---------- Today: the extra cards ---------- */
-function brainToday(){const el=$('brainBox');if(!el||!S.loaded)return;const td=today(),dd=dayDoc(td),cards=[];
-  cards.push(`<div class="row" style="margin-bottom:12px"><button class="pri grow" data-act="next" style="justify-content:center">What’s next?</button><button class="sm" data-act="goChat">Chat</button></div>`);
-  const nd=nudges().filter(x=>x.lvl!=='light'&&x.t.ndg!==td).slice(0,3);
-  if(nd.length)cards.push(`<div class="card" style="margin-bottom:12px">${nd.map(x=>`<div class="item"><div class="${x.lvl==='push'?'t':'m'}" style="font-size:15px">${esc(nudgeLine(x))}</div></div>`).join('')}<div class="row" style="margin-top:6px"><button class="sm ghost" data-act="ndgOk" data-ids="${nd.map(x=>x.t.id).join(',')}">Got it</button></div></div>`);
-  if((dow()===0||dow()===1)&&!dd.wr&&!dayDoc(addD(td,-1)).wr&&winsSince(reviewWeekOf()).length)cards.push(`<div class="card" style="margin-bottom:12px"><div class="t" style="font-size:15px">Your week in review</div><div class="m">Wins, what slipped, and what’s coming.</div><div class="row" style="margin-top:8px"><button class="sm pri" data-act="weekReview">Open it</button></div></div>`);
-  const qp=quietProjects()[0];if(qp&&qp.p.qnd!==td)cards.push(`<div class="card" style="margin-bottom:12px"><div class="m">Quiet for ${qp.q} days</div><div class="t" style="font-size:15px">${esc(qp.p.name)}</div>${qp.p.next?`<div class="m">Next: ${esc(qp.p.next)}</div>`:''}<div class="row" style="margin-top:8px"><button class="sm" data-act="projPlan" data-id="${qp.p.id}">Plan time for it</button><button class="sm ghost" data-act="projPause" data-id="${qp.p.id}">Pause it</button><button class="sm ghost" data-act="projLater" data-id="${qp.p.id}">Not now</button></div></div>`);
-  const hb=habitCard();if(hb)cards.push(`<div class="card" style="margin-bottom:12px">${hb}</div>`);
-  const inb=notesOf('inbox').length,app=notesOf('app').length;
-  if(nowHM()>=planAt()&&!dd.night)cards.push(`<div class="card" style="margin-bottom:12px"><div class="t" style="font-size:15px">Plan tomorrow</div><div class="row" style="margin-top:8px"><button class="sm pri" data-act="nightNow">Build it now</button></div></div>`);
-  else if(dd.night&&nowHM()>=planAt())cards.push(`<div class="row" style="margin-bottom:12px"><button class="sm" data-act="nightShow">Tomorrow’s plan</button>${inb?`<button class="sm" data-act="notes" data-k="inbox">Inbox · ${inb}</button>`:''}</div>`);
-  el.innerHTML=cards.join('');
-  const mb=$('moreBox');if(mb&&!mb.querySelector('[data-brain]'))mb.insertAdjacentHTML('afterbegin',`<div data-brain><button class="lnk" data-act="goChat"><span class="grow">Chat<small>Talk to Jarvis by text or voice</small></span></button><button class="lnk" data-act="notes" data-k="app"><span class="grow">App updates<small>${app?app+' ready to copy into your code tool':'Say “Jarvis should…” and it lands here'}</small></span></button><button class="lnk" data-act="notes" data-k="inbox"><span class="grow">Inbox<small>${inb?inb+' loose thought'+(inb>1?'s':''):'Nothing loose'}</small></span></button><button class="lnk" data-act="notes" data-k="note"><span class="grow">Notes<small>${notesOf('note').length} kept</small></span></button><button class="lnk" data-act="wins"><span class="grow">Wins<small>${winsSince(addD(today(),-6)).length} finished in the last 7 days</small></span></button><button class="lnk" data-act="weekReview"><span class="grow">Weekly review<small>Wins, what slipped, what’s coming</small></span></button><button class="lnk" data-act="people"><span class="grow">People and chores<small>${S.people.length} people · ${[...S.tasks.values()].filter(t=>t.s==='recurring'&&t.every).length} chores</small></span></button></div>`)}
+function brainToday(){FM.clear();const top=$('brainBox'),el=$('brainBox2');if(!top||!el||!S.loaded)return;const td=today(),dd=dayDoc(td),a=[],c=[];
+  if(S.stale)a.push(`<div class="card warnc" style="margin-top:12px"><div class="t" style="font-size:15px">This copy of Jarvis is out of date</div><div class="m">A newer version is open somewhere else. Reload so the two don’t undo each other’s changes.</div><div class="row" style="margin-top:8px"><button class="sm pri" data-act="reload">Reload</button></div></div>`);
+  else if(S.hot&&Date.now()<S.hot)a.push(`<div class="card warnc" style="margin-top:12px"><div class="t" style="font-size:15px">Another copy of Jarvis is open on an older version</div><div class="m">Close or reload Jarvis on your other devices. Until then I’ve paused background saving here so nothing gets undone.</div></div>`);
+  if(nowHM()>=planAt()&&!dd.night)a.push(`<div class="card" style="margin-top:12px"><div class="row" style="flex-wrap:nowrap"><div class="grow"><div class="t" style="font-size:15px">Plan tomorrow</div><div class="m">Two minutes: tomorrow’s timeline${notesOf('inbox').length?' and your inbox':''}.</div></div><button class="sm pri" data-act="nightNow">Start</button></div></div>`);
+  else if(dd.night&&nowHM()>=planAt())a.push(`<div class="row" style="margin-top:12px"><button class="sm" data-act="nightShow">Tomorrow’s plan</button>${notesOf('inbox').length?`<button class="sm" data-act="notes" data-k="inbox">Inbox · ${notesOf('inbox').length}</button>`:''}</div>`);
+  if((dow()===0||dow()===1)&&!dd.wr&&!dayDoc(addD(td,-1)).wr&&winsSince(reviewWeekOf()).length)a.push(`<div class="card" style="margin-top:12px"><div class="row" style="flex-wrap:nowrap"><div class="grow"><div class="t" style="font-size:15px">Your week in review</div><div class="m">Wins, what slipped, what’s coming.</div></div><button class="sm pri" data-act="weekReview">Open</button></div></div>`);
+  top.innerHTML=a.join('');
+  /* due soon and not already on today's list (those carry a pill on their own row) */
+  const onToday=new Set((S.plan?.picks||[]).map(k=>k.id)),nd=nudges().filter(x=>!onToday.has(x.t.id)&&x.t.ndg!==td&&(x.lvl!=='light'||x.d<=7)).slice(0,5);
+  if(nd.length)c.push(`<h2>Due soon</h2><div class="card">${nd.map(x=>`<button class="due" data-act="wkItem" data-id="${x.t.id}"><span class="pill ${x.d<=0?'bad':x.d<=3?'warn':'mute'}">${x.d<0?-x.d+'d late':x.d===0?'Today':x.d===1?'Tomorrow':DN[dowOf(x.t.due)]+' '+(+x.t.due.slice(8))}</span><span class="grow">${esc(T(x.t))}<small>${x.t.day?'planned for '+esc(dayWord(x.t.day)):'not planned yet'}</small></span></button>`).join('')}</div>`);
+  const hb=habitCard();if(hb)c.push(`<h2>Habits</h2><div class="card">${hb}</div>`);
+  const qp=quietProjects()[0];if(qp&&qp.p.qnd!==td)c.push(`<h2>Gone quiet</h2><div class="card"><div class="t" style="font-size:15px">${esc(qp.p.name)} <span class="m">· ${qp.q} days</span></div>${qp.p.next?`<div class="m">Next: ${esc(qp.p.next)}</div>`:''}<div class="row" style="margin-top:8px"><button class="sm" data-act="projPlan" data-id="${qp.p.id}">Book time</button><button class="sm ghost" data-act="projPause" data-id="${qp.p.id}">Pause it</button><button class="sm ghost" data-act="projLater" data-id="${qp.p.id}">Not now</button></div></div>`);
+  el.innerHTML=c.join('');
+  const mb=$('moreBox'),inb=notesOf('inbox').length,app=notesOf('app').length,L=(act,t,sm,k)=>`<button class="lnk" data-act="${act}"${k?` data-k="${k}"`:''}><span class="grow">${t}<small>${sm}</small></span></button>`;
+  if(mb&&!mb.querySelector('[data-brain]'))mb.insertAdjacentHTML('afterbegin',`<div data-brain><h2 style="margin-top:6px">Capture</h2>${L('notes','Inbox',inb?inb+' loose thought'+(inb>1?'s':'')+' to sort':'Nothing loose','inbox')}${L('notes','Notes',notesOf('note').length+' kept','note')}${L('notes','App updates',app?app+' ready to copy into your code tool':'Say “Jarvis should…” and it lands here','app')}
+    <h2>Progress</h2>${L('wins','Wins',winsSince(addD(today(),-6)).length+' finished in the last 7 days')}${L('weekReview','Weekly review','Wins, what slipped, what’s coming')}${L('people','People, chores and projects',`${S.people.length} people · ${[...S.tasks.values()].filter(t=>t.s==='recurring'&&t.every).length} chores · ${S.projects.length} projects`)}<h2>Tools</h2></div>`)}
 function peopleSheet(){const ch=[...S.tasks.values()].filter(t=>t.s==='recurring'&&+t.every>0);
   sheet(`<h3 style="font:600 18px var(--disp);margin:0">People and chores</h3><h2>People</h2><div class="card">${S.people.map(p=>`<div class="item"><div class="t" style="font-size:15px">${esc(p.name)}</div><div class="m">every ${p.every||14} days · last ${p.last?esc(dayWord(p.last)):'not yet'}${p.note?' · '+esc(p.note):''}</div></div>`).join('')||'<div class="m">Say “remind me to stay in touch with Saira every two weeks”.</div>'}</div>
   <h2>Chores</h2><div class="card">${ch.map(c=>`<div class="item"><div class="t" style="font-size:15px">${esc(c.t)}</div><div class="m">every ${c.every} days · last ${c.last?esc(dayWord(c.last)):'not yet'}</div></div>`).join('')||'<div class="m">Say “vacuum every week, laundry every 4 days”.</div>'}</div>
@@ -2088,13 +2159,17 @@ function peopleSheet(){const ch=[...S.tasks.values()].filter(t=>t.s==='recurring
   <div class="row" style="margin-top:14px"><button class="sm ghost" data-act="close">Close</button></div>`)}
 
 /* ---------- chat ---------- */
-function renderChat(){const el=$('chatList');if(!el)return;{const m=$('qMic');if(m)m.hidden=!dict;const ci=$('chatIn');if(ci&&!dict)ci.placeholder='Type, or use your keyboard’s mic…'}const l=(S.dumps||[]).slice(0,30).reverse();
-  el.innerHTML=(l.map(d=>`<div class="bub me">${esc(d.text)}</div>${d.reply?`<div class="bub ai">${esc(d.reply)}</div>`:''}`).join('')+(V.state==='thinking'&&V.heard&&!l.some(d=>d.text===V.heard&&d.reply)?`<div class="bub ai dim">…</div>`:''))||'<div class="m" style="text-align:center;padding:30px 0">Talk to me like you’d talk to a person. Tasks, plans, notes, questions.</div>';
-  if(S.view==='chat')el.scrollTop=el.scrollHeight}
-async function chatSend(){const el=$('chatIn'),x=(el.value||'').trim();if(!x)return;el.value='';quickMicOff();V.qEl='';renderChat();const p=respond(x,false);setTimeout(renderChat,60);await p;renderChat()}
+function renderChat(){const el=$('chatList');if(!el)return;const m=$('chatMic');if(m){m.hidden=!dict;m.classList.toggle('rec',!!V.quick&&V.qEl==='chatIn')}
+  const l=(S.dumps||[]).slice(0,30).reverse();let day='',h='';
+  for(const d of l){const dd=dayOf(d.at);if(dd!==day){day=dd;h+=`<div class="bday">${esc(dayName(dd))}</div>`}h+=`<div class="bub me">${esc(d.text)}</div>${d.reply?`<div class="bub ai">${esc(d.reply)}</div>`:''}`}
+  if(V.state==='thinking'&&V.heard&&!l.some(d=>d.text===V.heard&&d.reply))h+=`<div class="bub ai dim">Thinking…</div>`;
+  el.innerHTML=h||`<div class="m" style="text-align:center;padding:40px 12px">Talk to me the way you’d talk to a person.<br>Tasks, plans, notes, questions, changes to your schedule.</div>`;
+  if(S.view==='chat'){const sc=$('scr');sc.scrollTop=sc.scrollHeight}}
+function chatGrow(){const el=$('chatIn');if(!el)return;el.style.height='44px';el.style.height=Math.min(132,el.scrollHeight+2)+'px'}
+async function chatSend(){const el=$('chatIn'),x=(el.value||'').trim();if(!x||V.state==='thinking')return;el.value='';chatGrow();quickMicOff();V.qEl='';renderChat();const p=respond(x,false);setTimeout(renderChat,60);await p;renderChat()}
 
 /* ---------- what the model knows and may do ---------- */
-function brainCtx(){const td=today(),tm=addD(td,1),p=pat(),tl=d=>timeline(d).filter(x=>x.s!=null).map(x=>`${hmS(x.s)}-${hmS(x.e)} ${x.kind==='task'?x.t+(x.deep?' (focus)':''):x.kind==='focus'?'[focus block]':x.t}`).join('; ');
+function brainCtx(){FM.clear();const td=today(),tm=addD(td,1),p=pat(),tl=d=>timeline(d).filter(x=>x.s!=null).map(x=>`${hmS(x.s)}-${hmS(x.e)} ${x.kind==='task'?x.t+(x.deep?' (focus)':''):x.kind==='focus'?'[focus block]':x.t}`).join('; ');
   const top=weekItems().filter(t=>!isDone(t)).map(t=>({t,p:prio(t)})).sort((a,b)=>b.p.v-a.p.v).slice(0,10).map(x=>`${x.t.id}|${T(x.t)}|${x.t.day||'not placed'}|${CATS[catOf(x.t)]}|${x.p.why.join(', ')||'normal'}`).join('\n');
   const hab=habDefs().map(h=>`${h.name}: ${weekCount(h.k)} this week, streak ${streak(h.k)}`).join('; ');
   return `
@@ -2114,7 +2189,8 @@ Inbox (unsorted): ${notesOf('inbox').map(n=>n.text.slice(0,80)).join(' / ')||'em
 Nightly planning time: ${planAt()}.
 Your last replies (never start the same way as any of these): ${(S.dumps||[]).slice(0,6).map(d=>'"'+String(d.reply||'').slice(0,50)+'"').join(' ')}
 `}
-function brainRules(){return `- Task details: every new task gets "cat" (personal, finances, health, work, project, home or people). Also give "due", "pri" (1 critical, 2 high, 3 normal, 4 low) and "est" in minutes when he says them or they are obvious; otherwise fill "cat" and "est" yourself and leave due and pri empty. Confirm in a few words what you filed (e.g. "Finances, due Nov 26, about 45 minutes"). To change these on an existing task use set_meta.
+function brainRules(){return `- Task details: every new task gets "cat" (personal, finances, health, work, project, home or people). Give "due", "pri" (1 critical, 2 high, 3 normal, 4 low) and "est" in minutes when he says them. When he gives no priority or no time needed, do not hold the task back and do not make him answer first: add it with your best guess, and end your reply by saying the guess as something he can correct in one word (e.g. "I put it at normal priority, about 30 minutes. Right?"). When he gives several tasks at once, ask that once for the batch, not per task. If his next message corrects it, use set_meta on those items. This replaces any older note about asking before scheduling. To change details on an existing task use set_meta.
+- Dirty or dusty jobs (assembling furniture, cleaning out the back area, moving things): set "messy":true on add or with set_meta. The app then keeps them away from the hours before teaching and puts same-job tasks back to back.
 - His priority wins. If he gives none, the app ranks by deadline, consequences, how long it has waited and its project. If he asks why something is first, answer in one sentence from the why list in Top priorities.
 - Notes: decide whether something is a task, an event or a note. Information or an idea with no action is note kind "note". Anything about how this app should work differently ("Jarvis should…", "the app needs to…", "can you make it…") is note kind "app", rewritten as one clear instruction a developer could follow; never a task. If you truly cannot tell where something belongs, note kind "inbox".
 - Good morning / just woke up / I'm up: reply with a short rundown (three sentences at most): the top one or two priorities, today's fixed events with times, anything due within 2 days, then ask how he's feeling. If he answers that he's tired, rough, sick, stressed or low on energy, use low_energy for today and say kindly in one sentence that you kept only the must-dos (the app lists what moved). No guilt, no pep talk.
@@ -2126,10 +2202,10 @@ function brainRules(){return `- Task details: every new task gets "cat" (persona
 - If he asks what to do now or what's next: whats_next (the app answers with the single best thing).
 - Voice: vary your wording every time; never open the way any of your last replies did, and do not open with "Understood". Be brief, natural and a little clever, never cute. Confirm changes in a few words. Ask at most one short question. Never invent tasks, events or details he did not give.
 `}
-const brainOps=()=>`{"op":"set_meta","id":"","cat":"","due":null,"pri":null,"est":null},{"op":"note","kind":"note|app|inbox","text":""},{"op":"low_energy","date":"YYYY-MM-DD","on":true},{"op":"day_start","date":"YYYY-MM-DD","at":"HH:MM"},{"op":"plan_time","at":"21:00","once":false},{"op":"chore","title":"","every_days":7,"est":30},{"op":"person","name":"","every_days":14,"how":"Message","note":""},{"op":"touched","name":""},{"op":"project","name":"","status":"active","next":"","note":""},{"op":"habit","name":"","per_week":3},{"op":"habit_done","name":"workout","date":null},{"op":"whats_next"},`;
-async function brainAdd(id,o){const c={};if(CATS[o.cat])c.cat=o.cat;if(o.project){const p=S.projects.find(x=>norm(x.name)===norm(o.project));if(p)c.proj=p.id}if(Object.keys(c).length){S.tasks.set(id,{...S.tasks.get(id),...c});await up(id,c)}}
+const brainOps=()=>`{"op":"set_meta","id":"","cat":"","due":null,"pri":null,"est":null,"messy":null},{"op":"note","kind":"note|app|inbox","text":""},{"op":"low_energy","date":"YYYY-MM-DD","on":true},{"op":"day_start","date":"YYYY-MM-DD","at":"HH:MM"},{"op":"plan_time","at":"21:00","once":false},{"op":"chore","title":"","every_days":7,"est":30},{"op":"person","name":"","every_days":14,"how":"Message","note":""},{"op":"touched","name":""},{"op":"project","name":"","status":"active","next":"","note":""},{"op":"habit","name":"","per_week":3},{"op":"habit_done","name":"workout","date":null},{"op":"whats_next"},`;
+async function brainAdd(id,o){const c={};if(CATS[o.cat])c.cat=o.cat;if(o.messy===true)c.messy=true;if(o.project){const p=S.projects.find(x=>norm(x.name)===norm(o.project));if(p)c.proj=p.id}if(Object.keys(c).length){S.tasks.set(id,{...S.tasks.get(id),...c});await up(id,c)}}
 async function brainOp(o,out,src){const td=today();
-  if(o.op==='set_meta'&&S.tasks.has(o.id)){const c={};if(CATS[o.cat])c.cat=o.cat;if(isDate(o.due||''))c.due=o.due;if([1,2,3,4].includes(o.pri))c.p=o.pri;if(+o.est)c.est=+o.est;if(Object.keys(c).length){await upL(o.id,c);out.push('filed: '+T(S.tasks.get(o.id)))}return true}
+  if(o.op==='set_meta'&&S.tasks.has(o.id)){const c={};if(CATS[o.cat])c.cat=o.cat;if(isDate(o.due||''))c.due=o.due;if([1,2,3,4].includes(o.pri))c.p=o.pri;if(+o.est)c.est=+o.est;if(typeof o.messy==='boolean')c.messy=o.messy;if(Object.keys(c).length){await upL(o.id,c);S.touch3=true;out.push('filed: '+T(S.tasks.get(o.id)))}return true}
   if(o.op==='note'&&o.text){const k=await addNote(o.kind,o.text);if(k){out.push(`${k==='app'?'app update':k} saved`);V.brainSay+=k==='app'?' '+vary(['Added to your app updates.','Saved for the next app update.','That’s in your app updates list.'],o.text):k==='inbox'?' It’s in your inbox for tonight.':''}return true}
   if(o.op==='low_energy'){const d=isDate(o.date||'')?o.date:td;await dayWrite(d,cur=>({...cur,low:o.on!==false}));const m=await relayMoves(true);out.push((o.on!==false?'light day ':'normal day ')+d);V.brainSay+=m;return true}
   if(o.op==='day_start'&&hm(o.at||'')){const d=isDate(o.date||'')?o.date:addD(td,1);await dayWrite(d,cur=>({...cur,start:o.at}));const m=await relayMoves(true);out.push(`${dayWord(d)} starts ${o.at}`);V.brainSay+=m;return true}
@@ -2157,12 +2233,25 @@ async function brainOp(o,out,src){const td=today();
   if(/work ?out|gym/i.test(t.t||''))await habitMark('workout',today())}}
 
 /* ---------- the minute tick ---------- */
-async function tick3(){if(!S.loaded||!S.daysKnown||!db)return;try{await learnSave();await spawnDue();
-  const dd=dayDoc(today());if(nowHM()>=planAt()&&!dd.night&&!S.nightBusy&&document.visibilityState==='visible'){S.nightBusy=true;try{await nightly()}finally{S.nightBusy=false}}}catch(e){console.warn(e)}}
+const quiet3=()=>V.state==='idle'&&$('sheet').hidden&&!(document.activeElement&&/TEXTAREA|INPUT|SELECT/.test(document.activeElement.tagName)&&document.activeElement.value);
+async function tick3(){if(today()!==S.day&&!window.__HQ_DAY&&quiet3()){location.reload();return}if(!S.loaded||!S.daysKnown||!db)return;buildCheck();if(!autoOk())return;try{await learnSave();await spawnDue();
+  const dd=dayDoc(today());if(nowHM()>=planAt()&&!dd.night&&!S.nightBusy&&document.visibilityState==='visible'&&quiet3()&&S.view==='today'){S.nightBusy=true;try{await nightly()}finally{S.nightBusy=false}}}catch(e){console.warn(e)}}
 
 /* ---------- hooks into the older screens ---------- */
-{const _rt=renderToday;renderToday=function(){_rt();try{brainToday()}catch(e){console.warn(e)}}}
-{const _rc=renderCal;renderCal=function(){_rc();const el=$('calBox');if(el)el.insertAdjacentHTML('afterbegin','<h2 style="margin-top:6px">Plan</h2>'+planHtml())}}
+{const _rt=renderToday;renderToday=function(){FM.clear();_rt();try{buildCheck();brainToday()}catch(e){console.warn(e)}}}
+renderCal=function(){const el=$('calBox');if(!el)return;FM.clear();const days=horizon(),td=today(),sel=days.includes(S.tlDay)?S.tlDay:td,wk=weekItems(),wp=weekPace();
+  const ldOf=d=>wk.filter(t=>t.day===d&&!isDone(t)).reduce((a,t)=>a+estOf(t),0);
+  const chips=days.map(d=>{const ld=ldOf(d),ev=evOn(d).length,ov=ld>dayBudget(d)+20&&ld>0;return `<button class="dchip${d===sel?' on':''}${ov?' ov':''}" data-act="tlDay" data-d="${d}"><b>${d===td?'Today':DN[dowOf(d)]+' '+(+d.slice(8))}</b><small>${ld?durS(ld):ev?ev+' event'+(ev>1?'s':''):'open'}</small></button>`}).join('');
+  const done=wk.filter(t=>isDone(t)&&t.day===sel),allDay=evOn(sel).filter(e=>!hm(e.s||'')),loose=wk.filter(t=>!t.day&&!isDone(t)),doneAll=wk.filter(isDone);
+  const mini=t=>`<button class="wki${isDone(t)?' done':''}" data-act="wkItem" data-id="${t.id}"><span class="dot"></span><span class="tt">${esc(T(t))}</span><span class="mm num">${isDone(t)?'done':durS(estOf(t))}</span></button>`;
+  el.innerHTML=`<div class="dchips">${chips}</div>
+    <div class="card">${allDay.map(e=>`<div class="evl" style="padding:0 0 8px">${esc(e.t)}${e.approx?' · around this date':' · all day'}</div>`).join('')}${tlHtml(sel)}${done.length?`<div class="m" style="margin-top:10px">Done ${sel===td?'today':'that day'}: ${done.map(t=>esc(short(T(t)))).join(', ')}</div>`:''}</div>
+    ${wk.length?`<h2>This week</h2><div class="card"><div class="dkh"><span class="lbl" style="letter-spacing:.12em">${wp.ok?'On pace':'More than fits'}</span><span class="cnt num">${wp.done}<small>/${wp.all}</small></span></div><div class="bar" aria-hidden="true">${wk.map(t=>`<i class="${isDone(t)?'on':''}"></i>`).join('')}</div><div class="fit${wp.ok?'':' over'}">${durS(wp.left)} of work left · room for ${durS(wp.room)} in the next 7 days</div><div class="row" style="margin-top:8px"><button class="ghost sm" data-act="rebal" style="padding-left:0">Rearrange the week</button><button class="ghost sm" data-act="weekAsk">Add to the list</button></div></div>`
+      :'<div class="card" style="margin-top:10px"><div class="m" style="margin-bottom:10px">Nothing planned yet. Tell me what has to get done and I’ll fit it into your days.</div><button class="sm pri" data-act="weekAsk">Tell Jarvis</button></div>'}
+    ${loose.length?`<h2>No room this week · ${loose.length}</h2><div class="wkd">${loose.map(mini).join('')}</div>`:''}
+    ${doneAll.length?sec('sec:wkdone',`Done this week · ${doneAll.length}`,doneAll.map(mini).join('')):''}
+    <h2>Coming up</h2><div class="card">${calBody()}</div>`;
+  el.querySelector('.dchip.on')?.scrollIntoView({block:'nearest',inline:'center'})};
 {const _rm=renderMem;renderMem=function(){_rm();const el=$('memList'),L=learnedText();if(el&&L.length&&!el.querySelector('[data-learned]'))el.insertAdjacentHTML('beforebegin',`<div data-learned><h2>What I’ve learned</h2><div class="card">${L.map(x=>`<div class="item" style="font-size:14px">${esc(x)}</div>`).join('')}</div></div>`)}}
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,id=b.dataset.id;
   const H={
@@ -2171,7 +2260,13 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
     nxStart:async()=>{await upL(id,{startAt:stamp()});$('sheet').hidden=true;toast('Started. Tap done when it’s finished.',2200)},
     goChat:()=>{$('sheet').hidden=true;show('chat')},
     chatSend:()=>chatSend(),
-    chatMic:()=>{V.qEl='chatIn';quickMic()},
+    chatMic:()=>{if(V.quick){quickMicOff();renderChat();return}V.qEl='chatIn';quickMic();V.qEl='chatIn';renderChat()},
+    reload:()=>location.reload(),
+    tSet:async()=>{const f=b.dataset.f,v=+b.dataset.v;if(f==='p'&&S.tasks.has(id)){await upL(id,{p:v});await applyWeek(false);wkSheet(id)}},
+    wkOff:async()=>{$('sheet').hidden=true;const c={wk:null,day:null,pin:false,at:null,hold:addD(today(),7)};S.tasks.set(id,{...S.tasks.get(id),...c});await up(id,c);await applyWeek(false);toast('Off your plan for a week. It’s on your later list.',2600)},
+    wkFloat:async()=>{$('sheet').hidden=true;const c={pin:false,day:null,at:null};S.tasks.set(id,{...S.tasks.get(id),...c});await up(id,c);await applyWeek(true);const t=S.tasks.get(id);toast(t?.day?'Placed on '+dayWord(t.day)+'.':'No room this week.',2200)},
+    rebal:async()=>{const m=await relayMoves(true);toast('Rearranged.'+(m||' Nothing needed to move.'),4200)},
+    spill:async()=>{const tm=addD(today(),1),ids=agenda().rows.filter(r=>r.over).map(r=>r.t.id);for(const i of ids){const t=S.tasks.get(i);if(!t||t.daily)continue;const c={day:tm,wk:monOf(tm),pin:false,at:null,defer:(t.defer||0)+1};S.tasks.set(i,{...t,...c});await up(i,c);await plMark(i,{pushed:true})}await applyWeek(false);toast(`Moved ${ids.length} to tomorrow.`,2400)},
     tlDay:()=>{S.tlDay=b.dataset.d;renderCal()},
     lowDay:async()=>{const d=b.dataset.d,on=!dayDoc(d).low;await dayWrite(d,cur=>({...cur,low:on}));const m=await relayMoves(true);toast((on?'Light day: must-dos only.':'Back to a normal day.')+m,4200);if(!$('sheet').hidden&&$('sheetBody').querySelector('.tlw'))nightSheet(d);renderCal()},
     nightNow:()=>nightly(),
@@ -2195,7 +2290,13 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
     projPause:async()=>{await db.doc('projects/'+id).update({status:'paused'});toast('Paused.',1200)},
     projLater:async()=>{await db.doc('projects/'+id).update({qnd:today()})}};
   if(H[a]){e.stopImmediatePropagation();e.preventDefault();try{await H[a]()}catch(er){console.warn(er);toast('That didn’t work. Try again.',2000)}}},true);
-document.addEventListener('keydown',e=>{if(e.target?.id==='chatIn'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();chatSend()}},true);
+document.addEventListener('keydown',e=>{if(e.target?.id==='chatIn'&&e.key==='Enter'&&!e.shiftKey&&!matchMedia('(pointer:coarse)').matches){e.preventDefault();chatSend()}},true);
+document.addEventListener('input',e=>{if(e.target?.id==='chatIn')chatGrow()},true);
+/* while the phone keyboard is really up (the visible area shrank), the bottom bar steps aside; it always comes back */
+const typing=el=>!!el&&(el.tagName==='TEXTAREA'||(el.tagName==='INPUT'&&!/checkbox|radio|button|time|date/.test(el.type)));
+{const vv=window.visualViewport;let base=vv?vv.height:0;const kb=()=>{if(!vv)return;base=Math.max(base,vv.height);document.body.classList.toggle('kb',typing(document.activeElement)&&vv.height<base-140)};
+  if(vv){vv.addEventListener('resize',kb);document.addEventListener('focusin',()=>setTimeout(kb,250));document.addEventListener('focusout',()=>setTimeout(kb,150))}}
+$('sheet').addEventListener('click',e=>{if(e.target===$('sheet')){quickMicOff();$('sheet').hidden=true}});
 if(db)boot3();
 
 </script>
