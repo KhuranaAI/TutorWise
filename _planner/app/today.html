@@ -207,6 +207,7 @@ nav button:active{background:var(--soft)}
 .bub.me{align-self:flex-end;background:var(--acc);color:var(--acc-ink);border-bottom-right-radius:5px}
 .bub.ai{align-self:flex-start;background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:5px}
 .bub.dim{color:var(--dim)}
+.say1{display:inline-grid;place-items:center;vertical-align:-3px;margin-left:6px;width:26px;height:26px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--mute)}.say1:active{color:var(--acc)}
 .bday{align-self:center;font:600 10px var(--disp);letter-spacing:.18em;text-transform:uppercase;color:var(--dim);padding:8px 0 2px}
 .chatbar{display:flex;gap:8px;align-items:flex-end;padding:4px 0 10px}
 .chatbar textarea{flex:1;min-width:0;height:44px;min-height:44px;max-height:132px;resize:none;border-radius:22px;padding:11px 16px}
@@ -1426,7 +1427,8 @@ function feeNotes(){
 /* ---------- render ---------- */
 function renderAll(){renderToday();renderList();renderCentre();renderAI();renderMem()}
 const IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-const canSpeak=()=>!!(tts&&!V.ttsOff);
+const sysOn=()=>'speechSynthesis'in window&&!V.noSpeech&&(S.settings.sysVoice==='on'||(S.settings.sysVoice!=='off'&&!matchMedia('(pointer:coarse)').matches));
+const canSpeak=()=>!!(tts&&!V.ttsOff)||sysOn();
 function renderCore(){
   const st=V.state,live=st==='listening'||st==='starting',hear=canHear();
   $('vState').innerHTML={idle:hear?'Tap to talk':'Tell me anything',starting:'One moment',listening:'Listening <span id="vTime" class="num"></span>',thinking:V.conv?'Thinking · still listening':'Thinking',speaking:'Speaking'}[st];
@@ -1442,7 +1444,7 @@ function renderCore(){
     :st==='speaking'?'<button data-act="stopSpeak">Stop</button>':st==='thinking'?''
     :`<button data-act="next" class="go">What’s next?</button>${hb.up?`<button data-act="up" class="ok">Up${hb.upAt?' '+esc(t12(hb.upAt)):''} ✓</button>`:modeNow()==='work'?'<button data-act="upNow">I’m up</button><button data-act="up">Up earlier…</button>':'<button data-act="up">I’m up</button>'}${!hear&&voiceLine()?`<a class="chip" href="${esc(voiceLine())}" target="_blank" rel="noopener">Talk by voice</a>`:''}${canSpeak()?'<button data-act="brief">Brief me</button>':''}`;
   document.body.classList.toggle('nomic',!hear);
-  const vb=$('btnVoice');vb.hidden=!canSpeak();vb.innerHTML=V.voiceOn?ICON.on:ICON.off;vb.setAttribute('aria-pressed',String(V.voiceOn));vb.setAttribute('aria-label',V.voiceOn?'Spoken replies are on':'Spoken replies are off');
+  const vb=$('btnVoice');vb.hidden=!tts&&!('speechSynthesis'in window);vb.innerHTML=V.voiceOn?ICON.on:ICON.off;vb.setAttribute('aria-pressed',String(V.voiceOn));vb.setAttribute('aria-label',V.voiceOn?'Spoken replies are on':'Spoken replies are off');
   orb.set(st);
 }
 const sec=(key,title,body)=>body?`<details class="sec" data-key="${key}"${S.open.has(key)?' open':''}><summary><span>${title}</span></summary><div class="secb">${body}</div></details>`:'';
@@ -1571,6 +1573,7 @@ function settingsSheet(){const s=S.settings;const f=(k,l,t='time')=>`<label for=
   sheet(`<h3 style="font:600 18px var(--disp);margin:0">Settings</h3>${f('address','What it calls you','text')}
   ${tts?`<label for="s_voice">Its voice</label><div class="row" style="flex-wrap:nowrap"><select id="s_voice">${['buttery','airy','glassy','rounded'].map(v=>`<option ${s.voice===v?'selected':''}>${v}</option>`).join('')}</select><button data-act="testVoice">Test</button></div>`:''}
   ${dict?`<label for="s_pause">It answers when</label><select id="s_pause">${[[2,'I pause for 2 seconds'],[3,'I pause for 3 seconds'],[5,'I pause for 5 seconds'],[0,'only when I say “I’m done”']].map(([v,l])=>`<option value="${v}" ${(+s.pause||0)===v?'selected':''}>${l}</option>`).join('')}</select>`:''}
+  <label for="s_sysVoiceOn">When Claude’s voice isn’t available</label><select id="s_sysVoiceOn"><option value="">${matchMedia('(pointer:coarse)').matches?'Stay silent (phone default)':'Use this computer’s voice (default)'}</option><option value="on" ${S.settings.sysVoice==='on'?'selected':''}>Use this device’s voice</option><option value="off" ${S.settings.sysVoice==='off'?'selected':''}>Stay silent</option></select>
   <label>Voice in this view</label><div class="row" style="flex-wrap:nowrap;align-items:center"><button data-act="voiceCheck" style="flex:none">Check voice</button><span class="m grow" id="vcOut">Microphone: ${esc(micWord())}. Speaker: ${esc(spkWord())}.</span></div>
   ${f('planAt','Plan tomorrow each night at')}<label for="s_travel">Travel time between places</label><select id="s_travel">${[10,15,20,30,45].map(v=>`<option value="${v}" ${(+s.travel||20)===v?'selected':''}>${v} minutes</option>`).join('')}</select>${f('wake','Wake-up time you’re aiming for')}${f('workStart','Day starts (until I’ve learned your mornings)')}${linked()?'':f('teachStart','Teaching starts')+f('teachEnd','Teaching ends')}${f('protect','Always protect','text')}
   <label for="s_capacity">How full to plan your free time</label><select id="s_capacity">${[0.5,0.65,0.8].map(v=>`<option value="${v}" ${+s.capacity===v?'selected':''}>${Math.round(v*100)}% ${v===0.5?'(light)':v===0.65?'(realistic)':'(packed)'}</option>`).join('')}</select>
@@ -1602,7 +1605,7 @@ function pickVoice(){const vs=speechSynthesis.getVoices().filter(v=>/^en/i.test(
   const sc=v=>(/natural|neural/i.test(v.name)?60:0)+(/ryan|guy|andrew|brian|daniel|george|arthur/i.test(v.name)?24:0)+(/google uk english male/i.test(v.name)?46:0)+(/google/i.test(v.name)?12:0)+(/premium/i.test(v.name)?30:0)+(/enhanced/i.test(v.name)?20:0)+(/en.GB/i.test(v.lang)?8:0)+(v.default?2:0);
   return vs.sort((a,b)=>sc(b)-sc(a))[0]}
 /* Phones only let a page speak after a real tap. The first tap or key press says one silent word, which opens the door and tells us whether this device speaks here at all. */
-function unlockSpeech(){if(spUnlocked||tts||!('speechSynthesis'in window))return;spUnlocked=true;
+function unlockSpeech(){if(spUnlocked||(tts&&!V.ttsOff)||!('speechSynthesis'in window))return;spUnlocked=true;
   try{const u=new SpeechSynthesisUtterance('ok');u.volume=0;u.rate=1.5;const good=()=>{if(!V.speechOk){V.speechOk=true;V.noSpeech=false;renderCore()}};u.onstart=good;u.onend=good;utts.push(u);
     speechSynthesis.speak(u);setTimeout(()=>{if(!V.speechOk&&!speechSynthesis.speaking){V.noSpeech=true;renderCore()}},3000)}catch(e){V.noSpeech=true}}
 for(const ev of['click','touchend','keydown'])document.addEventListener(ev,unlockSpeech,{capture:true,passive:true});
@@ -1610,11 +1613,13 @@ for(const ev of['click','touchend','keydown'])document.addEventListener(ev,unloc
 function speak(text,force,queue){return new Promise(async res=>{
   if(!text||(!V.voiceOn&&!force))return res(false);
   V.lastReply=text;
-  if(tts&&!V.conv){if(V.ttsOff)return res(false);
-    try{await tts[queue&&tts.active()?'add':'speak'](text.slice(0,1900),{voice:S.settings.voice||'buttery',rate:1.05});res(true)}
-    catch(e){if(e?.code==='not_granted'||e?.code==='unavailable'){V.ttsOff=true;renderCore()}res(false)}
-    return}
-  return res(false); /* no system voice: he dislikes it. Claude's voice or text only */
+  if(tts&&!V.conv&&!V.ttsOff){
+    try{await tts[queue&&tts.active()?'add':'speak'](text.slice(0,1900),{voice:S.settings.voice||'buttery',rate:1.05});V.ttsErr='';return res(true)}
+    catch(e){const c=e?.code||'error';V.ttsErr=c;if(c==='not_granted'||c==='unavailable'){V.ttsOff=true;renderCore()}
+      if(c==='busy'){await wait(700);try{await tts.speak(text.slice(0,1900),{voice:S.settings.voice||'buttery',rate:1.05});return res(true)}catch(_){}}
+      if(!V.ttsWarned){V.ttsWarned=true;toast(sysOn()?'Claude’s voice isn’t available here, so this device’s voice is speaking.':'Claude’s voice isn’t available here ('+c+'). Turn on this device’s voice in Settings.',5200)}
+      if(!sysOn())return res(false)}}
+  if(!sysOn())return res(false); /* Claude's voice, or this device's voice where he allows it */
   if(!('speechSynthesis'in window)||V.noSpeech)return res(false);
   try{if(!queue&&(speechSynthesis.speaking||speechSynthesis.pending))speechSynthesis.cancel();
     const parts=(text.match(/[^.!?]+[.!?]+["”’)]*|[^.!?]+$/g)||[text]).map(x=>x.trim()).filter(Boolean),v=pickVoice();let started=false,left=parts.length;V.spokeEnd=Date.now()+60000;
@@ -1625,7 +1630,7 @@ function speak(text,force,queue){return new Promise(async res=>{
     const dog=setTimeout(()=>{if(left>0){left=0;try{speechSynthesis.cancel()}catch(e){}V.spokeEnd=Date.now();if(V.state==='speaking')setState('idle');res(started)}},4000+text.length*110); /* some browsers never say they finished */
     setTimeout(()=>{if(!started&&!speechSynthesis.speaking){V.noSpeech=true;renderCore();res(false)}},2600);
   }catch(e){res(false)}})}
-function stopSpeak(){if(tts)tts.stop().catch(()=>{});else try{speechSynthesis.cancel()}catch(e){}if(V.state==='speaking')setState('idle')}
+function stopSpeak(){if(tts)tts.stop().catch(()=>{});try{speechSynthesis.cancel()}catch(e){}if(V.state==='speaking')setState('idle')}
 function wireTts(){
   tts.onState(({state})=>{if(state==='speaking'||state==='starting'){if(V.state==='idle')setState('speaking')}else if(state==='idle'&&V.state==='speaking')setState('idle')});
   tts.onPosition(()=>orb.tick())}
@@ -1698,7 +1703,7 @@ function orbTap(){const st=V.state;V.hint='';
   const el=$('dump');el.focus();el.scrollIntoView({block:'center',behavior:'smooth'})}
 const voiceLine=()=>/^https:\/\/claude\.ai\//.test(S.settings.voiceLine||'')?S.settings.voiceLine:'';
 const micWord=()=>dict?'Claude’s dictation':SR&&!V.noMic?'this browser’s speech recognition':'not available in this view, so type instead';
-const spkWord=()=>tts?'Claude’s voice':V.speechOk?'this device’s voice':V.noSpeech?'not available in this view':'not checked yet';
+const spkWord=()=>!V.voiceOn?'turned off (tap the speaker at the top to turn it on)':tts&&!V.ttsOff?'Claude’s voice':sysOn()?'this device’s voice':'not available here';
 async function voiceCheck(){const el=$('vcOut');if(el)el.textContent='Checking…';V.noSpeech=false;const ok=await speak(`Voice check, ${sir()}. I can speak here.`,true);
   const e2=$('vcOut');if(e2)e2.textContent=`Speaker: ${ok?'working':'not available in this view'}. Microphone: ${micWord()}.`}
 function grow(){const el=$('dump');el.style.height='44px';el.style.height=Math.min(140,el.scrollHeight+2)+'px'}
@@ -1783,7 +1788,7 @@ document.addEventListener('click',async e=>{
   if(a==='sendNow')return finish(true);
   if(a==='cancelListen')return finish(false);
   if(a==='stopSpeak')return stopSpeak();
-  if(a==='voice'){V.voiceOn=!V.voiceOn;try{localStorage.setItem('hq.voice',V.voiceOn?'1':'0')}catch(e){}if(!V.voiceOn)stopSpeak();renderCore();toast(V.voiceOn?'Spoken replies on':'Spoken replies off',1600);return}
+  if(a==='voice'){V.voiceOn=!V.voiceOn;if(V.voiceOn){V.ttsOff=false;V.ttsWarned=false;V.noSpeech=false}try{localStorage.setItem('hq.voice',V.voiceOn?'1':'0')}catch(e){}if(!V.voiceOn)stopSpeak();renderCore();toast(V.voiceOn?'Spoken replies on':'Spoken replies off',1600);return}
   if(a==='brief')return speak(briefText(),true);
   if(a==='docket')return respond('What’s on the docket for today?');
   if(a==='voiceCheck')return voiceCheck();
@@ -1866,7 +1871,7 @@ document.addEventListener('click',async e=>{
   if(a==='qSend')return quickSend();
   if(a==='qMic')return quickMic();
   if(a==='saveSettings'){const n={...S.settings};for(const k of['address','wake','workStart','teachStart','teachEnd','protect','planAt'])if($('s_'+k))n[k]=$('s_'+k).value||DEF[k];if($('s_travel'))n.travel=+$('s_travel').value;n.capacity=+$('s_capacity').value;
-    if($('s_voice'))n.voice=$('s_voice').value;if($('s_conv'))n.handsFree=$('s_conv').value==='1';if($('s_pause'))n.pause=+$('s_pause').value;if($('s_sysVoice'))try{localStorage.setItem('hq.sysVoice',$('s_sysVoice').value)}catch(e){}if($('s_autoSend'))n.autoSend=$('s_autoSend').checked;
+    if($('s_voice'))n.voice=$('s_voice').value;if($('s_sysVoiceOn'))n.sysVoice=$('s_sysVoiceOn').value||null;if($('s_conv'))n.handsFree=$('s_conv').value==='1';if($('s_pause'))n.pause=+$('s_pause').value;if($('s_sysVoice'))try{localStorage.setItem('hq.sysVoice',$('s_sysVoice').value)}catch(e){}if($('s_autoSend'))n.autoSend=$('s_autoSend').checked;
     await db?.doc('settings/main').set(n).catch(()=>toast('Could not save'));$('sheet').hidden=true;toast('Saved',1600);return}
 });
 renderAll();orb.sync();boot();
@@ -1887,7 +1892,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.tlDay='';S.nextSkip=[];
-const BUILD=41;
+const BUILD=42;
 /* a remove button for any task row */
 const XB=id=>`<button class="xb" data-act="drop" data-id="${id}" aria-label="Remove this task" title="Remove"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>`;
 if(matchMedia('(pointer:coarse)').matches&&!window.__HQ_DAY)V.noMic=true; /* a phone gives this page no mic of its own unless Claude's dictation is there (canHear checks that first) */
@@ -2207,7 +2212,7 @@ function peopleSheet(){const ch=[...S.tasks.values()].filter(t=>t.s==='recurring
 function renderChat(){const el=$('chatList');if(!el)return;const m=$('chatMic');if(m){m.hidden=!dict;m.classList.toggle('rec',!!V.quick&&V.qEl==='chatIn')}
   const l=(S.dumps||[]).slice(0,30);let day='',h='';
   if(V.state==='thinking'&&V.heard&&!l.some(d=>d.text===V.heard&&d.reply))h+=`<div class="turn"><div class="bub me">${esc(V.heard)}</div><div class="bub ai dim">Thinking…</div></div>`;
-  for(const d of l){const dd=dayOf(d.at);if(dd!==day){day=dd;h+=`<div class="bday">${esc(dayName(dd))}</div>`}if(V.state==='thinking'&&d.text===V.heard&&!d.reply)continue;h+=`<div class="turn"><div class="bub me">${esc(d.text)}</div>${d.reply?`<div class="bub ai">${esc(d.reply)}</div>`:''}</div>`}
+  for(const d of l){const dd=dayOf(d.at);if(dd!==day){day=dd;h+=`<div class="bday">${esc(dayName(dd))}</div>`}if(V.state==='thinking'&&d.text===V.heard&&!d.reply)continue;h+=`<div class="turn"><div class="bub me">${esc(d.text)}</div>${d.reply?`<div class="bub ai">${esc(d.reply)}${canSpeak()?`<button class="say1" data-act="sayIt" data-id="${d.id}" aria-label="Read this aloud"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg></button>`:''}</div>`:''}</div>`}
   el.innerHTML=h||`<div class="m" style="text-align:center;padding:40px 12px">Talk to me the way you’d talk to a person.<br>Tasks, plans, notes, questions, changes to your schedule.</div>`}
 function chatGrow(){const el=$('chatIn');if(!el)return;el.style.height='44px';el.style.height=Math.min(132,el.scrollHeight+2)+'px'}
 async function chatSend(){const el=$('chatIn'),x=(el.value||'').trim();if(!x||V.state==='thinking')return;el.value='';chatGrow();quickMicOff();V.qEl='';renderChat();const p=respond(x,false);setTimeout(renderChat,60);await p;renderChat()}
@@ -2319,6 +2324,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
     chatSend:()=>chatSend(),
     chatMic:()=>{if(V.quick){quickMicOff();renderChat();return}V.qEl='chatIn';quickMic();V.qEl='chatIn';renderChat()},
     reload:()=>location.reload(),
+    sayIt:()=>{const d=(S.dumps||[]).find(x=>x.id===id);if(d?.reply){V.ttsOff=false;speak(d.reply,true)}},
     drop:async()=>{const t=S.tasks.get(id);if(!t)return;const prev={s:t.s,day:t.day??null,pin:!!t.pin,at:t.at??null};$('sheet').hidden=true;
       await upL(id,{s:'parked',dropped:today(),day:null,pin:false,at:null});if(S.plan?.picks?.some(k=>k.id===id))await plMark(id,{gone:true}).catch(()=>{});await applyWeek(false);logEv('drop',T(t));
       toast(`Removed: ${short(T(t))}`,6000,{label:'Undo',fn:async()=>{await upL(id,{...prev,dropped:null});await applyWeek(false);toast('Back on your list.',1600)}})},
