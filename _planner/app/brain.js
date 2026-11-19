@@ -13,7 +13,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.tlDay='';S.nextSkip=[];
-const BUILD=37;
+const BUILD=38;
 if(matchMedia('(pointer:coarse)').matches&&!window.__HQ_DAY)V.noMic=true; /* a phone gives this page no mic of its own unless Claude's dictation is there (canHear checks that first) */
 /* work done once per screen update, however many parts of the screen ask for it */
 let TV=0;{let _t=S.tasks;const wrap=m=>{const st=m.set.bind(m),dl=m.delete.bind(m);m.set=(k,v)=>{TV++;return st(k,v)};m.delete=k=>{TV++;return dl(k)};return m};wrap(_t);Object.defineProperty(S,'tasks',{get(){return _t},set(m){_t=wrap(m);TV++},configurable:true})}
@@ -311,11 +311,10 @@ function peopleSheet(){const ch=[...S.tasks.values()].filter(t=>t.s==='recurring
 
 /* ---------- chat ---------- */
 function renderChat(){const el=$('chatList');if(!el)return;const m=$('chatMic');if(m){m.hidden=!dict;m.classList.toggle('rec',!!V.quick&&V.qEl==='chatIn')}
-  const l=(S.dumps||[]).slice(0,30).reverse();let day='',h='';
-  for(const d of l){const dd=dayOf(d.at);if(dd!==day){day=dd;h+=`<div class="bday">${esc(dayName(dd))}</div>`}h+=`<div class="bub me">${esc(d.text)}</div>${d.reply?`<div class="bub ai">${esc(d.reply)}</div>`:''}`}
-  if(V.state==='thinking'&&V.heard&&!l.some(d=>d.text===V.heard&&d.reply))h+=`<div class="bub ai dim">Thinking…</div>`;
-  el.innerHTML=h||`<div class="m" style="text-align:center;padding:40px 12px">Talk to me the way you’d talk to a person.<br>Tasks, plans, notes, questions, changes to your schedule.</div>`;
-  if(S.view==='chat'){const sc=$('scr');sc.scrollTop=sc.scrollHeight}}
+  const l=(S.dumps||[]).slice(0,30);let day='',h='';
+  if(V.state==='thinking'&&V.heard&&!l.some(d=>d.text===V.heard&&d.reply))h+=`<div class="turn"><div class="bub me">${esc(V.heard)}</div><div class="bub ai dim">Thinking…</div></div>`;
+  for(const d of l){const dd=dayOf(d.at);if(dd!==day){day=dd;h+=`<div class="bday">${esc(dayName(dd))}</div>`}if(V.state==='thinking'&&d.text===V.heard&&!d.reply)continue;h+=`<div class="turn"><div class="bub me">${esc(d.text)}</div>${d.reply?`<div class="bub ai">${esc(d.reply)}</div>`:''}</div>`}
+  el.innerHTML=h||`<div class="m" style="text-align:center;padding:40px 12px">Talk to me the way you’d talk to a person.<br>Tasks, plans, notes, questions, changes to your schedule.</div>`}
 function chatGrow(){const el=$('chatIn');if(!el)return;el.style.height='44px';el.style.height=Math.min(132,el.scrollHeight+2)+'px'}
 async function chatSend(){const el=$('chatIn'),x=(el.value||'').trim();if(!x||V.state==='thinking')return;el.value='';chatGrow();quickMicOff();V.qEl='';renderChat();const p=respond(x,false);setTimeout(renderChat,60);await p;renderChat()}
 
@@ -446,11 +445,31 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
   if(H[a]){e.stopImmediatePropagation();e.preventDefault();try{await H[a]()}catch(er){console.warn(er);toast('That didn’t work. Try again.',2000)}}},true);
 document.addEventListener('keydown',e=>{if(e.target?.id==='chatIn'&&e.key==='Enter'&&!e.shiftKey&&!matchMedia('(pointer:coarse)').matches){e.preventDefault();chatSend()}},true);
 document.addEventListener('input',e=>{if(e.target?.id==='chatIn')chatGrow()},true);
-/* while the phone keyboard is really up (the visible area shrank), the bottom bar steps aside; it always comes back */
 const typing=el=>!!el&&(el.tagName==='TEXTAREA'||(el.tagName==='INPUT'&&!/checkbox|radio|button|time|date/.test(el.type)));
-{const vv=window.visualViewport;let base=vv?vv.height:0;const kb=()=>{if(!vv)return;base=Math.max(base,vv.height);document.body.classList.toggle('kb',typing(document.activeElement)&&vv.height<base-140)};
-  if(vv){vv.addEventListener('resize',kb);document.addEventListener('focusin',()=>setTimeout(kb,250));document.addEventListener('focusout',()=>setTimeout(kb,150))}}
 $('sheet').addEventListener('click',e=>{if(e.target===$('sheet')){quickMicOff();$('sheet').hidden=true}});
-document.addEventListener('focusin',e=>{if($('sheet').contains(e.target)&&typing(e.target)&&matchMedia('(pointer:coarse)').matches)$('sheet').classList.add('top')});
-document.addEventListener('focusout',()=>setTimeout(()=>{if(!$('sheet').contains(document.activeElement)||!typing(document.activeElement))$('sheet').classList.remove('top')},200));
+/* ---------- fitting the screen ----------
+   In the Claude app this page can sit in a frame taller than the phone's screen, with the app doing the scrolling. Then
+   anything pinned to the frame's top or bottom ends up off screen. Thin markers down the page tell us which part of the
+   frame is actually visible; the top bar, pop-ups and notices are placed inside that part. */
+const BAND={top:0,bot:innerHeight,tall:false};
+{const vis=new Map();let io=null,box=null,raf=0;
+  const apply=()=>{raf=0;let top=1e9,bot=-1;for(const [el,r] of vis){if(!r)continue;top=Math.min(top,r[0]);bot=Math.max(bot,r[1])}
+    if(bot<0)return;const tall=bot-top<innerHeight-40;BAND.top=Math.max(0,Math.round(top));BAND.bot=Math.round(bot);BAND.tall=tall;
+    document.body.classList.toggle('tallf',tall);const tp=$('top');
+    if(tall){const h=tp.offsetHeight;$('topPad').style.height=h+'px';tp.style.transform=`translateY(${BAND.top}px)`}else{$('topPad').style.height='0px';tp.style.transform=''}
+    const sh=$('sheet');if(tall){sh.style.top=BAND.top+'px';sh.style.height=(BAND.bot-BAND.top)+'px'}else{sh.style.top='';sh.style.height=''}
+    document.querySelectorAll('.toast').forEach(x=>x.style.top=tall?(BAND.top+tp.offsetHeight+10)+'px':'')};
+  const soon=()=>{if(!raf)raf=requestAnimationFrame(apply)};
+  const build=()=>{if(!('IntersectionObserver'in window))return;io?.disconnect();vis.clear();box?.remove();box=document.createElement('div');box.setAttribute('aria-hidden','true');box.style.cssText='position:absolute;left:0;top:0;width:1px;pointer-events:none;visibility:hidden';
+    const H=Math.max(document.documentElement.scrollHeight,innerHeight),step=40;box.style.height=H+'px';
+    io=new IntersectionObserver(es=>{for(const e of es){const t=+e.target.dataset.y;vis.set(e.target,e.isIntersecting?[t+(e.intersectionRect.top-e.boundingClientRect.top),t+(e.intersectionRect.bottom-e.boundingClientRect.top)]:null)}soon()},{threshold:[0,.25,.5,.75,1]});
+    for(let y=0;y<H;y+=step){const m=document.createElement('i');m.dataset.y=y;m.style.cssText=`position:absolute;left:0;width:1px;top:${y}px;height:${Math.min(step,H-y)}px`;box.appendChild(m);io.observe(m)}
+    document.body.appendChild(box)};
+  let rb=0;const rebuild=()=>{clearTimeout(rb);rb=setTimeout(build,120)};
+  build();addEventListener('resize',rebuild);addEventListener('scroll',soon,{passive:true});
+  if('ResizeObserver'in window){let lastH=0;new ResizeObserver(()=>{const h=document.documentElement.scrollHeight;if(Math.abs(h-lastH)>30){lastH=h;rebuild()}}).observe(document.body)}
+  {const _sh=sheet;sheet=function(html){_sh(html);soon()}}
+  {const _to=toast;toast=function(...a){const r=_to(...a);soon();return r}}
+  /* switching screens: start at the visible top */
+  {const _show=show;show=function(v){_show(v);if(BAND.tall){try{$('app').scrollIntoView({block:'start'})}catch(e){}requestAnimationFrame(apply)}}}}
 if(db)boot3();
