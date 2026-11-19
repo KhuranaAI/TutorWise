@@ -307,3 +307,14 @@ after every answer. He wants "the native talking feature" and a week list that i
   for a start time when the student has two lessons that day. The scheduler's own summary is appended to the reply, the
   change_id is kept in `S.lastSch`, an Undo toast follows, then `connSync()` refreshes. Weekend and capacity rules are the
   scheduler's own. Not done: dry-run previews, free-slot suggestions for makeups.
+
+## Nov 19 update: chief of staff (v35)
+Second script in today.html (source copy: app/brain.js) replaces horizon/dayBudget/layoutWeek/applyWeek/agenda/openPicks
+and wraps finishTask/renderToday/renderCal/renderMem. Rolling 7-day plan (pool: week list, items with a day in range,
+due within 9 days, critical, chore/person instances) ranked by prio() (his priority, deadline, age, project, deferrals);
+timeline(d) places timed items, a focus block for project/long work in the learned peak window, then the rest around
+fixed events (with travel buffers) and teaching from the scheduler. Learning (agent/patterns): wake per weekday/weekend,
+peak hours from 'did' events, actual/estimate ratio from task.act (measured from Start or the gap since the last finish).
+Nightly plan at settings.planAt (21:00; planOnce for tonight), light days (days/{d}.low), day starts (days/{d}.start),
+chores (recurring+every), people (collection people), projects, habits/streaks (habits/{date}), notes (note/app/inbox),
+Chat tab, What's next, nudges by days-to-due, wins and the weekly review. Runs while the app is open.
