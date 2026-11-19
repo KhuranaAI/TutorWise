@@ -13,7 +13,9 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.tlDay='';S.nextSkip=[];
-const BUILD=40;
+const BUILD=41;
+/* a remove button for any task row */
+const XB=id=>`<button class="xb" data-act="drop" data-id="${id}" aria-label="Remove this task" title="Remove"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>`;
 if(matchMedia('(pointer:coarse)').matches&&!window.__HQ_DAY)V.noMic=true; /* a phone gives this page no mic of its own unless Claude's dictation is there (canHear checks that first) */
 /* work done once per screen update, however many parts of the screen ask for it */
 let TV=0;{let _t=S.tasks;const wrap=m=>{const st=m.set.bind(m),dl=m.delete.bind(m);m.set=(k,v)=>{TV++;return st(k,v)};m.delete=k=>{TV++;return dl(k)};return m};wrap(_t);Object.defineProperty(S,'tasks',{get(){return _t},set(m){_t=wrap(m);TV++},configurable:true})}
@@ -244,7 +246,7 @@ function wkSheet(id){const t=S.tasks.get(id);if(!t)return;const days=horizon(),d
   <label>Priority</label><div class="chips" style="flex-wrap:wrap">${[1,2,3,4].map(p=>`<button class="${(t.p||3)===p?'on':''}" data-act="tSet" data-id="${t.id}" data-f="p" data-v="${p}">${PRI[p]}</button>`).join('')}</div>
   <div class="row" style="flex-wrap:nowrap;align-items:flex-end;margin-top:2px"><div class="grow"><label for="tf_est">Takes</label><select id="tf_est" data-tf="est" data-id="${t.id}">${mins.map(m=>`<option value="${m}"${m===e?' selected':''}>${durS(m)}</option>`).join('')}</select></div><div class="grow"><label for="tf_due">Due</label><input id="tf_due" type="date" data-tf="due" data-id="${t.id}" value="${isDate(t.due||'')?t.due:''}"></div></div>
   <label for="tf_cat">Category</label><select id="tf_cat" data-tf="cat" data-id="${t.id}">${Object.keys(CATS).map(k=>`<option value="${k}"${catOf(t)===k?' selected':''}>${CATS[k]}</option>`).join('')}</select>`}
-  <div class="row" style="margin-top:16px">${done?`<button class="sm" data-act="undone" data-id="${t.id}">Not done after all</button>`:`<button class="sm pri" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="quick" data-id="${t.id}">Add info</button>${t.pin||hm(t.at||'')?`<button class="sm" data-act="wkFloat" data-id="${t.id}">Let Jarvis place it</button>`:''}${inPlan(t)?`<button class="sm" data-act="wkOff" data-id="${t.id}">Not this week</button>`:''}`}<button class="sm ghost" data-act="close">Close</button></div>`)}
+  <div class="row" style="margin-top:16px">${done?`<button class="sm" data-act="undone" data-id="${t.id}">Not done after all</button>`:`<button class="sm pri" data-act="done" data-id="${t.id}">Done</button><button class="sm" data-act="quick" data-id="${t.id}">Add info</button>${t.pin||hm(t.at||'')?`<button class="sm" data-act="wkFloat" data-id="${t.id}">Let Jarvis place it</button>`:''}${inPlan(t)?`<button class="sm" data-act="wkOff" data-id="${t.id}">Not this week</button>`:''}<button class="sm" data-act="drop" data-id="${t.id}" style="color:var(--bad)">Remove</button>`}<button class="sm ghost" data-act="close">Close</button></div>`)}
 document.addEventListener('change',async e=>{const el=e.target,f=el?.dataset?.tf,id=el?.dataset?.id;if(!f||!S.tasks.has(id))return;
   const c=f==='est'?{est:+el.value||30}:f==='due'?{due:isDate(el.value)?el.value:null}:f==='cat'?{cat:el.value}:null;if(!c)return;await upL(id,c);await applyWeek(false);toast('Saved.',1200);if(!$('sheet').hidden)wkSheet(id)});
 /* ---------- notes, app updates, inbox ---------- */
@@ -261,8 +263,8 @@ function planAt(){const o=S.settings.planOnce;return o&&o.d===today()&&hm(o.at||
 function tlHtml(d){const tl=timeline(d),day=dayDoc(d),tw=travelWarn(d),rows=tl.map(x=>{
     if(x.kind==='focus')return `<div class="tl foc"><span class="tm num">${esc(t12(hmS(x.s)))}</span><span class="tx">Focus block until ${esc(t12(hmS(x.e)))}</span></div>`;
     if(x.kind!=='task')return `<div class="tl fx"><span class="tm num">${esc(t12(hmS(x.es)))}</span><span class="tx">${esc(x.t)}${x.travel?` <small>+${x.travel} min travel each way</small>`:''}<small>until ${esc(t12(hmS(x.ee)))}</small></span></div>`;
-    if(x.s==null)return `<button class="tl ov" data-act="wkItem" data-id="${x.id}"><span class="tm">—</span><span class="tx">${esc(x.t)}<small>doesn’t fit this day</small></span></button>`;
-    return `<button class="tl${x.deep?' dp':''}" data-act="wkItem" data-id="${x.id}"><span class="tm num">${esc(t12(hmS(x.s)))}</span><span class="tx">${esc(x.t)}<small>${durS(x.e-x.s)}${x.set?' · set time':''}</small></span></button>`}).join('');
+    if(x.s==null)return `<div class="tl ov" data-act="wkItem" data-id="${x.id}" role="button" tabindex="0"><span class="tm">—</span><span class="tx">${esc(x.t)}<small>doesn’t fit this day</small></span>${XB(x.id)}</div>`;
+    return `<div class="tl${x.deep?' dp':''}" data-act="wkItem" data-id="${x.id}" role="button" tabindex="0"><span class="tm num">${esc(t12(hmS(x.s)))}</span><span class="tx">${esc(x.t)}<small>${durS(x.e-x.s)}${x.set?' · set time':''}</small></span>${XB(x.id)}</div>`}).join('');
   const stl=d===today()&&!hm(day.start||'')?'':`Starts ${esc(t12(dayStart(d)))}`;
   return `${stl||day.low?`<div class="m" style="margin:2px 0 8px">${[stl,day.low?'Light day: must-dos only':''].filter(Boolean).join(' · ')}</div>`:''}${tw.length?`<div class="card warnc" style="margin-bottom:8px">${tw.map(w=>`<div class="m">⚠ ${esc(w)}</div>`).join('')}</div>`:''}<div class="tlw">${rows||'<div class="m">Nothing planned.</div>'}</div>
   <div class="row" style="margin-top:8px"><button class="sm" data-act="lowDay" data-d="${d}">${day.low?'Back to a normal day':'Make it a light day'}</button></div>`}
@@ -300,7 +302,7 @@ function brainToday(){FM.clear();const top=$('brainBox'),el=$('brainBox2');if(!t
   top.innerHTML=a.join('');
   /* due soon and not already on today's list (those carry a pill on their own row) */
   const onToday=new Set((S.plan?.picks||[]).map(k=>k.id)),nd=nudges().filter(x=>!onToday.has(x.t.id)&&x.t.ndg!==td&&(x.lvl!=='light'||x.d<=7)).slice(0,5);
-  if(nd.length)c.push(`<h2>Due soon</h2><div class="card">${nd.map(x=>`<button class="due" data-act="wkItem" data-id="${x.t.id}"><span class="pill ${x.d<=0?'bad':x.d<=3?'warn':'mute'}">${x.d<0?-x.d+'d late':x.d===0?'Today':x.d===1?'Tomorrow':DN[dowOf(x.t.due)]+' '+(+x.t.due.slice(8))}</span><span class="grow">${esc(T(x.t))}<small>${x.t.day?'planned for '+esc(dayWord(x.t.day)):'not planned yet'}</small></span></button>`).join('')}</div>`);
+  if(nd.length)c.push(`<h2>Due soon</h2><div class="card">${nd.map(x=>`<div class="due" data-act="wkItem" data-id="${x.t.id}" role="button" tabindex="0"><span class="pill ${x.d<=0?'bad':x.d<=3?'warn':'mute'}">${x.d<0?-x.d+'d late':x.d===0?'Today':x.d===1?'Tomorrow':DN[dowOf(x.t.due)]+' '+(+x.t.due.slice(8))}</span><span class="grow">${esc(T(x.t))}<small>${x.t.day?'planned for '+esc(dayWord(x.t.day)):'not planned yet'}</small></span>${XB(x.t.id)}</div>`).join('')}</div>`);
   const hb=habitCard();if(hb)c.push(`<h2>Habits</h2><div class="card">${hb}</div>`);
   const qp=quietProjects()[0];if(qp&&qp.p.qnd!==td)c.push(`<h2>Gone quiet</h2><div class="card"><div class="t" style="font-size:15px">${esc(qp.p.name)} <span class="m">· ${qp.q} days</span></div>${qp.p.next?`<div class="m">Next: ${esc(qp.p.next)}</div>`:''}<div class="row" style="margin-top:8px"><button class="sm" data-act="projPlan" data-id="${qp.p.id}">Book time</button><button class="sm ghost" data-act="projPause" data-id="${qp.p.id}">Pause it</button><button class="sm ghost" data-act="projLater" data-id="${qp.p.id}">Not now</button></div></div>`);
   el.innerHTML=c.join('');
@@ -424,7 +426,7 @@ renderCal=function(){const el=$('calBox');if(!el||S.view!=='cal')return;FM.clear
   const ldOf=d=>wk.filter(t=>t.day===d&&!isDone(t)).reduce((a,t)=>a+estOf(t),0);
   const chips=days.map(d=>{const ld=ldOf(d),ev=evOn(d).length,ov=ld>dayBudget(d)+20&&ld>0;return `<button class="dchip${d===sel?' on':''}${ov?' ov':''}" data-act="tlDay" data-d="${d}"><b>${d===td?'Today':DN[dowOf(d)]+' '+(+d.slice(8))}</b><small>${ld?durS(ld):ev?ev+' event'+(ev>1?'s':''):'open'}</small></button>`}).join('');
   const done=wk.filter(t=>isDone(t)&&t.day===sel),allDay=evOn(sel).filter(e=>!hm(e.s||'')),loose=wk.filter(t=>!t.day&&!isDone(t)),doneAll=wk.filter(isDone);
-  const mini=t=>`<button class="wki${isDone(t)?' done':''}" data-act="wkItem" data-id="${t.id}"><span class="dot"></span><span class="tt">${esc(T(t))}</span><span class="mm num">${isDone(t)?'done':durS(estOf(t))}</span></button>`;
+  const mini=t=>`<div class="wki${isDone(t)?' done':''}" data-act="wkItem" data-id="${t.id}" role="button" tabindex="0"><span class="dot"></span><span class="tt">${esc(T(t))}</span><span class="mm num">${isDone(t)?'done':durS(estOf(t))}</span>${isDone(t)?'':XB(t.id)}</div>`;
   el.innerHTML=`<div class="dchips">${chips}</div>
     <div class="card">${allDay.map(e=>`<div class="evl" style="padding:0 0 8px">${esc(e.t)}${e.approx?' · around this date':' · all day'}</div>`).join('')}${tlHtml(sel)}${done.length?`<div class="m" style="margin-top:10px">Done ${sel===td?'today':'that day'}: ${done.map(t=>esc(short(T(t)))).join(', ')}</div>`:''}</div>
     ${wk.length?`<h2>This week</h2><div class="card"><div class="dkh"><span class="lbl" style="letter-spacing:.12em">${wp.ok?'On pace':'More than fits'}</span><span class="cnt num">${wp.done}<small>/${wp.all}</small></span></div><div class="bar" aria-hidden="true">${wk.map(t=>`<i class="${isDone(t)?'on':''}"></i>`).join('')}</div><div class="fit${wp.ok?'':' over'}">${durS(wp.left)} of work left · room for ${durS(wp.room)} in the next 7 days</div><div class="row" style="margin-top:8px"><button class="ghost sm" data-act="rebal" style="padding-left:0">Rearrange the week</button><button class="ghost sm" data-act="weekAsk">Add to the list</button></div></div>`
@@ -443,6 +445,9 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
     chatSend:()=>chatSend(),
     chatMic:()=>{if(V.quick){quickMicOff();renderChat();return}V.qEl='chatIn';quickMic();V.qEl='chatIn';renderChat()},
     reload:()=>location.reload(),
+    drop:async()=>{const t=S.tasks.get(id);if(!t)return;const prev={s:t.s,day:t.day??null,pin:!!t.pin,at:t.at??null};$('sheet').hidden=true;
+      await upL(id,{s:'parked',dropped:today(),day:null,pin:false,at:null});if(S.plan?.picks?.some(k=>k.id===id))await plMark(id,{gone:true}).catch(()=>{});await applyWeek(false);logEv('drop',T(t));
+      toast(`Removed: ${short(T(t))}`,6000,{label:'Undo',fn:async()=>{await upL(id,{...prev,dropped:null});await applyWeek(false);toast('Back on your list.',1600)}})},
     projects:()=>{S.projOpen='';projectsSheet()},
     pjOpen:()=>{S.projOpen=S.projOpen===id?'':id;projectsSheet()},
     pjNew:()=>projectsSheet(true),
