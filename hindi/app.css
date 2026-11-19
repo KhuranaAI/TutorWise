@@ -940,3 +940,6 @@ body.dark .filmi-tap { color: var(--brand); }
 .badge-hero .badge-big { position: relative; width: 110px; height: 110px; margin: 10px auto 6px; border-radius: 50%; display: grid; place-items: center; font-size: 58px; background: var(--brand-lt); animation: cardFlip .9s cubic-bezier(.2,1.2,.4,1) both; }
 .badge-hero .badge-big i { font-size: 34px; right: -2px; bottom: -2px; }
 .home-hello .greet { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.who-hero .logo { margin-bottom: 8px; }
+.who-list { display: grid; gap: 12px; width: 100%; max-width: 320px; margin: 22px auto 0; }
+.who-btn { font-size: 20px; min-height: 60px; }

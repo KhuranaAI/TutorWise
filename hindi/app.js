@@ -6,6 +6,29 @@
   "use strict";
 
   const C = window.BOLO_CONTENT;
+
+  /* ---------- Who's learning? ----------
+     The course is written for Anissa. On a phone set up for someone else, her name is swapped into every greeting
+     and sentence ("Main Leeann hoon", "Namaste Leeann!"). Same formal Hindi, same female forms. The choice is
+     saved in settings.learner (and synced with the account); changing it reloads the app. */
+  const LEARNERS = {
+    anissa: { name: "Anissa", dv: "अनीसा", accept: ["anisa", "anisha", "annisa"] },
+    leeann: { name: "Leeann", dv: "लीएन", accept: ["leeann", "leann", "leanne", "lianne", "liann", "leane", "lean", "lian"] }
+  };
+  const LEARNER_ID = (() => {
+    try { const s = JSON.parse(localStorage.getItem("bolo.m1.v1") || "null"); return (s && s.settings && s.settings.learner) || null; } catch (e) { return null; }
+  })();
+  (function personalize(L) {
+    if (!L || L === LEARNERS.anissa) return;
+    const swaps = [["Anissa beta", L.name + " ji"], ["अनीसा बेटा", L.dv + " जी"], ["Anissa dear", L.name + " ji"], ["Anissa", L.name], ["अनीसा", L.dv]];
+    const fix = (str) => swaps.reduce((t, [a, b]) => t.split(a).join(b), str);
+    const walk = (o) => {
+      if (Array.isArray(o)) { o.forEach((x, i) => { if (typeof x === "string") o[i] = fix(x); else walk(x); }); return; }
+      if (o && typeof o === "object") Object.keys(o).forEach((k) => { const v = o[k]; if (typeof v === "string") o[k] = fix(v); else walk(v); });
+    };
+    walk(C);
+    if (C.lexicon && C.lexicon.anissa) C.lexicon.anissa[4] = L.accept.slice(); // spellings accepted when she types her name
+  })(LEARNERS[LEARNER_ID]);
   const M = C.modules.find((m) => m.id === "m1"); // Module 1 ("What Am I Doing?") has its own hand-built stages
   const SP = C.speaker;
   const PART = {};
@@ -103,6 +126,8 @@
     s.weak = s.weak && typeof s.weak === "object" ? s.weak : {};                       // per sentence: misses / first-try wins
     s.filmi = Array.isArray(s.filmi) ? s.filmi : [];                                    // unlocked Filmi cards
     s.badges = Array.isArray(s.badges) ? s.badges : [];                                 // Filmi album badges earned
+    if (!s.settings.learner && (s.xp > 0 || s.filmi.length || Object.keys(s.modules).some((k) => s.modules[k] && (Object.keys(s.modules[k].done || {}).length || s.modules[k].run))))
+      s.settings.learner = "anissa"; // phones from before profiles (real progress on them is Anissa's)
     s.modules.review = Object.assign(freshModule(), s.modules.review);
     return s;
   }
@@ -794,7 +819,7 @@
   // Share a win (e.g. with her boyfriend) — the phone's share sheet, or copy as a fallback.
   function shareAction(text) {
     return { label: "📤 Share", cls: "ghost", onClick: async (e) => {
-      const btn = e.currentTarget, msg = text + " — Anissa";
+      const btn = e.currentTarget, msg = text + " — " + SP.name;
       try {
         if (navigator.share) { await navigator.share({ text: msg }); return; }
         await navigator.clipboard.writeText(msg);
@@ -3469,7 +3494,8 @@
     screen(
       h("div", { class: "home-head" },
         logo,
-        h("div", { class: "home-hello" }, greet, h("p", { class: "small muted" }, S.xp ? `★ ${S.xp} XP so far` : "Hindi for chatting with the family"))),
+        h("div", { class: "home-hello" }, greet,
+          S.xp === 0 && !S.account ? h("button", { class: "link-btn", style: "padding:0;font-size:13px", onclick: () => { S.settings.learner = null; save(); location.reload(); } }, `Not ${SP.name}? Switch`) : null, h("p", { class: "small muted" }, S.xp ? `★ ${S.xp} XP so far` : "Hindi for chatting with the family"))),
       streakCard(),
       upNextCard(target, !anyProgress),
       homeTiles(),
@@ -3563,6 +3589,18 @@
   });
 
   const LOADED_AT = Date.now();
+  function showWhoPicker() {
+    view = "who";
+    showChrome(false);
+    const pick1 = (id) => { S.settings.learner = id; save(); Sound.play("done"); setTimeout(() => location.reload(), 150); };
+    screen(h("div", { class: "stage-hero who-hero" },
+      h("div", { class: "logo" }, "Bolo!", h("small", { lang: "hi" }, "बोलो · speak!")),
+      h("h1", {}, "Who's learning Hindi?"),
+      h("p", { class: "muted" }, "Pick your name — the app will greet you and teach you as you."),
+      h("div", { class: "who-list" }, Object.keys(LEARNERS).map((id) =>
+        h("button", { class: "btn who-btn", onclick: () => pick1(id) }, "🙋🏽‍♀️ " + LEARNERS[id].name)))));
+    actions([]);
+  }
   function init() {
     // stage label + Devanagari quick toggle live in the top bar
     const top = $("topbar");
@@ -3585,9 +3623,13 @@
     applySettings();
     updateXP();
     Speech.init(() => { if (view === "start") showStart(); });
+    if (!S.settings.learner) return showWhoPicker(); // a new phone: ask who's learning first (the app reloads after)
     showStart();
     // Cloud: pull a newer copy (e.g. from another phone) on launch; save when the app is backgrounded or comes back online.
-    Cloud.onAdopt = () => { applySettings(); updateXP(); if (view === "start") showStart(); };
+    Cloud.onAdopt = () => {
+      if ((S.settings.learner || "anissa") !== (LEARNER_ID || "anissa")) return location.reload(); // signed into someone else's progress
+      applySettings(); updateXP(); if (view === "start") showStart();
+    };
     Cloud.sync();
     if (Cloud.enabled && !S.account) {
       Cloud.checkAccounts().then((ready) => {

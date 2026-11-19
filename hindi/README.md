@@ -14,6 +14,10 @@ A static, no-build web app. Open `hindi/index.html` from any static host (it's s
 
 ## The course (made for Anissa)
 
+**Who's learning?** A new phone first asks who's learning (Anissa or Leeann, her mom). For Leeann, her name is swapped
+into every greeting and sentence (`LEARNERS` / `personalize` at the top of `app.js`); the Hindi is the same. The choice
+is saved in `settings.learner` and travels with the account. Phones that already had progress are Anissa's.
+
 She always speaks as herself (female forms: rahi, gayi, aaungi) and uses **aap** + **ji** with Aunty, Uncle and
 other elders. Everyday family Hindi with plenty of Hinglish (e.g. *bhaag* for run, *shopping kar*). Every module is open from the
 start, so she can jump ahead; stages inside a module go in order. **Test mode** (all Filmi cards open, until the app is
