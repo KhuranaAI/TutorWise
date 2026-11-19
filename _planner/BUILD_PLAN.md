@@ -318,3 +318,17 @@ peak hours from 'did' events, actual/estimate ratio from task.act (measured from
 Nightly plan at settings.planAt (21:00; planOnce for tonight), light days (days/{d}.low), day starts (days/{d}.start),
 chores (recurring+every), people (collection people), projects, habits/streaks (habits/{date}), notes (note/app/inbox),
 Chat tab, What's next, nudges by days-to-due, wins and the weekly review. Runs while the app is open.
+
+## Nov 19 review pass (v36–v37)
+- Frame: #app flex column, #scr is the only scroller, nav/chat bar/FAB are in the layout (no fixed bars). Nav labels fit 320 px.
+- Root cause of the days/{date} write storm: scoreSync compared JSON text while the db returns fields in its own order,
+  so it re-saved on every render. Comparison is now order-independent (stab()); dayWrite has a burst breaker; BUILD
+  number in settings.build marks stale copies; a page open past midnight reloads.
+- Plan: inPlan (rolling pool, holds, wk through next week), layoutWeek returns unplaced, applyWeek is serialized, writes
+  in parallel and renders once; weekItems cached on a task-version counter; one Intl formatter.
+- Timeline: timed items, messy jobs, must-dos, focus block (learned peak), then the rest; same "Prefix:" tasks back to back;
+  at most an hour after teaching; overflow marked "no room" with a move-to-tomorrow action.
+- Item sheet edits day, priority, length, due, category. Tasks search. Plan tab = day strip + timeline.
+- Independent review findings (21) fixed and re-run against the reviewer's repro scripts; left: weekPace double count
+  across weeks, legacy past-day rescore for dailies finished before pl.done was recorded.
+- Morning routine no longer places tasks or writes plans; it scores yesterday and writes the brief.
