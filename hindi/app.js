@@ -3452,7 +3452,8 @@
       giftReady() ? tile("gift ready", "🎁", "Daily gift", "Ready — tap to open!", () => openGift(() => showStart()))
         : tile("gift locked", "🎁", "Daily gift", openedToday ? "Opened ✓ — new one tomorrow" : `Hit today's goal to unlock (${Math.min(today, goalXP())}/${goalXP()} XP)`),
       tile("phrases", "🃏", "Phrase cards", `${(S.phrases || []).length}/${PHRASES.length} collected`, showPhrases),
-      tile("filmi", "🎬", "Filmi album", `${S.filmi.length}/${FILMI.length} cards · 🏅 ${S.badges.length}`, showFilmiList));
+      tile("filmi", "🎬", "Filmi album", `${S.filmi.length}/${FILMI.length} cards · 🏅 ${S.badges.length}`, showFilmiList),
+      tile("handsfree wide", "🚗", "Hands-free practice", "Learn while driving or walking — just listen and speak", showHandsFreeSetup));
   }
   // Settings as labelled rows, so each option says what it does.
   function settingsCard() {
@@ -3589,6 +3590,251 @@
   });
 
   const LOADED_AT = Date.now();
+  /* =====================================================
+     🚗 Hands-free practice — a spoken lesson, no screen needed
+     English prompt → pause while she says it out loud → the Hindi answer, twice.
+     New sentences are heard first, then asked a few sentences later and again
+     after that (spaced repetition inside the session). Car / AirPods buttons work
+     through the Media Session API; the screen is kept awake when the phone allows.
+     ===================================================== */
+  const HF_LEN = [["10", "10 min"], ["20", "20 min"], ["0", "Non-stop"]];
+  const HF_PACE = [["relaxed", "🐢 Relaxed"], ["normal", "🚶 Normal"]];
+  function hfSentences(modId) {
+    const out = [], add = (mod, key, roman, deva, en, ask) => { if (deva && en) out.push({ key: mod + ":" + key, roman, deva, en, ask }); };
+    const mods = modId === "all" ? C.modules.filter((m) => hasProgress(m.id)) : [MODS[modId]].filter(Boolean);
+    (mods.length ? mods : [C.modules[0]]).forEach((m) => {
+      if (m.id === M.id) VERBS.forEach((v) => add(m.id, v.id, romanSentence(v.id), devaSentence(v.id), english(v)));
+      (m.items || []).forEach((it) => add(m.id, it.id, it.roman, it.deva, it.en, it.ask && it.ask.dv ? it.ask : null));
+    });
+    return out;
+  }
+  const HF = {
+    en: null,
+    pickEn() {
+      if (this.en || !("speechSynthesis" in window)) return this.en;
+      const score = (v) => (/premium/i.test(v.name) ? 4 : 0) + (/enhanced|neural|natural/i.test(v.name) ? 3 : 0) + (/^en[-_](IN|US|GB|CA)/i.test(v.lang) ? 1 : 0);
+      this.en = window.speechSynthesis.getVoices().filter((v) => /^en([-_]|$)/i.test(v.lang)).sort((a, b) => score(b) - score(a))[0] || null;
+      return this.en;
+    },
+    // Speak and resolve when finished (with a time limit: iPhones sometimes never report the end).
+    speak(text, lang, rate) {
+      return new Promise((res) => {
+        if (!text || !("speechSynthesis" in window)) return res();
+        let done = false;
+        const fin = () => { if (!done) { done = true; clearTimeout(t); res(); } };
+        const u = new SpeechSynthesisUtterance(text);
+        if (lang === "hi") { u.voice = Speech.voice; u.lang = Speech.voice ? Speech.voice.lang : "hi-IN"; u.rate = rate || 0.82; }
+        else { const v = this.pickEn(); if (v) u.voice = v; u.lang = v ? v.lang : "en-US"; u.rate = rate || 1; }
+        u.onend = fin; u.onerror = fin;
+        const t = setTimeout(fin, 2500 + text.length * 110 / (u.rate || 1));
+        window.speechSynthesis.speak(u);
+      });
+    }
+  };
+  function hfPlan(pool) {
+    // weakest first, then the rest; each sentence: hear it → (3 later) say it → (6 later) say it / answer Aunty
+    const weak = pool.filter((x) => weakScore(x.key) > 0).sort((a, b) => weakScore(b.key) - weakScore(a.key));
+    const order = weak.concat(shuffle(pool.filter((x) => !weak.includes(x))));
+    const slots = [];
+    const put = (at, step) => { while (slots[at]) at++; slots[at] = step; };
+    order.forEach((it, i) => {
+      const base = i * 2;
+      const seen = (S.weak[it.key] && (S.weak[it.key].o || 0) > 1); // she already knows it well → skip the "hear it" step
+      if (!seen) put(base, { kind: "hear", it });
+      put(base + 3, { kind: "say", it });
+      put(base + 8, it.ask && Math.random() < 0.7 ? { kind: "answer", it } : { kind: "say", it });
+    });
+    return slots.filter(Boolean);
+  }
+  function showHandsFreeSetup() {
+    view = "hf";
+    showChrome(false);
+    const hf = S.settings.hf = Object.assign({ len: "10", pace: "normal", mod: "all" }, S.settings.hf);
+    const back = h("button", { class: "link-btn back-link" }, "‹ Home");
+    back.addEventListener("click", () => showStart());
+    const seg = (opts, key) => h("div", { class: "hf-seg" }, opts.map(([v, label]) => {
+      const b = h("button", { class: "hf-opt" + (hf[key] === v ? " on" : "") }, label);
+      b.addEventListener("click", () => { hf[key] = v; save(); Sound.play("tap"); showHandsFreeSetup(); });
+      return b;
+    }));
+    const started = C.modules.filter((m) => hasProgress(m.id));
+    const sel = h("select", { class: "hf-select" },
+      h("option", { value: "all" }, started.length ? `Everything I've started (${started.length} module${started.length > 1 ? "s" : ""})` : `Module 1 · ${C.modules[0].title}`),
+      C.modules.map((m) => h("option", { value: m.id }, `Module ${m.number} · ${m.title}`)));
+    sel.value = MODS[hf.mod] || hf.mod === "all" ? hf.mod : "all";
+    sel.addEventListener("change", () => { hf.mod = sel.value; save(); });
+    const noVoice = !Speech.supported;
+    screen(back,
+      h("div", { class: "hf-hero" }, h("div", { class: "hf-car" }, "🚗"), h("h2", { class: "title" }, "Hands-free practice"),
+        h("p", { class: "subtitle" }, "A spoken lesson for driving, walking or cooking. You hear an English sentence, say it in Hindi out loud, then hear the answer. No need to look at the screen.")),
+      h("div", { class: "hf-tips" },
+        h("p", {}, "🚦 ", h("b", {}, "Start it before you drive"), " and keep your eyes on the road — everything is spoken."),
+        h("p", {}, "🎧 Car buttons and AirPods work: ⏯ pause · ⏭ skip · ⏮ repeat."),
+        h("p", {}, "📱 Keep Bolo open on screen (in a phone holder). If the screen locks, the lesson pauses."),
+        noVoice ? h("p", { class: "hf-warn" }, "🔇 No Hindi voice found on this phone. Download one first: Settings → Accessibility → Spoken Content → Voices → Hindi.") : null),
+      h("div", { class: "card hf-card" },
+        h("div", { class: "section-title" }, "What to practise"), sel,
+        h("div", { class: "section-title mt" }, "How long"), seg(HF_LEN, "len"),
+        h("div", { class: "section-title mt" }, "Thinking time"), seg(HF_PACE, "pace")));
+    actions([{ label: "▶ Start", onClick: () => startHandsFree(), disabled: noVoice }]);
+  }
+  // A second of silence on loop lets the car / AirPods buttons control the lesson.
+  function silentAudio() {
+    const sr = 8000, n = sr, buf = new ArrayBuffer(44 + n * 2), d = new DataView(buf);
+    const w = (o, str) => [...str].forEach((c, i) => d.setUint8(o + i, c.charCodeAt(0)));
+    w(0, "RIFF"); d.setUint32(4, 36 + n * 2, true); w(8, "WAVE"); w(12, "fmt "); d.setUint32(16, 16, true); d.setUint16(20, 1, true); d.setUint16(22, 1, true);
+    d.setUint32(24, sr, true); d.setUint32(28, sr * 2, true); d.setUint16(32, 2, true); d.setUint16(34, 16, true); w(36, "data"); d.setUint32(40, n * 2, true);
+    const a = new Audio(URL.createObjectURL(new Blob([buf], { type: "audio/wav" })));
+    a.loop = true; a.volume = 0.01;
+    return a;
+  }
+  function startHandsFree() {
+    const hf = S.settings.hf;
+    const pool = hfSentences(hf.mod);
+    if (!pool.length) return;
+    const think = hf.pace === "relaxed" ? 1.6 : 1;
+    const limitMs = (+hf.len || 0) * 60000;
+    const t0 = Date.now();
+    let plan = hfPlan(pool), pos = 0, paused = false, gen = 0, said = 0, lock = null, audio = null;
+    view = "hfplay";
+    showChrome(false);
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+    HF.pickEn();
+    // UI
+    const status = h("div", { class: "hf-status" }), big = h("div", { class: "hf-big" }), sub = h("div", { class: "hf-sub" });
+    const ring = h("div", { class: "hf-ring" }), clock = h("div", { class: "hf-clock" }), counter = h("div", { class: "hf-count" });
+    const pauseBtn = h("button", { class: "hf-btn main", "aria-label": "Pause" }, "⏸");
+    const repBtn = h("button", { class: "hf-btn", "aria-label": "Repeat" }, "↺");
+    const skipBtn = h("button", { class: "hf-btn", "aria-label": "Skip" }, "⏭");
+    const endBtn = h("button", { class: "link-btn hf-end" }, "✕ End");
+    screen(h("div", { class: "hf-play" },
+      h("div", { class: "hf-top" }, endBtn, clock),
+      h("div", { class: "hf-center" }, ring, status, big, sub, counter),
+      h("div", { class: "hf-ctrls" }, repBtn, pauseBtn, skipBtn)));
+    actions([]);
+    document.body.classList.add("hf-on");
+    const show = (st, b, sm, mode) => { status.textContent = st; big.textContent = b || ""; sub.textContent = sm || ""; ring.className = "hf-ring " + (mode || ""); };
+    const fmt = (ms) => { const m = Math.floor(ms / 60000), x = Math.floor((ms % 60000) / 1000); return m + ":" + String(x).padStart(2, "0"); };
+    const tick = setInterval(() => {
+      if (!screenEl.contains(clock)) return cleanup();
+      clock.textContent = limitMs ? "⏱ " + fmt(Math.max(0, limitMs - (Date.now() - t0))) : "⏱ " + fmt(Date.now() - t0);
+    }, 500);
+    const wait = (ms, g) => new Promise((res) => setTimeout(() => res(g === gen), ms));
+    const hi = (text, rate) => HF.speak(text, "hi", rate);
+    const en = (text) => HF.speak(text, "en");
+    async function play(step, g) {
+      const it = step.it, words = it.roman.split(/\s+/).length;
+      const gap = Math.round((2600 + words * 700) * think);
+      if (step.kind === "hear") {
+        show("🎧 Listen", it.roman, "", "listen");
+        await en("Listen."); if (g !== gen) return;
+        await hi(it.deva); if (!(await wait(900, g))) return;
+        await hi(it.deva, 0.7); if (!(await wait(500, g))) return;
+        show("🎧 It means", it.roman, it.en, "listen");
+        await en("That means: " + it.en); if (!(await wait(700, g))) return;
+        show("🗣️ Say it with me", it.roman, it.en, "you");
+        await en("Say it with me."); if (g !== gen) return;
+        await hi(it.deva, 0.75); await wait(Math.round(gap * 0.8), g);
+        return;
+      }
+      if (step.kind === "answer") {
+        show("👩🏽 Aunty asks", it.ask.hi, "", "listen");
+        await en("Aunty asks:"); if (g !== gen) return;
+        await hi(it.ask.dv); if (!(await wait(400, g))) return;
+        show("🗣️ Your turn", it.ask.hi, "Answer: " + it.en, "you");
+        await en("Answer: " + it.en); if (g !== gen) return;
+      } else {
+        show("🗣️ How do you say…", "", it.en, "you");
+        await en(pick(["How do you say:", "Say in Hindi:", "How would you say:"]) + " " + it.en); if (g !== gen) return;
+      }
+      show("🗣️ Your turn — say it out loud", "", step.kind === "answer" ? it.ask.hi : it.en, "you think");
+      if (!(await wait(gap, g))) return;
+      show("✅ Answer", it.roman, it.en, "answer");
+      await hi(it.deva); if (!(await wait(800, g))) return;
+      await hi(it.deva, 0.72); if (!(await wait(900, g))) return;
+      said++;
+      award(1);
+    }
+    async function loop() {
+      const g = ++gen;
+      while (g === gen && !paused) {
+        if (limitMs && Date.now() - t0 > limitMs) return finish();
+        if (pos >= plan.length) { plan = hfPlan(pool); pos = 0; }
+        counter.textContent = said ? `${said} said out loud` : "";
+        if (pos && pos % 12 === 0 && plan[pos] && !plan[pos].cheered) {
+          plan[pos].cheered = true;
+          show("🎉", pick(["Shabash!", "Bahut badhiya!", "Wah!"]), "", "listen");
+          await en(pick(["Great job! Keep going.", `You're doing so well, ${SP.name}.`, "Nice! Here's the next one."])); if (g !== gen) return;
+        }
+        await play(plan[pos], g);
+        if (g !== gen) return;
+        pos++;
+      }
+    }
+    function setPaused(p) {
+      paused = p;
+      gen++;
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+      pauseBtn.textContent = p ? "▶" : "⏸";
+      pauseBtn.setAttribute("aria-label", p ? "Play" : "Pause");
+      if (p) show("⏸ Paused", "", "Tap ▶ (or your car's play button) to carry on", "");
+      else loop();
+      try { navigator.mediaSession.playbackState = p ? "paused" : "playing"; } catch (e) {}
+    }
+    const restart = () => { gen++; try { window.speechSynthesis.cancel(); } catch (e) {} paused = false; pauseBtn.textContent = "⏸"; loop(); };
+    const repeat = () => { Sound.play("tap"); restart(); };
+    const skip = () => { Sound.play("tap"); pos++; restart(); };
+    pauseBtn.addEventListener("click", () => setPaused(!paused));
+    repBtn.addEventListener("click", repeat);
+    skipBtn.addEventListener("click", skip);
+    endBtn.addEventListener("click", () => finish());
+    // Car / AirPods buttons
+    try {
+      audio = silentAudio(); audio.play().catch(() => {});
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({ title: "Bolo! Hands-free Hindi", artist: SP.name + "'s lesson" });
+        navigator.mediaSession.setActionHandler("play", () => setPaused(false));
+        navigator.mediaSession.setActionHandler("pause", () => setPaused(true));
+        navigator.mediaSession.setActionHandler("nexttrack", skip);
+        navigator.mediaSession.setActionHandler("previoustrack", repeat);
+        navigator.mediaSession.playbackState = "playing";
+      }
+    } catch (e) {}
+    // Keep the screen on
+    const wake = () => { try { if ("wakeLock" in navigator) navigator.wakeLock.request("screen").then((l) => { lock = l; }).catch(() => {}); } catch (e) {} };
+    wake();
+    const onVis = () => { if (document.visibilityState === "visible") wake(); else if (!paused) setPaused(true); };
+    document.addEventListener("visibilitychange", onVis);
+    let cleaned = false;
+    function cleanup() {
+      if (cleaned) return; cleaned = true;
+      gen++; clearInterval(tick);
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+      try { if (audio) { audio.pause(); audio.src = ""; } } catch (e) {}
+      try { if (lock) lock.release(); } catch (e) {}
+      try { ["play", "pause", "nexttrack", "previoustrack"].forEach((a) => navigator.mediaSession.setActionHandler(a, null)); navigator.mediaSession.playbackState = "none"; } catch (e) {}
+      document.removeEventListener("visibilitychange", onVis);
+      document.body.classList.remove("hf-on");
+    }
+    function finish() {
+      const mins = Math.max(1, Math.round((Date.now() - t0) / 60000));
+      cleanup();
+      S.lastHandsFree = dayStr(); save();
+      if (said) HF.speak(`That's it for today. ${pick(["Bahut badhiya", "Shabash", "Wah"])}, ${SP.name}!`, "en");
+      Sound.play("done"); confetti();
+      screen(h("div", { class: "stage-hero" },
+        h("div", { class: "stage-badge" }, "🚗"), h("div", { class: "kicker" }, "Hands-free practice"),
+        h("h1", {}, said ? pick(["Shabash!", "Bahut badhiya!", "Wah!"]) : "See you next time!"),
+        h("div", { class: "stat-row" },
+          h("div", { class: "stat" }, h("b", {}, String(said)), h("span", {}, "Said out loud")),
+          h("div", { class: "stat" }, h("b", {}, mins + " min"), h("span", {}, "Practised")),
+          h("div", { class: "stat" }, h("b", {}, "🔥" + S.streak.count), h("span", {}, "Day streak")))));
+      actions([{ label: "Back home", onClick: () => showStart() }]);
+    }
+    show("🚗 Ready", "Hands-free Hindi", "Here we go!", "listen");
+    (async () => { const g0 = gen; await en(`Hands-free Hindi. Ready, ${SP.name}? Let's go!`); if (g0 === gen && !paused && !cleaned) loop(); })();
+  }
+
   function showWhoPicker() {
     view = "who";
     showChrome(false);

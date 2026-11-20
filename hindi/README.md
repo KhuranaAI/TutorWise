@@ -111,6 +111,13 @@ mode, dark mode, sound, Hindi voice, each with a one-line description) → accou
 
 ## Speaking, review and themes
 
+- **🚗 Hands-free practice** (home-screen tile): a spoken lesson for driving or walking. English prompt → a pause while
+  she says it out loud → the Hindi answer twice. New sentences are heard first ("Listen… That means… Say it with me"),
+  then quizzed a few steps later and again after that; Aunty's questions (`ask`) are asked in Hindi for her to answer.
+  Weak sentences come first. Choose the modules, length (10 / 20 min / non-stop) and thinking time. Car and AirPods
+  buttons work through the Media Session API (a silent audio loop holds the session); the screen is kept awake with the
+  Wake Lock API where supported; the lesson pauses if the app goes to the background. +1 XP per sentence said.
+
 - **Speak It! 🎙️** (every module except "What Am I Doing?"): she answers out loud with no tiles, typing or English sentence — Aunty
   asks a Hindi question (`ask` on an item) or she gets a picture cue (`cue`). Where the browser supports speech
   recognition, 🎤 listens in Hindi (hi-IN) and checks the answer; otherwise she reveals the answer and rates herself.
