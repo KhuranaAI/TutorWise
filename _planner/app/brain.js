@@ -13,7 +13,10 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.tlDay='';S.nextSkip=[];
-const BUILD=43;
+const BUILD=44;
+const DH=id=>`<span class="dh" data-drag="${id}" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg></span>`;
+/* his own ranking (dragged in Tasks) decides between two ranked items */
+const ordBoth=(a,b)=>Number.isFinite(a.ord)&&Number.isFinite(b.ord)?a.ord-b.ord:0;
 /* a remove button for any task row */
 const XB=id=>`<button class="xb" data-act="drop" data-id="${id}" aria-label="Remove this task" title="Remove"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>`;
 if(matchMedia('(pointer:coarse)').matches&&!window.__HQ_DAY)V.noMic=true; /* a phone gives this page no mic of its own unless Claude's dictation is there (canHear checks that first) */
@@ -124,7 +127,7 @@ function layoutWeek(full){FM.clear();const days=horizon(),last=days[days.length-
   const lowD=d=>!!dayDoc(d).low;
   for(const t of items){const keep=t.day&&by.has(t.day)&&(t.pin||!full)&&!(lowD(t.day)&&!mustDo(t));if(keep)by.get(t.day).push(t);else if(t.pin&&t.day&&t.day>last)continue;else wait.push(t)}
   const load=d=>by.get(d).reduce((a,t)=>a+estOf(t),0);
-  wait.sort((a,b)=>prio(b).v-prio(a).v||((a.wkN??999)-(b.wkN??999))||a.id.localeCompare(b.id));
+  wait.sort((a,b)=>(mustDo(b)-mustDo(a))||ordBoth(a,b)||prio(b).v-prio(a).v||((a.wkN??999)-(b.wkN??999))||a.id.localeCompare(b.id));
   for(const t of wait){const e=estOf(t),must=mustDo(t),lim=t.due&&isDate(t.due)&&t.due>=days[0]&&t.due<=last?t.due:last;
     const ok=days.filter(x=>x<=lim&&!(lowD(x)&&!must)&&!(isWE(x)&&catOf(t)==='work'&&!must)&&!(t.messy&&!messyOk(x)));
     let d=ok.find(x=>load(x)+e<=dayBudget(x));
@@ -156,7 +159,7 @@ function timeline0(d){const live=d===today(),marks=live?(S.plan?.marks||{}):{},p
   const items=weekItems().filter(t=>t.day===d&&!isDone(t)&&!marks[t.id]).concat(dailiesOn(d).filter(t=>!marks[t.id]&&t.last!==d));
   const deep=t=>catOf(t)==='project'||estOf(t)>=60;
   const mo=live?(S.plan?.order||[]):[],mi=id=>{const k=mo.indexOf(id);return k<0?1e6:k},manual=mo.length>0;
-  const order=items.map(t=>({t,pr:prio(t).v,m:estOf(t)})).sort((x,y)=>manual?(mi(x.t.id)-mi(y.t.id))||(mustDo(y.t)-mustDo(x.t))||y.pr-x.pr:(mustDo(y.t)-mustDo(x.t))||y.pr-x.pr);
+  const order=items.map(t=>({t,pr:prio(t).v,m:estOf(t)})).sort((x,y)=>manual?(mi(x.t.id)-mi(y.t.id))||(mustDo(y.t)-mustDo(x.t))||y.pr-x.pr:(mustDo(y.t)-mustDo(x.t))||ordBoth(x.t,y.t)||y.pr-x.pr);
   const fits=(s,m)=>!taken.some(([x,y])=>s<y&&s+m>x);
   const nextFree=(from,m)=>{let s=from;for(let i=0;i<200&&s+m<=lim;i++){const c=taken.find(([x,y])=>s<y&&s+m>x);if(!c)return s;s=c[1]}return null};
   const put=(o,s,extra)=>{taken.push([s,s+o.m]);out.push({s,e:s+o.m,t:T(o.t),id:o.t.id,kind:'task',...extra})},placed=new Set();
@@ -432,21 +435,32 @@ function micTop(){const st=V.state;
   if(canHear()){if(S.view!=='today'&&S.view!=='chat')show('chat');listen();return}
   show('chat');const el=$('chatIn');el.focus();toast('Tap the microphone on your keyboard and talk, then Send.',3200)}
 {const _rc=renderCore;renderCore=function(){_rc();const m=$('btnMic');if(m){const on=V.state==='listening'||V.state==='starting';m.classList.toggle('rec',on);m.setAttribute('aria-label',on?'Stop and send':'Talk to Jarvis')}if(S.view==='chat')renderChat()}}
-/* ---------- drag to reorder today's list (the grip on the right of each row) ---------- */
-{let D=null;
-  document.addEventListener('pointerdown',e=>{const h=e.target.closest('[data-drag]');if(!h)return;const li=h.closest('li.r');if(!li)return;e.preventDefault();
-    D={li,id:h.dataset.drag,list:li.parentElement,y0:e.clientY,moved:false};S.dragging=true;document.body.classList.add('dragging');li.classList.add('drag');try{h.setPointerCapture(e.pointerId)}catch(_){}},{passive:false});
+/* ---------- drag to reorder: today's list (his order for today) and the Tasks list (his ranking overall) ---------- */
+{let D=null;const rowsOf=l=>[...l.querySelectorAll(':scope > [data-row]')];
+  document.addEventListener('pointerdown',e=>{const h=e.target.closest('[data-drag]');if(!h)return;const li=h.closest('[data-row]'),list=li?.parentElement;if(!li||!list?.dataset.dragset)return;e.preventDefault();
+    D={li,id:h.dataset.drag,list,set:list.dataset.dragset,y0:e.clientY,moved:false};S.dragging=true;document.body.classList.add('dragging');li.classList.add('drag');try{h.setPointerCapture(e.pointerId)}catch(_){}},{passive:false});
   document.addEventListener('pointermove',e=>{if(!D)return;e.preventDefault();const y=e.clientY;D.li.style.transform=`translateY(${y-D.y0}px)`;
-    const rows=[...D.list.querySelectorAll('li.r[data-row]')].filter(r=>r!==D.li&&!r.classList.contains('done'));
+    const rows=rowsOf(D.list).filter(r=>r!==D.li&&!r.classList.contains('done'));
+    const fol=rows.filter(r=>D.li.compareDocumentPosition(r)&Node.DOCUMENT_POSITION_FOLLOWING);rows.splice(0,rows.length,...rows.filter(r=>!fol.includes(r)),...fol.reverse());
     for(const r of rows){const b=r.getBoundingClientRect(),mid=b.top+b.height/2,me=D.li.getBoundingClientRect();
-      if(y<mid&&me.top>b.top&&D.li.compareDocumentPosition(r)&Node.DOCUMENT_POSITION_PRECEDING){D.list.insertBefore(D.li,r);D.y0+=D.li.getBoundingClientRect().top-me.top;D.li.style.transform=`translateY(${y-D.y0}px)`;D.moved=true;break}
-      if(y>mid&&me.bottom<b.bottom&&D.li.compareDocumentPosition(r)&Node.DOCUMENT_POSITION_FOLLOWING){D.list.insertBefore(D.li,r.nextSibling);D.y0+=D.li.getBoundingClientRect().top-me.top;D.li.style.transform=`translateY(${y-D.y0}px)`;D.moved=true;break}}},{passive:false});
+      if(y<mid&&(D.li.compareDocumentPosition(r)&Node.DOCUMENT_POSITION_PRECEDING)){D.list.insertBefore(D.li,r);D.y0+=D.li.getBoundingClientRect().top-me.top;D.li.style.transform=`translateY(${y-D.y0}px)`;D.moved=true;break}
+      if(y>mid&&(D.li.compareDocumentPosition(r)&Node.DOCUMENT_POSITION_FOLLOWING)){D.list.insertBefore(D.li,r.nextSibling);D.y0+=D.li.getBoundingClientRect().top-me.top;D.li.style.transform=`translateY(${y-D.y0}px)`;D.moved=true;break}}
+    /* near the edge of what he can see: keep scrolling */
+    const top=BAND.tall?BAND.top+($('top')?.offsetHeight||0):($('top')?.offsetHeight||0),bot=BAND.tall?BAND.bot:innerHeight;if(!BAND.tall){if(y<top+40)scrollBy(0,-12);else if(y>bot-40)scrollBy(0,12)}},{passive:false});
   const end=async()=>{if(!D)return;const d=D;D=null;d.li.style.transform='';d.li.classList.remove('drag');document.body.classList.remove('dragging');S.dragging=false;
-    if(!d.moved){renderToday();return}
-    const ids=[...d.list.querySelectorAll('li.r[data-row]')].map(r=>r.dataset.row).filter(i=>S.tasks.has(i));
-    S.plan={...(S.plan||{}),order:ids};FM.clear();renderToday();await db?.doc('plans/'+today()).update({order:ids}).catch(()=>{});toast('Your order is saved. The first one is next.',1800)};
+    if(!d.moved){renderAll();return}
+    const ids=rowsOf(d.list).map(r=>r.dataset.row).filter(i=>S.tasks.has(i));
+    if(d.set==='today'){S.plan={...(S.plan||{}),order:ids};FM.clear();renderToday();await db?.doc('plans/'+today()).update({order:ids}).catch(()=>{});toast('Your order is saved. The first one is next.',1800);return}
+    /* Tasks list: one write when the neighbours are already ranked, otherwise rank the whole visible list once */
+    const k=ids.indexOf(d.id),pv=S.tasks.get(ids[k-1]),nx=S.tasks.get(ids[k+1]),num=x=>Number.isFinite(x?.ord);
+    let writes=[];
+    if((!pv||num(pv))&&(!nx||num(nx))&&(pv||nx)&&(!pv||!nx||nx.ord-pv.ord>0.001)){const o=!pv?nx.ord-10:!nx?pv.ord+10:(pv.ord+nx.ord)/2;writes=[[d.id,o]]}
+    else writes=ids.map((id,i)=>[id,(i+1)*10]).filter(([id,o])=>S.tasks.get(id).ord!==o);
+    for(const [id,o] of writes)S.tasks.set(id,{...S.tasks.get(id),ord:o});FM.clear();renderList();
+    await Promise.all(writes.map(([id,o])=>db?.doc('tasks/'+id).update({ord:o}).catch(()=>{})));await applyWeek(false);toast('Ranking saved. Jarvis plans in this order.',2000)};
   document.addEventListener('pointerup',end);document.addEventListener('pointercancel',end);
-  const _rt=renderToday;renderToday=function(){if(S.dragging)return;return _rt()}}
+  const _rt=renderToday;renderToday=function(){if(S.dragging)return;return _rt()};
+  const _rl=renderList;renderList=function(){if(S.dragging)return;return _rl()}}
 
 /* ---------- progress on tasks that take more than one sitting ---------- */
 const progToday=t=>(t.prog||[]).filter(x=>x.d===today()).reduce((a,x)=>a+(+x.min||0),0);
