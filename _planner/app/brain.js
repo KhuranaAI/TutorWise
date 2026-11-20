@@ -13,7 +13,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.tlDay='';S.nextSkip=[];
-const BUILD=42;
+const BUILD=43;
 /* a remove button for any task row */
 const XB=id=>`<button class="xb" data-act="drop" data-id="${id}" aria-label="Remove this task" title="Remove"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>`;
 if(matchMedia('(pointer:coarse)').matches&&!window.__HQ_DAY)V.noMic=true; /* a phone gives this page no mic of its own unless Claude's dictation is there (canHear checks that first) */
@@ -155,7 +155,8 @@ function timeline0(d){const live=d===today(),marks=live?(S.plan?.marks||{}):{},p
   const tt0=teachOf(d),lim=tt0?Math.min(toM('22:00'),toM(tt0.e)+60):toM('21:30'),fx=fixedOn(d),out=fx.map(f=>({...f})),taken=fx.map(f=>[f.s,f.e]);
   const items=weekItems().filter(t=>t.day===d&&!isDone(t)&&!marks[t.id]).concat(dailiesOn(d).filter(t=>!marks[t.id]&&t.last!==d));
   const deep=t=>catOf(t)==='project'||estOf(t)>=60;
-  const order=items.map(t=>({t,pr:prio(t).v,m:estOf(t)})).sort((x,y)=>(mustDo(y.t)-mustDo(x.t))||y.pr-x.pr);
+  const mo=live?(S.plan?.order||[]):[],mi=id=>{const k=mo.indexOf(id);return k<0?1e6:k},manual=mo.length>0;
+  const order=items.map(t=>({t,pr:prio(t).v,m:estOf(t)})).sort((x,y)=>manual?(mi(x.t.id)-mi(y.t.id))||(mustDo(y.t)-mustDo(x.t))||y.pr-x.pr:(mustDo(y.t)-mustDo(x.t))||y.pr-x.pr);
   const fits=(s,m)=>!taken.some(([x,y])=>s<y&&s+m>x);
   const nextFree=(from,m)=>{let s=from;for(let i=0;i<200&&s+m<=lim;i++){const c=taken.find(([x,y])=>s<y&&s+m>x);if(!c)return s;s=c[1]}return null};
   const put=(o,s,extra)=>{taken.push([s,s+o.m]);out.push({s,e:s+o.m,t:T(o.t),id:o.t.id,kind:'task',...extra})},placed=new Set();
@@ -167,10 +168,11 @@ function timeline0(d){const live=d===today(),marks=live?(S.plan?.marks||{}):{},p
     const g=grpOf(o.t);let at=s+o.m;if(g)for(const q of order)if(!placed.has(q.t.id)&&grpOf(q.t)===g&&!hm(q.t.at||''))at=place(q,at); /* same job, same block */
     return Math.max(from,at)};
   /* messy jobs first thing, then what must happen today */
+  if(manual){let at=a;for(const o of order)at=place(o,at)}
   for(const o of order)if(o.t.messy)place(o,a);
   let cur=a;for(const o of order)if(mustDo(o.t)&&!deep(o.t))cur=place(o,a);
   const dl=order.filter(o=>!placed.has(o.t.id)&&deep(o.t));
-  if(dl.length&&!low){const pk=p.peak?{s:toM(p.peak.s),e:toM(p.peak.e)}:null,from=pk&&pk.e>a?Math.max(a,pk.s):a;let s=nextFree(from,dl[0].m);if(s==null)s=nextFree(a,dl[0].m);
+  if(dl.length&&!low&&!manual){const pk=p.peak?{s:toM(p.peak.s),e:toM(p.peak.e)}:null,from=pk&&pk.e>a?Math.max(a,pk.s):a;let s=nextFree(from,dl[0].m);if(s==null)s=nextFree(a,dl[0].m);
     if(s!=null){let at=s;for(const o of dl){if(at+o.m>lim||!fits(at,o.m)||at-s>=150)break;put(o,at,{deep:true});placed.add(o.t.id);at+=o.m}
       if(at>s)out.push({s,e:at,t:'Focus block',kind:'focus'})}}
   for(const o of order)place(o,a);
@@ -242,7 +244,11 @@ function wkSheet(id){const t=S.tasks.get(id);if(!t)return;const days=horizon(),d
   sheet(`<h3 style="font:600 18px/1.3 var(--disp);margin:0 0 4px">${esc(T(t))}</h3><div class="m">${esc(where)} · ${esc(CATS[catOf(t)])}${t.due?' · due '+esc(dayName(t.due)):''}</div>
   ${!done&&pr.why.length?`<div class="m" style="margin-top:4px">Why it ranks where it does: ${esc(pr.why.join(', '))}.</div>`:''}
   ${t.n?`<p class="why" style="white-space:pre-wrap;margin:8px 0 0">${esc(t.n)}</p>`:''}${t.msg?`<p class="first" id="m_s${t.id}" style="white-space:pre-wrap;margin-top:8px">${esc(t.msg)}</p><button class="sm" data-act="copy" data-from="m_s${t.id}">Copy the message</button>`:''}
-  ${done?'':`<label>Do it on</label><div class="chips" style="flex-wrap:wrap">${days.map(d=>`<button class="${t.day===d?'on':''}" data-act="wkMove" data-id="${t.id}" data-d="${d}">${d===today()?'Today':d===addD(today(),1)?'Tomorrow':DN[dowOf(d)]+' '+(+d.slice(8))}</button>`).join('')}</div>
+  ${done?'':`<h2 style="margin-top:14px">Progress</h2><div class="card" style="padding:12px">${(t.prog||[]).length?`<div style="margin-bottom:8px">${(t.prog||[]).slice(-5).reverse().map(x=>`<div class="m">${esc(dayName(x.d))}: ${x.min?esc(durS(x.min)):''}${x.note?(x.min?' · ':'')+esc(x.note):''}</div>`).join('')}</div>`:''}
+    <div class="row" style="flex-wrap:nowrap;align-items:flex-end"><div class="grow"><label for="pg_min" style="margin-top:0">Worked on it today</label><select id="pg_min">${[0,10,15,20,30,45,60,90,120,180].map(m=>`<option value="${m}"${m===30?' selected':''}>${m?durS(m):'—'}</option>`).join('')}</select></div><div class="grow"><label for="pg_left" style="margin-top:0">Still to go</label><select id="pg_left">${[0,10,15,20,30,45,60,90,120,180,240].map(m=>`<option value="${m}"${m===Math.min(240,Math.max(0,e-30))?' selected':''}>${m?durS(m):'unsure'}</option>`).join('')}</select></div></div>
+    <label for="pg_note">What you did (optional)</label><input id="pg_note" placeholder="e.g. finished the unit circle, half the practice set">
+    <div class="row" style="margin-top:8px"><button class="sm pri" data-act="pgLog" data-id="${t.id}">Log it</button><button class="sm" data-act="pgLog" data-id="${t.id}" data-next="${addD(today(),1)}">Log it, rest tomorrow</button></div></div>
+  <label>Do it on</label><div class="chips" style="flex-wrap:wrap">${days.map(d=>`<button class="${t.day===d?'on':''}" data-act="wkMove" data-id="${t.id}" data-d="${d}">${d===today()?'Today':d===addD(today(),1)?'Tomorrow':DN[dowOf(d)]+' '+(+d.slice(8))}</button>`).join('')}</div>
   <label>Priority</label><div class="chips" style="flex-wrap:wrap">${[1,2,3,4].map(p=>`<button class="${(t.p||3)===p?'on':''}" data-act="tSet" data-id="${t.id}" data-f="p" data-v="${p}">${PRI[p]}</button>`).join('')}</div>
   <div class="row" style="flex-wrap:nowrap;align-items:flex-end;margin-top:2px"><div class="grow"><label for="tf_est">Takes</label><select id="tf_est" data-tf="est" data-id="${t.id}">${mins.map(m=>`<option value="${m}"${m===e?' selected':''}>${durS(m)}</option>`).join('')}</select></div><div class="grow"><label for="tf_due">Due</label><input id="tf_due" type="date" data-tf="due" data-id="${t.id}" value="${isDate(t.due||'')?t.due:''}"></div></div>
   <label for="tf_cat">Category</label><select id="tf_cat" data-tf="cat" data-id="${t.id}">${Object.keys(CATS).map(k=>`<option value="${k}"${catOf(t)===k?' selected':''}>${CATS[k]}</option>`).join('')}</select>`}
@@ -332,6 +338,7 @@ function peopleSheet(){const ch=[...S.tasks.values()].filter(t=>t.s==='recurring
 /* ---------- chat ---------- */
 function renderChat(){const el=$('chatList');if(!el)return;const m=$('chatMic');if(m){m.hidden=!dict;m.classList.toggle('rec',!!V.quick&&V.qEl==='chatIn')}
   const l=(S.dumps||[]).slice(0,30);let day='',h='';
+  if(V.state==='listening'||V.state==='starting')h+=`<div class="turn"><div class="bub me dim">${esc((V.buf||'')+(V.partial?' '+V.partial:''))||'Listening… talk, then tap the mic to send.'}</div></div>`;
   if(V.state==='thinking'&&V.heard&&!l.some(d=>d.text===V.heard&&d.reply))h+=`<div class="turn"><div class="bub me">${esc(V.heard)}</div><div class="bub ai dim">Thinking…</div></div>`;
   for(const d of l){const dd=dayOf(d.at);if(dd!==day){day=dd;h+=`<div class="bday">${esc(dayName(dd))}</div>`}if(V.state==='thinking'&&d.text===V.heard&&!d.reply)continue;h+=`<div class="turn"><div class="bub me">${esc(d.text)}</div>${d.reply?`<div class="bub ai">${esc(d.reply)}${canSpeak()?`<button class="say1" data-act="sayIt" data-id="${d.id}" aria-label="Read this aloud"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg></button>`:''}</div>`:''}</div>`}
   el.innerHTML=h||`<div class="m" style="text-align:center;padding:40px 12px">Talk to me the way you’d talk to a person.<br>Tasks, plans, notes, questions, changes to your schedule.</div>`}
@@ -372,13 +379,14 @@ function brainRules(){return `- Task details: every new task gets "cat" (persona
 - Time he is not free today (getting ready, making lunch, driving to the centre, an errand), even said in passing ("I should reach the centre around 11:30", "count travel and lunch"): add a block for it with from and to (from now until he arrives if he gives only the arrival). Use a sensible length only when he clearly implies one (travel to the centre about 30 minutes, lunch about 30 minutes) and say the times you used in a few words.
 - When he says when something should happen today ("this evening", "after tutoring", "first thing", "later", "I'll try again later", "at 3"): set_meta with "when" (an HH:MM time, or "after teaching", "evening", "later", "morning"). The app puts it at that time.
 - When he says something is less (or more) important than the app thinks ("report cards aren't the most important today"), lower (or raise) "pri" with set_meta on those items. Never just say you will.
+- Worked on something that isn't finished ("did 30 minutes of trig", "got halfway through the report cards"): progress with minutes, a short note, "left" = minutes still to go if he says ("another 30 to 40 minutes" means 35), and "next" = the date if he says when he'll continue ("tomorrow"). Never mark it done.
 - Partly done ("tidied my room a bit", "called, no answer"): keep it open, update est to what is left if he says, and set "when" if he says when he'll finish it. Never mark it done.
 - Ask a question at most once. If you asked something in an earlier reply above and he has not answered, do not ask it again; carry on without it.
 - If he asks what to do now or what's next: whats_next (the app answers with the single best thing). For "what's going on" or "where are things", answer yourself in two sentences from today's timeline: what is done, what is next and when. No ops.
 - Your reply must match what your ops actually do. Never say you are rebuilding, checking or updating something unless an op does it; the app re-plans by itself after every change.
 - Voice: vary your wording every time; never open the way any of your last replies did, and do not open with "Understood". Be brief, natural and a little clever, never cute. Confirm changes in a few words. Ask at most one short question. Never invent tasks, events or details he did not give.
 `}
-const brainOps=()=>`{"op":"set_meta","id":"","cat":"","due":null,"pri":null,"est":null,"messy":null,"when":null},{"op":"block","title":"","from":"HH:MM","to":"HH:MM","date":null},{"op":"note","kind":"note|app|inbox","text":""},{"op":"low_energy","date":"YYYY-MM-DD","on":true},{"op":"day_start","date":"YYYY-MM-DD","at":"HH:MM"},{"op":"plan_time","at":"21:00","once":false},{"op":"chore","title":"","every_days":7,"est":30},{"op":"person","name":"","every_days":14,"how":"Message","note":""},{"op":"touched","name":""},{"op":"project","name":"","status":null,"next":"","note":"","url":null},{"op":"habit","name":"","per_week":3},{"op":"habit_done","name":"workout","date":null},{"op":"whats_next"},`;
+const brainOps=()=>`{"op":"set_meta","id":"","cat":"","due":null,"pri":null,"est":null,"messy":null,"when":null},{"op":"block","title":"","from":"HH:MM","to":"HH:MM","date":null},{"op":"progress","id":"","minutes":30,"note":"","left":null,"next":null},{"op":"note","kind":"note|app|inbox","text":""},{"op":"low_energy","date":"YYYY-MM-DD","on":true},{"op":"day_start","date":"YYYY-MM-DD","at":"HH:MM"},{"op":"plan_time","at":"21:00","once":false},{"op":"chore","title":"","every_days":7,"est":30},{"op":"person","name":"","every_days":14,"how":"Message","note":""},{"op":"touched","name":""},{"op":"project","name":"","status":null,"next":"","note":"","url":null},{"op":"habit","name":"","per_week":3},{"op":"habit_done","name":"workout","date":null},{"op":"whats_next"},`;
 async function brainAdd(id,o){const c={};if(CATS[o.cat])c.cat=o.cat;if(o.messy===true)c.messy=true;if(o.project){const p=S.projects.find(x=>norm(x.name)===norm(o.project));if(p)c.proj=p.id}if(Object.keys(c).length){S.tasks.set(id,{...S.tasks.get(id),...c});await up(id,c)}}
 async function brainOp(o,out,src){const td=today();
   if(o.op==='set_meta'&&S.tasks.has(o.id)){const c={};if(CATS[o.cat])c.cat=o.cat;if(isDate(o.due||''))c.due=o.due;if([1,2,3,4].includes(o.pri))c.p=o.pri;if(+o.est)c.est=+o.est;if(typeof o.messy==='boolean')c.messy=o.messy;
@@ -386,6 +394,7 @@ async function brainOp(o,out,src){const td=today();
       if(hm(w))at=w;else if(/after.?(teach|tutor|lesson|class)|evening|tonight/i.test(w))at=tt?hmS(toM(tt.e)+15):'19:30';else if(/later|retry|again/i.test(w))at=hmS(Math.min(toM('21:00'),Math.ceil((toM(nowHM())+120)/15)*15));else if(/morning|first/i.test(w))at=null;
       if(at){c.at=at;c.day=d;c.wk=monOf(d);c.pin=true}}if(Object.keys(c).length){await upL(o.id,c);S.touch3=true;out.push('filed: '+T(S.tasks.get(o.id)))}return true}
   if(o.op==='note'&&o.text){const k=await addNote(o.kind,o.text);if(k){out.push(`${k==='app'?'app update':k} saved`);V.brainSay+=k==='app'?' '+vary(['Added to your app updates.','Saved for the next app update.','That’s in your app updates list.'],o.text):k==='inbox'?' It’s in your inbox for tonight.':''}return true}
+  if(o.op==='progress'&&S.tasks.has(o.id)){const m=await logProgress(o.id,o.minutes,o.note,o.left,o.next);out.push('progress: '+T(S.tasks.get(o.id))+' — '+m);return true}
   if(o.op==='block'&&hm(o.from||'')&&hm(o.to||'')&&o.to>o.from){const d=isDate(o.date||'')?o.date:td,x=String(o.title||'Busy').slice(0,60);await dayWrite(d,cur=>({...cur,busy:[...(cur.busy||[]).filter(b=>!(b.s===o.from&&b.e===o.to)),{s:o.from,e:o.to,x}]}));out.push(`blocked ${o.from}–${o.to}: ${x}`);S.touch3=true;return true}
   if(o.op==='low_energy'){const d=isDate(o.date||'')?o.date:td;await dayWrite(d,cur=>({...cur,low:o.on!==false}));if(o.on===false)await restoreLow(d);const m=await relayMoves(true);out.push((o.on!==false?'light day ':'normal day ')+d);V.brainSay+=m;return true}
   if(o.op==='day_start'&&hm(o.at||'')){const d=isDate(o.date||'')?o.date:addD(td,1);await dayWrite(d,cur=>({...cur,start:o.at}));const m=await relayMoves(true);out.push(`${dayWord(d)} starts ${o.at}`);V.brainSay+=m;return true}
@@ -414,6 +423,40 @@ async function afterDone(t,d){if(!t)return;
   await _fin(id,ev);if(!t)return;const c={};if(act>0&&act<480)c.act=act;if(t.startAt)c.startAt=null;if(Object.keys(c).length)await upL(id,c);
   await afterDone(t,today())}}
 {const _db=doneBack;doneBack=async function(id,d){const t=S.tasks.get(id);await _db(id,d);await afterDone(t,d)}}
+
+/* ---------- the mic at the top ---------- */
+function micTop(){const st=V.state;
+  if(st==='listening'||st==='starting'){finish(true);return}
+  if(st==='speaking'){stopSpeak();return}
+  if(V.quick){quickMicOff();return}
+  if(canHear()){if(S.view!=='today'&&S.view!=='chat')show('chat');listen();return}
+  show('chat');const el=$('chatIn');el.focus();toast('Tap the microphone on your keyboard and talk, then Send.',3200)}
+{const _rc=renderCore;renderCore=function(){_rc();const m=$('btnMic');if(m){const on=V.state==='listening'||V.state==='starting';m.classList.toggle('rec',on);m.setAttribute('aria-label',on?'Stop and send':'Talk to Jarvis')}if(S.view==='chat')renderChat()}}
+/* ---------- drag to reorder today's list (the grip on the right of each row) ---------- */
+{let D=null;
+  document.addEventListener('pointerdown',e=>{const h=e.target.closest('[data-drag]');if(!h)return;const li=h.closest('li.r');if(!li)return;e.preventDefault();
+    D={li,id:h.dataset.drag,list:li.parentElement,y0:e.clientY,moved:false};S.dragging=true;document.body.classList.add('dragging');li.classList.add('drag');try{h.setPointerCapture(e.pointerId)}catch(_){}},{passive:false});
+  document.addEventListener('pointermove',e=>{if(!D)return;e.preventDefault();const y=e.clientY;D.li.style.transform=`translateY(${y-D.y0}px)`;
+    const rows=[...D.list.querySelectorAll('li.r[data-row]')].filter(r=>r!==D.li&&!r.classList.contains('done'));
+    for(const r of rows){const b=r.getBoundingClientRect(),mid=b.top+b.height/2,me=D.li.getBoundingClientRect();
+      if(y<mid&&me.top>b.top&&D.li.compareDocumentPosition(r)&Node.DOCUMENT_POSITION_PRECEDING){D.list.insertBefore(D.li,r);D.y0+=D.li.getBoundingClientRect().top-me.top;D.li.style.transform=`translateY(${y-D.y0}px)`;D.moved=true;break}
+      if(y>mid&&me.bottom<b.bottom&&D.li.compareDocumentPosition(r)&Node.DOCUMENT_POSITION_FOLLOWING){D.list.insertBefore(D.li,r.nextSibling);D.y0+=D.li.getBoundingClientRect().top-me.top;D.li.style.transform=`translateY(${y-D.y0}px)`;D.moved=true;break}}},{passive:false});
+  const end=async()=>{if(!D)return;const d=D;D=null;d.li.style.transform='';d.li.classList.remove('drag');document.body.classList.remove('dragging');S.dragging=false;
+    if(!d.moved){renderToday();return}
+    const ids=[...d.list.querySelectorAll('li.r[data-row]')].map(r=>r.dataset.row).filter(i=>S.tasks.has(i));
+    S.plan={...(S.plan||{}),order:ids};FM.clear();renderToday();await db?.doc('plans/'+today()).update({order:ids}).catch(()=>{});toast('Your order is saved. The first one is next.',1800)};
+  document.addEventListener('pointerup',end);document.addEventListener('pointercancel',end);
+  const _rt=renderToday;renderToday=function(){if(S.dragging)return;return _rt()}}
+
+/* ---------- progress on tasks that take more than one sitting ---------- */
+const progToday=t=>(t.prog||[]).filter(x=>x.d===today()).reduce((a,x)=>a+(+x.min||0),0);
+const progP=t=>{const m=progToday(t);return m?` <span class="pill good">${durS(m)} in</span>`:''};
+async function logProgress(id,min,note,left,next){const t=S.tasks.get(id);if(!t)return'';min=Math.max(0,Math.round(+min||0));const td=today();
+  const prog=[...(t.prog||[]),{d:td,min,note:String(note||'').slice(0,300),at:nowHM()}].slice(-60),c={prog,startAt:null};
+  if(+left>0)c.est=Math.round(+left);if(note)c.n=((t.n||'')+'\n'+td+': '+(min?durS(min)+' — ':'')+String(note).slice(0,300)).trim();
+  if(isDate(next||'')&&next>=td){Object.assign(c,{day:next,wk:monOf(next),pin:true,at:null,hold:null})}
+  await upL(id,c);if(min)await exMark('pg_'+id,{t:'Worked on: '+T(t).slice(0,90),min:progToday({prog})||min,manual:true,at:nowHM()});logEv('did',`${durS(min)} on ${T(t)}`);
+  await applyWeek(false);return `${min?durS(min)+' logged':'Noted'}${+left>0?`, about ${durS(+left)} to go`:''}${isDate(next||'')&&next>=td?`, back on ${dayWord(next)}`:''}.`}
 
 /* ---------- the minute tick ---------- */
 const quiet3=()=>V.state==='idle'&&$('sheet').hidden&&!(document.activeElement&&/TEXTAREA|INPUT|SELECT/.test(document.activeElement.tagName)&&document.activeElement.value);
@@ -445,6 +488,8 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
     chatSend:()=>chatSend(),
     chatMic:()=>{if(V.quick){quickMicOff();renderChat();return}V.qEl='chatIn';quickMic();V.qEl='chatIn';renderChat()},
     reload:()=>location.reload(),
+    pgLog:async()=>{const m=$('pg_min')?.value,l=$('pg_left')?.value,n=$('pg_note')?.value||'';b.disabled=true;const msg=await logProgress(id,m,n,l,b.dataset.next||'');toast(msg,2400);wkSheet(id)},
+    micTop:()=>micTop(),
     sayIt:()=>{const d=(S.dumps||[]).find(x=>x.id===id);if(d?.reply){V.ttsOff=false;speak(d.reply,true)}},
     drop:async()=>{const t=S.tasks.get(id);if(!t)return;const prev={s:t.s,day:t.day??null,pin:!!t.pin,at:t.at??null};$('sheet').hidden=true;
       await upL(id,{s:'parked',dropped:today(),day:null,pin:false,at:null});if(S.plan?.picks?.some(k=>k.id===id))await plMark(id,{gone:true}).catch(()=>{});await applyWeek(false);logEv('drop',T(t));
