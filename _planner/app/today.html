@@ -1231,7 +1231,7 @@ function briefText(){
   const cur=openPicks()[0],f=feeTot(),parts=[greet(true)];
   const ls=lastSame();if(ls&&modeNow()==='work')parts.push(ls);
   if(cur&&modeNow()==='work')parts.push(`${cur.k.why} Start by: ${cur.k.first}`);
-  if(f.sum)parts.push(`${money(f.sum)} in fees is still unpaid.`);
+  if(f.sum&&typeof feeNagOk==='function'&&feeNagOk()){parts.push(`${money(f.sum)} in fees is still unpaid.`);feeNagDone()}
   const hard=[...S.tasks.values()].filter(t=>t.hard&&t.due&&t.s!=='done'&&dayDiff(t.due)>=0).sort((x,y)=>x.due.localeCompare(y.due))[0];
   if(hard){const d=dayDiff(hard.due);parts.push(`${hard.t} is ${d===0?'due today':d===1?'due tomorrow':'due in '+d+' days'}.`)}
   return parts.join(' ')}
@@ -2266,6 +2266,7 @@ Chores: ${[...S.tasks.values()].filter(t=>t.s==='recurring'&&t.every).map(c=>`${
 Projects gone quiet: ${quietProjects().map(x=>`${x.p.name} (${x.q} days)`).join('; ')||'none'}
 Inbox (unsorted): ${notesOf('inbox').map(n=>String(n.text||'').slice(0,80)).join(' / ')||'empty'}
 Nightly planning time: ${planAt()}.
+Fee reminder due (mention unpaid fees on your own only if yes): ${feeNagOk()?'yes':'no'}.
 Your last replies (never start the same way as any of these): ${(S.dumps||[]).slice(0,6).map(d=>'"'+String(d.reply||'').slice(0,50)+'"').join(' ')}
 `}
 function brainRules(){return `- Task details: every new task gets "cat" (personal, finances, health, work, project, home or people). Give "due", "pri" (1 critical, 2 high, 3 normal, 4 low) and "est" in minutes when he says them. When he gives no priority or no time needed, he wants to be asked for both. Do it without losing the task: add it now with your best guess, and end your reply with one short question that states the guess (e.g. \"Normal priority, about 30 minutes: right?\"). When he gives several tasks at once, ask once for the batch, not per task. When his next message answers, apply it with set_meta. To change details on an existing task use set_meta.
@@ -2285,6 +2286,7 @@ function brainRules(){return `- Task details: every new task gets "cat" (persona
 - Partly done ("tidied my room a bit", "called, no answer"): keep it open, update est to what is left if he says, and set "when" if he says when he'll finish it. Never mark it done.
 - Ask a question at most once. If you asked something in an earlier reply above and he has not answered, do not ask it again; carry on without it.
 - Money: a payment he received is paid with the amount, the date and the method ("cash" = Cash, e-transfer = ET). The app writes it to his fee sheet (the month's tab of his income sheet: Date Received, Fee Received and Payment Method) and to the TutorWise Billing ledger. If he did not say how he was paid, record it anyway and ask once: "Cash or e-transfer?"; his answer is pay_method. One payment covering two children is one paid op per child. If he says a payment is already in the sheet but missing from billing, use paid with billing_only true.
+- Unpaid fees: bring them up on your own only when \"Fee reminder due\" above is yes (from two weeks into the month, then every few days; sending parents reminders resets it). When he says he sent fee reminders, mark that task done.
 - What you did: the app's operation results are listed after each of your earlier replies above. Only ever describe what those results show. Never say you cannot reach his fee sheet or billing: the app does both. Never claim you saved, removed or changed anything that no op did.
 - App updates are only for changes he asks to the app itself. If one was filed by mistake, remove it with note_drop. Never file a mistake you made, a complaint about a reply, or a correction to his data as an app update.
 - If he asks what to do now or what's next: whats_next (the app answers with the single best thing). For "what's going on" or "where are things", answer yourself in two sentences from today's timeline: what is done, what is next and when. No ops.
@@ -2322,6 +2324,7 @@ async function afterDone(t,d){if(!t)return;
   if(t.chore&&S.tasks.has(t.chore)){const c=S.tasks.get(t.chore);if(!c.last||c.last<d)await upL(t.chore,{last:d})}
   if(t.person){const p=S.people.find(x=>x.id===t.person);if(p&&(!p.last||p.last<d))await db.doc('people/'+p.id).update({last:d}).catch(()=>{})}
   if(t.proj)await db.doc('projects/'+t.proj).update({last:today()}).catch(()=>{});
+  if(/fee/i.test(t.t||'')&&/remind|message|note/i.test(t.t||'')){S.settings={...S.settings,feeRemindAt:d};await db.doc('settings/main').update({feeRemindAt:d}).catch(()=>{})}
   const hk=t.hab||(/work ?out|gym/i.test(t.t||'')?'workout':'');if(hk)await habitMark(hk,d)}
 {const _fin=finishTask;finishTask=async function(id,ev){const t=S.tasks.get(id);let act=null;
   if(t&&t.s!=='recurring'){if(t.startAt&&dayOf(t.startAt)===today())act=Math.round((Date.now()-Date.parse(t.startAt))/6e4);
@@ -2342,6 +2345,9 @@ async function setPayMethod(s,method){const out=[];
   out.push(await sheetMethod(s,method)?'fee sheet method set to '+method:'fee sheet method not written');
   const p=(S.students.get(s.id)||s).billPending;if(p){const r=await billPay(s,p.amount,p.date,method);out.push(r)}return out.join('; ')}
 
+/* fees: only from two weeks into the month, then every few days; sending reminders to parents resets the clock */
+function feeNagOk(){const td=today();if(+td.slice(8)<14)return false;const last=[S.settings.feeNagAt,S.settings.feeRemindAt].filter(isDate).sort().pop();return !last||-dayDiff(last)>=3}
+function feeNagDone(){S.settings={...S.settings,feeNagAt:today()};db?.doc('settings/main').update({feeNagAt:today()}).catch(()=>{})}
 /* ---------- the mic at the top ---------- */
 function micTop(){const st=V.state;
   if(st==='listening'||st==='starting'){finish(true);return}
