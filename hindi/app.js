@@ -406,16 +406,30 @@
     init(onChange) {
       if (!("speechSynthesis" in window)) return;
       const choose = () => {
-        const had = !!this.voice;
-        const vs = window.speechSynthesis.getVoices();
-        // Prefer the best Hindi voice installed (iPhone: "Lekha (Premium)" > "Lekha (Enhanced)" > basic).
-        const score = (v) => (/premium/i.test(v.name) ? 4 : 0) + (/enhanced|neural|natural/i.test(v.name) ? 3 : 0) + (/google/i.test(v.name) ? 1 : 0);
-        this.voice = vs.filter((v) => /^hi([-_]|$)/i.test(v.lang)).sort((a, b) => score(b) - score(a))[0] || null;
-        if (had !== !!this.voice && onChange) onChange();
+        const had = this.voice;
+        this.list = window.speechSynthesis.getVoices().filter((v) => /^hi([-_]|$)/i.test(v.lang)).sort((a, b) => this.score(b) - this.score(a));
+        // Her own pick (Settings → Hindi voice) wins; otherwise the best one installed.
+        const mine = S.settings.voiceURI && this.list.find((v) => v.voiceURI === S.settings.voiceURI);
+        this.voice = mine || this.list[0] || null;
+        if (had !== this.voice && onChange) onChange();
       };
+      this.rechoose = choose;
       choose();
       if (window.speechSynthesis.addEventListener) window.speechSynthesis.addEventListener("voiceschanged", choose);
       else window.speechSynthesis.onvoiceschanged = choose;
+    },
+    list: [],
+    // iPhones often call the basic and the downloaded voice by the same name ("Lekha"); the quality is in voiceURI
+    // (com.apple.voice.compact / .enhanced / .premium …).
+    score(v) {
+      const t = (v.name + " " + (v.voiceURI || "")).toLowerCase();
+      return (/premium/.test(t) ? 8 : 0) + (/enhanced|neural|natural|wavenet/.test(t) ? 6 : 0) + (/siri/.test(t) ? 5 : 0)
+        + (/compact|eloquence|espeak/.test(t) ? -4 : 0) + (/google/.test(t) ? 2 : 0) + (v.localService ? 1 : 0);
+    },
+    label(v) {
+      const t = (v.name + " " + (v.voiceURI || "")).toLowerCase();
+      const q = /premium/.test(t) ? "Premium ⭐" : /enhanced|neural|natural/.test(t) ? "Enhanced" : /siri/.test(t) ? "Siri" : /compact/.test(t) ? "Basic" : "";
+      return v.name.replace(/\s*\((premium|enhanced)\)/i, "") + (q ? " · " + q : "") + (v.lang && v.lang !== "hi-IN" ? " (" + v.lang + ")" : "");
     },
     get supported() { return !!this.voice; },
     get on() { return !!this.voice && S.settings.voice; },
@@ -3455,6 +3469,19 @@
       tile("filmi", "🎬", "Filmi album", `${S.filmi.length}/${FILMI.length} cards · 🏅 ${S.badges.length}`, showFilmiList),
       tile("handsfree wide", "🚗", "Hands-free practice", "Learn while driving or walking — just listen and speak", showHandsFreeSetup));
   }
+  // Choose which installed Hindi voice to use, with a test button.
+  function voicePicker() {
+    const sel = h("select", { class: "hf-select voice-select", "aria-label": "Hindi voice" },
+      Speech.list.map((v) => h("option", { value: v.voiceURI }, Speech.label(v))));
+    sel.value = Speech.voice ? Speech.voice.voiceURI : "";
+    sel.addEventListener("change", () => { S.settings.voiceURI = sel.value; save(); Speech.rechoose(); Speech.say("नमस्ते! मैं आपकी हिंदी आवाज़ हूँ।", true); });
+    const test = h("button", { class: "btn small-btn ghost" }, "▶ Test");
+    test.addEventListener("click", () => Speech.say("नमस्ते! आप कैसे हैं? मैं ठीक हूँ।", true));
+    return h("div", { class: "voice-pick" },
+      h("div", { class: "voice-row" }, sel, test),
+      h("p", { class: "small muted" }, Speech.list.length > 1 ? `${Speech.list.length} Hindi voices on this phone. Pick the one that sounds best.`
+        : "Only one Hindi voice on this phone. For a natural one: Settings → Accessibility → Spoken Content → Voices → Hindi → download an Enhanced or Premium voice, then reopen Bolo."));
+  }
   // Settings as labelled rows, so each option says what it does.
   function settingsCard() {
     const row = (icon, label, desc, key, onChange) => h("div", { class: "set-row" },
@@ -3464,7 +3491,8 @@
       row("🤫", "Quiet mode", "Type instead of speaking; no automatic audio", "quiet"),
       row("🌙", "Dark mode", "Easier on the eyes at night", "dark", applySettings),
       row("🔔", "Sound effects", "Dings, pops and celebrations", "sound"),
-      Speech.supported ? row("🗣️", "Hindi voice", "Read Hindi out loud on your phone", "voice") : h("p", { class: "small muted", style: "margin-top:8px" }, "🗣️ Hindi voice: download a Hindi voice in iPhone Settings → Accessibility → Spoken Content → Voices to hear Hindi read aloud."));
+      Speech.supported ? row("🗣️", "Hindi voice", "Read Hindi out loud on your phone", "voice") : h("p", { class: "small muted", style: "margin-top:8px" }, "🗣️ Hindi voice: download a Hindi voice in iPhone Settings → Accessibility → Spoken Content → Voices to hear Hindi read aloud."),
+      Speech.supported ? voicePicker() : null);
   }
 
   function showStart() {

@@ -982,3 +982,8 @@ body.hf-on { background: #0b1220; }
 .hf-btn { width: 76px; height: 76px; border-radius: 50%; background: rgba(255,255,255,.12); color: #fff; font-size: 30px; display: grid; place-items: center; }
 .hf-btn.main { width: 104px; height: 104px; font-size: 40px; background: #0f9f8f; box-shadow: 0 6px 0 #0b6e63; }
 .hf-btn:active { transform: scale(.95); }
+.voice-pick { padding: 4px 0 6px 46px; }
+.voice-row { display: flex; gap: 8px; align-items: center; }
+.voice-row .voice-select { flex: 1; min-width: 0; padding: 10px; font-size: 14px; }
+.voice-row .btn { width: auto; flex: 0 0 auto; }
+.voice-pick p { margin: 6px 0 0; }
