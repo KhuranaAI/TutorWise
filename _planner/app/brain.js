@@ -13,7 +13,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.tlDay='';S.nextSkip=[];
-const BUILD=47;
+const BUILD=48;
 const DH=id=>`<span class="dh" data-drag="${id}" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg></span>`;
 /* his own ranking (dragged in Tasks) decides between two ranked items */
 const ordBoth=(a,b)=>Number.isFinite(a.ord)&&Number.isFinite(b.ord)?a.ord-b.ord:0;
@@ -105,9 +105,14 @@ function prio(t){if(!t)return{v:0,why:[]};const why=[];let v=({1:100,2:70,3:40,4
   if(t.carried){v+=6;why.push('carried over')}
   if(t.person)why.push('keeping in touch');if(t.chore)why.push('chore rotation');
   return{v:Math.round(v),why}}
+const HOMEQ=/\b(clean(ing)? (my|the) (room|washroom|bathroom|kitchen|house|place)|my room|washroom|laundry|vacuum|dishes|cook|meal prep|pack (a |my )?lunch|at home|house|garage|bed ?sheets|groceries away|walk (otis|bruni|the dog)|feed (otis|bruni|the dog))\b/i;
+const isHome=t=>t?.where==='home'||(t?.where!=='centre'&&(catOf(t)==='home'&&!/centre|center|back area|tutorwise|classroom/i.test(t.t||'')||HOMEQ.test(t?.t||'')));
+const commute=()=>+S.settings.commute||25;
 const grpOf=t=>{const m=String(t.t||'').match(/^([^:]{3,28}):/);return m?norm(m[1]):''};
 /* dusty or dirty jobs: only where there are 2 clear hours before teaching (or no teaching) */
 const messyOk=d=>{const tt=teachOf(d);return !tt||toM(tt.s)-Math.max(toM(dayStart(d)),d===today()?toM(nowHM()):0)>=180};
+/* his own projects are fillers: they get time only after the day's important work */
+const isFill=t=>!!t&&(t.proj||catOf(t)==='project')&&!t.pin&&!hm(t.at||'')&&!(t.due&&dayDiff(t.due)<=2);
 const mustDo=t=>t.p===1||!!(t.due&&isDate(t.due)&&dayDiff(t.due)<=1)||!!(t.hard&&t.due&&dayDiff(t.due)<=2)||(hm(t.at||'')&&!!t.pin);
 const dayW=d=>Math.abs(dayDiff(d))>6?dayName(d):dayWord(d);
 
@@ -132,7 +137,7 @@ function layoutWeek(full){FM.clear();const days=horizon(),last=days[days.length-
   const lowD=d=>!!dayDoc(d).low;
   for(const t of items){const keep=t.day&&by.has(t.day)&&(t.pin||!full)&&!(lowD(t.day)&&!mustDo(t));if(keep)by.get(t.day).push(t);else if(t.pin&&t.day&&t.day>last)continue;else wait.push(t)}
   const load=d=>by.get(d).reduce((a,t)=>a+estOf(t),0);
-  wait.sort((a,b)=>(mustDo(b)-mustDo(a))||ordBoth(a,b)||prio(b).v-prio(a).v||((a.wkN??999)-(b.wkN??999))||a.id.localeCompare(b.id));
+  wait.sort((a,b)=>(isFill(a)-isFill(b))||(mustDo(b)-mustDo(a))||ordBoth(a,b)||prio(b).v-prio(a).v||((a.wkN??999)-(b.wkN??999))||a.id.localeCompare(b.id));
   for(const t of wait){const e=estOf(t),must=mustDo(t),lim=t.due&&isDate(t.due)&&t.due>=days[0]&&t.due<=last?t.due:last;
     const ok=days.filter(x=>x<=lim&&!(lowD(x)&&!must)&&!(isWE(x)&&catOf(t)==='work'&&!must)&&!(t.messy&&!messyOk(x)));
     let d=ok.find(x=>load(x)+e<=dayBudget(x));
@@ -162,14 +167,20 @@ function timeline(d){return fmemo('tl'+d,()=>timeline0(d))}
 function timeline0(d){const live=d===today(),marks=live?(S.plan?.marks||{}):{},p=pat(),low=!!dayDoc(d).low;let a=toM(dayStart(d));if(live)a=Math.max(a,Math.ceil(toM(nowHM())/5)*5);
   const tt0=teachOf(d),lim=tt0?Math.min(toM('22:00'),toM(tt0.e)+60):toM('21:30'),fx=fixedOn(d),out=fx.map(f=>({...f})),taken=fx.map(f=>[f.s,f.e]);
   const items=weekItems().filter(t=>t.day===d&&!isDone(t)&&!marks[t.id]).concat(dailiesOn(d).filter(t=>!marks[t.id]&&t.last!==d));
-  const deep=t=>catOf(t)==='project'||estOf(t)>=60;
+  const deep=t=>estOf(t)>=60&&!isFill(t);
   const mo=live?(S.plan?.order||[]):[],mi=id=>{const k=mo.indexOf(id);return k<0?1e6:k},manual=mo.length>0;
-  const order=items.map(t=>({t,pr:prio(t).v,m:estOf(t)})).sort((x,y)=>manual?(mi(x.t.id)-mi(y.t.id))||(mustDo(y.t)-mustDo(x.t))||y.pr-x.pr:(mustDo(y.t)-mustDo(x.t))||ordBoth(x.t,y.t)||y.pr-x.pr);
+  const order=items.map(t=>({t,pr:prio(t).v,m:estOf(t)})).sort((x,y)=>(isFill(x.t)-isFill(y.t))||(manual?(mi(x.t.id)-mi(y.t.id))||(mustDo(y.t)-mustDo(x.t))||y.pr-x.pr:(mustDo(y.t)-mustDo(x.t))||ordBoth(x.t,y.t)||y.pr-x.pr));
   const fits=(s,m)=>!taken.some(([x,y])=>s<y&&s+m>x);
   const nextFree=(from,m)=>{let s=from;for(let i=0;i<200&&s+m<=lim;i++){const c=taken.find(([x,y])=>s<y&&s+m>x);if(!c)return s;s=c[1]}return null};
   const put=(o,s,extra)=>{taken.push([s,s+o.m]);out.push({s,e:s+o.m,t:T(o.t),id:o.t.id,kind:'task',...extra})},placed=new Set();
   for(const o of order)if(hm(o.t.at||'')&&!(live&&toM(o.t.at)+o.m<=a)){put(o,Math.max(toM(o.t.at),live?a:0),{set:true});placed.add(o.t.id)}
-  const place=(o,from)=>{if(placed.has(o.t.id))return from;let s=nextFree(from,o.m);
+  /* on a day at the centre he is home only before he leaves and after he gets back */
+  const centreDay=!!tt0&&!isWE(d),leave=toM(dayStart(d))-commute(),back=tt0?toM(tt0.e)+commute():0,homeLim=toM('22:30');
+  const freeIn=(from,to,m)=>{let s=from;for(let i=0;i<200&&s+m<=to;i++){const c=taken.find(([x,y])=>s<y&&s+m>x);if(!c)return s;s=c[1]}return null};
+  const place=(o,from)=>{if(placed.has(o.t.id))return from;
+    if(centreDay&&isHome(o.t)){const am=wakeOf(d)?toM(wakeOf(d)):null;let s=am!=null&&leave-am>=o.m+30&&(!live||a<leave)?freeIn(Math.max(am+30,live?a:0),leave,o.m):null;if(s==null)s=freeIn(Math.max(back,live?a:0),homeLim,o.m);
+      if(s==null){out.push({s:null,t:T(o.t),id:o.t.id,kind:'task',over:true});placed.add(o.t.id);return from}put(o,s,{home:true});placed.add(o.t.id);return from}
+    let s=nextFree(from,o.m);
     if(s!=null&&o.t.messy&&tt0&&s+o.m>toM(tt0.s)-120&&s<toM(tt0.s))s=null; /* never right before teaching */
     if(s==null){out.push({s:null,t:T(o.t),id:o.t.id,kind:'task',over:true});placed.add(o.t.id);return from}
     put(o,s,{small:o.m<=20});placed.add(o.t.id);
@@ -184,6 +195,7 @@ function timeline0(d){const live=d===today(),marks=live?(S.plan?.marks||{}):{},p
     if(s!=null){let at=s;for(const o of dl){if(at+o.m>lim||!fits(at,o.m)||at-s>=150)break;put(o,at,{deep:true});placed.add(o.t.id);at+=o.m}
       if(at>s)out.push({s,e:at,t:'Focus block',kind:'focus'})}}
   for(const o of order)place(o,a);
+  if(centreDay&&out.some(x=>x.home&&x.s>=back))out.push({s:back-commute(),e:back,es:back-commute(),ee:back,t:'Drive home',kind:'fixed'});
   return out.sort((x,y)=>(x.s??1e9)-(y.s??1e9)||(x.kind==='focus'?-1:y.kind==='focus'?1:0))}
 /* the docket follows the timeline */
 function agenda(){const p=S.plan,marks=p?.marks||{},tl=timeline(today()),at=new Map(tl.filter(x=>x.id).map(x=>[x.id,x]));
@@ -376,6 +388,7 @@ Fee reminder due (mention unpaid fees on your own only if yes): ${feeNagOk()?'ye
 Your last replies (never start the same way as any of these): ${(S.dumps||[]).slice(0,6).map(d=>'"'+String(d.reply||'').slice(0,50)+'"').join(' ')}
 `}
 function brainRules(){return `- Task details: every new task gets "cat" (personal, finances, health, work, project, home or people). Give "due", "pri" (1 critical, 2 high, 3 normal, 4 low) and "est" in minutes when he says them. When he gives no priority or no time needed, he wants to be asked for both. Do it without losing the task: add it now with your best guess, and end your reply with one short question that states the guess (e.g. \"Normal priority, about 30 minutes: right?\"). When he gives several tasks at once, ask once for the batch, not per task. When his next message answers, apply it with set_meta. To change details on an existing task use set_meta.
+- Where: things done at home (cleaning his room, laundry, cooking, the dog) happen before he leaves for the centre or after he is back; the app places them so. If the app guesses wrong, set_meta "where":"home" or "centre".
 - Dirty or dusty jobs (assembling furniture, cleaning out the back area, moving things): set "messy":true on add or with set_meta. The app then keeps them away from the hours before teaching and puts same-job tasks back to back.
 - His priority wins. If he gives none, the app ranks by deadline, consequences, how long it has waited and its project. If he asks why something is first, answer in one sentence from the why list in Top priorities.
 - Notes: decide whether something is a task, an event or a note. Information or an idea with no action is note kind "note". Anything about how this app should work differently ("Jarvis should…", "the app needs to…", "can you make it…") is note kind "app", rewritten as one clear instruction a developer could follow; never a task. If you truly cannot tell where something belongs, note kind "inbox".
@@ -384,6 +397,7 @@ function brainRules(){return `- Task details: every new task gets "cat" (persona
 - If he says how long his mornings take ("it takes me an hour and a half to get ready and get to the centre"), use routine with ready_min. the app rebuilds the day, keeps must-dos early and lists what moved.
 - "Do my planning at 10 tonight": plan_time with once true. "Plan every night at 10": once false.
 - Chores ("vacuum every week", "laundry every 4 days", "clean the back area every two weeks"): chore with every_days. People to keep in touch with ("message Saira", "plan time with my niece"): person with every_days (14 if he gives no hint) and how ("Message" or "Plan time with"). When he says he talked to, saw or messaged someone on that list: touched.
+- His projects are fillers: never ask him for a duration or weekly time on them; the app gives them time only after the day's important work.
 - Projects: project to add or update one (status active, paused, waiting or done, its next step, and \"url\" when he gives a link to its app or page). Link a new task to a project with "project" on add.
 - Habits: "I worked out" means habit_done workout. A new habit to track: habit with per_week.
 - Time he is not free today (getting ready, making lunch, driving to the centre, an errand), even said in passing ("I should reach the centre around 11:30", "count travel and lunch"): add a block for it with from and to (from now until he arrives if he gives only the arrival). Use a sensible length only when he clearly implies one (travel to the centre about 30 minutes, lunch about 30 minutes) and say the times you used in a few words.
@@ -394,20 +408,23 @@ function brainRules(){return `- Task details: every new task gets "cat" (persona
 - Ask a question at most once. If you asked something in an earlier reply above and he has not answered, do not ask it again; carry on without it.
 - Money: a payment he received is paid with the amount, the date and the method ("cash" = Cash, e-transfer = ET). The app writes it to his fee sheet (the month's tab of his income sheet: Date Received, Fee Received and Payment Method) and to the TutorWise Billing ledger. If he did not say how he was paid, record it anyway and ask once: "Cash or e-transfer?"; his answer is pay_method. One payment covering two children is one paid op per child. If he says a payment is already in the sheet but missing from billing, use paid with billing_only true.
 - Unpaid fees: bring them up on your own only when \"Fee reminder due\" above is yes (from two weeks into the month, then every few days; sending parents reminders resets it). When he says he sent fee reminders, mark that task done.
+- Schedule questions: the lesson list above was just read fresh from the scheduler. Answer from it exactly. Teaching starts at the first lesson of his (Nimish's) and ends at the last one.
 - What you did: the app's operation results are listed after each of your earlier replies above. Only ever describe what those results show. Never say you cannot reach his fee sheet or billing: the app does both. Never claim you saved, removed or changed anything that no op did.
+- Removing a task ("delete that", "it's not a real task", a duplicate): drop with its id, one per task. Never use week_remove for that.
 - App updates are only for changes he asks to the app itself. If one was filed by mistake, remove it with note_drop. Never file a mistake you made, a complaint about a reply, or a correction to his data as an app update.
 - If he asks what to do now or what's next: whats_next (the app answers with the single best thing). For "what's going on" or "where are things", answer yourself in two sentences from today's timeline: what is done, what is next and when. No ops.
 - Your reply must match what your ops actually do. Never say you are rebuilding, checking or updating something unless an op does it; the app re-plans by itself after every change.
 - Voice: vary your wording every time; never open the way any of your last replies did, and do not open with "Understood". Be brief, natural and a little clever, never cute. Confirm changes in a few words. Ask at most one short question. Never invent tasks, events or details he did not give.
 `}
-const brainOps=()=>`{"op":"set_meta","id":"","cat":"","due":null,"pri":null,"est":null,"messy":null,"when":null},{"op":"block","title":"","from":"HH:MM","to":"HH:MM","date":null},{"op":"note_drop","contains":"words from the note to remove"},{"op":"progress","id":"","minutes":30,"note":"","left":null,"next":null},{"op":"note","kind":"note|app|inbox","text":""},{"op":"low_energy","date":"YYYY-MM-DD","on":true},{"op":"day_start","date":"YYYY-MM-DD","at":"HH:MM","wake":false},{"op":"routine","ready_min":75},{"op":"plan_time","at":"21:00","once":false},{"op":"chore","title":"","every_days":7,"est":30},{"op":"person","name":"","every_days":14,"how":"Message","note":""},{"op":"touched","name":""},{"op":"project","name":"","status":null,"next":"","note":"","url":null},{"op":"habit","name":"","per_week":3},{"op":"habit_done","name":"workout","date":null},{"op":"whats_next"},`;
+const brainOps=()=>`{"op":"set_meta","id":"","cat":"","due":null,"pri":null,"est":null,"messy":null,"when":null,"where":null},{"op":"block","title":"","from":"HH:MM","to":"HH:MM","date":null},{"op":"note_drop","contains":"words from the note to remove"},{"op":"drop","id":""},{"op":"progress","id":"","minutes":30,"note":"","left":null,"next":null},{"op":"note","kind":"note|app|inbox","text":""},{"op":"low_energy","date":"YYYY-MM-DD","on":true},{"op":"day_start","date":"YYYY-MM-DD","at":"HH:MM","wake":false},{"op":"routine","ready_min":75},{"op":"plan_time","at":"21:00","once":false},{"op":"chore","title":"","every_days":7,"est":30},{"op":"person","name":"","every_days":14,"how":"Message","note":""},{"op":"touched","name":""},{"op":"project","name":"","status":null,"next":"","note":"","url":null},{"op":"habit","name":"","per_week":3},{"op":"habit_done","name":"workout","date":null},{"op":"whats_next"},`;
 async function brainAdd(id,o){const c={};if(CATS[o.cat])c.cat=o.cat;if(o.messy===true)c.messy=true;if(o.project){const p=S.projects.find(x=>norm(x.name)===norm(o.project));if(p)c.proj=p.id}if(Object.keys(c).length){S.tasks.set(id,{...S.tasks.get(id),...c});await up(id,c)}}
 async function brainOp(o,out,src){const td=today();
-  if(o.op==='set_meta'&&S.tasks.has(o.id)){const c={};if(CATS[o.cat])c.cat=o.cat;if(isDate(o.due||''))c.due=o.due;if([1,2,3,4].includes(o.pri))c.p=o.pri;if(+o.est)c.est=+o.est;if(typeof o.messy==='boolean')c.messy=o.messy;
+  if(o.op==='set_meta'&&S.tasks.has(o.id)){const c={};if(CATS[o.cat])c.cat=o.cat;if(isDate(o.due||''))c.due=o.due;if([1,2,3,4].includes(o.pri))c.p=o.pri;if(+o.est)c.est=+o.est;if(typeof o.messy==='boolean')c.messy=o.messy;if(['home','centre'].includes(o.where))c.where=o.where;
     {const t0=S.tasks.get(o.id),w=String(o.when||''),d=t0.day&&t0.day>=today()?t0.day:today(),tt=teachOf(d);let at=null;
       if(hm(w))at=w;else if(/after.?(teach|tutor|lesson|class)|evening|tonight/i.test(w))at=tt?hmS(toM(tt.e)+15):'19:30';else if(/later|retry|again/i.test(w))at=hmS(Math.min(toM('21:00'),Math.ceil((toM(nowHM())+120)/15)*15));else if(/morning|first/i.test(w))at=null;
       if(at){c.at=at;c.day=d;c.wk=monOf(d);c.pin=true}}if(Object.keys(c).length){await upL(o.id,c);S.touch3=true;out.push('filed: '+T(S.tasks.get(o.id)))}return true}
   if(o.op==='note'&&o.text){const k=await addNote(o.kind,o.text);if(k){out.push(`${k==='app'?'app update':k} saved`);}return true}
+  if(o.op==='drop'&&S.tasks.has(o.id)){const t=S.tasks.get(o.id);await upL(o.id,{s:'parked',dropped:today(),day:null,pin:false,at:null});logEv('drop',T(t));S.touch3=true;out.push('removed: '+T(t));return true}
   if(o.op==='note_drop'&&o.contains){const n=S.notes.filter(x=>!x.done&&String(x.text).toLowerCase().includes(String(o.contains).toLowerCase()));for(const x of n.slice(0,3))await db.doc('notes/'+x.id).update({done:true});out.push(n.length?'note removed':'no matching note');return true}
   if(o.op==='progress'&&S.tasks.has(o.id)){const m=await logProgress(o.id,o.minutes,o.note,o.left,o.next);out.push('progress: '+T(S.tasks.get(o.id))+' — '+m);return true}
   if(o.op==='block'&&hm(o.from||'')&&hm(o.to||'')&&o.to>o.from){const d=isDate(o.date||'')?o.date:td,x=String(o.title||'Busy').slice(0,60);await dayWrite(d,cur=>({...cur,busy:[...(cur.busy||[]).filter(b=>!(b.s===o.from&&b.e===o.to)),{s:o.from,e:o.to,x}]}));out.push(`blocked ${o.from}–${o.to}: ${x}`);S.touch3=true;return true}
@@ -456,6 +473,14 @@ async function setPayMethod(s,method){const out=[];
 /* fees: only from two weeks into the month, then every few days; sending reminders to parents resets the clock */
 function feeNagOk(){const td=today();if(+td.slice(8)<14)return false;const last=[S.settings.feeNagAt,S.settings.feeRemindAt].filter(isDate).sort().pop();return !last||-dayDiff(last)>=3}
 function feeNagDone(){S.settings={...S.settings,feeNagAt:today()};db?.doc('settings/main').update({feeNagAt:today()}).catch(()=>{})}
+/* ---------- the schedule is read fresh: before any answer about lessons, and every 10 minutes while open ---------- */
+const SCHQ=/tutor|teach|lesson|class|schedul|student|attend|makeup|start at|finish|end at|who do i have|who's in|whos in|tonight|book|cancel|move/i;
+async function schedFresh(text,force){if(!S.settings.schedConn||!mcp)return;const again=/check|again|updated|refresh|sync|wrong|incorrect/i.test(text||'')&&(S.dumps||[]).slice(0,3).some(d=>Date.now()-Date.parse(d.at)<15*6e4&&SCHQ.test(d.text+' '+(d.reply||'')));if(!force&&!again&&!SCHQ.test(text||''))return;if(again)force=true;const age=Date.now()-Date.parse(S.sched?.at||0);
+  if(!force&&age<90e3&&!/check|again|updated|refresh|sync/i.test(text||''))return;
+  try{await Promise.race([connSync(),new Promise(r=>setTimeout(r,7000))])}catch(e){console.warn('sched',e)}}
+setInterval(()=>{if(document.visibilityState==='visible'&&S.settings.schedConn&&Date.now()-Date.parse(S.sched?.at||0)>6e5&&!S.syncing)connSync().catch(()=>{})},60000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&S.settings.schedConn&&Date.now()-Date.parse(S.sched?.at||0)>18e4&&!S.syncing)connSync().catch(()=>{})});
+
 /* ---------- the mic at the top ---------- */
 function micTop(){const st=V.state;
   if(st==='listening'||st==='starting'){finish(true);return}
