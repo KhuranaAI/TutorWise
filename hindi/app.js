@@ -7,6 +7,19 @@
 
   const C = window.BOLO_CONTENT;
 
+  /* ---------- NATIVE_BRIDGE: running inside the Bolo! iPhone app (bolo-app/App.tsx) ----------
+     The app hands over the phone's Hindi voices (incl. Enhanced / Premium ones Safari hides), plays hands-free
+     lessons natively (so they keep going with the screen locked) and schedules the daily reminder. */
+  const NATIVE = window.BoloNative && window.ReactNativeWebView ? window.BoloNative : null;
+  let nativeHF = null;
+  const nativePost = (m) => { try { window.ReactNativeWebView.postMessage(JSON.stringify(m)); } catch (e) { /* not in the app */ } };
+  if (NATIVE) {
+    const early = NATIVE.inbox || [];
+    NATIVE.receive = (m) => { if (m.type === "hf" && nativeHF) nativeHF(m); else if (m.type === "reminder") onReminderResult(m); };
+    early.forEach((m) => NATIVE.receive(m));
+    document.documentElement.classList.add("in-app");
+  }
+
   /* ---------- Who's learning? ----------
      The course is written for Anissa. On a phone set up for someone else, her name is swapped into every greeting
      and sentence ("Main Leeann hoon", "Namaste Leeann!"). Same formal Hindi, same female forms. The choice is
@@ -404,6 +417,14 @@
   const Speech = {
     voice: null,
     init(onChange) {
+      if (NATIVE) { // voices come from the app
+        this.list = (NATIVE.voices || []).filter((v) => /^hi([-_]|$)/i.test(v.language))
+          .map((v) => ({ name: v.name, voiceURI: v.identifier, lang: v.language, localService: true, quality: v.quality }))
+          .sort((a, b) => this.score(b) - this.score(a));
+        this.rechoose = () => { this.voice = (S.settings.voiceURI && this.list.find((v) => v.voiceURI === S.settings.voiceURI)) || this.list[0] || null; };
+        this.rechoose();
+        return;
+      }
       if (!("speechSynthesis" in window)) return;
       const choose = () => {
         const had = this.voice;
@@ -423,19 +444,22 @@
     // (com.apple.voice.compact / .enhanced / .premium …).
     score(v) {
       const t = (v.name + " " + (v.voiceURI || "")).toLowerCase();
-      return (/premium/.test(t) ? 8 : 0) + (/enhanced|neural|natural|wavenet/.test(t) ? 6 : 0) + (/siri/.test(t) ? 5 : 0)
+      return (/premium/.test(t) ? 8 : 0) + (/enhanced|neural|natural|wavenet/.test(t) || v.quality === "Enhanced" ? 6 : 0) + (/siri/.test(t) ? 5 : 0)
         + (/compact|eloquence|espeak/.test(t) ? -4 : 0) + (/google/.test(t) ? 2 : 0) + (v.localService ? 1 : 0);
     },
     label(v) {
       const t = (v.name + " " + (v.voiceURI || "")).toLowerCase();
-      const q = /premium/.test(t) ? "Premium ⭐" : /enhanced|neural|natural/.test(t) ? "Enhanced" : /siri/.test(t) ? "Siri" : /compact/.test(t) ? "Basic" : "";
+      const q = /premium/.test(t) ? "Premium ⭐" : /enhanced|neural|natural/.test(t) || v.quality === "Enhanced" ? "Enhanced" : /siri/.test(t) ? "Siri" : /compact/.test(t) ? "Basic" : "";
       return v.name.replace(/\s*\((premium|enhanced)\)/i, "") + (q ? " · " + q : "") + (v.lang && v.lang !== "hi-IN" ? " (" + v.lang + ")" : "");
     },
     get supported() { return !!this.voice; },
+    stop() { if (NATIVE) nativePost({ type: "stop" }); else try { window.speechSynthesis.cancel(); } catch (e) { /* ignore */ } },
+    sayLang(text, lang) { if (NATIVE) nativePost({ type: "say", text, lang }); else HF.speak(text, lang); },
     get on() { return !!this.voice && S.settings.voice; },
     say(text, manual) {
       if (!this.on || !text) return;
       if (S.settings.quiet && !manual) return; // quiet mode: only play when she taps 🔊
+      if (NATIVE) return nativePost({ type: "say", text, lang: "hi", voice: this.voice.voiceURI, rate: 0.82 });
       try {
         window.speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(text);
@@ -3390,7 +3414,7 @@
   function installTip() {
     const iOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     const installed = navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
-    if (!iOS || installed || !document.querySelector('link[rel="manifest"]')) return null;
+    if (NATIVE || !iOS || installed || !document.querySelector('link[rel="manifest"]')) return null;
     return h("div", { class: "note mt small" }, h("b", {}, "Play it like an app: "), "tap the Share button ", h("span", { "aria-hidden": "true" }, "⬆️"), " then “Add to Home Screen”.");
   }
 
@@ -3469,6 +3493,24 @@
       tile("filmi", "🎬", "Filmi album", `${S.filmi.length}/${FILMI.length} cards · 🏅 ${S.badges.length}`, showFilmiList),
       tile("handsfree wide", "🚗", "Hands-free practice", "Learn while driving or walking — just listen and speak", showHandsFreeSetup));
   }
+  // ⏰ Daily reminder (in the iPhone app only).
+  function reminderRow() {
+    const r = S.settings.reminder = Object.assign({ on: false, hour: 19, minute: 0 }, S.settings.reminder);
+    const push = () => nativePost({ type: "reminder", on: r.on, hour: r.hour, minute: r.minute, body: `Your 🔥 streak is waiting, ${SP.name}! A few minutes of Hindi?` });
+    const sw = h("button", { class: "toggle bare", role: "switch", "aria-checked": String(!!r.on), "aria-label": "Daily reminder" }, h("span", { class: "sw" }));
+    sw.addEventListener("click", () => { r.on = !r.on; sw.setAttribute("aria-checked", String(r.on)); save(); push(); Sound.play("tap"); });
+    const time = h("select", { class: "hf-select reminder-time", "aria-label": "Reminder time" },
+      [7, 8, 9, 12, 13, 17, 18, 19, 20, 21, 22].map((hr) => h("option", { value: String(hr) }, (hr % 12 || 12) + ":00 " + (hr < 12 ? "am" : "pm"))));
+    time.value = String(r.hour);
+    time.addEventListener("change", () => { r.hour = +time.value; r.minute = 0; save(); if (r.on) push(); });
+    return h("div", { class: "set-row" }, h("span", { class: "set-ic" }, "⏰"),
+      h("span", { class: "set-txt" }, h("b", {}, "Daily reminder"), h("span", { class: "d" }, "A nudge to keep your streak"), time), sw);
+  }
+  function onReminderResult(m) {
+    if (m.ok) return;
+    S.settings.reminder = Object.assign({}, S.settings.reminder, { on: false }); save();
+    showSheet({ ok: false, title: "Notifications are off", html: "To get reminders, allow them in your iPhone's <b>Settings → Bolo! → Notifications</b>, then turn the reminder on again.", buttons: [{ label: "OK", onClick: () => { hideSheet(); if (view === "start") showStart(); } }] });
+  }
   // Choose which installed Hindi voice to use, with a test button.
   function voicePicker() {
     const sel = h("select", { class: "hf-select voice-select", "aria-label": "Hindi voice" },
@@ -3492,7 +3534,8 @@
       row("🌙", "Dark mode", "Easier on the eyes at night", "dark", applySettings),
       row("🔔", "Sound effects", "Dings, pops and celebrations", "sound"),
       Speech.supported ? row("🗣️", "Hindi voice", "Read Hindi out loud on your phone", "voice") : h("p", { class: "small muted", style: "margin-top:8px" }, "🗣️ Hindi voice: download a Hindi voice in iPhone Settings → Accessibility → Spoken Content → Voices to hear Hindi read aloud."),
-      Speech.supported ? voicePicker() : null);
+      Speech.supported ? voicePicker() : null,
+      NATIVE ? reminderRow() : null);
   }
 
   function showStart() {
@@ -3698,7 +3741,8 @@
       h("div", { class: "hf-tips" },
         h("p", {}, "🚦 ", h("b", {}, "Start it before you drive"), " and keep your eyes on the road — everything is spoken."),
         h("p", {}, "🎧 Car buttons and AirPods work: ⏯ pause · ⏭ skip · ⏮ repeat."),
-        h("p", {}, "📱 Keep Bolo open on screen (in a phone holder). If the screen locks, the lesson pauses."),
+        NATIVE ? h("p", {}, "🔒 It keeps going with the screen locked — pause and play from the lock screen.")
+          : h("p", {}, "📱 Keep Bolo open on screen (in a phone holder). If the screen locks, the lesson pauses."),
         noVoice ? h("p", { class: "hf-warn" }, "🔇 No Hindi voice found on this phone. Download one first: Settings → Accessibility → Spoken Content → Voices → Hindi.") : null),
       h("div", { class: "card hf-card" },
         h("div", { class: "section-title" }, "What to practise"), sel,
@@ -3716,6 +3760,34 @@
     a.loop = true; a.volume = 0.01;
     return a;
   }
+  // One lesson step as a script: show (what's on screen) · en / hi (speak) · wait (thinking time).
+  function hfScript(step, think) {
+    const sh = (st, b, sm, mode) => ({ t: "show", v: [st, b || "", sm || "", mode || ""] });
+    if (step.kind === "cheer") {
+      const w = pick(["Shabash!", "Bahut badhiya!", "Wah!"]);
+      return { parts: [sh("🎉", w, "", "listen"), { t: "en", s: pick(["Great job! Keep going.", `You're doing so well, ${SP.name}.`, "Nice! Here's the next one."]) }] };
+    }
+    const it = step.it, words = it.roman.split(/\s+/).length;
+    const gap = Math.round((2600 + words * 700) * think);
+    if (step.kind === "hear") return { parts: [
+      sh("🎧 Listen", it.roman, "", "listen"), { t: "en", s: "Listen." }, { t: "hi", s: it.deva }, { t: "wait", ms: 900 },
+      { t: "hi", s: it.deva, rate: 0.7 }, { t: "wait", ms: 500 },
+      sh("🎧 It means", it.roman, it.en, "listen"), { t: "en", s: "That means: " + it.en }, { t: "wait", ms: 700 },
+      sh("🗣️ Say it with me", it.roman, it.en, "you"), { t: "en", s: "Say it with me." }, { t: "hi", s: it.deva, rate: 0.75 }, { t: "wait", ms: Math.round(gap * 0.8) }] };
+    const ask = step.kind === "answer" ? [
+      sh("👩🏽 Aunty asks", it.ask.hi, "", "listen"), { t: "en", s: "Aunty asks:" }, { t: "hi", s: it.ask.dv }, { t: "wait", ms: 400 },
+      sh("🗣️ Your turn", it.ask.hi, "Answer: " + it.en, "you"), { t: "en", s: "Answer: " + it.en }]
+      : [sh("🗣️ How do you say…", "", it.en, "you"), { t: "en", s: pick(["How do you say:", "Say in Hindi:", "How would you say:"]) + " " + it.en }];
+    return { xp: true, parts: ask.concat([
+      sh("🗣️ Your turn — say it out loud", "", step.kind === "answer" ? it.ask.hi : it.en, "you think"), { t: "wait", ms: gap },
+      sh("✅ Answer", it.roman, it.en, "answer"), { t: "hi", s: it.deva }, { t: "wait", ms: 800 },
+      { t: "hi", s: it.deva, rate: 0.72 }, { t: "wait", ms: 900 }]) };
+  }
+  function hfScripts(pool, think, minSteps) { // enough of the lesson for one session, with a cheer every 12 steps
+    const out = [];
+    while (out.length < minSteps) hfPlan(pool).forEach((st) => { if (out.length && out.length % 13 === 12) out.push(hfScript({ kind: "cheer" }, think)); out.push(hfScript(st, think)); });
+    return out;
+  }
   function startHandsFree() {
     const hf = S.settings.hf;
     const pool = hfSentences(hf.mod);
@@ -3723,10 +3795,11 @@
     const think = hf.pace === "relaxed" ? 1.6 : 1;
     const limitMs = (+hf.len || 0) * 60000;
     const t0 = Date.now();
-    let plan = hfPlan(pool), pos = 0, paused = false, gen = 0, said = 0, lock = null, audio = null;
+    const steps = hfScripts(pool, think, limitMs ? Math.max(40, (+hf.len) * 8) : 600);
+    let pos = 0, paused = false, gen = 0, said = 0, lock = null, audio = null;
     view = "hfplay";
     showChrome(false);
-    try { window.speechSynthesis.cancel(); } catch (e) {}
+    Speech.stop();
     HF.pickEn();
     // UI
     const status = h("div", { class: "hf-status" }), big = h("div", { class: "hf-big" }), sub = h("div", { class: "hf-sub" });
@@ -3741,114 +3814,106 @@
       h("div", { class: "hf-ctrls" }, repBtn, pauseBtn, skipBtn)));
     actions([]);
     document.body.classList.add("hf-on");
-    const show = (st, b, sm, mode) => { status.textContent = st; big.textContent = b || ""; sub.textContent = sm || ""; ring.className = "hf-ring " + (mode || ""); };
+    const show = (v) => { status.textContent = v[0]; big.textContent = v[1] || ""; sub.textContent = v[2] || ""; ring.className = "hf-ring " + (v[3] || ""); };
     const fmt = (ms) => { const m = Math.floor(ms / 60000), x = Math.floor((ms % 60000) / 1000); return m + ":" + String(x).padStart(2, "0"); };
     const tick = setInterval(() => {
       if (!screenEl.contains(clock)) return cleanup();
       clock.textContent = limitMs ? "⏱ " + fmt(Math.max(0, limitMs - (Date.now() - t0))) : "⏱ " + fmt(Date.now() - t0);
     }, 500);
-    const wait = (ms, g) => new Promise((res) => setTimeout(() => res(g === gen), ms));
-    const hi = (text, rate) => HF.speak(text, "hi", rate);
-    const en = (text) => HF.speak(text, "en");
-    async function play(step, g) {
-      const it = step.it, words = it.roman.split(/\s+/).length;
-      const gap = Math.round((2600 + words * 700) * think);
-      if (step.kind === "hear") {
-        show("🎧 Listen", it.roman, "", "listen");
-        await en("Listen."); if (g !== gen) return;
-        await hi(it.deva); if (!(await wait(900, g))) return;
-        await hi(it.deva, 0.7); if (!(await wait(500, g))) return;
-        show("🎧 It means", it.roman, it.en, "listen");
-        await en("That means: " + it.en); if (!(await wait(700, g))) return;
-        show("🗣️ Say it with me", it.roman, it.en, "you");
-        await en("Say it with me."); if (g !== gen) return;
-        await hi(it.deva, 0.75); await wait(Math.round(gap * 0.8), g);
-        return;
-      }
-      if (step.kind === "answer") {
-        show("👩🏽 Aunty asks", it.ask.hi, "", "listen");
-        await en("Aunty asks:"); if (g !== gen) return;
-        await hi(it.ask.dv); if (!(await wait(400, g))) return;
-        show("🗣️ Your turn", it.ask.hi, "Answer: " + it.en, "you");
-        await en("Answer: " + it.en); if (g !== gen) return;
-      } else {
-        show("🗣️ How do you say…", "", it.en, "you");
-        await en(pick(["How do you say:", "Say in Hindi:", "How would you say:"]) + " " + it.en); if (g !== gen) return;
-      }
-      show("🗣️ Your turn — say it out loud", "", step.kind === "answer" ? it.ask.hi : it.en, "you think");
-      if (!(await wait(gap, g))) return;
-      show("✅ Answer", it.roman, it.en, "answer");
-      await hi(it.deva); if (!(await wait(800, g))) return;
-      await hi(it.deva, 0.72); if (!(await wait(900, g))) return;
-      said++;
-      award(1);
-    }
-    async function loop() {
-      const g = ++gen;
-      while (g === gen && !paused) {
-        if (limitMs && Date.now() - t0 > limitMs) return finish();
-        if (pos >= plan.length) { plan = hfPlan(pool); pos = 0; }
-        counter.textContent = said ? `${said} said out loud` : "";
-        if (pos && pos % 12 === 0 && plan[pos] && !plan[pos].cheered) {
-          plan[pos].cheered = true;
-          show("🎉", pick(["Shabash!", "Bahut badhiya!", "Wah!"]), "", "listen");
-          await en(pick(["Great job! Keep going.", `You're doing so well, ${SP.name}.`, "Nice! Here's the next one."])); if (g !== gen) return;
-        }
-        await play(plan[pos], g);
-        if (g !== gen) return;
-        pos++;
-      }
-    }
-    function setPaused(p) {
+    const gotXP = () => { said++; counter.textContent = `${said} said out loud`; award(1); };
+    const showPaused = (p) => {
       paused = p;
-      gen++;
-      try { window.speechSynthesis.cancel(); } catch (e) {}
       pauseBtn.textContent = p ? "▶" : "⏸";
       pauseBtn.setAttribute("aria-label", p ? "Play" : "Pause");
-      if (p) show("⏸ Paused", "", "Tap ▶ (or your car's play button) to carry on", "");
-      else loop();
-      try { navigator.mediaSession.playbackState = p ? "paused" : "playing"; } catch (e) {}
-    }
-    const restart = () => { gen++; try { window.speechSynthesis.cancel(); } catch (e) {} paused = false; pauseBtn.textContent = "⏸"; loop(); };
-    const repeat = () => { Sound.play("tap"); restart(); };
-    const skip = () => { Sound.play("tap"); pos++; restart(); };
-    pauseBtn.addEventListener("click", () => setPaused(!paused));
-    repBtn.addEventListener("click", repeat);
-    skipBtn.addEventListener("click", skip);
-    endBtn.addEventListener("click", () => finish());
-    // Car / AirPods buttons
-    try {
-      audio = silentAudio(); audio.play().catch(() => {});
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.metadata = new MediaMetadata({ title: "Bolo! Hands-free Hindi", artist: SP.name + "'s lesson" });
-        navigator.mediaSession.setActionHandler("play", () => setPaused(false));
-        navigator.mediaSession.setActionHandler("pause", () => setPaused(true));
-        navigator.mediaSession.setActionHandler("nexttrack", skip);
-        navigator.mediaSession.setActionHandler("previoustrack", repeat);
-        navigator.mediaSession.playbackState = "playing";
+      if (p) show(["⏸ Paused", "", "Tap ▶ (or your car's play button) to carry on", ""]);
+    };
+    let cleaned = false, cleanup, setPaused, repeat, skip;
+    if (NATIVE) {
+      // The app plays the lesson itself, so it keeps going with the screen locked.
+      nativeHF = (m) => {
+        if (m.ev === "show") show(m.v);
+        else if (m.ev === "xp") gotXP();
+        else if (m.ev === "paused") showPaused(m.on);
+        else if (m.ev === "end") finish(true);
+      };
+      nativePost({ type: "hf-start", steps, limitMs, hiVoice: Speech.voice ? Speech.voice.voiceURI : "", name: SP.name });
+      setPaused = (p) => { nativePost({ type: "hf-cmd", cmd: p ? "pause" : "play" }); showPaused(p); };
+      repeat = () => { Sound.play("tap"); nativePost({ type: "hf-cmd", cmd: "repeat" }); };
+      skip = () => { Sound.play("tap"); nativePost({ type: "hf-cmd", cmd: "skip" }); };
+      cleanup = () => { if (cleaned) return; cleaned = true; clearInterval(tick); nativePost({ type: "hf-cmd", cmd: "stop" }); nativeHF = null; document.body.classList.remove("hf-on"); };
+      show(["🚗 Ready", "Hands-free Hindi", "Here we go!", "listen"]);
+    } else {
+      const wait = (ms, g) => new Promise((res) => setTimeout(() => res(g === gen), ms));
+      async function runStep(step, g) {
+        for (const p of step.parts) {
+          if (g !== gen) return false;
+          if (p.t === "show") show(p.v);
+          else if (p.t === "wait") { if (!(await wait(p.ms, g))) return false; }
+          else await HF.speak(p.s, p.t, p.rate);
+        }
+        return g === gen;
       }
-    } catch (e) {}
-    // Keep the screen on
-    const wake = () => { try { if ("wakeLock" in navigator) navigator.wakeLock.request("screen").then((l) => { lock = l; }).catch(() => {}); } catch (e) {} };
-    wake();
-    const onVis = () => { if (document.visibilityState === "visible") wake(); else if (!paused) setPaused(true); };
-    document.addEventListener("visibilitychange", onVis);
-    let cleaned = false;
-    function cleanup() {
-      if (cleaned) return; cleaned = true;
-      gen++; clearInterval(tick);
-      try { window.speechSynthesis.cancel(); } catch (e) {}
-      try { if (audio) { audio.pause(); audio.src = ""; } } catch (e) {}
-      try { if (lock) lock.release(); } catch (e) {}
-      try { ["play", "pause", "nexttrack", "previoustrack"].forEach((a) => navigator.mediaSession.setActionHandler(a, null)); navigator.mediaSession.playbackState = "none"; } catch (e) {}
-      document.removeEventListener("visibilitychange", onVis);
-      document.body.classList.remove("hf-on");
+      const loop = async () => {
+        const g = ++gen;
+        while (g === gen && !paused) {
+          if (limitMs && Date.now() - t0 > limitMs) return finish();
+          if (pos >= steps.length) pos = 0;
+          const st = steps[pos];
+          if (!(await runStep(st, g))) return;
+          if (st.xp) gotXP();
+          pos++;
+        }
+      };
+      const restart = () => { gen++; try { window.speechSynthesis.cancel(); } catch (e) {} showPaused(false); loop(); };
+      setPaused = (p) => {
+        showPaused(p);
+        gen++;
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+        if (!p) loop();
+        try { navigator.mediaSession.playbackState = p ? "paused" : "playing"; } catch (e) {}
+      };
+      repeat = () => { Sound.play("tap"); restart(); };
+      skip = () => { Sound.play("tap"); pos++; restart(); };
+      // Car / AirPods buttons
+      try {
+        audio = silentAudio(); audio.play().catch(() => {});
+        if ("mediaSession" in navigator) {
+          navigator.mediaSession.metadata = new MediaMetadata({ title: "Bolo! Hands-free Hindi", artist: SP.name + "'s lesson" });
+          navigator.mediaSession.setActionHandler("play", () => setPaused(false));
+          navigator.mediaSession.setActionHandler("pause", () => setPaused(true));
+          navigator.mediaSession.setActionHandler("nexttrack", skip);
+          navigator.mediaSession.setActionHandler("previoustrack", repeat);
+          navigator.mediaSession.playbackState = "playing";
+        }
+      } catch (e) {}
+      // Keep the screen on
+      const wake = () => { try { if ("wakeLock" in navigator) navigator.wakeLock.request("screen").then((l) => { lock = l; }).catch(() => {}); } catch (e) {} };
+      wake();
+      const onVis = () => { if (document.visibilityState === "visible") wake(); else if (!paused) setPaused(true); };
+      document.addEventListener("visibilitychange", onVis);
+      cleanup = () => {
+        if (cleaned) return; cleaned = true;
+        gen++; clearInterval(tick);
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+        try { if (audio) { audio.pause(); audio.src = ""; } } catch (e) {}
+        try { if (lock) lock.release(); } catch (e) {}
+        try { ["play", "pause", "nexttrack", "previoustrack"].forEach((a) => navigator.mediaSession.setActionHandler(a, null)); navigator.mediaSession.playbackState = "none"; } catch (e) {}
+        document.removeEventListener("visibilitychange", onVis);
+        document.body.classList.remove("hf-on");
+      };
+      show(["🚗 Ready", "Hands-free Hindi", "Here we go!", "listen"]);
+      (async () => { const g0 = gen; await HF.speak(`Hands-free Hindi. Ready, ${SP.name}? Let's go!`, "en"); if (g0 === gen && !paused && !cleaned) loop(); })();
     }
+    pauseBtn.addEventListener("click", () => setPaused(!paused));
+    repBtn.addEventListener("click", () => repeat());
+    skipBtn.addEventListener("click", () => skip());
+    endBtn.addEventListener("click", () => finish());
     function finish() {
+      if (cleaned) return;
       const mins = Math.max(1, Math.round((Date.now() - t0) / 60000));
       cleanup();
       S.lastHandsFree = dayStr(); save();
-      if (said) HF.speak(`That's it for today. ${pick(["Bahut badhiya", "Shabash", "Wah"])}, ${SP.name}!`, "en");
+      if (said) setTimeout(() => Speech.sayLang(`That's it for today. ${pick(["Bahut badhiya", "Shabash", "Wah"])}, ${SP.name}!`, "en"), 200);
       Sound.play("done"); confetti();
       screen(h("div", { class: "stage-hero" },
         h("div", { class: "stage-badge" }, "🚗"), h("div", { class: "kicker" }, "Hands-free practice"),
@@ -3859,8 +3924,6 @@
           h("div", { class: "stat" }, h("b", {}, "🔥" + S.streak.count), h("span", {}, "Day streak")))));
       actions([{ label: "Back home", onClick: () => showStart() }]);
     }
-    show("🚗 Ready", "Hands-free Hindi", "Here we go!", "listen");
-    (async () => { const g0 = gen; await en(`Hands-free Hindi. Ready, ${SP.name}? Let's go!`); if (g0 === gen && !paused && !cleaned) loop(); })();
   }
 
   function showWhoPicker() {

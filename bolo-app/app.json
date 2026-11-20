@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "name": "Bolo!",
+    "slug": "bolo",
+    "scheme": "bolo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#fff6ea",
+    "ios": {
+      "bundleIdentifier": "ca.tutorwise.bolo",
+      "buildNumber": "1",
+      "supportsTablet": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": [
+          "audio"
+        ],
+        "NSMicrophoneUsageDescription": "Bolo listens when you tap the microphone so you can practise speaking Hindi.",
+        "NSSpeechRecognitionUsageDescription": "Bolo checks the Hindi you say out loud."
+      }
+    },
+    "android": {
+      "package": "ca.tutorwise.bolo",
+      "adaptiveIcon": {
+        "backgroundColor": "#2a9d8f",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      [
+        "expo-audio",
+        {
+          "enableBackgroundPlayback": true,
+          "microphonePermission": "Bolo listens when you tap the microphone so you can practise speaking Hindi."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#2a9d8f"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/icon.png",
+          "imageWidth": 160,
+          "backgroundColor": "#2a9d8f"
+        }
+      ]
+    ]
+  }
+}
