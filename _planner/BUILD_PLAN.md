@@ -352,3 +352,27 @@ Chat tab, What's next, nudges by days-to-due, wins and the weekly review. Runs w
   task that mentions that prefix) are kept on one day. One full re-plan per build (`settings.layoutBuild`).
 - Today: loose ends (catch-up, weekly review, later list) sit under the docket instead of above it; toasts replace each other.
 - Test harness: the mock database now sorts and limits queries; opt-in scheduler answers from the snapshot per week.
+
+## Nov 22 update 2: scheduling that follows how he works, learning from his moves, a desktop layout (v52, BUILD 50)
+- What a task is: `ctxOf(t)` = work / life (personal errands) / home, and `needle(t)` 0-3 = how much it moves the business
+  this week. Sources, in order: what he set (`ctx`, `nd`, `ndBy:'me'`, chips in the task sheet or `set_meta` needle/kind),
+  the week's focus (`settings.focus.items`, `settings.goal`; op `focus`), a background read by the model (`classify`,
+  `ndBy:'ai'`, at most every 8 minutes and only for tasks it has not seen), then keyword and area rules.
+- Order inside a day (`timeline0`): by `rankOf` = weights over features (needle, focus, deadline, overdue, critical, quick,
+  long, dirty, personal). At the centre, personal errands come after the work: up to `settings.lifeMax` minutes before
+  teaching (shown as "after work"), the rest in the evening. Dirty jobs follow the work that matters when both fit two
+  hours clear of teaching, else they go first. A run of long work is labelled a focus block; the learned peak is no longer
+  used for placement. A passed soft date is pressure (`over`), not a must: `mustDo` = critical, fixed deadline, or due
+  today/tomorrow.
+- Which day (`layoutWeek`): personal things that do not press go to the next day off; on a centre day the evening is shared
+  by home jobs and personal errands and never exceeds `eveMax`. Days off take anything that is not work.
+- Learning: any drag (docket, a day in the calendar, the week board, the nightly sheet) is pairwise evidence; `learnOrder`
+  nudges the weights (`agent/rank`: `w` holds only differences from the defaults, `n` moves, `log` last 40). If the personal
+  weight rises above -1 the "personal after work" gate is dropped. Day moves are logged and shown to the model. Settings
+  show what was picked up and can forget it.
+- His own order for any day: today on `plans/{today}.order`, other days on `days/{d}.ord` (used when that day arrives).
+- Week view (wide screens): seven columns, drag a card to another day (pins it) or another spot, add in a column.
+- Wide screens (1024px and up): navigation on the left, the view in the middle (Today = docket beside tomorrow; Calendar =
+  month beside the day), Jarvis and the conversation always on the right. Nodes are re-parented on entering and leaving.
+- Thin work day: a "Room today" card offers up to two needle-moving items from his list; never fees before the 14th.
+- Soft-overdue items lose their red tags and leave "Due soon" after a day.
