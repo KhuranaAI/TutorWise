@@ -112,7 +112,7 @@ API keys or subscriptions. Build it as **one private claude.ai Artifact page** t
 - His use so far: he opened the app twice on his phone (tapped Up and Workout on and off), has not typed anything,
   marked nothing, has not run the scheduler bridge. His fee sheet has not changed since Nov 10 (checked from here tonight).
 - App v8: a sync can no longer reuse an existing student's document id when it adds a student (the scheduler has a
-  second "Jasreet" that would have overwritten the fee-paying one); the Money section shows when the fee sheet was last
+  second student of the same name that would have overwritten the fee-paying one); the Money section shows when the fee sheet was last
   checked, with a "Check now" button; a short "How to use this" section sits at the bottom of Today.
 - Routines now: "Nimish HQ morning agent (lean)" daily at 05:47 Toronto (fresh session, database only). The older
   "Nimish HQ morning agent" stays DISABLED and must not be deleted from another session without care: it is bound to the
@@ -332,3 +332,23 @@ Chat tab, What's next, nudges by days-to-due, wins and the weekly review. Runs w
 - Independent review findings (21) fixed and re-run against the reviewer's repro scripts; left: weekPace double count
   across weeks, legacy past-day rescore for dailies finished before pl.done was recorded.
 - Morning routine no longer places tasks or writes plans; it scores yesterday and writes the brief.
+
+## Nov 22 update: a real calendar, days off, instant answers (v51, BUILD 49)
+- Calendar tab (was Plan): month grid, tap a date, type "Dinner 7pm" and choose Add plan (an event) or Add to-do (a task
+  pinned to that date). `parseWhen` reads times and lengths; events open in a sheet (date, times, repeat, where, notes;
+  remove one day of a repeat or all of it, with Undo). Repeats gained "every N weeks" (`rep:'weeks'`, `every`). Dates in the
+  next 7 days show the timeline; later dates list plans, to-dos and the usual teaching hours; past dates show what got
+  done. Any task can be put on any date from its sheet ("or another date").
+- Days off: weekends are off days by default (`settings.weekend`: light / off / work; `days/{d}.workDay` overrides one day).
+  `autoOkOn` lets the planner put only personal, home, people and health items there (nothing in "off"), at most 150 min,
+  with no clock times, no late/score pressure, no nightly plan and no fee reminders. What he put on the day himself stays.
+- Next week's lessons: `connSync` also reads next week (`sched/week.next`); `teachOf(d)` uses real lessons, else the same
+  weekday of the latest known week (marked as usual), else timetable slots. A sync is used at once, not after the save lands.
+- Instant answers (`quickIntent`): time, what's next, what's left, status, a day's plan and teaching hours are answered
+  from the plan itself without the model; anything that changes something, names a student or asks about fees still goes
+  to the model. "What's next" is the first item on the docket, so the list and the answer always agree.
+- Planning rules in Settings ("How I plan your days"): get-ready time, commute, minutes allowed after teaching, weekends.
+  On a centre day, home jobs never exceed the after-teaching allowance. Jobs that belong together (same "Prefix:", or a
+  task that mentions that prefix) are kept on one day. One full re-plan per build (`settings.layoutBuild`).
+- Today: loose ends (catch-up, weekly review, later list) sit under the docket instead of above it; toasts replace each other.
+- Test harness: the mock database now sorts and limits queries; opt-in scheduler answers from the snapshot per week.
