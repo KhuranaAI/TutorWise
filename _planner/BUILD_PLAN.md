@@ -376,3 +376,13 @@ Chat tab, What's next, nudges by days-to-due, wins and the weekly review. Runs w
   month beside the day), Jarvis and the conversation always on the right. Nodes are re-parented on entering and leaving.
 - Thin work day: a "Room today" card offers up to two needle-moving items from his list; never fees before the 14th.
 - Soft-overdue items lose their red tags and leave "Due soon" after a day.
+
+## Nov 22 update 3: evenings, streak check (v53, BUILD 51)
+- A day without teaching can be planned until 22:30 (was 21:30).
+- Daily streaks = habits with `per` 7. From 20:30 a card on Today asks which were hit; the nightly plan text ends with the
+  same question; the morning brief lists them. `habit_done` matches a streak by key or by its name.
+- Day blocks (`days/{d}.busy`) may carry `rt:true` (routine: lunch, a walk, lights out); the greeting skips those.
+- Known gap: `dayWrite` sets the whole day record from the local copy, so a field written to today's record from outside
+  while a local write is in flight is lost. Outside writers should re-check today's record after a few seconds.
+- Next: a weekly briefing intake (paste or dictate the Sunday meeting notes; preview, then apply to events, tasks, focus
+  and streaks), and a per-person data root so a second person can have their own planner.
