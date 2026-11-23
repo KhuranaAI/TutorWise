@@ -3,16 +3,16 @@
   "id": "m4-fact-inference-guess",
   "number": 4,
   "title": "Fact, inference or guess?",
-  "goal": "Test every statement. Does a sentence say it? Do two clues point to it? Or is it only a guess?",
+  "goal": "Test each statement. Does a sentence say it? Do two clues point to it? Or is it only a guess?",
   "card": {
-    "title": "CAN YOU TAP IT? → FACT. TWO CLUES? → INFERENCE. NEITHER? → GUESS. A JUDGMENT? → OPINION.",
+    "title": "A SENTENCE SAYS IT? → FACT. TWO CLUES? → INFERENCE. AN OPINION WORD? → OPINION. NONE OF THESE? → GUESS.",
     "lines": [
-      "FACT: a sentence says it, in these words or in other words. Prove it by tapping the sentence.",
+      "FACT: a sentence says it, in the same words or in other words. Tap that sentence to prove it.",
       "INFERENCE: no sentence says it, but two clues in the text point to it.",
-      "GUESS: fewer than two clues in the text, clues only from your own head, or the text says the opposite.",
-      "OPINION: a judgment, like GOOD, BAD, BEST, UNFAIR or SHOULD. Nobody can prove it.",
-      "Not a fact? Look for a judgment word first. A judgment is an OPINION, even when there are no clues.",
-      "If it feels obvious, that does not make it a fact. Only a sentence makes it a fact."
+      "GUESS: the text has one clue or none. Clues from your own head do not count. Or the text says the opposite.",
+      "OPINION: it has an opinion word, like GOOD, BAD, BEST, UNFAIR or SHOULD. People could disagree. Nobody can prove it.",
+      "No sentence says it? Look for an opinion word first. If there is one, it is an OPINION, even with no clues.",
+      "Feeling sure is not enough. It is a FACT only if a sentence says it."
     ]
   },
   "boxes": {
@@ -26,24 +26,24 @@
     },
     "guess": {
       "label": "GUESS",
-      "test": "fewer than two clues in the text, or the text says the opposite"
+      "test": "one clue or none, or the text says the opposite"
     },
     "opinion": {
       "label": "OPINION",
-      "test": "a judgment: good, bad, best, boring, unfair, should"
+      "test": "an opinion word: good, bad, best, boring, unfair, should"
     }
   },
   "feedback": {
     "hint1": "Read the statement again. Does a sentence say it?",
-    "fingerMissed": "Look again. One sentence says this. It may use different words.",
+    "fingerMissed": "Look again. One sentence does say this. It may use other words.",
     "fingerWrong": "That sentence does not say this. Keep looking.",
-    "fingerNone": "Read that sentence again. Does it SAY this? If not, tap No sentence says it.",
-    "clueWrong": "That sentence does not point to it. Look for another clue.",
-    "boxAsk": "So which box is it? Look for a judgment word first.",
+    "fingerNone": "Read that sentence again. Does it really SAY this? If not, tap No sentence says it.",
+    "clueWrong": "That sentence does not point to it. Find another clue.",
+    "boxAsk": "Which one is it? Look for an opinion word first.",
     "box": {
       "inference": "Count the clues in the text. At least two point to it.",
       "guess": "Count the clues in the text. Clues from your own head do not count. Are there two?",
-      "opinion": "Look for a judgment word, like GOOD, BAD, BEST, UNFAIR or SHOULD. A judgment is an OPINION."
+      "opinion": "Look for an opinion word, like GOOD, BAD, BEST, UNFAIR or SHOULD. That makes it an OPINION."
     }
   },
   "rubrics": {
@@ -52,7 +52,7 @@
       "levels": [
         {
           "score": 3,
-          "description": "The clue, the reasoning and the inference are all there, and they link."
+          "description": "The clue, what you know, and the inference are all there, and they link."
         },
         {
           "score": 2,
@@ -64,7 +64,7 @@
         },
         {
           "score": 0,
-          "description": "Only a label (fact, inference, guess), or nothing usable."
+          "description": "Only a box name (fact, inference, guess), or nothing usable."
         }
       ]
     }
@@ -189,19 +189,19 @@
           "id": "m4-learn-1",
           "type": "explain",
           "text": [
-            "Any statement about a text goes in one of four boxes.",
-            "FACT: a sentence says it, in these words or in other words. You can tap that sentence.",
+            "Every statement about a text goes in one of four boxes.",
+            "FACT: a sentence says it, in the same words or in other words. You can tap that sentence.",
             "INFERENCE: no sentence says it, but two clues point to it.",
-            "GUESS: fewer than two clues, or the clues are from your own head, or the text says the opposite.",
-            "OPINION: a judgment, like good, bad, best or unfair. Nobody can prove it.",
-            "The trick: if it feels obvious, that does NOT make it a fact. Only a sentence makes it a fact."
+            "GUESS: the text has one clue or none. Clues from your own head do not count. Or the text says the opposite.",
+            "OPINION: it has an opinion word, like good, bad, best or unfair. People could disagree. Nobody can prove it.",
+            "Watch out: feeling sure does NOT make it a fact. Only a sentence makes it a fact."
           ],
           "showCard": true
         },
         {
           "id": "m4-learn-2",
           "type": "worked",
-          "title": "Try it with no text",
+          "title": "Try it without a text",
           "reveals": [
             {
               "label": "What you see",
@@ -221,14 +221,14 @@
             },
             {
               "label": "OPINION",
-              "text": "He is lazy for not washing the pan. That is a judgment."
+              "text": "He is lazy for not washing the pan. LAZY is an opinion word."
             }
           ]
         },
         {
           "id": "m4-learn-3",
           "type": "sort",
-          "prompt": "Fact or opinion? Here there is no text, so a fact is something you could check. An opinion is a judgment someone could disagree with.",
+          "prompt": "Tap a card. Then tap FACT or OPINION. A fact is something you could check. An opinion is something people could disagree about.",
           "categories": [
             {
               "id": "fact",
@@ -248,7 +248,7 @@
             {
               "text": "Pizza is the best food.",
               "category": "opinion",
-              "why": "BEST is a judgment. Someone could disagree."
+              "why": "BEST is an opinion word. Someone could disagree."
             },
             {
               "text": "The test is on Friday.",
@@ -258,7 +258,7 @@
             {
               "text": "The coach is unfair.",
               "category": "opinion",
-              "why": "UNFAIR is a judgment."
+              "why": "UNFAIR is an opinion word."
             },
             {
               "text": "Marcus has a phone.",
@@ -268,23 +268,23 @@
             {
               "text": "Mornings are terrible.",
               "category": "opinion",
-              "why": "TERRIBLE is a judgment. Not everyone agrees."
+              "why": "TERRIBLE is an opinion word. Not everyone agrees."
             }
           ],
-          "hint2": "Ask: could I check this, or is it a judgment?",
-          "hint3": "Look for a judgment word like BEST, UNFAIR or TERRIBLE."
+          "hint2": "Ask: could I check this? Or could people disagree?",
+          "hint3": "Look for an opinion word like BEST, UNFAIR or TERRIBLE."
         },
         {
           "id": "m4-learn-4",
           "type": "worked",
-          "title": "Watch the tests",
+          "title": "Watch the steps",
           "reveals": [
             {
               "label": "Statement 1",
               "text": "The gym door was locked."
             },
             {
-              "label": "Finger test",
+              "label": "Does a sentence say it?",
               "text": "Sentence 3 says 'the gym door was still locked.' I can tap it. FACT.",
               "highlight": [
                 3
@@ -295,8 +295,8 @@
               "text": "The coach was in a hurry."
             },
             {
-              "label": "Finger test",
-              "text": "No sentence says he was in a hurry, in these words or in other words. It feels obvious, but it is not a fact."
+              "label": "Does a sentence say it?",
+              "text": "No sentence says he was in a hurry, in the same words or in other words. It feels true, but it is not a fact."
             },
             {
               "label": "Count the clues",
@@ -312,7 +312,7 @@
             },
             {
               "label": "Count the clues",
-              "text": "He was late. But late could be traffic or a flat tire. No clue points to sleeping. GUESS."
+              "text": "He was late. But late could mean traffic or a flat tire. No clue points to sleeping. GUESS."
             }
           ],
           "passage": "gym",
@@ -336,8 +336,8 @@
           "proof": [
             5
           ],
-          "why": "The words are 'a coffee stain down the front of his shirt.'",
-          "hint2": "Search for COFFEE.",
+          "why": "Sentence 5 says 'a coffee stain down the front of his shirt.'",
+          "hint2": "Look for the word COFFEE.",
           "hint3": "It is sentence 4 or sentence 5."
         },
         {
@@ -349,8 +349,8 @@
           "proof": [
             6
           ],
-          "why": "The words are in the story: 'Sorry, sorry,' he said, unlocking the door.",
-          "hint2": "Search for SORRY.",
+          "why": "The words are in the text: 'Sorry, sorry,' he said, unlocking the door.",
+          "hint2": "Look for the word SORRY.",
           "hint3": "It is sentence 6 or sentence 7."
         },
         {
@@ -359,14 +359,14 @@
           "statement": "Marcus is the best player on the team.",
           "passage": "gym",
           "box": "opinion",
-          "why": "BEST is a judgment word. One person could call Marcus the best player and another could disagree. The story does not say how well he plays.",
+          "why": "BEST is an opinion word. People could disagree about who is the best player. The text does not say how well Marcus plays.",
           "accept": {
-            "guess": "GUESS can be argued too: nothing in the story says how well Marcus plays. But BEST is a judgment word, so OPINION is the better box."
+            "guess": "You could also say GUESS: nothing in the text says how well Marcus plays. But BEST is an opinion word, so OPINION is the better box."
           },
           "boxWhy": {
-            "inference": "Which clues in the story show how well Marcus plays? There are none. And look at the word BEST."
+            "inference": "Which clues in the text show how well Marcus plays? There are none. And look at the word BEST."
           },
-          "hint2": "No sentence says it. Look at the word BEST. Is it a judgment?",
+          "hint2": "No sentence says it. Look at the word BEST. Is it an opinion word?",
           "hint3": "It is not an INFERENCE. There are no clues about how he plays."
         },
         {
@@ -375,13 +375,13 @@
           "statement": "The coach is a bad coach.",
           "passage": "gym",
           "box": "opinion",
-          "why": "BAD is a judgment. One person could call him a bad coach and another could disagree. No sentence could prove who is right.",
+          "why": "BAD is an opinion word. People could disagree about the coach. No sentence could prove who is right.",
           "boxWhy": {
-            "inference": "He was late once. But BAD COACH is a judgment about him, and clues cannot prove a judgment.",
-            "guess": "It is not in the text, that is true. But BAD is a judgment word. A judgment is an OPINION."
+            "inference": "He was late once. But BAD is an opinion word. Clues cannot prove an opinion.",
+            "guess": "True, it is not in the text. But BAD is an opinion word. That makes it an OPINION."
           },
           "hint2": "No sentence says it. Look at the word BAD. Could two people disagree about it?",
-          "hint3": "It is a GUESS or an OPINION. Is BAD a judgment word?"
+          "hint3": "It is a GUESS or an OPINION. Is BAD an opinion word?"
         },
         {
           "id": "m4-t5",
@@ -393,7 +393,7 @@
               "text": "Marcus kept checking the time."
             },
             {
-              "label": "Finger test",
+              "label": "Does a sentence say it?",
               "text": "Sentence 1 says he 'checked his phone for the third time in a minute.' Sentence 2 shows what he saw: 6:58.",
               "highlight": [
                 1,
@@ -402,11 +402,11 @@
             },
             {
               "label": "Fact or inference?",
-              "text": "You can call it a FACT: sentence 1 tells what he did, in other words. Or you can call it an INFERENCE, because the word TIME is not in sentence 1. Then name your two clues."
+              "text": "You can call it a FACT: sentence 1 says what he did, in other words. Or you can call it an INFERENCE, because the word TIME is not in sentence 1. Then name your two clues."
             },
             {
               "label": "Tell your tutor",
-              "text": "Which box did you pick, and why? Both can be argued. What matters is the proof."
+              "text": "Which box did you pick? Why? Both boxes can work. What matters is how you prove it."
             }
           ],
           "passage": "gym",
@@ -418,7 +418,7 @@
           "statement": "The coach had spilled his coffee on the way to the gym.",
           "passage": "gym",
           "box": "guess",
-          "why": "The stain is there, but the story does not say when or where it happened. One clue is not two, and it does not point to ON THE WAY.",
+          "why": "The stain is in the text, but the text does not say when or where it happened. One clue is not two. And it does not point to ON THE WAY.",
           "near": [
             {
               "sentences": [
@@ -428,10 +428,10 @@
             }
           ],
           "accept": {
-            "inference": "You can argue INFERENCE if you count the stain and the fast car as two clues. But neither clue says WHEN the coffee spilled, so GUESS is the safer box. Talk about it with your tutor."
+            "inference": "You could say INFERENCE if you count the stain and the fast car as two clues. But no clue says WHEN the coffee spilled. So GUESS is the safer box. Talk about it with your tutor."
           },
           "boxWhy": {
-            "opinion": "This is about what happened. It is not a judgment. Count the clues in the text."
+            "opinion": "This is about what happened. It has no opinion word. Count the clues in the text."
           },
           "hint2": "No sentence says it. Look at sentence 5. What does it say about the coffee, and what does it leave out?",
           "hint3": "It is an INFERENCE or a GUESS. Count the clues that say WHEN the coffee spilled."
@@ -446,7 +446,7 @@
             8,
             9
           ],
-          "why": "The text says Marcus grinned. Last week the coach benched him (made him sit out) for being three minutes late, and now the coach is late himself. People grin when something is funny. So probably Marcus found it funny.",
+          "why": "The text says Marcus grinned. Last week the coach benched him (made him sit out) for being three minutes late. Now the coach is late himself. People grin when something is funny. So probably Marcus found it funny.",
           "near": [
             {
               "sentences": [
@@ -463,9 +463,9 @@
           ],
           "boxWhy": {
             "guess": "Look at the last two sentences. What did Marcus do, and what happened to him last week?",
-            "opinion": "FUNNY is how Marcus felt. It is not a judgment about him. Look for clues."
+            "opinion": "FUNNY here is how Marcus felt. It is not an opinion about him. Look for clues."
           },
-          "hint2": "No sentence says it. Look at what Marcus does near the end, and what happened to him last week.",
+          "hint2": "No sentence says it. Look at what Marcus does near the end. Then look at what happened to him last week.",
           "hint3": "It is an INFERENCE. The clues are in sentences 8 and 9."
         },
         {
@@ -474,7 +474,7 @@
           "statement": "The coach got to the gym before seven.",
           "passage": "gym",
           "box": "guess",
-          "why": "The text says the opposite. The coach's car pulled in at 7:04, after seven. When the text says the opposite, the statement is a GUESS, and a wrong one.",
+          "why": "The text says the opposite. The coach's car pulled in at 7:04. That is after seven. When the text says the opposite, the statement is a GUESS, and a wrong one.",
           "near": [
             {
               "sentences": [
@@ -490,8 +490,8 @@
             }
           ],
           "boxWhy": {
-            "inference": "Check for the opposite first. When did the coach's car pull in?",
-            "opinion": "This is about a time. It is not a judgment. When did the coach's car pull in?"
+            "inference": "First check if the text says the opposite. When did the coach's car pull in?",
+            "opinion": "This is about a time. It has no opinion word. When did the coach's car pull in?"
           },
           "hint2": "No sentence says it. Look at sentence 5. What time did the car pull in?",
           "hint3": "The text says the opposite. Which box is that?"
@@ -510,7 +510,7 @@
           "type": "explain",
           "text": [
             "In a conversation, people do not always say what they feel.",
-            "Look at what they DO, and at what they do NOT answer.",
+            "Look at what they DO. Look at what they do NOT answer.",
             "Each one is a clue. Two clues that point the same way make an inference.",
             "One clue, or a clue from your own head, is only a guess."
           ],
@@ -527,7 +527,7 @@
             2
           ],
           "why": "Her words are 'I ate at Jamal's.'",
-          "hint2": "Search for JAMAL.",
+          "hint2": "Look for the name JAMAL.",
           "hint3": "It is sentence 2 or sentence 3."
         },
         {
@@ -554,7 +554,7 @@
           ],
           "boxWhy": {
             "guess": "Look at what Lena does with her food and with her eyes. Are there two clues?",
-            "opinion": "UPSET is how Lena feels. It is not a judgment about her. Can you find clues for it?"
+            "opinion": "UPSET is how Lena feels. It is not an opinion about her. Can you find clues for it?"
           },
           "hint2": "No sentence says it. Look at what Lena does, not at what she says.",
           "hint3": "It is an INFERENCE. Clues: she is not eating, she pushes the rice around, she does not look up."
@@ -570,7 +570,7 @@
             8,
             9
           ],
-          "why": "The text says she does not look up, and she answers a different question about the test. People avoid a question when the answer is bad. So probably she thinks it went badly.",
+          "why": "The text says she does not look up. She answers a different question about the test. People avoid a question when the answer is bad. So probably she thinks it went badly.",
           "near": [
             {
               "sentences": [
@@ -581,7 +581,7 @@
           ],
           "boxWhy": {
             "guess": "Look at how Lena answers Dad's question about the test. Does she really answer it?",
-            "opinion": "This is about what Lena thinks. It is not your judgment. Look for clues in what she does."
+            "opinion": "This is about what Lena thinks. It is not your opinion. Look for clues in what she does."
           },
           "hint2": "No sentence says it. Look at what happens right after Dad asks about the test.",
           "hint3": "It is an INFERENCE. The clues are in sentences 7, 8 and 9."
@@ -592,20 +592,20 @@
           "statement": "Lena failed the test.",
           "passage": "dinner",
           "box": "guess",
-          "why": "The story gives no mark. Lena says the tests are not back. She may think it went badly, but BADLY is not FAILED.",
+          "why": "The text gives no mark. Lena says the tests are not back. She may think it went badly, but BADLY is not FAILED.",
           "near": [
             {
               "sentences": [
                 8
               ],
-              "why": "In that sentence Lena says the tests are not back yet. The story gives no mark."
+              "why": "In that sentence Lena says the tests are not back yet. The text gives no mark."
             }
           ],
           "boxWhy": {
-            "inference": "The clues point to WORRIED. Do any clues point to FAILED? The story gives no mark.",
-            "opinion": "This is about a mark. It is not a judgment. Does the story give a mark?"
+            "inference": "The clues point to WORRIED. Do any clues point to FAILED? The text gives no mark.",
+            "opinion": "This is about a mark. It has no opinion word. Does the text give a mark?"
           },
-          "hint2": "No sentence says it. Read sentence 8. Does the story give a mark?",
+          "hint2": "No sentence says it. Read sentence 8. Does the text give a mark?",
           "hint3": "It is an INFERENCE or a GUESS. Do the clues say FAILED, or only WORRIED?"
         },
         {
@@ -614,13 +614,13 @@
           "statement": "Dad is being unfair to Lena.",
           "passage": "dinner",
           "box": "opinion",
-          "why": "UNFAIR is a judgment. One reader could say Dad is being unfair. Another could say he is being a caring parent. No sentence could prove who is right.",
+          "why": "UNFAIR is an opinion word. One reader could say Dad is being unfair. Another could say he is being a caring parent. No sentence could prove who is right.",
           "boxWhy": {
-            "inference": "He asks about the test twice. But UNFAIR is a judgment about him, and clues cannot prove a judgment.",
-            "guess": "It is not in the text, that is true. But UNFAIR is a judgment word. A judgment is an OPINION."
+            "inference": "He asks about the test twice. But UNFAIR is an opinion word. Clues cannot prove an opinion.",
+            "guess": "True, it is not in the text. But UNFAIR is an opinion word. That makes it an OPINION."
           },
           "hint2": "No sentence says it. Look at the word UNFAIR. Could two readers disagree about it?",
-          "hint3": "It is a GUESS or an OPINION. Is UNFAIR a judgment word?"
+          "hint3": "It is a GUESS or an OPINION. Is UNFAIR an opinion word?"
         },
         {
           "id": "m4-d6",
@@ -631,7 +631,7 @@
           "proof": [
             9
           ],
-          "why": "Dad is the one speaking. 'That's not what I asked' says the same thing in different words.",
+          "why": "Dad is the one speaking. 'That's not what I asked' says the same thing in other words.",
           "near": [
             {
               "sentences": [
@@ -640,14 +640,14 @@
               "why": "That is the question. Which sentence tells Lena she has not answered it?"
             }
           ],
-          "hint2": "A fact can be said in different words. Look at Dad's last line.",
+          "hint2": "A fact can use other words. Look at Dad's last line.",
           "hint3": "It is sentence 6 or sentence 9."
         }
       ]
     },
     {
       "id": "say-why",
-      "title": "Say why",
+      "title": "Explain an inference",
       "mode": "tutor",
       "minutes": 10,
       "tutorNote": "WE DO. An inference has three parts: the clue, the reasoning, and the inference. The student says each frame aloud before typing. The middle step (I know that) is the one that gets skipped; ask 'What do you know about people who do that?' The typed answers go to the review queue; score 0 to 3.",
@@ -658,9 +658,9 @@
           "text": [
             "An inference has three parts.",
             "THE TEXT SAYS: the clue.",
-            "I KNOW THAT: what you already know about people or things like this.",
+            "I KNOW THAT: what you already know from life.",
             "SO PROBABLY: the inference.",
-            "The clues must come from the text. What you know only explains them.",
+            "The clues must come from the text. What you know just helps explain them.",
             "Say it out loud first. Then type it."
           ],
           "showCard": false
@@ -668,7 +668,7 @@
         {
           "id": "m4-w1",
           "type": "worked",
-          "title": "Watch one",
+          "title": "Watch an example",
           "reveals": [
             {
               "label": "The text says",
@@ -688,7 +688,7 @@
             },
             {
               "label": "All three parts",
-              "text": "The clue comes from the text. The reasoning is what I know. The inference comes last."
+              "text": "The clue comes from the text. Then what I know. The inference comes last."
             }
           ],
           "question": "Why can we say Marcus found it funny that the coach was late?",
@@ -698,8 +698,8 @@
         {
           "id": "m4-w2",
           "type": "text",
-          "prompt": "Say it out loud first, then type it.",
-          "stem": "Explain this inference: \"Lena is upset about something.\"",
+          "prompt": "Say it out loud first. Then type it.",
+          "stem": "Fill in the three boxes for this inference: \"Lena is upset about something.\"",
           "parts": [
             {
               "label": "The clue",
@@ -728,8 +728,8 @@
         {
           "id": "m4-w3",
           "type": "text",
-          "prompt": "Say it out loud first, then type it.",
-          "stem": "Explain this inference: \"Lena thinks the math test went badly.\"",
+          "prompt": "Say it out loud first. Then type it.",
+          "stem": "Fill in the three boxes for this inference: \"Lena thinks the math test went badly.\"",
           "parts": [
             {
               "label": "The clue",
@@ -784,7 +784,7 @@
             1
           ],
           "why": "'Stopped selling' means the same as 'no longer sells.'",
-          "hint2": "Search for CAFETERIA.",
+          "hint2": "Look for the word CAFETERIA.",
           "hint3": "It is sentence 1 or sentence 3."
         },
         {
@@ -796,8 +796,8 @@
           "proof": [
             2
           ],
-          "why": "It says the decision 'followed complaints from teachers' about students who were wired (too full of energy), then asleep.",
-          "hint2": "Search for TEACHERS.",
+          "why": "Sentence 2 says the decision 'followed complaints from teachers' about students who were wired (too full of energy), then asleep.",
+          "hint2": "Look for the word TEACHERS.",
           "hint3": "It is sentence 2 or sentence 5."
         },
         {
@@ -810,7 +810,7 @@
             1,
             4
           ],
-          "why": "The text says the cafeteria stopped selling energy drinks. It also says students now bring them from the corner store, and the store's morning sales have doubled. When one place stops selling something, people buy it somewhere else. So probably the store is selling more because of the ban.",
+          "why": "The text says the cafeteria stopped selling energy drinks. Now students bring them from the corner store. The store's morning sales have doubled. When one place stops selling something, people buy it somewhere else. So probably the store is selling more because of the ban.",
           "near": [
             {
               "sentences": [
@@ -821,7 +821,7 @@
           ],
           "boxWhy": {
             "guess": "Look at sentence 1 and sentence 4. What did the cafeteria stop doing, and what happened at the store?",
-            "opinion": "This is about what happened. It is not a judgment. Look for clues in sentences 1 and 4."
+            "opinion": "This is about what happened. It has no opinion word. Look for clues in sentences 1 and 4."
           },
           "hint2": "No sentence says it. What did the cafeteria stop doing, and what happened at the store after that?",
           "hint3": "It is an INFERENCE. The clues are in sentences 1 and 4."
@@ -835,8 +835,8 @@
           "proof": [
             4
           ],
-          "why": "The words are 'the store's owner says his morning sales have doubled.'",
-          "hint2": "Search for OWNER.",
+          "why": "Sentence 4 says 'the store's owner says his morning sales have doubled.'",
+          "hint2": "Look for the word OWNER.",
           "hint3": "It is sentence 3 or sentence 4."
         },
         {
@@ -845,7 +845,7 @@
           "statement": "Most students support the ban.",
           "passage": "drinks",
           "box": "guess",
-          "why": "The text says the opposite: 61 percent of students DISAGREED with the ban. Always check for the opposite before you call something an inference.",
+          "why": "The text says the opposite: 61 percent of students DISAGREED with the ban. Always check for the opposite before you pick INFERENCE.",
           "near": [
             {
               "sentences": [
@@ -855,8 +855,8 @@
             }
           ],
           "boxWhy": {
-            "inference": "Check for the opposite first. What does sentence 5 say most students think?",
-            "opinion": "This is a claim about what students think, and the survey checked it. What did the survey find?"
+            "inference": "First check if the text says the opposite. What does sentence 5 say most students think?",
+            "opinion": "This is about what students think. A survey asked them. What did the survey find?"
           },
           "hint2": "No sentence says it. Look at the survey in sentence 5.",
           "hint3": "The text says the opposite. Which box is that?"
@@ -872,18 +872,18 @@
             5,
             6
           ],
-          "why": "The text says the policy will be reviewed in January, and 61 percent of students disagreed with it. A review can end in a change. So probably the ban could change.",
+          "why": "The text says the policy will be reviewed (looked at again) in January. It also says 61 percent of students disagreed with it. A review can end in a change. So probably the ban could change.",
           "near": [
             {
               "sentences": [
                 6
               ],
-              "why": "That sentence says the policy will be REVIEWED. It does not say it will change. So it is a clue, not a fact."
+              "why": "That sentence says the policy will be REVIEWED (looked at again). It does not say it will change. So it is a clue, not a fact."
             }
           ],
           "boxWhy": {
             "guess": "Look at the last two sentences. What will happen in January, and what do most students think?",
-            "opinion": "This is about what could happen. It is not a judgment. Look for clues."
+            "opinion": "This is about what could happen. It has no opinion word. Look for clues."
           },
           "hint2": "No sentence says it. What will happen in January?",
           "hint3": "It is an INFERENCE. The clues are in sentences 5 and 6."
@@ -894,13 +894,13 @@
           "statement": "The ban is unfair to students.",
           "passage": "drinks",
           "box": "opinion",
-          "why": "UNFAIR is a judgment. Most students disagreed with the ban, but that does not prove it is unfair. People can disagree about what is fair.",
+          "why": "UNFAIR is an opinion word. Most students disagreed with the ban, but that does not prove it is unfair. People can disagree about what is fair.",
           "boxWhy": {
-            "inference": "Most students disagreed with the ban. But UNFAIR is a judgment, and clues cannot prove a judgment.",
-            "guess": "It is not in the text, that is true. But UNFAIR is a judgment word. A judgment is an OPINION."
+            "inference": "Most students disagreed with the ban. But UNFAIR is an opinion word. Clues cannot prove an opinion.",
+            "guess": "True, it is not in the text. But UNFAIR is an opinion word. That makes it an OPINION."
           },
           "hint2": "No sentence says it. Look at the word UNFAIR. Could two people disagree about it?",
-          "hint3": "It is a GUESS or an OPINION. Is UNFAIR a judgment word?"
+          "hint3": "It is a GUESS or an OPINION. Is UNFAIR an opinion word?"
         },
         {
           "id": "m4-o8",
@@ -908,7 +908,7 @@
           "statement": "The principal regrets the ban.",
           "passage": "drinks",
           "box": "guess",
-          "why": "Nothing in the text shows how Ms. Okafor feels about the ban. A review in January is not regret.",
+          "why": "REGRETS means she wishes it had not happened. Nothing in the text shows how Ms. Okafor feels about the ban. A review in January is not regret.",
           "near": [
             {
               "sentences": [
@@ -919,7 +919,7 @@
           ],
           "boxWhy": {
             "inference": "She will review the policy. Does that show she REGRETS it? A review is not a feeling.",
-            "opinion": "REGRETS is about how she feels. It is not a judgment. Are there clues for it in the text?"
+            "opinion": "REGRETS is about how she feels. It is not an opinion word. Are there clues for it in the text?"
           },
           "hint2": "No sentence says it. Find every sentence about Ms. Okafor. Do any show her feelings?",
           "hint3": "It is an INFERENCE or a GUESS. Count the clues about her feelings."
@@ -932,8 +932,8 @@
           "box": "guess",
           "why": "Sentence 2 says some students were asleep by period four. But the text says nothing about grades. One clue plus your own idea is a GUESS.",
           "boxWhy": {
-            "inference": "Sentence 2 gives one clue: some students were asleep by period four. Nothing is said about grades. One clue plus your own idea is a guess.",
-            "opinion": "This is a claim about grades. It is not a judgment. Does the text say anything about grades?"
+            "inference": "Sentence 2 gives one clue: some students were asleep by period four. Nothing is said about grades. One clue plus your own idea is a GUESS.",
+            "opinion": "This is about grades. It has no opinion word. Does the text say anything about grades?"
           },
           "hint2": "No sentence says it. Does any sentence talk about grades or marks?",
           "hint3": "It is an INFERENCE or a GUESS. Are there two clues in the text?"
@@ -950,8 +950,8 @@
         {
           "id": "m4-e1",
           "type": "text",
-          "prompt": "Say it out loud first, then type it.",
-          "stem": "Explain this inference: \"The corner store is selling more because of the ban.\"",
+          "prompt": "Say it out loud first. Then type it.",
+          "stem": "Fill in the three boxes for this inference: \"The corner store is selling more because of the ban.\"",
           "parts": [
             {
               "label": "The clue",
@@ -980,8 +980,8 @@
         {
           "id": "m4-e2",
           "type": "text",
-          "prompt": "Say it out loud first, then type it.",
-          "stem": "Explain this inference: \"The ban could change.\"",
+          "prompt": "Say it out loud first. Then type it.",
+          "stem": "Fill in the three boxes for this inference: \"The ban could change.\"",
           "parts": [
             {
               "label": "The clue",
@@ -1036,7 +1036,7 @@
             1
           ],
           "why": "'Twenty minutes before her first shift' means she was early.",
-          "hint2": "A fact can be said in different words. Look for a time.",
+          "hint2": "A fact can use other words. Look for a time.",
           "hint3": "It is sentence 1 or sentence 9."
         },
         {
@@ -1061,7 +1061,7 @@
           ],
           "boxWhy": {
             "guess": "Look at what Amira does with her name tag and with her hands. Are there two clues?",
-            "opinion": "NERVOUS is how Amira felt. It is not a judgment about her. Look for clues."
+            "opinion": "NERVOUS is how Amira felt. It is not an opinion about her. Look for clues."
           },
           "hint2": "No sentence says it. Look at what Amira's hands do.",
           "hint3": "It is an INFERENCE. Clues: the name tag, the dropped can, the shaking hands."
@@ -1075,8 +1075,8 @@
           "proof": [
             3
           ],
-          "why": "The words are 'showed her how to scan items.'",
-          "hint2": "Search for SCAN.",
+          "why": "Sentence 3 says 'showed her how to scan items.'",
+          "hint2": "Look for the word SCAN.",
           "hint3": "It is sentence 3 or sentence 4."
         },
         {
@@ -1085,10 +1085,10 @@
           "statement": "Amira wants to become a store manager.",
           "passage": "shift",
           "box": "guess",
-          "why": "Nothing in the story is about what Amira wants to be. No clues means GUESS.",
+          "why": "Nothing in the text is about what Amira wants to be. No clues means GUESS.",
           "boxWhy": {
             "inference": "Which sentence is about what Amira wants to be one day? None. Clues from your own head do not count.",
-            "opinion": "This is about what Amira wants. It is not a judgment. Does the story say anything about it?"
+            "opinion": "This is about what Amira wants. It has no opinion word. Does the text say anything about it?"
           },
           "hint2": "No sentence says it. Does any sentence talk about what Amira wants to be?",
           "hint3": "It is an INFERENCE or a GUESS. Count the clues in the text."
@@ -1103,7 +1103,7 @@
             8,
             9
           ],
-          "why": "The text says her line was the longest in the store for the first hour, and as short as the others by the end. A line gets shorter when the cashier works faster. So probably she got faster.",
+          "why": "The text says her line was the longest in the store for the first hour. By the end, it was as short as the others. A line gets shorter when the cashier works faster. So probably she got faster.",
           "near": [
             {
               "sentences": [
@@ -1120,9 +1120,9 @@
           ],
           "boxWhy": {
             "guess": "Look at her line in the first hour, and her line at the end. Are there two clues?",
-            "opinion": "FASTER is something you can see in her line. It is not a judgment. Look for clues."
+            "opinion": "FASTER is something you can see in her line. It is not an opinion word. Look for clues."
           },
-          "hint2": "No sentence says it. Look at what the story says about the line at her register.",
+          "hint2": "No sentence says it. Look at what the text says about the line at her register.",
           "hint3": "It is an INFERENCE. The clues are in sentences 8 and 9."
         },
         {
@@ -1141,8 +1141,8 @@
             }
           ],
           "boxWhy": {
-            "inference": "Check for the opposite first. What did Carl say in sentence 4?",
-            "opinion": "This is about what Carl said. It is not a judgment. What did he say in sentence 4?"
+            "inference": "First check if the text says the opposite. What did Carl say in sentence 4?",
+            "opinion": "This is about what Carl said. It has no opinion word. What did he say in sentence 4?"
           },
           "hint2": "No sentence says it. Find what Carl said to Amira.",
           "hint3": "The text says the opposite. Which box is that?"
@@ -1153,13 +1153,13 @@
           "statement": "Scanning groceries is boring work.",
           "passage": "shift",
           "box": "opinion",
-          "why": "BORING is a judgment about the work. One person finds it boring. Another does not.",
+          "why": "BORING is an opinion word. One person finds the work boring. Another does not.",
           "boxWhy": {
-            "inference": "The story does not show anyone being bored. And BORING is a judgment, which clues cannot prove.",
-            "guess": "It is not in the text, that is true. But BORING is a judgment word. A judgment is an OPINION."
+            "inference": "The text does not show anyone being bored. But BORING is an opinion word. Clues cannot prove an opinion.",
+            "guess": "True, it is not in the text. But BORING is an opinion word. That makes it an OPINION."
           },
           "hint2": "No sentence says it. Look at the word BORING. Could two people disagree about it?",
-          "hint3": "It is a GUESS or an OPINION. Is BORING a judgment word?"
+          "hint3": "It is a GUESS or an OPINION. Is BORING an opinion word?"
         },
         {
           "id": "m4-h8",
@@ -1171,14 +1171,14 @@
             7
           ],
           "why": "The customer's words are 'Take your time.'",
-          "hint2": "Search for CUSTOMER.",
+          "hint2": "Look for the word CUSTOMER.",
           "hint3": "It is sentence 5 or sentence 7."
         },
         {
           "id": "m4-h9",
           "type": "text",
-          "prompt": "Say it out loud first, then type it.",
-          "stem": "Explain this inference: \"Amira was nervous when she started.\"",
+          "prompt": "Say it out loud first. Then type it.",
+          "stem": "Fill in the three boxes for this inference: \"Amira was nervous when she started.\"",
           "parts": [
             {
               "label": "The clue",
@@ -1241,7 +1241,7 @@
               "why": "That sentence says who paid for the food. Which sentence tells you students do not pay?"
             }
           ],
-          "hint2": "A fact can be said in different words. What word means it costs nothing?",
+          "hint2": "A fact can use other words. What word means it costs nothing?",
           "hint3": "It is sentence 1 or sentence 8."
         },
         {
@@ -1255,7 +1255,7 @@
             4,
             5
           ],
-          "why": "Teachers saw students with their heads on their desks, and the cart gives out about 150 items a day. Students who take breakfast at school probably did not eat at home. So probably some came to school hungry.",
+          "why": "Teachers saw students with their heads on their desks. The cart gives out about 150 items a day. Students who take breakfast at school probably did not eat at home. So probably some came to school hungry.",
           "near": [
             {
               "sentences": [
@@ -1267,7 +1267,7 @@
           ],
           "boxWhy": {
             "guess": "Why did teachers want a breakfast cart? And how much food does it give out? Count the clues.",
-            "opinion": "HUNGRY is not a judgment. Look for clues in the text."
+            "opinion": "HUNGRY is not an opinion word. Look for clues in the text."
           },
           "hint2": "No sentence says it. Look at what teachers noticed, and at how much food the cart gives out.",
           "hint3": "It is an INFERENCE. The clues are in sentences 3, 4 and 5."
@@ -1289,7 +1289,7 @@
           ],
           "boxWhy": {
             "inference": "The school is LOOKING for money. Does any sentence point to the cart being cancelled?",
-            "opinion": "This is about what will happen. It is not a judgment. Does any sentence say the cart will stop?"
+            "opinion": "This is about what will happen. It has no opinion word. Does any sentence say the cart will stop?"
           },
           "hint2": "No sentence says it. Read the last sentence. What is the school doing?",
           "hint3": "It is an INFERENCE or a GUESS. Do the clues point to CANCELLED?"
@@ -1303,8 +1303,8 @@
           "proof": [
             2
           ],
-          "why": "The words are 'two student volunteers push the cart through the front hall.'",
-          "hint2": "Search for VOLUNTEERS.",
+          "why": "Sentence 2 says 'two student volunteers push the cart through the front hall.'",
+          "hint2": "Look for the word VOLUNTEERS.",
           "hint3": "It is sentence 2 or sentence 8."
         },
         {
@@ -1313,13 +1313,13 @@
           "statement": "Every school should have a breakfast cart.",
           "passage": "cart",
           "box": "opinion",
-          "why": "SHOULD is a judgment about what is right. People can disagree, and no sentence could prove it.",
+          "why": "SHOULD is an opinion word. People can disagree about it, and no sentence could prove it.",
           "boxWhy": {
-            "inference": "The cart seems to help at this school. But SHOULD is a judgment, and clues cannot prove a judgment.",
-            "guess": "It is not in the text, that is true. But SHOULD is a judgment word. A judgment is an OPINION."
+            "inference": "The cart seems to help at this school. But SHOULD is an opinion word. Clues cannot prove an opinion.",
+            "guess": "True, it is not in the text. But SHOULD is an opinion word. That makes it an OPINION."
           },
           "hint2": "No sentence says it. Look at the word SHOULD. Could two people disagree?",
-          "hint3": "It is a GUESS or an OPINION. Is SHOULD a judgment word?"
+          "hint3": "It is a GUESS or an OPINION. Is SHOULD an opinion word?"
         },
         {
           "id": "m4-c6",
@@ -1342,7 +1342,7 @@
           ],
           "boxWhy": {
             "guess": "Look at what happens to the granola bars and to the apples. Are there two clues?",
-            "opinion": "This is about what students take. It is not a judgment about which food is better. Look for clues."
+            "opinion": "This is about what students take. It is not about which food is better. Look for clues."
           },
           "hint2": "No sentence says it. Which food runs out? Which food is left?",
           "hint3": "It is an INFERENCE. The clues are in sentences 5 and 6."
@@ -1363,8 +1363,8 @@
             }
           ],
           "boxWhy": {
-            "inference": "Check for the opposite first. What does sentence 6 say about apples?",
-            "opinion": "This is about which food runs out. It is not a judgment. What does sentence 6 say?"
+            "inference": "First check if the text says the opposite. What does sentence 6 say about apples?",
+            "opinion": "This is about which food runs out. It has no opinion word. What does sentence 6 say?"
           },
           "hint2": "No sentence says it. Find the sentence about apples. What does it say?",
           "hint3": "The text says the opposite. Which box is that?"
@@ -1378,8 +1378,8 @@
           "proof": [
             7
           ],
-          "why": "It says the office 'has recorded fewer late arrivals to first period.'",
-          "hint2": "Search for LATE.",
+          "why": "Sentence 7 says the office 'has recorded fewer late arrivals to first period.'",
+          "hint2": "Look for the word LATE.",
           "hint3": "It is sentence 5 or sentence 7."
         },
         {
@@ -1391,10 +1391,10 @@
           "why": "The text is about breakfast. Nothing in it is about lunch.",
           "boxWhy": {
             "inference": "Which sentence talks about lunch? None. Clues from your own head do not count.",
-            "opinion": "This is a claim about lunch. It is not a judgment. Does the text say anything about lunch?"
+            "opinion": "This is about lunch. It has no opinion word. Does the text say anything about lunch?"
           },
           "hint2": "No sentence says it. Does any sentence talk about lunch?",
-          "hint3": "It is an INFERENCE or a GUESS. Are the clues in the text?"
+          "hint3": "It is an INFERENCE or a GUESS. Are there clues in the text?"
         },
         {
           "id": "m4-c10",
@@ -1417,7 +1417,7 @@
           ],
           "boxWhy": {
             "guess": "Look at the last two sentences. Who paid, for how long, and what is the school looking for now?",
-            "opinion": "This is about money. It is not a judgment. Look for clues in the last two sentences."
+            "opinion": "This is about money. It has no opinion word. Look for clues in the last two sentences."
           },
           "hint2": "No sentence says it. Who paid for the food, and for how long?",
           "hint3": "It is an INFERENCE. The clues are in sentences 8 and 9."
@@ -1425,8 +1425,8 @@
         {
           "id": "m4-c11",
           "type": "text",
-          "prompt": "Say it out loud first, then type it.",
-          "stem": "Explain this inference: \"Granola bars are more popular than apples.\"",
+          "prompt": "Say it out loud first. Then type it.",
+          "stem": "Fill in the three boxes for this inference: \"Granola bars are more popular than apples.\"",
           "parts": [
             {
               "label": "The clue",
@@ -1455,8 +1455,8 @@
         {
           "id": "m4-c12",
           "type": "text",
-          "prompt": "Say it out loud first, then type it.",
-          "stem": "Explain this inference: \"Some students were coming to school hungry.\"",
+          "prompt": "Say it out loud first. Then type it.",
+          "stem": "Fill in the three boxes for this inference: \"Some students were coming to school hungry.\"",
           "parts": [
             {
               "label": "The clue",

@@ -1,14 +1,16 @@
-// sort (Module 3): tap a card, then tap its category. No dragging needed.
+// sort: tap a card, tap where it goes, then press Check. No dragging needed.
 // Each card's tries are saved under its own key (card-1, card-2, ...).
 import { el } from "../auth.js";
 import { speakButton } from "../speech.js";
 import { feedbackBox, hintLadder, shuffle, questionLine } from "../ui.js";
+import { checkButton } from "../confirm.js";
 
 export function render(ctx) {
   const { item } = ctx;
   const fb = feedbackBox();
   const hints = hintLadder(item, ctx.onHint, ctx.hintStart);
   let active = null;
+  let target = null;   // the place picked for the active card, waiting for Check
   let placed = 0;
 
   const order = shuffle(item.cards.map((c, i) => ({ ...c, i })));
@@ -20,26 +22,42 @@ export function render(ctx) {
     c.btn = b; c.row = row;
     return row;
   });
-  const status = el("p", { class: "muted", "aria-live": "polite" }, "Tap a card first.");
+  const status = el("p", { class: "muted", "aria-live": "polite" }, "Step 1: tap a card.");
+  const catBtns = new Map();
   const catButtons = item.categories.map((cat) => {
-    const b = el("button", { type: "button", class: "btn sort-cat" }, `Put it in ${cat.label}`);
-    b.addEventListener("click", () => place(cat));
+    const b = el("button", { type: "button", class: "btn sort-cat", "aria-pressed": "false" }, `Put it in ${cat.label}`);
+    b.addEventListener("click", () => choose(cat));
+    catBtns.set(cat.id, b);
     const list = el("ul", { class: "bin-list" });
     bins.set(cat.id, list);
     return el("div", { class: "bin" }, el("h3", { class: "bin-title" }, cat.label), b, list);
   });
+  const check = checkButton(place);
+
+  function setTarget(cat) {
+    target = cat;
+    catBtns.forEach((b, id) => { const on = !!cat && id === cat.id; b.classList.toggle("is-picked", on); b.setAttribute("aria-pressed", String(on)); });
+    if (cat) check.show(); else check.hide();
+  }
 
   function select(c, b) {
     if (b.disabled) return;
     active = c;
     order.forEach((o) => { o.btn.classList.toggle("is-active", o === c); o.btn.setAttribute("aria-pressed", String(o === c)); });
-    status.textContent = `Where does "${c.text}" go?`;
+    status.textContent = `Step 2: where does "${c.text}" go? Tap a place, then press Check my answer.`;
+    setTarget(null);
     fb.clear();
   }
 
-  function place(cat) {
-    if (!active) { status.textContent = "Tap a card first."; return; }
-    const c = active;
+  function choose(cat) {
+    if (!active) { status.textContent = "Step 1: tap a card first."; return; }
+    setTarget(cat);
+  }
+
+  function place() {
+    const c = active, cat = target;
+    if (!c || !cat) return;
+    setTarget(null);
     // `accept` lists other categories that can also be argued for this card.
     const ok = c.category === cat.id || (c.accept || []).includes(cat.id);
     ctx.record(`card-${c.i + 1}`, cat.id, ok);
@@ -50,7 +68,7 @@ export function render(ctx) {
       fb.ok(`Right: ${cat.label}. ${c.why}`);
       active = null;
       if (placed === item.cards.length) { status.textContent = "All sorted."; hints.disable(); ctx.complete(); }
-      else { status.textContent = "Tap the next card."; cards.find((r) => r.isConnected)?.querySelector("button")?.focus(); }
+      else { status.textContent = "Step 1: tap the next card."; }
     } else {
       fb.bad(`Not ${cat.label}. Try another place.`);
     }
@@ -62,5 +80,6 @@ export function render(ctx) {
     el("div", { class: "sort-cards" }, cards),
     status,
     el("div", { class: "bins" }, catButtons),
+    check.node,
     fb.node, hints.node);
 }

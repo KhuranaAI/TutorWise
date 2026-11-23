@@ -3,14 +3,14 @@
   "id": "m1-question-job",
   "number": 1,
   "title": "What is the question asking?",
-  "goal": "Before you look for an answer, say the question's job: what kind of answer, about what, and how many parts.",
+  "goal": "Before you answer a question, work out what it wants: what kind of answer, about what, and how many parts.",
   "card": {
     "title": "KIND – ABOUT – HOW MANY",
     "lines": [
-      "KIND: what kind of answer does it want?",
-      "ABOUT: about what, exactly?",
-      "HOW MANY: how many parts do I need?",
-      "Flip words: NOT and EXCEPT turn the question around."
+      "KIND: What kind of answer does it want? A time, a place, a reason...",
+      "ABOUT: What is it about? Read every word.",
+      "HOW MANY: How many parts? Look for 'and'.",
+      "NOT and EXCEPT turn the question around: find the one that is NOT true."
     ]
   },
   "kinds": {
@@ -24,33 +24,33 @@
     "way": "a way of doing something",
     "amount": "an amount",
     "choice": "one choice from a list",
-    "sentence": "a sentence from the text",
-    "purpose": "what a part of the text is for"
+    "sentence": "a sentence from the passage",
+    "purpose": "what a part of the passage is for"
   },
   "feedback": {
     "kind": {
-      "person": "Who wants a person or a group.",
-      "thing": "What wants a thing: an object, a problem or an idea.",
-      "action": "'What did someone do' wants something someone did.",
-      "words": "'What did someone say' or 'text' wants the words.",
-      "time": "When wants a time.",
-      "place": "Where wants a place.",
-      "reason": "Why wants a reason. A reason starts with 'because'.",
-      "way": "How wants a way of doing something.",
-      "amount": "How much, how many and how long want an amount.",
-      "choice": "Which wants one choice from the list.",
-      "sentence": "'Which sentence' wants a sentence you can point to in the text.",
-      "purpose": "'Purpose' asks what that part of the text is for."
+      "person": "'Who' asks for a person or a group.",
+      "thing": "'What' asks for a thing: an object, a problem or an idea.",
+      "action": "'What did someone do' asks for something someone did.",
+      "words": "Look for 'say' or 'text'. The question wants the words someone said or wrote.",
+      "time": "'When' asks for a time.",
+      "place": "'Where' asks for a place.",
+      "reason": "'Why' asks for a reason. A reason starts with 'because'.",
+      "way": "'How' asks for a way of doing something.",
+      "amount": "'How much', 'how many' and 'how long' ask for an amount.",
+      "choice": "'Which' asks you to pick one choice from a list.",
+      "sentence": "'Which sentence' asks for a sentence you can point to in the passage.",
+      "purpose": "'Purpose' means what that part of the passage is for."
     },
     "about": {
-      "topic": "That is the topic. The target is longer. Read everything after the question word.",
-      "other": "That is about something else. Read the question again, word by word.",
-      "otherPart": "That is the other part of the question. Find the 'and', then look at this part only."
+      "topic": "Too short. That only names who or what it is about. Read every word after the question word.",
+      "other": "That is about something else. Read the question again, one word at a time.",
+      "otherPart": "That is the other part of the question. Find 'and'. Look only at this part."
     },
-    "parts": "Look for 'and' joining two questions. Count again.",
-    "flipMissed": "Look again. One small word flips this question.",
-    "flipNone": "No flip word here. The flip words are NOT and EXCEPT.",
-    "flipMeaning": "A flip word turns the job around. Most choices will be true. You are hunting for the one that is not."
+    "parts": "Look for 'and' between two questions. Then count again.",
+    "flipMissed": "Look again. Find the word NOT or EXCEPT, and tap it.",
+    "flipNone": "This question has no NOT or EXCEPT. Tap \"No NOT or EXCEPT\".",
+    "flipMeaning": "Right. NOT or EXCEPT turns the question around. Most choices will be true. You need the one that is not."
   },
   "rubrics": {
     "sentence2": {
@@ -132,7 +132,7 @@
   "sections": [
     {
       "id": "learn",
-      "title": "The trick",
+      "title": "Learn the steps",
       "mode": "tutor",
       "minutes": 8,
       "tutorNote": "I DO. Read the explanation together, do the matching, then reveal the worked example one step at a time while thinking aloud.",
@@ -141,19 +141,19 @@
           "id": "m1-learn-1",
           "type": "explain",
           "text": [
-            "Every question has a job.",
-            "Before you look for the answer, say the job in three pieces.",
-            "KIND: what kind of thing am I looking for?",
-            "ABOUT: about what, exactly?",
-            "HOW MANY: how many things do I need?",
-            "If you can say the job, you can find the answer. If you can't say the job, you're guessing."
+            "Every question wants something.",
+            "Before you answer, work out three things.",
+            "KIND: What kind of answer does it want?",
+            "ABOUT: What is it about, exactly?",
+            "HOW MANY: How many parts does it have?",
+            "If you know what it wants, you can find the answer. If not, you are only guessing."
           ],
           "showCard": true
         },
         {
           "id": "m1-learn-2",
           "type": "match",
-          "prompt": "Match each question word to the kind of answer it wants.",
+          "prompt": "Match each question word to the kind of answer it asks for.",
           "pairs": [
             {
               "left": "who",
@@ -188,27 +188,27 @@
         {
           "id": "m1-learn-3",
           "type": "worked",
-          "title": "Watch one",
+          "title": "Watch me do one",
           "reveals": [
             {
               "label": "Flip word?",
-              "text": "No NOT or EXCEPT. Nothing flips."
+              "text": "No NOT or EXCEPT. Nothing is turned around."
             },
             {
               "label": "First question word",
-              "text": "WHY. Why wants a reason. About what? About the driver waiting."
+              "text": "WHY. 'Why' asks for a reason. About what? The driver waiting."
             },
             {
               "label": "Keep reading",
-              "text": "There is an AND. After it: HOW did she thank him. How wants a way of doing something. About Priya thanking him."
+              "text": "There is an AND. After it comes HOW. 'How' asks for a way. About what? Priya thanking him."
             },
             {
-              "label": "The job",
-              "text": "One reason the driver waited, and one way Priya thanked him. Two parts."
+              "label": "What it wants",
+              "text": "Two parts. A reason the driver waited. A way Priya thanked him."
             },
             {
-              "label": "Now look at the story",
-              "text": "Reason: the driver saw her. Way: she said thanks. The job told me what to look for.",
+              "label": "Now look at the passage",
+              "text": "Reason: the driver saw her. Way: she said thanks. Knowing what the question wanted told me what to look for.",
               "highlight": [
                 9,
                 11
@@ -222,7 +222,7 @@
     },
     {
       "id": "together",
-      "title": "Say the job together",
+      "title": "Do it together",
       "mode": "tutor",
       "minutes": 10,
       "tutorNote": "WE DO. The student says KIND, ABOUT and HOW MANY aloud before tapping. Wait ten seconds before any prompt. After each item, say the job back correctly in one sentence.",
@@ -230,7 +230,7 @@
         {
           "id": "m1-t1",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Where did Priya work?",
           "flipWord": null,
           "parts": [
@@ -259,7 +259,7 @@
         {
           "id": "m1-t2",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "What did Priya's brother text her?",
           "flipWord": null,
           "parts": [
@@ -283,12 +283,12 @@
               ]
             }
           ],
-          "model": "I need the words of the text Priya's brother sent. One part."
+          "model": "I need words: what Priya's brother texted. One part."
         },
         {
           "id": "m1-t3",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Why did Priya make a note on her phone?",
           "flipWord": null,
           "parts": [
@@ -317,7 +317,7 @@
         {
           "id": "m1-t4",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "How did Priya get the driver to notice her?",
           "flipWord": null,
           "parts": [
@@ -346,7 +346,7 @@
         {
           "id": "m1-t5",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "What did the driver do when he saw Priya, and what did Priya say to him?",
           "flipWord": null,
           "parts": [
@@ -394,7 +394,7 @@
         {
           "id": "m1-t6",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Which of these is NOT something Priya did on her way to the bus?",
           "flipWord": "NOT",
           "parts": [
@@ -424,7 +424,7 @@
     },
     {
       "id": "own",
-      "title": "Say the job on your own",
+      "title": "Do it on your own",
       "mode": "solo",
       "minutes": 10,
       "tutorNote": "YOU DO. No help. Eight questions with no passage. Score is first-attempt accuracy; note which type fails (two-part, NOT, why).",
@@ -432,7 +432,7 @@
         {
           "id": "m1-o1",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "When does the park close in winter?",
           "flipWord": null,
           "parts": [
@@ -461,7 +461,7 @@
         {
           "id": "m1-o2",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Who is allowed to use the skate area?",
           "flipWord": null,
           "parts": [
@@ -490,7 +490,7 @@
         {
           "id": "m1-o3",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Why did the city build a fence around the pond?",
           "flipWord": null,
           "parts": [
@@ -519,7 +519,7 @@
         {
           "id": "m1-o4",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "How much does a season pass cost?",
           "flipWord": null,
           "parts": [
@@ -548,7 +548,7 @@
         {
           "id": "m1-o5",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "What problem did the new phone have, and how did the store fix it?",
           "flipWord": null,
           "parts": [
@@ -596,7 +596,7 @@
         {
           "id": "m1-o6",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Which sentence shows that Omar was nervous before his interview?",
           "flipWord": null,
           "parts": [
@@ -620,12 +620,12 @@
               ]
             }
           ],
-          "model": "I need a sentence from the text: proof that Omar was nervous before his interview. One part."
+          "model": "I need a sentence from the passage: the proof that Omar was nervous before his interview. One part."
         },
         {
           "id": "m1-o7",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "What is the main purpose of the second paragraph?",
           "flipWord": null,
           "parts": [
@@ -654,7 +654,7 @@
         {
           "id": "m1-o8",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Which of the following is NOT a rule for the skate area?",
           "flipWord": "NOT",
           "parts": [
@@ -693,14 +693,14 @@
           "id": "m1-v0",
           "type": "explain",
           "text": [
-            "Read the story. For each question, say the job first. Do not answer yet."
+            "Read the passage. For each question, work out what it wants. Do not answer yet."
           ],
           "showCard": false
         },
         {
           "id": "m1-v1",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "What did Daniel try to buy?",
           "flipWord": null,
           "parts": [
@@ -730,7 +730,7 @@
         {
           "id": "m1-v2",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Why did Daniel bring a note to the office?",
           "flipWord": null,
           "parts": [
@@ -760,7 +760,7 @@
         {
           "id": "m1-v3",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "When was the machine refilled, and what was left for Daniel?",
           "flipWord": null,
           "parts": [
@@ -809,7 +809,7 @@
         {
           "id": "m1-v4",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "How did Daniel try to get the bottle out?",
           "flipWord": null,
           "parts": [
@@ -839,7 +839,7 @@
         {
           "id": "m1-v5",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Which of these did Daniel NOT do?",
           "flipWord": "NOT",
           "parts": [
@@ -869,7 +869,7 @@
         {
           "id": "m1-v6",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "What do you think was in the envelope?",
           "flipWord": null,
           "parts": [
@@ -904,29 +904,29 @@
             {
               "id": "a",
               "text": "hit the machine",
-              "why": "He did this. Sentence 3."
+              "why": "He did do this. See sentence 3."
             },
             {
               "id": "b",
               "text": "bring a note to the office",
-              "why": "He did this. Sentence 5."
+              "why": "He did do this. See sentence 5."
             },
             {
               "id": "c",
               "text": "call his mother",
-              "why": "Right. The story never says this. It is the one he did not do.",
+              "why": "Right. The passage never says he did this.",
               "correct": true
             },
             {
               "id": "d",
               "text": "press the button",
-              "why": "He did this. Sentence 2."
+              "why": "He did do this. See sentence 2."
             }
           ],
           "prompt": "Now answer this one.",
           "passage": "vending",
-          "hint2": "Check each choice against the story. Three of them are in it.",
-          "hint3": "It is (b) or (c). Which one can you find in the story?"
+          "hint2": "Look for each choice in the passage. Three of them are there.",
+          "hint3": "It is (b) or (c). Which one is NOT in the passage?"
         },
         {
           "id": "m1-v8",
@@ -936,7 +936,7 @@
             "Daniel tried to buy a water."
           ],
           "rubric": "sentence2",
-          "prompt": "Answer in a full sentence.",
+          "prompt": "Type your answer as a full sentence.",
           "passage": "vending"
         },
         {
@@ -947,7 +947,7 @@
             "The machine was refilled on Friday, and an envelope with Daniel's name on it was left at the front desk."
           ],
           "rubric": "twoPart3",
-          "prompt": "Answer both parts in a full sentence.",
+          "prompt": "Type one full sentence that answers both parts.",
           "passage": "vending"
         }
       ]
@@ -962,7 +962,7 @@
         {
           "id": "m1-h1",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Where does the team practise on Thursdays?",
           "flipWord": null,
           "parts": [
@@ -991,7 +991,7 @@
         {
           "id": "m1-h2",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "What did the manager tell the new employee to bring, and why?",
           "flipWord": null,
           "parts": [
@@ -1039,7 +1039,7 @@
         {
           "id": "m1-h3",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "How long does the battery last on the new model?",
           "flipWord": null,
           "parts": [
@@ -1068,7 +1068,7 @@
         {
           "id": "m1-h4",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Why was the concert moved indoors?",
           "flipWord": null,
           "parts": [
@@ -1097,7 +1097,7 @@
         {
           "id": "m1-h5",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Which of the following is NOT something you need for the trip?",
           "flipWord": "NOT",
           "parts": [
@@ -1121,12 +1121,12 @@
               ]
             }
           ],
-          "model": "I need one choice. Three choices will be things I need. I need the one I do NOT need."
+          "model": "I need one choice. Three choices will be things I need for the trip. I want the one I do NOT need."
         },
         {
           "id": "m1-h6",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Who decides which students get the award?",
           "flipWord": null,
           "parts": [
@@ -1164,7 +1164,7 @@
         {
           "id": "m1-c1",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "When does the library open on Sundays?",
           "flipWord": null,
           "parts": [
@@ -1193,7 +1193,7 @@
         {
           "id": "m1-c2",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Why did Maya switch to the morning class?",
           "flipWord": null,
           "parts": [
@@ -1222,7 +1222,7 @@
         {
           "id": "m1-c3",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Who found the missing wallet, and where was it?",
           "flipWord": null,
           "parts": [
@@ -1270,7 +1270,7 @@
         {
           "id": "m1-c4",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "How does the new recycling program work?",
           "flipWord": null,
           "parts": [
@@ -1299,7 +1299,7 @@
         {
           "id": "m1-c5",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Which of these is NOT a reason the game was cancelled?",
           "flipWord": "NOT",
           "parts": [
@@ -1328,7 +1328,7 @@
         {
           "id": "m1-c6",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "What did the coach change after the first game, and why did she change it?",
           "flipWord": null,
           "parts": [
@@ -1376,7 +1376,7 @@
         {
           "id": "m1-c7",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "How many students signed up for the trip?",
           "flipWord": null,
           "parts": [
@@ -1405,7 +1405,7 @@
         {
           "id": "m1-c8",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Where did the fire start, and how did the firefighters put it out?",
           "flipWord": null,
           "parts": [
@@ -1453,7 +1453,7 @@
         {
           "id": "m1-c9",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Which sentence tells you that Jordan was surprised?",
           "flipWord": null,
           "parts": [
@@ -1477,12 +1477,12 @@
               ]
             }
           ],
-          "model": "I need a sentence from the text: proof that Jordan was surprised. One part."
+          "model": "I need a sentence from the passage: the proof that Jordan was surprised. One part."
         },
         {
           "id": "m1-c10",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Who is the article mostly written for?",
           "flipWord": null,
           "parts": [
@@ -1520,7 +1520,7 @@
         {
           "id": "m1-b1",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Where do the buses leave from on Saturdays?",
           "flipWord": null,
           "parts": [
@@ -1549,7 +1549,7 @@
         {
           "id": "m1-b2",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Why did the store close early on Friday?",
           "flipWord": null,
           "parts": [
@@ -1578,7 +1578,7 @@
         {
           "id": "m1-b3",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "What did Sam forget, and how did he get it back?",
           "flipWord": null,
           "parts": [
@@ -1626,7 +1626,7 @@
         {
           "id": "m1-b4",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "When does the pool open in the summer?",
           "flipWord": null,
           "parts": [
@@ -1655,7 +1655,7 @@
         {
           "id": "m1-b5",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Which of these is NOT a job the volunteers do?",
           "flipWord": "NOT",
           "parts": [
@@ -1684,7 +1684,7 @@
         {
           "id": "m1-b6",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Who started the club, and why did they start it?",
           "flipWord": null,
           "parts": [
@@ -1732,7 +1732,7 @@
         {
           "id": "m1-b7",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "How long does the ferry ride take?",
           "flipWord": null,
           "parts": [
@@ -1761,7 +1761,7 @@
         {
           "id": "m1-b8",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "When did the power go out, and what did the family do?",
           "flipWord": null,
           "parts": [
@@ -1809,7 +1809,7 @@
         {
           "id": "m1-b9",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "Which sentence shows that Lina was proud of her work?",
           "flipWord": null,
           "parts": [
@@ -1833,12 +1833,12 @@
               ]
             }
           ],
-          "model": "I need a sentence from the text: proof that Lina was proud of her work. One part."
+          "model": "I need a sentence from the passage: the proof that Lina was proud of her work. One part."
         },
         {
           "id": "m1-b10",
           "type": "job",
-          "prompt": "Say the job. Do not answer the question.",
+          "prompt": "Work out what the question wants. Do not answer it.",
           "question": "What is the main purpose of the last paragraph?",
           "flipWord": null,
           "parts": [

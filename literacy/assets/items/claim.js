@@ -54,9 +54,11 @@ export function render(ctx) {
   function stepFinger() {
     const tried = new Set();
     let none = null;
+    const isFact = item.box === "fact";
+    const notIt = (n) => nearWhy(n) || (isFact ? (fbk.fingerWrong || "That sentence does not say this. Keep looking.") : (fbk.fingerNone || "Read that sentence again. Does it SAY this, or is it only a clue?"));
     const pick = (n) => {
-      if (n !== null && tried.has(n)) return;
-      const isFact = item.box === "fact";
+      // Already tried: say why again, but do not count it as a new try.
+      if (n !== null && tried.has(n)) { say("bad", notIt(n)); return; }
       const ok = isFact ? n !== null && proof.includes(n) : n === null;
       ctx.record("finger", n === null ? "none" : n, ok);
       if (ok && isFact) {
@@ -66,8 +68,8 @@ export function render(ctx) {
       } else if (ok) {
         listen(null, "");
         none.button.classList.add("is-right");
-        bar("Now pick a box below.");
-        after("Right. No sentence says it, so it is not a fact.", stepBox, "Pick a box");
+        bar("Now pick the right word below.");
+        after("Right. No sentence says it, so it is not a fact.", stepBox, "Next step");
       } else if (n === null) {
         none.button.classList.add("is-wrong"); none.button.disabled = true;
         strip?.action(null);
@@ -77,13 +79,14 @@ export function render(ctx) {
         // On a fact, a wrong sentence is simply wrong. On anything else the sentence
         // may be a clue, so it is not crossed out: it only does not SAY the statement.
         if (isFact) passage.mark(n, "wrong");
-        say("bad", nearWhy(n) || (isFact ? (fbk.fingerWrong || "That sentence does not say this. Keep looking.") : (fbk.fingerNone || "Read that sentence again. Does it SAY this, or is it only a clue?")));
+        say("bad", notIt(n));
       }
     };
     none = choice("", NONE, () => pick(null));
-    ask(`Finger test. Tap the sentence that says this. If no sentence says it, tap ${NONE}.`, [none]);
-    bar("Finger test. Tap the sentence that says this.", NONE, () => pick(null));
-    listen(pick, "Tap a sentence.");
+    ask(`Step 1. Does a sentence in the passage say this? Tap that sentence. If no sentence says it, tap "${NONE}".`, [none]);
+    // On a phone the button in the bar picks "No sentence says it" below and brings Check into view.
+    bar("Does a sentence say this? Tap it, then press Check.", NONE, () => none.button.click());
+    listen(pick, "Tap a sentence, then press Check this sentence.");
   }
 
   // 2. Not a fact: which box?
@@ -99,10 +102,10 @@ export function render(ctx) {
         return;
       }
       b.classList.add("is-right");
-      if (item.box === "inference" && need > 0) after(`Right: ${label(k)}. Now prove it.`, stepClues, "Prove it");
+      if (item.box === "inference" && need > 0) after(`Right: ${label(k)}. Now find the clues.`, stepClues, "Find the clues");
       else { stage.querySelectorAll("button").forEach((x) => { x.disabled = true; }); finish("", k); }
     }));
-    ask(fbk.boxAsk || "So which box is it?", rows);
+    ask(`Step 2. ${fbk.boxAsk || "So which is it?"}`, rows);
     stage.querySelector("button")?.focus();
   }
 
@@ -110,14 +113,15 @@ export function render(ctx) {
   function stepClues() {
     const found = new Set();
     const tried = new Set();
-    const title = item.cluePrompt || `Prove it. Tap ${need === 2 ? "two" : need} clues in the passage.`;
-    ask(title, null);
+    const title = item.cluePrompt || `Tap ${need === 2 ? "two sentences that are clues" : need === 1 ? "one sentence that is a clue" : `${need} sentences that are clues`} for it. Check each one.`;
+    ask(`Step 3. ${title}`, null);
     bar(title);
     strip?.say("", "");
     // The clues are up in the passage: on a narrow screen, go back to it.
     if (strip && window.matchMedia("(max-width: 899px)").matches) strip.node.scrollIntoView({ block: "start" });
     listen((n) => {
-      if (found.has(n) || tried.has(n)) return;
+      if (found.has(n)) return;
+      if (tried.has(n)) { say("bad", nearWhy(n) || fbk.clueWrong || "That sentence does not point to it. Look for another clue."); return; }
       const ok = proof.includes(n);
       ctx.record(`clue-${found.size + 1}`, n, ok);
       if (!ok) {
@@ -130,7 +134,7 @@ export function render(ctx) {
       passage.highlight([n], "proof");
       if (found.size >= need) { listen(null, ""); finish(""); }
       else say("ok", `That is a clue. Find ${need - found.size === 1 ? "one more" : `${need - found.size} more`}.`);
-    }, "Tap a clue.");
+    }, "Tap a clue, then press Check this sentence.");
   }
 
   // 4. The result, said in full

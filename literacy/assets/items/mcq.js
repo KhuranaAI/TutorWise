@@ -55,7 +55,7 @@ export function renderMulti(ctx) {
       btn.setAttribute("aria-pressed", String(picked.has(opt.id)));
       btn.classList.toggle("is-picked", picked.has(opt.id));
       check.disabled = picked.size !== need;
-    });
+    }, { instant: true });
     row.button.setAttribute("aria-pressed", "false");
     return row;
   });

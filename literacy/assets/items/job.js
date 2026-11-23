@@ -3,6 +3,7 @@
 import { el } from "../auth.js";
 import { speakButton } from "../speech.js";
 import { choice, feedbackBox, hintLadder, shuffleNotSame, continueButton } from "../ui.js";
+import { confirmChoice } from "../confirm.js";
 
 const norm = (w) => w.replace(/[^A-Za-z']/g, "").toUpperCase();
 
@@ -44,7 +45,7 @@ export function render(ctx) {
   function ask(sub, title, rows) {
     fb.clear();
     stage.replaceChildren(el("p", { class: "job-step-title" }, title), el("div", { class: "choices" }, rows));
-    stage.querySelector("button")?.focus();
+    stage.querySelector("button")?.focus({ preventScroll: true });
   }
 
   function after(text, next, nextLabel = "Next") {
@@ -64,30 +65,33 @@ export function render(ctx) {
       ctx.record("flip", word === null ? "none" : norm(word), ok);
       if (ok) {
         btn?.classList.add("is-right");
-        after(item.flipWord ? (fbk.flipMeaning || "Right.") : "Right. No flip word.", stepParts);
+        after(item.flipWord ? (fbk.flipMeaning || "Right.") : "Right. There is no NOT or EXCEPT.", stepParts);
       } else {
         if (btn) { btn.classList.add("is-wrong"); btn.disabled = true; }
         fb.bad(item.flipWord ? (fbk.flipMissed || "Look again.") : (fbk.flipNone || "No flip word here."));
       }
     };
-    showQuestion({ tappable: true, onWord: (w, b) => pick(w, b) });
-    const none = choice("", "No flip word", (b) => pick(null, b));
-    ask("flip", "Is there a flip word? Tap it, or tap No flip word.", [none]);
+    const none = choice("", "No NOT or EXCEPT", (b) => pick(null, b));
+    ask("flip", "Step 1. Does the question have the word NOT or EXCEPT? If it does, tap that word in the question. If not, tap \"No NOT or EXCEPT\".", [none]);
+    // A word in the question and the "No ..." button share one Check button.
+    const group = stage.querySelector(".choices");
+    showQuestion({ tappable: true, onWord: (w, b) => confirmChoice(b, () => pick(w, b), group) });
   }
 
   // 2. How many parts?
   function stepParts() {
     showQuestion();
-    const rows = [1, 2].map((n) => choice("", n === 1 ? "1 part" : "2 parts", (b) => {
+    const rows = [1, 2].map((n) => choice("", n === 1 ? "One question" : "Two questions joined by \"and\"", (b) => {
       const ok = n === parts.length;
       ctx.record("parts", n, ok);
-      if (ok) { b.classList.add("is-right"); after(`Right. ${n === 1 ? "One part" : "Two parts"}.`, () => stepKind(0)); }
+      if (ok) { b.classList.add("is-right"); after(n === 1 ? "Right. It asks one thing." : "Right. It asks two things, so your answer needs both.", () => stepKind(0)); }
       else { b.classList.add("is-wrong"); b.disabled = true; fb.bad(module.feedback?.parts || "Count again."); }
     }));
-    ask("parts", "How many parts does the question have?", rows);
+    ask("parts", "Step 2. Does it ask one thing, or two things joined by \"and\"?", rows);
   }
 
-  const label = (i) => (parts.length === 2 ? `Part ${i + 1}: ` : "");
+  const label = (i) => (parts.length === 2 ? (i === 0 ? "First question. " : "Second question. ") : "");
+  const stepNo = (i, k) => `Step ${3 + i * 2 + k}. `;
 
   // 3a. Kind
   function stepKind(i) {
@@ -100,7 +104,7 @@ export function render(ctx) {
       if (ok) { b.classList.add("is-right"); after(`Right. ${module.kinds[k]}.`, () => stepAbout(i)); }
       else { b.classList.add("is-wrong"); b.disabled = true; fb.bad(module.feedback?.kind?.[p.kind] || "Look at the question word again."); }
     }));
-    ask(`kind-${i + 1}`, `${label(i)}What KIND of answer does it want?`, rows);
+    ask(`kind-${i + 1}`, `${stepNo(i, 0)}${label(i)}What kind of answer does it want?`, rows);
   }
 
   // 3b. About
@@ -113,10 +117,10 @@ export function render(ctx) {
       ctx.record(`about-${i + 1}`, o.text, ok);
       if (ok) {
         b.classList.add("is-right");
-        after("Right.", i + 1 < parts.length ? () => stepKind(i + 1) : stepModel, i + 1 < parts.length ? "Go to part 2" : "Next");
+        after("Right.", i + 1 < parts.length ? () => stepKind(i + 1) : stepModel, i + 1 < parts.length ? "Go to the second question" : "Next");
       } else { b.classList.add("is-wrong"); b.disabled = true; fb.bad(module.feedback?.about?.[o.why] || "Read the question again."); }
     }));
-    ask(`about-${i + 1}`, `${label(i)}ABOUT what, exactly?`, rows);
+    ask(`about-${i + 1}`, `${stepNo(i, 1)}${label(i)}What exactly is it asking about?`, rows);
   }
 
   // 4. The job, said in full
@@ -126,7 +130,7 @@ export function render(ctx) {
     hints.disable();
     stage.replaceChildren(
       el("div", { class: "model" },
-        el("div", { class: "q-row" }, el("strong", {}, "The job"), speakButton(item.model, "Listen", "btn-speak-small")),
+        el("div", { class: "q-row" }, el("strong", {}, "What the question wants"), speakButton(item.model, "Listen", "btn-speak-small")),
         el("p", {}, item.model)));
     ctx.complete();
   }

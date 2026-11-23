@@ -3,36 +3,36 @@
   "id": "m3-own-words",
   "number": 3,
   "title": "Say it in your own words",
-  "goal": "Three sizes of the same job: say one sentence a new way, say the point of a chunk, say the main idea of the whole text.",
+  "goal": "Say one sentence in new words. Say the main point of one part. Say the main idea of the whole text.",
   "card": {
-    "title": "PARAPHRASE · GIST · MAIN IDEA",
+    "title": "SAY IT IN YOUR OWN WORDS",
     "lines": [
-      "Paraphrase one sentence: COVER IT → SAY IT → CHECK IT. Same meaning, different words.",
-      "Gist of a chunk: WHO OR WHAT? → MOST IMPORTANT THING? → TEN WORDS.",
-      "Main idea of the whole text: TOPIC + WHAT THE TEXT SAYS ABOUT IT.",
+      "One sentence: COVER IT → SAY IT → CHECK IT. Same meaning, new words.",
+      "One part: WHO OR WHAT? → MOST IMPORTANT THING? → TEN WORDS OR FEWER.",
+      "Whole text: TOPIC + WHAT THE TEXT SAYS ABOUT IT.",
       "The topic is a few words. The main idea is a full sentence."
     ]
   },
   "traps": {
     "copy": {
       "label": "almost a copy",
-      "feedback": "That is the same sentence with one or two words changed. Cover it and say it like you are telling a friend."
+      "feedback": "That is the same sentence with a word or two changed. Cover it. Say it like you are telling a friend."
     },
     "meaning": {
       "label": "the meaning changed",
-      "feedback": "The words are new, but it does not say the same thing as the text."
+      "feedback": "The words are new, but the meaning changed."
     },
     "first": {
       "label": "the first sentence",
-      "feedback": "That is the first sentence of the chunk. Is it the most important thing, or just the first thing?"
+      "feedback": "That is just the first sentence of the part. Is it the most important thing?"
     },
     "detail": {
       "label": "a detail",
-      "feedback": "That is one detail or example. What is the detail there for? Say the bigger thing."
+      "feedback": "That is one detail. Say the bigger point."
     },
     "topic": {
       "label": "only the topic",
-      "feedback": "That names the topic. It does not say what the text tells you about it."
+      "feedback": "That only names the topic. It does not say what the text tells you about it."
     },
     "O": {
       "label": "the opposite",
@@ -40,7 +40,7 @@
     },
     "H": {
       "label": "half right",
-      "feedback": "Part of it is right, but it goes too far or leaves out half of the text."
+      "feedback": "Part of it is right. But it goes too far, or it leaves out half."
     }
   },
   "rubrics": {
@@ -49,11 +49,11 @@
       "levels": [
         {
           "score": 2,
-          "description": "Meaning kept and most content words changed."
+          "description": "Same meaning. Most of the main words are new."
         },
         {
           "score": 1,
-          "description": "Meaning kept but mostly the same words, or words changed and the meaning drifted."
+          "description": "Same meaning but mostly the same words. Or new words, but the meaning changed."
         },
         {
           "score": 0,
@@ -66,7 +66,7 @@
       "levels": [
         {
           "score": 1,
-          "description": "One sentence a stranger who read the chunk would accept as its point."
+          "description": "One sentence that says the main point of the part."
         },
         {
           "score": 0,
@@ -96,11 +96,11 @@
         },
         {
           "score": 1,
-          "description": "The point without the topic, or too narrow (covers one part only)."
+          "description": "The point without the topic. Or too small: it fits only one part."
         },
         {
           "score": 0,
-          "description": "Topic only, a detail, or the student's own opinion."
+          "description": "Only the topic, a detail, or your own opinion."
         }
       ]
     }
@@ -222,7 +222,7 @@
   "sections": [
     {
       "id": "paraphrase-learn",
-      "title": "One sentence, a new way",
+      "title": "Say one sentence in new words",
       "mode": "tutor",
       "minutes": 10,
       "tutorNote": "I DO then WE DO. Teach cover-say-check on one sentence, then two choose-the-best items, then three sentences said aloud before they are typed. Paraphrase is always oral first.",
@@ -231,20 +231,20 @@
           "id": "m3-p0",
           "type": "explain",
           "text": [
-            "To paraphrase is to say one sentence a new way.",
-            "A friend who did not read it should learn the same thing from your sentence.",
-            "COVER the sentence. SAY it your way. CHECK: same meaning? different words?",
-            "Changing one word is not enough. Changing the meaning is not allowed."
+            "To paraphrase means to say one sentence in new words.",
+            "Someone who did not read the text should learn the same thing from yours.",
+            "COVER the sentence. SAY it your way. CHECK: Same meaning? New words?",
+            "Do not change just one word. Do not change the meaning."
           ],
           "showCard": true
         },
         {
           "id": "m3-p1",
           "type": "worked",
-          "title": "Watch one",
+          "title": "Watch an example",
           "reveals": [
             {
-              "label": "Read it",
+              "label": "Read the sentence",
               "text": "A hoodie that costs sixty dollars new might cost eight dollars used.",
               "highlight": [
                 5
@@ -259,8 +259,8 @@
               "text": "Yes. Both say the used one is much cheaper."
             },
             {
-              "label": "Check: different words?",
-              "text": "Yes. Most of the words changed. That is a paraphrase."
+              "label": "Check: new words?",
+              "text": "Yes. Most of the words are new. So it is a good paraphrase."
             }
           ],
           "passage": "thrift"
@@ -268,12 +268,12 @@
         {
           "id": "m3-p2",
           "type": "mcq",
-          "stem": "Which one is the best paraphrase?",
+          "stem": "Which one says the same thing in new words?",
           "options": [
             {
               "id": "a",
               "text": "Many teens say they want clothes that no one else at school has.",
-              "why": "Only one word changed.",
+              "why": "Only one word is new. That is almost a copy.",
               "trap": "copy"
             },
             {
@@ -285,7 +285,7 @@
             {
               "id": "c",
               "text": "Teens want to wear the same clothes as everyone at school.",
-              "why": "The text says they want clothes nobody else has.",
+              "why": "That changes the meaning. The text says they want clothes nobody else has.",
               "trap": "meaning"
             }
           ],
@@ -294,7 +294,7 @@
         {
           "id": "m3-p3",
           "type": "mcq",
-          "stem": "Which one is the best paraphrase?",
+          "stem": "Which one says the same thing in new words?",
           "options": [
             {
               "id": "a",
@@ -305,13 +305,13 @@
             {
               "id": "b",
               "text": "Buying used clothes keeps them out of the trash for longer.",
-              "why": "Only one word changed.",
+              "why": "Only one word is new. That is almost a copy.",
               "trap": "copy"
             },
             {
               "id": "c",
               "text": "Used clothes should be thrown in the garbage.",
-              "why": "The text says buying them keeps them out of the garbage.",
+              "why": "That changes the meaning. The text says buying them keeps them out of the garbage.",
               "trap": "meaning"
             }
           ],
@@ -320,7 +320,7 @@
         {
           "id": "m3-p4",
           "type": "text",
-          "stem": "Say it a new way. Say it out loud first, then type it.",
+          "stem": "Say it out loud in new words. Then type it.",
           "model": [
             "These days a lot of teens decide to buy used clothes even though they have enough money for new ones."
           ],
@@ -337,7 +337,7 @@
         {
           "id": "m3-p5",
           "type": "text",
-          "stem": "Say it a new way. Say it out loud first, then type it.",
+          "stem": "Say it out loud in new words. Then type it.",
           "model": [
             "The sizes are not sorted, some clothes have marks on them, and sometimes you find nothing to buy."
           ],
@@ -347,7 +347,7 @@
         {
           "id": "m3-p6",
           "type": "text",
-          "stem": "Say it a new way. Say it out loud first, then type it.",
+          "stem": "Say it out loud in new words. Then type it.",
           "model": [
             "Teens who enjoy thrifting like the searching as much as the finding."
           ],
@@ -358,7 +358,7 @@
     },
     {
       "id": "paraphrase-own",
-      "title": "Paraphrase on your own",
+      "title": "New words on your own",
       "mode": "solo",
       "minutes": 10,
       "tutorNote": "YOU DO. Two typed paraphrases first, then two choose-the-best items. The typed ones go to the review queue; score 0 to 2.",
@@ -366,7 +366,7 @@
         {
           "id": "m3-q1",
           "type": "text",
-          "stem": "Say it a new way.",
+          "stem": "Say it out loud in new words. Then type it.",
           "model": [
             "If your shift is short, you still have time for homework and sleep."
           ],
@@ -376,7 +376,7 @@
         {
           "id": "m3-q2",
           "type": "text",
-          "stem": "Say it a new way.",
+          "stem": "Say it out loud in new words. Then type it.",
           "model": [
             "Teens who work over twenty hours a week often get lower marks and skip more classes."
           ],
@@ -386,7 +386,7 @@
         {
           "id": "m3-q3",
           "type": "mcq",
-          "stem": "Which one is the best paraphrase?",
+          "stem": "Which one says the same thing in new words?",
           "options": [
             {
               "id": "a",
@@ -397,7 +397,7 @@
             {
               "id": "b",
               "text": "Some work to save for college, some to help their families, and some just want their own money.",
-              "why": "Only one word changed.",
+              "why": "Only one word is new. That is almost a copy.",
               "trap": "copy"
             },
             {
@@ -412,7 +412,7 @@
         {
           "id": "m3-q4",
           "type": "mcq",
-          "stem": "Which one is the best paraphrase?",
+          "stem": "Which one says the same thing in new words?",
           "options": [
             {
               "id": "a",
@@ -429,7 +429,7 @@
             {
               "id": "c",
               "text": "Counsellors suggest that students who must work keep their hours low during the school year and pick up more in the summer.",
-              "why": "Only one or two words changed.",
+              "why": "Only one or two words are new. That is almost a copy.",
               "trap": "copy"
             }
           ],
@@ -439,7 +439,7 @@
     },
     {
       "id": "gist-learn",
-      "title": "The point of a chunk",
+      "title": "The main point of one part",
       "mode": "tutor",
       "minutes": 12,
       "tutorNote": "I DO on chunk 1, WE DO on chunks 2 to 4, with support fading: chunk 2 is choose-only (who or what, then best gist); for chunks 3 and 4 the student says and types a gist first, then checks it against three options. The player highlights one chunk at a time.",
@@ -448,17 +448,17 @@
           "id": "m3-g0",
           "type": "explain",
           "text": [
-            "After a few sentences, stop and say the most important thing.",
-            "Ask two questions. WHO OR WHAT is this chunk mostly about? What is the MOST IMPORTANT THING it says about that?",
-            "Then say it in ten words or fewer.",
-            "A gist leaves out examples and numbers."
+            "The text is split into parts. Read one part. Then stop and say the most important thing.",
+            "Ask: WHO OR WHAT is this part mostly about? What is the MOST IMPORTANT THING it says about that?",
+            "Say that in ten words or fewer. That is the main point.",
+            "Leave out examples and numbers."
           ],
           "showCard": true
         },
         {
           "id": "m3-g1",
           "type": "worked",
-          "title": "Watch one",
+          "title": "Watch an example",
           "reveals": [
             {
               "label": "Who or what?",
@@ -479,7 +479,7 @@
             },
             {
               "label": "What I left out",
-              "text": "'Money was tight.' That was the old way, not the point."
+              "text": "'Money was tight.' That is how things used to be. It is not the point."
             }
           ],
           "passage": "thrift"
@@ -487,46 +487,46 @@
         {
           "id": "m3-g2",
           "type": "mcq",
-          "stem": "Who or what is this chunk mostly about?",
+          "stem": "Who or what is this part mostly about?",
           "options": [
             {
               "id": "a",
               "text": "why teens shop at thrift stores",
-              "why": "Right. The chunk gives two reasons.",
+              "why": "Right. The part gives two reasons.",
               "correct": true
             },
             {
               "id": "b",
               "text": "a sixty-dollar hoodie",
-              "why": "The hoodie is one example.",
+              "why": "The hoodie is just one example.",
               "trap": "detail"
             },
             {
               "id": "c",
               "text": "school",
-              "why": "School is one word in the chunk, not what it is about.",
+              "why": "School is one word in this part. It is not what the part is about.",
               "trap": "detail"
             }
           ],
-          "prompt": "Chunk 2",
+          "prompt": "Read part 2. It is lit up.",
           "passage": "thrift",
           "chunk": 2
         },
         {
           "id": "m3-g3",
           "type": "mcq",
-          "stem": "Which one is the best gist of this chunk?",
+          "stem": "Which one best says the main point of this part?",
           "options": [
             {
               "id": "a",
               "text": "Part of the reason is price.",
-              "why": "That is the first sentence, and it gives only half.",
+              "why": "That is just the first sentence. It gives only one of the two reasons.",
               "trap": "first"
             },
             {
               "id": "b",
               "text": "A used hoodie can cost eight dollars.",
-              "why": "That is an example of the price reason.",
+              "why": "That is one example. It shows the low price.",
               "trap": "detail"
             },
             {
@@ -536,19 +536,19 @@
               "correct": true
             }
           ],
-          "prompt": "Chunk 2",
+          "prompt": "Read part 2. It is lit up.",
           "passage": "thrift",
           "chunk": 2
         },
         {
           "id": "m3-g4",
           "type": "text",
-          "stem": "Write the gist of this chunk in ten words or fewer.",
+          "stem": "Type the main point of this part in ten words or fewer.",
           "model": [
             "Buying used clothes is better for the environment."
           ],
           "rubric": "gist1",
-          "prompt": "Chunk 3",
+          "prompt": "Read part 3. It is lit up.",
           "passage": "thrift",
           "maxWords": 10,
           "chunk": 3
@@ -556,12 +556,12 @@
         {
           "id": "m3-g5",
           "type": "mcq",
-          "stem": "Which one is the best gist of this chunk?",
+          "stem": "Which one best says the main point of this part?",
           "options": [
             {
               "id": "a",
               "text": "There is also a bigger reason.",
-              "why": "That is the first sentence. It does not say what the reason is.",
+              "why": "That is just the first sentence. It does not say what the reason is.",
               "trap": "first"
             },
             {
@@ -577,19 +577,19 @@
               "correct": true
             }
           ],
-          "prompt": "Chunk 3. Now check: which is closest to yours?",
+          "prompt": "Read part 3 again. Which one is closest to what you typed?",
           "passage": "thrift",
           "chunk": 3
         },
         {
           "id": "m3-g6",
           "type": "text",
-          "stem": "Write the gist of this chunk in ten words or fewer.",
+          "stem": "Type the main point of this part in ten words or fewer.",
           "model": [
             "Thrifting takes patience, but fans enjoy the hunt."
           ],
           "rubric": "gist1",
-          "prompt": "Chunk 4",
+          "prompt": "Read part 4. It is lit up.",
           "passage": "thrift",
           "maxWords": 10,
           "chunk": 4
@@ -597,12 +597,12 @@
         {
           "id": "m3-g7",
           "type": "mcq",
-          "stem": "Which one is the best gist of this chunk?",
+          "stem": "Which one best says the main point of this part?",
           "options": [
             {
               "id": "a",
               "text": "Thrift shopping takes patience, though.",
-              "why": "That is the first sentence, and it leaves out how fans feel.",
+              "why": "That is just the first sentence. It leaves out how fans feel.",
               "trap": "first"
             },
             {
@@ -614,11 +614,11 @@
             {
               "id": "c",
               "text": "Thrifting takes patience, but fans enjoy the hunt.",
-              "why": "Right. The problem and how fans see it.",
+              "why": "Right. It gives the problem and how fans see it.",
               "correct": true
             }
           ],
-          "prompt": "Chunk 4. Now check: which is closest to yours?",
+          "prompt": "Read part 4 again. Which one is closest to what you typed?",
           "passage": "thrift",
           "chunk": 4
         }
@@ -626,7 +626,7 @@
     },
     {
       "id": "gist-own",
-      "title": "Gist on your own",
+      "title": "Main point on your own",
       "mode": "solo",
       "minutes": 12,
       "tutorNote": "YOU DO on a new passage. For each chunk the student types a gist first, then picks the closest option. The typed gists go to the review queue; score 1 if a stranger who read the chunk would accept it as the point.",
@@ -634,12 +634,12 @@
         {
           "id": "m3-h1",
           "type": "text",
-          "stem": "Write the gist of this chunk in ten words or fewer.",
+          "stem": "Type the main point of this part in ten words or fewer.",
           "model": [
             "Students work part-time for different reasons."
           ],
           "rubric": "gist1",
-          "prompt": "Chunk 1",
+          "prompt": "Read part 1. It is lit up.",
           "passage": "jobs",
           "maxWords": 10,
           "chunk": 1
@@ -647,18 +647,18 @@
         {
           "id": "m3-h2",
           "type": "mcq",
-          "stem": "Which one is the best gist of this chunk?",
+          "stem": "Which one best says the main point of this part?",
           "options": [
             {
               "id": "a",
               "text": "Some students simply want their own money.",
-              "why": "That is one of the reasons, not all of them.",
+              "why": "That is one reason, not all of them.",
               "trap": "detail"
             },
             {
               "id": "b",
               "text": "Students work part-time for different reasons.",
-              "why": "Right.",
+              "why": "Right. It covers all the reasons.",
               "correct": true
             },
             {
@@ -668,19 +668,19 @@
               "trap": "meaning"
             }
           ],
-          "prompt": "Chunk 1. Which is closest to yours?",
+          "prompt": "Read part 1 again. Which one is closest to what you typed?",
           "passage": "jobs",
           "chunk": 1
         },
         {
           "id": "m3-h3",
           "type": "text",
-          "stem": "Write the gist of this chunk in ten words or fewer.",
+          "stem": "Type the main point of this part in ten words or fewer.",
           "model": [
             "Working a little is fine; working a lot hurts school."
           ],
           "rubric": "gist1",
-          "prompt": "Chunk 2",
+          "prompt": "Read part 2. It is lit up.",
           "passage": "jobs",
           "maxWords": 10,
           "chunk": 2
@@ -688,18 +688,18 @@
         {
           "id": "m3-h4",
           "type": "mcq",
-          "stem": "Which one is the best gist of this chunk?",
+          "stem": "Which one best says the main point of this part?",
           "options": [
             {
               "id": "a",
               "text": "Studies of working teens often show a pattern.",
-              "why": "That is the first sentence. It does not say what the pattern is.",
+              "why": "That is just the first sentence. It does not say what the pattern is.",
               "trap": "first"
             },
             {
               "id": "b",
               "text": "Working a few hours is fine for school, but working over twenty hours hurts marks.",
-              "why": "Right. Both halves of the pattern.",
+              "why": "Right. It gives both sides of the pattern.",
               "correct": true
             },
             {
@@ -709,19 +709,19 @@
               "trap": "detail"
             }
           ],
-          "prompt": "Chunk 2. Which is closest to yours?",
+          "prompt": "Read part 2 again. Which one is closest to what you typed?",
           "passage": "jobs",
           "chunk": 2
         },
         {
           "id": "m3-h5",
           "type": "text",
-          "stem": "Write the gist of this chunk in ten words or fewer.",
+          "stem": "Type the main point of this part in ten words or fewer.",
           "model": [
             "Long shifts take time from school, so keep hours low."
           ],
           "rubric": "gist1",
-          "prompt": "Chunk 3",
+          "prompt": "Read part 3. It is lit up.",
           "passage": "jobs",
           "maxWords": 10,
           "chunk": 3
@@ -729,7 +729,7 @@
         {
           "id": "m3-h6",
           "type": "mcq",
-          "stem": "Which one is the best gist of this chunk?",
+          "stem": "Which one best says the main point of this part?",
           "options": [
             {
               "id": "a",
@@ -740,7 +740,7 @@
             {
               "id": "b",
               "text": "The difference seems to be time and energy.",
-              "why": "That is the first sentence. It does not say what the difference is between.",
+              "why": "That is just the first sentence. It does not say what the difference is.",
               "trap": "first"
             },
             {
@@ -750,7 +750,7 @@
               "correct": true
             }
           ],
-          "prompt": "Chunk 3. Which is closest to yours?",
+          "prompt": "Read part 3 again. Which one is closest to what you typed?",
           "passage": "jobs",
           "chunk": 3
         }
@@ -767,24 +767,24 @@
           "id": "m3-m0",
           "type": "explain",
           "text": [
-            "The TOPIC is what the text is about. It is a few words.",
+            "The TOPIC is what the text is about. It is just a few words.",
             "The MAIN IDEA is what the text says about the topic. It is a full sentence.",
             "Main idea = topic + what the text says about it.",
-            "A good main idea is one that every chunk fits under."
+            "A good main idea covers every part of the text."
           ],
           "showCard": true
         },
         {
           "id": "m3-m1",
           "type": "worked",
-          "title": "Watch one",
+          "title": "Watch an example",
           "reveals": [
             {
               "label": "Topic",
               "text": "Teens and thrift shopping."
             },
             {
-              "label": "Look at the four gists",
+              "label": "Look at the main point of each part",
               "text": "By choice. Cheap and one-of-a-kind. Better for the environment. Takes patience but fun."
             },
             {
@@ -793,7 +793,7 @@
             },
             {
               "label": "Check",
-              "text": "Does every chunk fit under that sentence? Yes. If one did not, the main idea would be too small."
+              "text": "Does that sentence cover every part? Yes. If it missed a part, it would be too small."
             }
           ],
           "passage": "thrift"
@@ -801,7 +801,7 @@
         {
           "id": "m3-m2",
           "type": "sort",
-          "prompt": "Sort each card: is it the topic, a detail, or a main idea?",
+          "prompt": "Tap a card. Then tap TOPIC, DETAIL or MAIN IDEA.",
           "categories": [
             {
               "id": "topic",
@@ -820,7 +820,7 @@
             {
               "text": "thrift stores",
               "category": "topic",
-              "why": "A few words. It names what the text is about."
+              "why": "Just a few words. It names what the text is about."
             },
             {
               "text": "a used hoodie can cost eight dollars",
@@ -835,7 +835,7 @@
             {
               "text": "second-hand shopping",
               "category": "topic",
-              "why": "A few words. It names what the text is about."
+              "why": "Just a few words. It names what the text is about."
             },
             {
               "text": "some items are stained",
@@ -845,7 +845,7 @@
             {
               "text": "thrift shopping is popular with teens because it is cheap, unique and greener",
               "category": "main",
-              "why": "The topic plus what the text says about it. Different words, same main idea."
+              "why": "The topic plus what the text says about it. New words, same main idea."
             }
           ]
         }
@@ -861,7 +861,7 @@
         {
           "id": "m3-n1",
           "type": "text",
-          "stem": "Write the topic in a few words.",
+          "stem": "Type the topic in a few words.",
           "model": [
             "Teens and part-time jobs"
           ],
@@ -871,7 +871,7 @@
         {
           "id": "m3-n2",
           "type": "text",
-          "stem": "Write the main idea in one sentence: the topic and what the text says about it.",
+          "stem": "Type the main idea in one sentence. Give the topic and what the text says about it.",
           "model": [
             "Part-time work is fine for students as long as the hours stay low, because long hours take time and energy from school."
           ],
@@ -881,12 +881,12 @@
         {
           "id": "m3-n3",
           "type": "mcq",
-          "stem": "Which is the best title for this passage?",
+          "stem": "Which is the best title for this text?",
           "options": [
             {
               "id": "a",
               "text": "Teenagers",
-              "why": "Too wide. It does not say what about teenagers.",
+              "why": "Too big. It does not say what the text says about teenagers.",
               "trap": "topic"
             },
             {
@@ -898,13 +898,13 @@
             {
               "id": "c",
               "text": "Part-Time Jobs: How Many Hours Is Too Many?",
-              "why": "Right. It fits every chunk.",
+              "why": "Right. It fits every part.",
               "correct": true
             },
             {
               "id": "d",
               "text": "Summer Jobs",
-              "why": "Summer is one detail in the last sentence.",
+              "why": "Summer is one small detail in the last sentence.",
               "trap": "detail"
             }
           ],
@@ -913,12 +913,12 @@
         {
           "id": "m3-n4",
           "type": "mcq",
-          "stem": "Which sentence states the main idea of the whole passage?",
+          "stem": "Which sentence gives the main idea of the whole text?",
           "options": [
             {
               "id": "a",
               "text": "Many students work part-time.",
-              "why": "True, but it only opens the topic. It does not say the point.",
+              "why": "True, but it only names the topic. It does not say the point.",
               "trap": "topic"
             },
             {
@@ -930,7 +930,7 @@
             {
               "id": "c",
               "text": "Part-time work can fit with school if students keep their hours low.",
-              "why": "Right. Every chunk fits under it.",
+              "why": "Right. It covers every part.",
               "correct": true
             },
             {
@@ -954,12 +954,12 @@
         {
           "id": "m3-x1",
           "type": "text",
-          "stem": "Write the gist of this chunk in ten words or fewer.",
+          "stem": "Type the main point of this part in ten words or fewer.",
           "model": [
             "Northfield High now has an official esports team."
           ],
           "rubric": "gist1",
-          "prompt": "Chunk 1",
+          "prompt": "Read part 1. It is lit up.",
           "passage": "esports",
           "maxWords": 10,
           "chunk": 1
@@ -967,12 +967,12 @@
         {
           "id": "m3-x2",
           "type": "mcq",
-          "stem": "Which one is the best gist of this chunk?",
+          "stem": "Which one best says the main point of this part?",
           "options": [
             {
               "id": "a",
               "text": "Northfield High went from punishing gaming to having an official esports team.",
-              "why": "Right. The change is the point.",
+              "why": "Right. The point is the change.",
               "correct": true
             },
             {
@@ -984,23 +984,23 @@
             {
               "id": "c",
               "text": "Two years ago, playing video games at Northfield High could get a student sent to the office.",
-              "why": "That is the first sentence. It tells only how things used to be.",
+              "why": "That is just the first sentence. It only tells how things used to be.",
               "trap": "first"
             }
           ],
-          "prompt": "Chunk 1. Which is closest to yours?",
+          "prompt": "Read part 1 again. Which one is closest to what you typed?",
           "passage": "esports",
           "chunk": 1
         },
         {
           "id": "m3-x3",
           "type": "text",
-          "stem": "Write the gist of this chunk in ten words or fewer.",
+          "stem": "Type the main point of this part in ten words or fewer.",
           "model": [
             "The team gets new students involved and working in class."
           ],
           "rubric": "gist1",
-          "prompt": "Chunk 2",
+          "prompt": "Read part 2. It is lit up.",
           "passage": "esports",
           "maxWords": 10,
           "chunk": 2
@@ -1008,7 +1008,7 @@
         {
           "id": "m3-x4",
           "type": "mcq",
-          "stem": "Which one is the best gist of this chunk?",
+          "stem": "Which one best says the main point of this part?",
           "options": [
             {
               "id": "a",
@@ -1019,7 +1019,7 @@
             {
               "id": "b",
               "text": "The team gets students involved who never joined before, and keeps them working in class.",
-              "why": "Right.",
+              "why": "Right. It covers the whole part.",
               "correct": true
             },
             {
@@ -1029,19 +1029,19 @@
               "trap": "meaning"
             }
           ],
-          "prompt": "Chunk 2. Which is closest to yours?",
+          "prompt": "Read part 2 again. Which one is closest to what you typed?",
           "passage": "esports",
           "chunk": 2
         },
         {
           "id": "m3-x5",
           "type": "text",
-          "stem": "Write the gist of this chunk in ten words or fewer.",
+          "stem": "Type the main point of this part in ten words or fewer.",
           "model": [
             "Parents worried about screens, but the coach won them over."
           ],
           "rubric": "gist1",
-          "prompt": "Chunk 3",
+          "prompt": "Read part 3. It is lit up.",
           "passage": "esports",
           "maxWords": 10,
           "chunk": 3
@@ -1049,12 +1049,12 @@
         {
           "id": "m3-x6",
           "type": "mcq",
-          "stem": "Which one is the best gist of this chunk?",
+          "stem": "Which one best says the main point of this part?",
           "options": [
             {
               "id": "a",
               "text": "Not everyone was pleased at first.",
-              "why": "That is the first sentence. It does not say who, why, or what happened next.",
+              "why": "That is just the first sentence. It does not say who, why, or what happened next.",
               "trap": "first"
             },
             {
@@ -1066,18 +1066,18 @@
             {
               "id": "c",
               "text": "Some parents worried about screen time, but the coach's limits won them over.",
-              "why": "Right. The worry and how it ended.",
+              "why": "Right. It gives the worry and how it ended.",
               "correct": true
             }
           ],
-          "prompt": "Chunk 3. Which is closest to yours?",
+          "prompt": "Read part 3 again. Which one is closest to what you typed?",
           "passage": "esports",
           "chunk": 3
         },
         {
           "id": "m3-x7",
           "type": "text",
-          "stem": "Say it a new way.",
+          "stem": "Say it out loud in new words. Then type it.",
           "model": [
             "A few parents were afraid the team would make students spend even longer on screens."
           ],
@@ -1087,12 +1087,12 @@
         {
           "id": "m3-x8",
           "type": "mcq",
-          "stem": "Which one is the best paraphrase?",
+          "stem": "Which one says the same thing in new words?",
           "options": [
             {
               "id": "a",
               "text": "To stay on the team, players have to attend class and keep their marks up, and most of them have.",
-              "why": "Only two words changed.",
+              "why": "Only a word or two changed. That is almost a copy.",
               "trap": "copy"
             },
             {
@@ -1113,7 +1113,7 @@
         {
           "id": "m3-x9",
           "type": "text",
-          "stem": "Write the main idea in one sentence: the topic and what the text says about it.",
+          "stem": "Type the main idea in one sentence. Give the topic and what the text says about it.",
           "model": [
             "Northfield's esports team has brought new students into school life and won over the parents who were worried about it."
           ],
@@ -1123,18 +1123,18 @@
         {
           "id": "m3-x10",
           "type": "mcq",
-          "stem": "Which sentence states the main idea of the whole passage?",
+          "stem": "Which sentence gives the main idea of the whole text?",
           "options": [
             {
               "id": "a",
               "text": "Esports.",
-              "why": "That names the topic only.",
+              "why": "That only names the topic.",
               "trap": "topic"
             },
             {
               "id": "b",
               "text": "Northfield's esports team has brought new students into school life and won over worried parents.",
-              "why": "Right. Every chunk fits under it.",
+              "why": "Right. It covers every part.",
               "correct": true
             },
             {
@@ -1155,24 +1155,24 @@
         {
           "id": "m3-x11",
           "type": "mcq",
-          "stem": "Which is the best title for this passage?",
+          "stem": "Which is the best title for this text?",
           "options": [
             {
               "id": "a",
               "text": "Video Games",
-              "why": "Too wide. It does not say what about video games.",
+              "why": "Too big. It does not say what the text says about video games.",
               "trap": "topic"
             },
             {
               "id": "b",
               "text": "How an Esports Team Won Over a School",
-              "why": "Right. It fits every chunk.",
+              "why": "Right. It fits every part.",
               "correct": true
             },
             {
               "id": "c",
               "text": "Why Gaming Should Be Banned",
-              "why": "The passage shows the team working well.",
+              "why": "The text shows the team working well.",
               "trap": "O"
             },
             {

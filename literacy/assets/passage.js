@@ -47,13 +47,40 @@ export class PassageView {
   }
 
   apply() {
+    if (!this.onTap) this.unpick();
     this.root.classList.toggle("show-numbers", this.numbers);
     this.root.classList.toggle("answer-mode", !!this.onTap);
     this.chunkEls?.forEach((c, i) => c.classList.toggle("dim", this.chunk != null && this.chunk !== i + 1));
   }
 
+  // Answer taps only pick a sentence. A "Check this sentence" button appears right after it,
+  // and the answer is marked when the student presses it.
+  pick(n) {
+    const s = this.sentEls[n];
+    if (!s || s.classList.contains("wrong") || s.classList.contains("proof")) return;
+    if (this.picked === n) return;
+    this.unpick();
+    this.picked = n;
+    s.classList.add("picked");
+    if (!this.checkBtn) {
+      this.checkBtn = el("button", { class: "btn btn-primary btn-small sent-check", type: "button" }, "Check this sentence");
+      this.checkBtn.addEventListener("click", () => {
+        const k = this.picked;
+        this.unpick();
+        if (k != null && this.onTap) this.onTap(k);
+      });
+    }
+    s.after(this.checkBtn);
+  }
+
+  unpick() {
+    if (this.picked != null) this.sentEls[this.picked]?.classList.remove("picked");
+    this.picked = null;
+    this.checkBtn?.remove();
+  }
+
   tap(n) {
-    if (this.onTap) { this.onTap(n); return; }
+    if (this.onTap) { this.pick(n); return; }
     const s = this.sentEls[n];
     const on = s.classList.toggle("mine");
     s.setAttribute("aria-pressed", String(on));
@@ -69,6 +96,7 @@ export class PassageView {
 
   clear() {
     stop();
+    this.unpick();
     for (const s of this.sentEls) if (s) {
       s.classList.remove("proof", "wrong", "mine", "shown");
       s.setAttribute("aria-pressed", "false");

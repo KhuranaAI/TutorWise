@@ -3,16 +3,16 @@
   "id": "m7-opinion-reasons",
   "number": 7,
   "title": "Your opinion, your reasons",
-  "goal": "Say what you think, give two different reasons, and prove each one with a real example.",
+  "goal": "Say what you think. Give two different reasons. Back up each reason with a real example.",
   "card": {
     "title": "FOUR BOXES",
     "lines": [
       "Box 1: OPINION + 2 REASONS. 'I think … because … and …'",
       "Box 2: REASON 1 + a little more about it + a real EXAMPLE + why it matters. 'One reason is … For example, … This shows …'",
       "Box 3: REASON 2, the same way. 'Another reason is …'",
-      "Box 4: 'In conclusion, …' Your opinion and both reasons again, short. Then one closing sentence. No new reasons.",
+      "Box 4: 'In conclusion, …' Say your opinion and both reasons again, in short. Then add one ending sentence. No new reasons.",
       "A real example gives at least two of these: who exactly, what exactly, when, how much.",
-      "Reason menu: money · time · sleep and health · safety · learning · friends and family · stress and fun · fairness · the future."
+      "Reason menu (kinds of reasons): money · time · sleep and health · safety · learning · friends and family · stress and fun · fairness · the future."
     ]
   },
   "traps": {
@@ -263,11 +263,11 @@
           "id": "m7-learn-1",
           "type": "explain",
           "text": [
-            "An opinion essay is four boxes.",
+            "An opinion essay has four boxes. Each box is one paragraph.",
             "Box 1: what you think, and your two reasons.",
             "Box 2: reason one, a real example, and why it matters.",
             "Box 3: reason two, a real example, and why it matters.",
-            "Box 4: say it again, short, and add one closing sentence.",
+            "Box 4: say your opinion and reasons again, in short. Add one ending sentence.",
             "A real example gives at least two of these: who exactly, what exactly, when, how much."
           ],
           "showCard": true
@@ -283,7 +283,7 @@
             },
             {
               "label": "Two reasons from the menu",
-              "text": "Sleep, and learning. TIME is too close to sleep, so I leave it out."
+              "text": "Sleep, and learning. I leave out TIME. It is too close to sleep."
             },
             {
               "label": "Box 1",
@@ -294,7 +294,7 @@
             },
             {
               "label": "Box 2",
-              "text": "Reason one: sleep. A little more about it. A real example: my friend who works until 10 p.m. Then why it matters.",
+              "text": "Reason one: sleep. A little more about it. A real example: my friend who works until 10 p.m. Then why it matters: 'This shows…'",
               "highlight": [
                 2,
                 3,
@@ -314,15 +314,15 @@
             },
             {
               "label": "Box 4",
-              "text": "In conclusion: the same opinion and both reasons again. Then one closing sentence. No new reasons.",
+              "text": "In conclusion: the same opinion and both reasons again. Then one ending sentence. No new reasons.",
               "highlight": [
                 10,
                 11
               ]
             },
             {
-              "label": "Count",
-              "text": "About 170 words. Four boxes. The same opinion at the start and at the end. Two different reasons. Each has a real example."
+              "label": "Check it",
+              "text": "About 170 words. Four boxes. The same opinion at the start and the end. Two different reasons. A real example for each."
             }
           ],
           "question": "Should high schools start later in the morning?",
@@ -339,7 +339,7 @@
             10
           ],
           "found": "Right. The writer says which side in sentence 1, and again in sentence 10.",
-          "other": "That sentence gives a reason or an example. Which sentence says which side the writer is on?",
+          "other": "That sentence gives a reason or an example. Find the sentence that says which side the writer is on.",
           "hint2": "The opinion comes first. Look for 'I think'.",
           "hint3": "It is sentence 1 or sentence 2.",
           "near": [
@@ -347,19 +347,19 @@
               "sentences": [
                 2
               ],
-              "why": "That is reason one. Which sentence says which side the writer is on?"
+              "why": "That is reason one. Find the sentence that says which side the writer is on."
             },
             {
               "sentences": [
                 6
               ],
-              "why": "That is reason two. Which sentence says which side the writer is on?"
+              "why": "That is reason two. Find the sentence that says which side the writer is on."
             },
             {
               "sentences": [
                 11
               ],
-              "why": "That says the change is good. It does not say what the change is. Which sentence says which side the writer is on?"
+              "why": "That says the change is good. It does not say what the change is. Find the sentence that names the side."
             }
           ]
         },
@@ -372,8 +372,8 @@
           "correct": [
             4
           ],
-          "found": "Right. Sentence 4 is about one real person, with a when: weeknights, until 10 p.m.",
-          "other": "That is not the example for the first reason. Look for one person the writer knows.",
+          "found": "Right. Sentence 4 is about one real person. It has a when: weeknights, until 10 p.m.",
+          "other": "That is not the example for reason one. Look for one person the writer knows.",
           "hint2": "Look for the words 'For example'.",
           "hint3": "It is sentence 3 or sentence 4.",
           "near": [
@@ -381,19 +381,19 @@
               "sentences": [
                 3
               ],
-              "why": "That sentence is about students in general. Which sentence is about one person the writer knows?"
+              "why": "That sentence is about all students. Find the sentence about one person the writer knows."
             },
             {
               "sentences": [
                 2
               ],
-              "why": "That is the reason. Which sentence gives a real example of it?"
+              "why": "That is the reason. Find the sentence with a real example of it."
             },
             {
               "sentences": [
                 8
               ],
-              "why": "That is the example for the SECOND reason."
+              "why": "That is the example for reason TWO."
             }
           ]
         },
@@ -406,8 +406,8 @@
           "correct": [
             8
           ],
-          "found": "Right. Sentence 8 is one real case: last year, my science class, my marks.",
-          "other": "That is not the example for the second reason. Look in box 3 for the writer's own class.",
+          "found": "Right. Sentence 8 is a real example: last year, my science class, my marks.",
+          "other": "That is not the example for reason two. Look in box 3 for the writer's own class.",
           "hint2": "Look in box 3. Find the sentence about the writer's own class.",
           "hint3": "It is sentence 7 or sentence 8.",
           "near": [
@@ -415,19 +415,19 @@
               "sentences": [
                 7
               ],
-              "why": "That sentence is about students in general. Which sentence is about the writer's own class?"
+              "why": "That sentence is about all students. Find the sentence about the writer's own class."
             },
             {
               "sentences": [
                 4
               ],
-              "why": "That is the example for the FIRST reason."
+              "why": "That is the example for reason ONE."
             },
             {
               "sentences": [
                 6
               ],
-              "why": "That is the reason. Which sentence gives a real example of it?"
+              "why": "That is the reason. Find the sentence with a real example of it."
             }
           ]
         }
@@ -444,9 +444,9 @@
           "id": "m7-op0",
           "type": "explain",
           "text": [
-            "Start by picking ONE side.",
-            "Say it in one sentence. It helps to start with 'I think'.",
-            "Name the topic in your sentence, so a reader knows what you are talking about.",
+            "Pick ONE side.",
+            "Say it in one sentence. Start with 'I think'.",
+            "Name the topic in your sentence. Then a reader knows what you mean.",
             "Do not say 'it depends'. Do not give both sides."
           ],
           "showCard": false
@@ -454,7 +454,7 @@
         {
           "id": "m7-op1",
           "type": "sort",
-          "prompt": "Is it a clear opinion? Sort each sentence.",
+          "prompt": "Sort each sentence. Does it pick one side and name the topic?",
           "categories": [
             {
               "id": "clear",
@@ -474,7 +474,7 @@
             {
               "text": "Some people think yes and some people think no.",
               "category": "not",
-              "why": "That gives both sides. Which side are YOU on?"
+              "why": "That gives both sides. It does not pick one."
             },
             {
               "text": "Many people talk about phones in class.",
@@ -494,7 +494,7 @@
             {
               "text": "Students should not have to wear uniforms.",
               "category": "clear",
-              "why": "There is no 'I think', but the side is clear and the topic is named."
+              "why": "There is no 'I think'. But it picks one side and names the topic."
             }
           ],
           "hint2": "Ask: can I tell which side the writer is on?",
@@ -503,7 +503,7 @@
         {
           "id": "m7-op2",
           "type": "text",
-          "prompt": "Say it out loud first, then type it.",
+          "prompt": "Say it out loud. Then type it.",
           "stem": "Should students choose their own seats in class? Write your opinion in one sentence.",
           "frame": "I think",
           "model": [
@@ -514,7 +514,7 @@
         {
           "id": "m7-op3",
           "type": "text",
-          "prompt": "Say it out loud first, then type it.",
+          "prompt": "Say it out loud. Then type it.",
           "stem": "Is it better to have one long school break or several short ones? Write your opinion in one sentence.",
           "frame": "I think",
           "model": [
@@ -535,9 +535,9 @@
           "id": "m7-r0",
           "type": "explain",
           "text": [
-            "Now you need two reasons, and they must be DIFFERENT.",
-            "Use the reason menu on the card.",
-            "Pick two menu words that fit. Turn each one into a sentence.",
+            "Now give two reasons. They must be DIFFERENT.",
+            "Open the card. Look at the reason menu. It lists kinds of reasons.",
+            "Pick two menu words that fit your side. Turn each one into a sentence.",
             "'Students would be happier' and 'students would enjoy school more' are the SAME reason said twice."
           ],
           "showCard": true
@@ -545,7 +545,7 @@
         {
           "id": "m7-r1",
           "type": "match",
-          "prompt": "Should high schools start later? Match each menu word to a reason.",
+          "prompt": "Should high schools start later? Match each menu word to its reason.",
           "pairs": [
             {
               "left": "sleep and health",
@@ -579,7 +579,7 @@
             {
               "id": "b",
               "text": "Students could save the money for college.",
-              "why": "Right. That is about money and the future. A different idea.",
+              "why": "Right. That is about money and the future. It is a different reason.",
               "correct": true
             },
             {
@@ -589,7 +589,7 @@
               "trap": "same"
             }
           ],
-          "hint2": "Which one comes from a different word on the reason menu?",
+          "hint2": "Look at the reason menu. Which one fits a different menu word?",
           "hint3": "It is (b) or (c). Which one is NOT about working harder?"
         },
         {
@@ -612,18 +612,18 @@
             {
               "id": "c",
               "text": "Phones make cheating easy.",
-              "why": "Right. That is about fairness. A different idea.",
+              "why": "Right. That is about fairness. It is a different reason.",
               "correct": true
             }
           ],
-          "hint2": "Which one comes from a different word on the reason menu?",
+          "hint2": "Look at the reason menu. Which one fits a different menu word?",
           "hint3": "It is (a) or (c). Which one is NOT about paying attention?"
         },
         {
           "id": "m7-r4",
           "type": "text",
-          "prompt": "Point to two different menu words first.",
-          "stem": "Should students be allowed to use phones in class? Pick a side. Then write two DIFFERENT reasons from the menu.",
+          "prompt": "First, point to two different words on the reason menu.",
+          "stem": "Should students be allowed to use phones in class? Pick a side. Write two DIFFERENT reasons from the menu.",
           "parts": [
             {
               "label": "My opinion",
@@ -662,17 +662,17 @@
           "type": "explain",
           "text": [
             "A reason needs a real example.",
-            "'Phones are distracting' is vague. It could be about anyone, at any time.",
+            "'Phones are distracting' is vague. That means it could be about anyone, at any time.",
             "'My phone buzzed in math and I missed the homework' is real.",
             "A real example gives at least two of these: who exactly, what exactly, when, how much.",
-            "It can be about you or someone you know. If you have none, write one that could be real."
+            "Use you or someone you know. If you have no example, make up one that could be real."
           ],
           "showCard": false
         },
         {
           "id": "m7-s1",
           "type": "sort",
-          "prompt": "Vague or specific? A real example gives at least two of these: who exactly, what exactly, when, how much.",
+          "prompt": "Sort each sentence: vague, or a real example? A real example gives at least two of these: who exactly, what exactly, when, how much.",
           "categories": [
             {
               "id": "vague",
@@ -680,14 +680,14 @@
             },
             {
               "id": "specific",
-              "label": "SPECIFIC"
+              "label": "REAL EXAMPLE"
             }
           ],
           "cards": [
             {
               "text": "Phones are distracting.",
               "category": "vague",
-              "why": "Who? When? It could be anyone, at any time."
+              "why": "Who? When? It could be anyone, any time."
             },
             {
               "text": "When a notification pops up in the middle of a lesson, I look at it and miss what the teacher said.",
@@ -725,8 +725,8 @@
               "why": "A when (Tuesdays), a how much (two hours, four hours) and a who (I)."
             }
           ],
-          "hint2": "Ask: who exactly? when? how much? If you cannot tell, it is vague.",
-          "hint3": "A specific example has a number, a day, a place or a person in it."
+          "hint2": "Ask: who exactly? When? How much? If you cannot tell, it is vague.",
+          "hint3": "A real example has a number, a day, a place or a person in it."
         },
         {
           "id": "m7-s2",
@@ -736,7 +736,7 @@
             {
               "id": "a",
               "text": "Part-time jobs teach teens to be on time.",
-              "why": "That says the reason again in other words. It is about teens in general, with no when and no how much.",
+              "why": "That is the reason again in other words. It is about all teens. There is no when and no how much.",
               "trap": "vague"
             },
             {
@@ -752,13 +752,13 @@
               "correct": true
             }
           ],
-          "hint2": "A real example is a real case. Look for a who and a when.",
+          "hint2": "A real example tells about one real case. Look for a who and a when.",
           "hint3": "It is (a) or (c). Which one has a day and a time in it?"
         },
         {
           "id": "m7-s3",
           "type": "text",
-          "prompt": "Say it out loud first, then type it.",
+          "prompt": "Say it out loud. Then type it.",
           "stem": "Make it real. The vague version: \"School lunches cost too much.\" Add at least two of these: who exactly, what exactly, when, how much.",
           "model": [
             "A slice of pizza and a juice in our cafeteria cost $8, and I buy lunch four days a week."
@@ -768,7 +768,7 @@
         {
           "id": "m7-s4",
           "type": "text",
-          "prompt": "Say it out loud first, then type it.",
+          "prompt": "Say it out loud. Then type it.",
           "stem": "Make it real. The vague version: \"The bus is often late.\" Add at least two of these: who exactly, what exactly, when, how much.",
           "model": [
             "Last Monday the 7:40 bus came at 8:05, and I missed the first twenty minutes of math."
@@ -779,7 +779,7 @@
     },
     {
       "id": "specific-own",
-      "title": "Make it real on your own",
+      "title": "Make it real: on your own",
       "mode": "solo",
       "minutes": 10,
       "tutorNote": "YOU DO. Two choose-the-example questions, then four vague statements to make real. The typed answers go to the review queue; score 0 to 2. Guide threshold: four of five vague details made specific; count these four with the two typed in 'Make it real'.",
@@ -808,7 +808,7 @@
               "trap": "reason"
             }
           ],
-          "hint2": "A real example is a real case. Look for a who and a how much.",
+          "hint2": "A real example tells about one real case. Look for a who and a how much.",
           "hint3": "It is (a) or (b). Which one is about one real person?"
         },
         {
@@ -835,13 +835,13 @@
               "trap": "reason"
             }
           ],
-          "hint2": "A real example is a real case. Look for a who and a when.",
+          "hint2": "A real example tells about one real case. Look for a who and a when.",
           "hint3": "It is (a) or (b). Which one tells about one real class?"
         },
         {
           "id": "m7-so3",
           "type": "text",
-          "prompt": "Say it out loud first, then type it.",
+          "prompt": "Say it out loud. Then type it.",
           "stem": "Make it real. The vague version: \"Video games can teach you things.\" Add at least two of these: who exactly, what exactly, when, how much.",
           "model": [
             "Playing a building game with my cousin every weekend taught me to plan ahead and save up for what I need."
@@ -851,7 +851,7 @@
         {
           "id": "m7-so4",
           "type": "text",
-          "prompt": "Say it out loud first, then type it.",
+          "prompt": "Say it out loud. Then type it.",
           "stem": "Make it real. The vague version: \"Group projects are unfair.\" Add at least two of these: who exactly, what exactly, when, how much.",
           "model": [
             "In my last science project, I wrote all four pages while two of my partners did nothing, and we all got the same mark."
@@ -861,7 +861,7 @@
         {
           "id": "m7-so5",
           "type": "text",
-          "prompt": "Say it out loud first, then type it.",
+          "prompt": "Say it out loud. Then type it.",
           "stem": "Make it real. The vague version: \"Teenagers need more sleep.\" Add at least two of these: who exactly, what exactly, when, how much.",
           "model": [
             "On school nights I get about six hours of sleep, and by third period I can hardly keep my eyes open."
@@ -871,7 +871,7 @@
         {
           "id": "m7-so6",
           "type": "text",
-          "prompt": "Say it out loud first, then type it.",
+          "prompt": "Say it out loud. Then type it.",
           "stem": "Make it real. The vague version: \"Volunteering helps people.\" Add at least two of these: who exactly, what exactly, when, how much.",
           "model": [
             "Every Saturday morning I pack food boxes at the food bank, and about forty families pick them up."
@@ -891,9 +891,9 @@
           "id": "m7-p0",
           "type": "explain",
           "text": [
-            "Box 2 and box 3 are body paragraphs. Each one has these jobs.",
-            "REASON: 'One reason is…' You can add one more sentence about it.",
-            "EXAMPLE: 'For example,…' A real case, with a who and a when.",
+            "Box 2 and Box 3 are body paragraphs: the middle of the essay. Each one has three parts.",
+            "REASON: 'One reason is…' You may add one more sentence about it.",
+            "EXAMPLE: 'For example,…' A real example, with a who and a when.",
             "WHY IT MATTERS: 'This shows…'"
           ],
           "showCard": true
@@ -908,11 +908,11 @@
             },
             {
               "text": "For example, my phone buzzed in math last week.",
-              "why": "'For example' needs a reason before it. Which sentence gives the reason?"
+              "why": "'For example' needs a reason before it. Find the reason first."
             },
             {
               "text": "While I was reading the message, I missed the homework.",
-              "why": "'The message' points back to the buzz. The buzz has to come first."
+              "why": "'The message' points back to the buzz. The buzz comes first."
             },
             {
               "text": "This shows that one message can make a student miss something important.",
@@ -926,7 +926,7 @@
         {
           "id": "m7-p2",
           "type": "text",
-          "prompt": "Say each sentence out loud first.",
+          "prompt": "Say each sentence out loud. Then type it.",
           "stem": "Should students be allowed to use phones in class? Write ONE body paragraph for your side.",
           "parts": [
             {
@@ -937,7 +937,7 @@
             {
               "label": "Real example",
               "starter": "For example,",
-              "help": "A real case. Who exactly? When? How much?",
+              "help": "A real example. Who exactly? When? How much?",
               "rows": 3
             },
             {
@@ -956,8 +956,8 @@
         {
           "id": "m7-p3",
           "type": "text",
-          "prompt": "Say it out loud first, then type it.",
-          "stem": "Now write Box 1 for the same question: your opinion and your two reasons. One or two sentences.",
+          "prompt": "Say it out loud. Then type it.",
+          "stem": "Write Box 1 for the same question. Give your opinion and your two reasons. Use one or two sentences.",
           "frame": "I think",
           "model": [
             "I think phones should not be allowed in class because they distract students and because they make cheating easy."
@@ -967,8 +967,8 @@
         {
           "id": "m7-p4",
           "type": "text",
-          "prompt": "Say it out loud first, then type it.",
-          "stem": "Now write Box 4: your opinion and both reasons again, short. Then add one closing sentence. No new reasons.",
+          "prompt": "Say it out loud. Then type it.",
+          "stem": "Write Box 4. Say your opinion and both reasons again, in short. Then add one ending sentence. No new reasons.",
           "frame": "In conclusion,",
           "model": [
             "In conclusion, phones should not be allowed in class because they distract students and make cheating easy. School is better without them."
@@ -988,10 +988,10 @@
           "id": "m7-e1-0",
           "type": "explain",
           "text": [
-            "Now write a whole essay.",
-            "Take about five minutes to plan: your side, two different reasons from the menu, and a real example for each.",
+            "Write a whole essay.",
+            "Plan for about five minutes. Pick your side, two different reasons from the menu, and a real example for each.",
             "Then write for about twenty minutes. Fill the four boxes in order.",
-            "Write it once. Do not write a rough copy and then a good copy."
+            "Write it one time. Do not write a rough copy and then a good copy."
           ],
           "showCard": true
         },
@@ -1045,7 +1045,7 @@
     },
     {
       "id": "essay-2",
-      "title": "Second essay: no starters",
+      "title": "Second essay: no sentence starters",
       "mode": "solo",
       "minutes": 30,
       "tutorNote": "YOU DO, on another day. The four boxes are still there, but the sentence starters are gone; the card and its reason menu can stay. Mark it the same way, and look first for the one change you named after the last essay.",
@@ -1062,7 +1062,7 @@
             },
             {
               "label": "Box 2: Reason 1, a real example, why it matters",
-              "help": "Reason, a little more about it, a real example, then why it matters.",
+              "help": "A reason, a little more about it, a real example, then why it matters.",
               "rows": 6
             },
             {
@@ -1072,7 +1072,7 @@
             },
             {
               "label": "Box 4: In conclusion",
-              "help": "Your opinion and both reasons again, short. Then one closing sentence. No new reasons.",
+              "help": "Your opinion and both reasons again, in short. Then one ending sentence. No new reasons.",
               "rows": 3
             }
           ],
@@ -1100,7 +1100,7 @@
     },
     {
       "id": "essay-3",
-      "title": "Third essay: one box",
+      "title": "Third essay: like the test",
       "mode": "solo",
       "minutes": 25,
       "tutorNote": "YOU DO: the mastery task. One box, no starters; the student starts a new line for each paragraph. The timer is set to twenty minutes, as in the plan. Guide threshold: two essays in a row on new prompts (the second essay and this one), each 150 words or more, with the opinion stated first and kept to the end, two different reasons, at least one specific example for each, four paragraphs, finished in 25 minutes, that you would mark Code 30 or higher for topic development.",
@@ -1109,9 +1109,9 @@
           "id": "m7-e3-0",
           "type": "explain",
           "text": [
-            "One box this time, like on the test.",
-            "Plan first: your side, two different reasons, a real example for each.",
-            "Start a new line for each of your four paragraphs.",
+            "This time, type the whole essay in one space, like on the test.",
+            "Plan first. Pick your side, two different reasons, and a real example for each.",
+            "Start a new line for each of your four boxes (paragraphs).",
             "Try to finish in about twenty minutes."
           ],
           "showCard": false

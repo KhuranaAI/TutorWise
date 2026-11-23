@@ -1,8 +1,9 @@
-// match: tap an item on the left, then its partner on the right.
+// match: tap an item on the left, then its partner on the right, then press Check.
 // Each pair's tries are saved under its own key (pair-1, pair-2, ...).
 import { el } from "../auth.js";
 import { speakButton } from "../speech.js";
 import { feedbackBox, hintLadder, shuffleNotSame } from "../ui.js";
+import { checkButton } from "../confirm.js";
 
 export function render(ctx) {
   const { item } = ctx;
@@ -18,22 +19,36 @@ export function render(ctx) {
   });
   const rights = shuffleNotSame(item.pairs.map((p, i) => ({ text: p.right, i }))).map((r) => {
     const b = el("button", { type: "button", class: "match-right" }, r.text);
-    b.addEventListener("click", () => pick(r, b));
+    b.addEventListener("click", () => choose(r, b));
+    r.btn = b;
     return el("div", { class: "choice-row" }, b, speakButton(r.text, "Listen", "btn-speak-small"));
   });
-  const status = el("p", { class: "muted", "aria-live": "polite" }, "Tap a word on the left first.");
+  const status = el("p", { class: "muted", "aria-live": "polite" }, "Step 1: tap a word on the left.");
+  let pending = null; // [r, btn] waiting for Check
+  const check = checkButton(() => { if (pending) { const [r, b] = pending; setPending(null); pick(r, b); } });
+  function setPending(p) {
+    if (pending) pending[1].classList.remove("is-picked");
+    pending = p;
+    if (p) { p[1].classList.add("is-picked"); check.show(); } else check.hide();
+  }
+  function choose(r, btn) {
+    if (btn.disabled) return;
+    if (active == null) { status.textContent = "Step 1: tap a word on the left first."; return; }
+    setPending([r, btn]);
+  }
 
   function select(i) {
     if (matched.has(i)) return;
     active = i;
     lefts.forEach((b, k) => { b.setAttribute("aria-pressed", String(k === i)); b.classList.toggle("is-active", k === i); });
-    status.textContent = `Now tap the match for "${item.pairs[i].left}".`;
+    status.textContent = `Step 2: tap the match for "${item.pairs[i].left}", then press Check my answer.`;
+    setPending(null);
     fb.clear();
   }
 
   function pick(r, btn) {
     if (btn.disabled) return;
-    if (active == null) { status.textContent = "Tap a word on the left first."; return; }
+    if (active == null) return;
     // Compare by text: two pairs could share the same right-hand side.
     const ok = r.text === item.pairs[active].right;
     ctx.record(`pair-${active + 1}`, r.text, ok);
@@ -47,7 +62,7 @@ export function render(ctx) {
       fb.ok(`Right. ${item.pairs[active].left}: ${r.text}.`);
       active = null;
       if (matched.size === item.pairs.length) { status.textContent = "All matched."; hints.disable(); ctx.complete(); }
-      else status.textContent = "Tap the next word on the left.";
+      else status.textContent = "Step 1: tap the next word on the left.";
     } else {
       fb.bad(`That is not the match for "${item.pairs[active].left}". Try another.`);
     }
@@ -58,5 +73,5 @@ export function render(ctx) {
     el("div", { class: "match-grid" },
       el("div", { class: "match-col", role: "group", "aria-label": "Left side" }, lefts),
       el("div", { class: "match-col", role: "group", "aria-label": "Right side" }, rights)),
-    status, fb.node, hints.node);
+    status, check.node, fb.node, hints.node);
 }

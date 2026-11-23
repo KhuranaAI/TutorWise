@@ -4,7 +4,7 @@
 import { el } from "../auth.js";
 import { questionLine, feedbackBox, hintLadder, continueButton } from "../ui.js";
 
-const OTHER = "Read that whole sentence. Does it do the job, or does it only share a word?";
+const OTHER = "Read that whole sentence. Does it answer the question, or does it only share a word with it?";
 
 export function render(ctx) {
   const { item, passage } = ctx;
@@ -13,11 +13,11 @@ export function render(ctx) {
   const area = el("div", { class: "find-area" });
   const node = el("div", { class: "item item-find" },
     questionLine(item.question),
-    el("p", { class: "instruction" }, item.prompt || "Tap the sentence that proves the answer."),
+    el("p", { class: "instruction" }, item.prompt || "Tap the sentence in the passage that shows the answer."),
     area, fb.node, hints.node);
 
   const tried = new Set();
-  ctx.strip?.set(item.question, item.prompt || "Tap the sentence that proves the answer.");
+  ctx.strip?.set(item.question, item.prompt || "Tap the sentence in the passage that shows the answer.");
   passage.onTap = (n) => {
     if (tried.has(n)) return;
     const ok = item.correct.includes(n);
@@ -53,6 +53,6 @@ export function render(ctx) {
     }
   };
   passage.apply();
-  passage.hint.textContent = "Tap a sentence.";
+  passage.hint.textContent = "Tap a sentence, then press Check this sentence.";
   return node;
 }

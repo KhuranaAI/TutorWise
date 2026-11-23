@@ -1,6 +1,7 @@
 // Small shared pieces used by the item components.
 import { el } from "./auth.js";
 import { speakButton } from "./speech.js";
+import { confirmChoice } from "./confirm.js";
 
 export const HINT1 = "Read the question again. What is it asking you to find?";
 
@@ -51,13 +52,17 @@ export function questionLine(text, tag = "p", cls = "question") {
   return el("div", { class: "q-row" }, el(tag, { class: cls }, text), speakButton(text));
 }
 
-/** An answer choice: a big button plus its own Listen button beside it. */
-export function choice(label, text, onPick) {
+/**
+ * An answer choice: a big button plus its own Listen button beside it.
+ * A tap picks it; the answer is only marked when the student presses Check
+ * (`{ instant: true }` for buttons that only toggle, like "choose two").
+ */
+export function choice(label, text, onPick, { instant = false } = {}) {
   const b = el("button", { class: "choice", type: "button" },
     label ? el("span", { class: "choice-letter", "aria-hidden": "true" }, label) : null,
     el("span", { class: "choice-text" }, text));
   if (label) b.setAttribute("aria-label", `${label}: ${text}`);
-  b.addEventListener("click", () => onPick(b));
+  b.addEventListener("click", () => (instant ? onPick(b) : confirmChoice(b, () => onPick(b))));
   const row = el("div", { class: "choice-row" }, b, speakButton(text, "Listen", "btn-speak-small"));
   row.button = b;
   return row;

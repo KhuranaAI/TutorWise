@@ -4,6 +4,7 @@ import { el } from "./auth.js";
 import { PassageView } from "./passage.js";
 import { stop as stopSpeech } from "./speech.js";
 import { tapStrip } from "./strip.js";
+import { howTo } from "./confirm.js";
 import { components } from "./items/index.js";
 import { cardDialog } from "./items/card.js";
 import {
@@ -196,6 +197,7 @@ export async function openSection({ root, uid, module, section, progress, writte
     taskSlot.replaceChildren(...[
       heading,
       item.prompt && !PROMPT_IN_COMPONENT.has(item.type) ? el("p", { class: "instruction" }, item.prompt) : null,
+      howTo(item.type) && !wasDone(item, index) ? el("p", { class: "how-to" }, howTo(item.type)) : null,
       body,
       el("div", { class: "step-nav" }, back, next)].filter(Boolean));
     window.scrollTo({ top: 0 });
