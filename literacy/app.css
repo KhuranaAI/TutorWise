@@ -331,3 +331,24 @@ dialog.sheet label{font-family:var(--f-ui);font-weight:600;font-size:.92rem;disp
 .steps li.label{list-style:none}
 .dot.flag{box-shadow:0 0 0 3px var(--gold)}
 .task .kind-row .toolbtn[aria-pressed="true"]{background:var(--gold);border-color:var(--gold)}
+
+/* ---------- marking ---------- */
+.mark-banner{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;background:var(--gold-soft);border:2px solid var(--gold);border-radius:14px;padding:14px 18px;margin:0 0 16px}
+.mark-banner[hidden]{display:none}
+.panel.how summary{cursor:pointer;font-family:var(--f-ui)}
+.how-steps{margin:12px 0 0;padding-left:22px;display:grid;gap:10px}
+.mark-list{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:10px}
+.mark-list li{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #d8dee6;border-radius:12px;padding:12px 14px;background:#fff}
+.mark-how{background:var(--navy-soft);border-radius:10px;padding:10px 14px;margin:14px 0}
+fieldset.codes{border:1px solid #d8dee6;border-radius:12px;padding:10px 12px 12px;margin:0 0 14px;display:grid;gap:8px}
+fieldset.codes legend{font-family:var(--f-ui);font-weight:700;color:var(--navy);padding:0 6px}
+.code-opt{display:flex;gap:10px;align-items:flex-start;border:2px solid #e3e8ee;border-radius:10px;padding:10px 12px;cursor:pointer;background:#fff;line-height:1.35}
+.code-opt:hover{border-color:var(--teal)}
+.code-opt.on{border-color:var(--teal-ink);background:var(--teal-soft)}
+.code-opt input{margin-top:3px;flex:0 0 auto;width:18px;height:18px}
+.code-opt .d{color:#4a5560;font-size:.93rem}
+.num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;font-size:.8rem;margin-right:4px}
+.starters{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px}
+.starter{border:1px solid var(--teal);background:var(--teal-soft);color:var(--teal-ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:.88rem;cursor:pointer;text-align:left}
+.starter:hover{background:#d4ece8}
+@media (max-width:600px){ .mark-list li{flex-direction:column;align-items:flex-start} }

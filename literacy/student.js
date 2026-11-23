@@ -739,7 +739,8 @@ function updateNav(){
     $("#overall").textContent = ""; return;
   }
   if(TUTOR){
-    link("#gradebook", "✓", "Gradebook", "All students", !PREVIEW && raw!=="settings");
+    link("#gradebook", "✓", "Gradebook", "All students", !PREVIEW && raw!=="settings" && raw!=="marking" && !raw.startsWith("mark~"));
+    link("#marking", "✎", "To mark", "Writing waiting for you", raw==="marking" || raw.startsWith("mark~"));
     link("#preview", "◉", "Preview the modules", "See what students see", PREVIEW);
     link("tutor/", "R", "Reading lessons", "Tracking and marking", false);
     link("#settings", "⚙", "Settings", "Password and AI marking help", raw==="settings");
@@ -766,6 +767,8 @@ function route(){
   if(!dbReady){ main.append(h("div", { class:"wrap narrow" }, '<p class="muted">Connecting…</p>')); }
   else if(TUTOR && !PREVIEW){
     if(raw.startsWith("student-")) main.append(renderStudent(raw.slice(8)));
+    else if(raw==="marking") main.append(renderMarking());
+    else if(raw.startsWith("mark~")){ const [, sid, wid] = raw.split("~"); main.append(renderMarkOne(sid, wid)); }
     else if(raw==="settings") main.append(renderSettings());
     else main.append(renderGradebook());
   }

@@ -52,7 +52,8 @@ function renderGradebook(){
   const rf = h("button", { class:"btn ghost sm", type:"button" }, "Refresh");
   const csv = h("button", { class:"btn ghost sm", type:"button" }, "Download as a spreadsheet");
   bar.append(rf, csv, h("a", { class:"btn ghost sm", href:"#preview" }, "Preview the modules"), h("a", { class:"btn ghost sm", href:"tutor/" }, "Reading lessons: tracking and marking"));
-  wrap.append(bar);
+  const banner = h("div", { class:"mark-banner", hidden:"" });
+  wrap.append(banner, bar);
   const tbl = h("div", { class:"tablewrap" }, '<p class="muted">Loading…</p>'); wrap.append(tbl);
   let rowsData = [];
   const loadTable = async () => {
@@ -71,6 +72,9 @@ function renderGradebook(){
         const osslt = !mine || MODULES.some(m => mine.includes(m.id));
         return `<tr><td><a href="#student-${esc(id)}">${esc(s.name||id)}</a></td>${cells}<td>${tm.length ? `<a href="#student-${esc(id)}"><span class="badge">${tm.length} to mark</span></a>` : `<span class="badge none">none</span>`}</td><td>${rn ? `<a href="tutor/" data-reading="${esc(id)}">${rn} lesson module${rn===1?"":"s"}</a>` : `<span class="badge none">none</span>`}</td><td><small>${X.updatedAt ? esc(when(X.updatedAt)) : osslt ? "Not started" : "See reading lessons"}</small></td></tr>`;
       }).join("");
+      const waiting = rowsData.reduce((n, r) => n + toMark(r.s, r.X, r.G).length, 0);
+      banner.hidden = false;
+      banner.innerHTML = waiting ? `<span><b>${waiting} piece${waiting===1?"":"s"} of writing ${waiting===1?"is":"are"} waiting for your mark.</b> Everything else marks itself.</span><a class="btn" href="#marking">Start marking →</a>` : `<span><b>Nothing to mark right now.</b> Choice questions mark themselves; writing shows up here when a student finishes it.</span><a class="btn ghost" href="#marking">How marking works</a>`;
       tbl.innerHTML = `<table class="gb"><tr><th>Student</th>${MODULES.map((m,i) => `<th title="${esc(m.title)}">M${i+1}</th>`).join("")}<th>Writing</th><th>Reading lessons</th><th>Last active</th></tr>${rows}</table><p class="muted small">Each module shows questions right on the first try out of all its questions, then activities done. ${MODULES.map((m,i) => `M${i+1} ${esc(m.title)}`).join(" · ")}. Reading lessons have their own tracking and marking page; the link opens it for that student.</p>`;
     }catch(e){ tbl.innerHTML = '<p class="muted">Couldn’t load the gradebook. Check your connection, then press Refresh.</p>'; }
   };
@@ -213,7 +217,7 @@ function renderStudent(sid){
   return wrap;
 }
 
-function markCard(sid, name, m, w, X, G){
+function markCard(sid, name, m, w, X, G, opts = {}){
   const txt = X.w[w.id] || ""; const gg = G[w.id] || {};
   const R = RUBRIC[w.mode] || RUBRIC.short;
   const card = h("section", { class:"task write" });
@@ -226,31 +230,60 @@ function markCard(sid, name, m, w, X, G){
     d.append(h("div", { class:"inner" }, [["op","Opinion"],["r1","Reason 1"],["d1","Proof 1"],["r2","Reason 2"],["d2","Proof 2"],["r3","Reason 3 / other side"]].filter(([k]) => String(plan[k]||"").trim()).map(([k,l]) => `<p><span class="muted">${l}:</span> ${esc(plan[k])}</p>`).join("")));
     card.append(d);
   }
+  if(w.passage && P[w.passage]){ const pd = h("details", { class:"model" }); pd.append(h("summary", {}, "The passage they read: " + esc(P[w.passage].title))); pd.append(h("div", { class:"inner" }, (P[w.passage].paras || P[w.passage].lines.map(([s,t]) => s + ": " + t)).map((t,i) => `<p><span class="muted">${i+1}</span> ${esc(t)}</p>`).join(""))); card.append(pd); }
+  card.append(h("p", { class:"label" }, "Their answer"));
   card.append(h("div", { class:"response" }, txt.trim() ? esc(txt).replace(/\n/g,"<br>") : '<span class="muted">Not written yet.</span>'));
 
-  const sel = (id, scale, val) => { const lab = h("label", { for:id }, esc(scale.label)); const s = h("select", { id }); s.append(h("option", { value:"" }, "Not marked"));
-    scale.codes.forEach(c => { const o = h("option", { value:String(c) }, `Code ${c}${scale.short && scale.short[c] ? " · " + scale.short[c] : ""}`); if(String(val)===String(c)) o.selected = true; s.append(o); });
-    if(val && !scale.codes.map(String).includes(String(val))){ const o = h("option", { value:String(val) }, `Level ${val} (earlier scale)`); o.selected = true; s.append(o); }
-    lab.append(s); return { lab, s }; };
-  const a = sel(w.id+"-gc", R.a, gg.content); const b = R.b ? sel(w.id+"-gv", R.b, gg.conventions) : null;
-  const grid = h("div", { class:"planner" }); grid.append(a.lab); if(b) grid.append(b.lab); card.append(grid);
-  const help = h("details", { class:"model" }); help.append(h("summary", {}, "What the codes mean"));
-  help.append(h("div", { class:"inner" }, [R.a, R.b].filter(Boolean).map(sc => `<p><b>${esc(sc.label)}</b></p><ul>${sc.codes.map(c => `<li><b>Code ${c}:</b> ${esc(sc.desc[c] || "")}</li>`).join("")}</ul>`).join("") + `<p class="muted small">${esc(R.note || "")}</p>`));
-  card.append(help);
-  const ta = h("textarea", { id:w.id+"-gm", placeholder:"Comment for the student", "aria-label":"Comment for the student" }); ta.value = gg.comment || ""; ta.style.minHeight = "110px"; card.append(ta);
+  // Each mark is a list of codes with what each one means, so the right one can be picked by reading.
+  const pick = (key, scale, val, step) => {
+    const fs = h("fieldset", { class:"codes" });
+    fs.append(h("legend", {}, `<span class="num">${step}</span> ${esc(scale.label)}`));
+    const nm = w.id + "-" + key;
+    const opts = scale.codes.slice().reverse().map(c => [String(c), c==="I" ? "Code I" : "Code " + c, (scale.short && scale.short[c] ? scale.short[c] + ". " : "") + (scale.desc[c] || "")]);
+    if(val && !scale.codes.map(String).includes(String(val))) opts.push([String(val), "Level " + val, "Marked on an earlier scale."]);
+    opts.forEach(([v, t, d]) => {
+      const id = nm + "-" + v; const lab = h("label", { class:"code-opt", for:id });
+      const r = h("input", { type:"radio", name:nm, id, value:v }); if(String(val ?? "")===v) r.checked = true;
+      r.onchange = () => fs.querySelectorAll(".code-opt").forEach(l => l.classList.toggle("on", l.querySelector("input").checked));
+      lab.append(r, h("span", {}, `<b>${esc(t)}</b> <span class="d">${esc(d)}</span>`)); if(r.checked) lab.classList.add("on"); fs.append(lab);
+    });
+    return { node:fs, get value(){ const c = fs.querySelector("input:checked"); return c ? c.value : ""; },
+      set value(v){ const c = [...fs.querySelectorAll("input")].find(x => x.value===String(v)); if(c){ c.checked = true; c.onchange(); } } };
+  };
+  const guide = h("p", { class:"mark-how" }, R.b
+    ? "This is an opinion essay, so it gets <b>two marks</b>: one for the ideas and support, one for spelling, grammar and punctuation. For each, read the codes from the top and pick the first one that fits most of the essay."
+    : "This is a short answer, so it gets <b>one mark</b>. Read the codes from the top and pick the first one that fits. If there is a model answer above, compare first.");
+  if(w.model){ const d = h("details", { class:"model" }); d.append(h("summary", {}, "Model answer (a Code 30 answer, to compare with)")); d.append(h("div", { class:"inner tagged" }, w.model)); card.append(d); }
+  card.append(guide);
+  const a = pick("gc", R.a, gg.content, 1); const b = R.b ? pick("gv", R.b, gg.conventions, 2) : null;
+  card.append(a.node); if(b) card.append(b.node);
+  card.append(h("p", { class:"muted small" }, esc(R.note || "")));
+  const cl = h("p", { class:"label" }, `<span class="num">${R.b ? 3 : 2}</span> A comment for ${esc(name)}`); card.append(cl);
+  const ta = h("textarea", { id:w.id+"-gm", placeholder:"One thing they did well, and one thing to work on next.", "aria-label":"Comment for the student" }); ta.value = gg.comment || ""; ta.style.minHeight = "110px";
+  const STARTERS = R.b
+    ? ["Your opinion is clear and stays the same all the way through.", "Give a specific example for each reason: a name, a number or a real event.", "Explain how each example proves your point.", "Use transitions such as “Another reason” or “For example.”", "Your conclusion should restate your opinion without adding a new reason.", "Proofread for capitals, end punctuation and run-on sentences."]
+    : ["You answered the question in your first sentence.", "Use a specific detail from the text, in your own words or in quotation marks.", "Explain how your detail supports your answer.", "Answer the question that was asked, not a different one.", "Check your spelling and end punctuation."];
+  const chips = h("div", { class:"starters", "aria-label":"Comment starters" });
+  STARTERS.forEach(t => { const c = h("button", { type:"button", class:"starter" }, esc(t)); c.onclick = () => { ta.value = (ta.value.trim() ? ta.value.trim() + " " : "") + t; ta.focus(); }; chips.append(c); });
+  card.append(h("p", { class:"muted small" }, "Tap a starter to add it, then change the words to fit."), chips, ta);
   const aiBox = h("div", { class:"ai", hidden:"" }); card.append(aiBox);
-  const sv = h("button", { class:"btn", type:"button" }, "Save mark");
+  const sv = h("button", { class:"btn", type:"button" }, "Save mark and show it to the student");
   const sm = h("span", { class:"muted", role:"status" }, gg.at ? "Last saved " + esc(when(gg.at)) : "");
   const row = h("div", { class:"q-actions" });
-  if(DB.aiEnabled && DB.aiEnabled()){
-    const ai = h("button", { class:"btn ghost", type:"button" }, "Suggest marks with AI");
-    ai.disabled = words(txt) < 5;
-    ai.onclick = async () => {
+  const aiOn = !!(DB.aiEnabled && DB.aiEnabled());
+  {
+    const ai = h("button", { class:"btn ghost", type:"button" }, "✨ Suggest marks with AI");
+    ai.disabled = aiOn && words(txt) < 5;
+    if(!aiOn) ai.onclick = () => {
+      aiBox.hidden = false;
+      aiBox.innerHTML = `<h4>AI marking is not switched on yet</h4><p>When it is set up, this button reads the answer and fills in suggested codes and a comment for you to check. Until then, mark it yourself with the codes above.</p>`;
+    };
+    else ai.onclick = async () => {
       ai.disabled = true; sm.textContent = "Reading the response. This can take up to a minute…";
       try{
         const res = await DB.aiSuggest({ mode:w.mode, prompt:w.prompt, target:w.target, passage: w.passage ? passageText(w.passage) : "", response:txt, scales:[R.a, R.b].filter(Boolean).map(sc => ({ label:sc.label, desc:sc.desc })) });
-        if(res.content) a.s.value = String(res.content);
-        if(b && res.conventions) b.s.value = String(res.conventions);
+        if(res.content) a.value = String(res.content);
+        if(b && res.conventions) b.value = String(res.conventions);
         if(res.comment && (!ta.value.trim() || confirm("Replace your comment with the suggested one?"))) ta.value = res.comment;
         aiBox.hidden = false;
         aiBox.innerHTML = `<h4>AI suggestion: check it before you save</h4>${res.notes ? `<p>${esc(res.notes).replace(/\n/g,"<br>")}</p>` : ""}<p class="note">Nothing is saved or shown to ${esc(name)} until you press Save mark. Change anything you disagree with.</p>`;
@@ -269,13 +302,97 @@ function markCard(sid, name, m, w, X, G){
   row.append(sv, sm); card.append(row);
   sv.onclick = async () => {
     sv.disabled = true; sm.textContent = "Saving…";
-    const item = { content:a.s.value, conventions: b ? b.s.value : "", comment:ta.value.trim(), at:new Date().toISOString(), hash:hash(txt) };
-    try{ const ref = DB.doc("grades/"+sid); const cur = await ref.get(); const items = Object.assign({}, (cur.exists && (cur.data()||{}).items) || {}); items[w.id] = item; await ref.set({ items }); sm.textContent = "Saved. " + name + " sees it on their page."; }
+    if(!a.value || (b && !b.value)){ sm.textContent = b ? "Choose both codes first." : "Choose a code first."; sv.disabled = false; return; }
+    const item = { content:a.value, conventions: b ? b.value : "", comment:ta.value.trim(), at:new Date().toISOString(), hash:hash(txt) };
+    try{ const ref = DB.doc("grades/"+sid); const cur = await ref.get(); const items = Object.assign({}, (cur.exists && (cur.data()||{}).items) || {}); items[w.id] = item; await ref.set({ items }); sm.textContent = "Saved. " + name + " sees it on their page."; if(opts.onSaved) opts.onSaved(); }
     catch(e){ sm.textContent = "Couldn’t save. Try again."; }
     sv.disabled = false;
   };
-  if(w.model){ const d = h("details", { class:"model" }); d.append(h("summary", {}, "Model answer")); d.append(h("div", { class:"inner tagged" }, w.model)); card.append(d); }
   return card;
+}
+
+// ---------- what needs marking ----------
+async function loadClass(){
+  const [st, pr, gr] = await Promise.all([DB.collection("students").get(), DB.collection("progress").get(), DB.collection("grades").get()]);
+  const PR = {}, GR = {}; pr.docs.forEach(d => PR[d.id] = d.data()); gr.docs.forEach(d => GR[d.id] = (d.data()||{}).items || {});
+  return st.docs.map(d => ({ id:d.id, s:d.data() || {}, X:Object.assign(blank(), PR[d.id] || {}), G:GR[d.id] || {} }))
+    .sort((a,b) => String(a.s.name||a.id).localeCompare(String(b.s.name||b.id)));
+}
+const moduleOfWrite = (w) => MODULES.find(m => writesOf(m).includes(w));
+const markHref = (sid, wid) => "#mark~" + encodeURIComponent(sid) + "~" + encodeURIComponent(wid);
+function queueOf(rows){ return rows.flatMap(r => toMark(r.s, r.X, r.G).map(t => ({ r, w:t.w, state:t.state, m:moduleOfWrite(t.w) }))); }
+
+function markingHow(){
+  const d = h("details", { class:"panel how" });
+  d.append(h("summary", {}, "<b>How marking works</b> (read this once)"));
+  d.append(h("div", { class:"inner" }, `
+    <ol class="how-steps">
+      <li><b>You only mark writing.</b> Every question with answer choices marks itself. You can still see each answer on the student’s page.</li>
+      <li><b>Two kinds of writing.</b> A <b>short answer</b> (up to 100 words, about a passage) gets <b>one mark</b>: Code 10, 20 or 30. An <b>opinion essay</b> gets <b>two marks</b>: ideas and support (Code 10 to 60) and spelling, grammar and punctuation (Code 10 to 40). <b>Code I</b> means off topic or no real attempt: no credit. These are the codes EQAO’s markers use.</li>
+      <li><b>To mark one:</b> read the task, read their answer, compare with the model answer if there is one, then pick the code whose description fits most of the answer. When you are torn between two codes, choose the lower one unless the answer clearly meets the higher description.</li>
+      <li><b>Add a comment:</b> one thing they did well and one thing to fix next. Tap a starter and change the words to fit.</li>
+      <li><b>Save.</b> The student sees your mark and comment on that screen of the module. If they change their writing afterwards, it comes back to this list.</li>
+    </ol>
+    <p class="muted small">The ✨ AI button will suggest codes and a comment once AI marking is switched on. You always check and save the mark yourself.</p>`));
+  return d;
+}
+
+function renderMarking(){
+  const wrap = h("div", { class:"wrap" });
+  wrap.append(h("header", { class:"page-head" }, `<span class="label">Tutor view</span><h1 tabindex="-1">To mark</h1><p>Everything waiting for you, by student. Questions with answer choices mark themselves, so this list is only writing.</p>`));
+  const how = markingHow(); wrap.append(how);
+  const list = h("div", {}, '<p class="muted">Loading…</p>'); wrap.append(list);
+  (async () => {
+    try{
+      const rows = await loadClass(); const q = queueOf(rows);
+      list.innerHTML = "";
+      if(!q.length){ how.open = true; list.append(h("section", { class:"panel" }, `<h2>Nothing to mark right now</h2><p>When a student finishes a short answer or an essay, it appears here.</p>`)); }
+      else {
+        const by = new Map(); q.forEach(x => { if(!by.has(x.r.id)) by.set(x.r.id, []); by.get(x.r.id).push(x); });
+        by.forEach((items, sid) => {
+          const sec = h("section", { class:"panel" });
+          sec.append(h("h2", {}, `${esc(items[0].r.s.name || sid)} <span class="badge">${items.length} to mark</span>`));
+          const ul = h("ul", { class:"mark-list" });
+          items.forEach(x => {
+            const n = words(x.r.X.w[x.w.id]);
+            ul.append(h("li", {}, `<div><b>${x.w.mode==="essay" ? "Opinion essay" : "Short answer"}</b> · M${MODULES.indexOf(x.m)+1} ${esc(x.m.title)}<br><span class="muted small">${n} words${x.state==="changed" ? " · changed since you marked it" : ""} · ${x.w.mode==="essay" ? "two marks" : "one mark"}</span></div><a class="btn sm" href="${markHref(sid, x.w.id)}">Mark it →</a>`));
+          });
+          sec.append(ul); list.append(sec);
+        });
+      }
+      // Reading lessons keep their own marking page.
+      const rd = h("section", { class:"panel" }); rd.append(h("h2", {}, "Reading lessons"), h("p", { class:"muted" }, "Checking…")); list.append(rd);
+      try{
+        const wr = await DB.collection("written_responses").get();
+        const n = wr.docs.filter(d => (d.data()||{}).status==="submitted").length;
+        rd.querySelector("p").outerHTML = n ? `<p><b>${n} written answer${n===1?"":"s"}</b> from the reading lessons ${n===1?"is":"are"} waiting. They are marked on the reading lessons page, with the same steps.</p><p><a class="btn" href="tutor/#/review">Mark reading lessons →</a></p>` : `<p>Nothing waiting from the reading lessons.</p>`;
+      }catch(e){ rd.querySelector("p").outerHTML = `<p><a href="tutor/#/review">Open the reading lessons marking page</a> to see what is waiting there.</p>`; }
+    }catch(e){ list.innerHTML = '<p class="muted">Couldn’t load the list. Check your connection and reload.</p>'; }
+  })();
+  return wrap;
+}
+
+function renderMarkOne(sid, wid){
+  const wrap = h("div", { class:"wrap" });
+  wrap.append(h("p", {}, `<a href="#marking">← Everything to mark</a>`));
+  const body = h("div", {}, '<p class="muted">Loading…</p>'); wrap.append(body);
+  (async () => {
+    try{
+      const rows = await loadClass(); const r = rows.find(x => x.id===sid);
+      const m = MODULES.find(mm => writesOf(mm).some(w => w.id===wid)); const w = m && writesOf(m).find(x => x.id===wid);
+      body.innerHTML = "";
+      if(!r || !w){ body.append(h("p", {}, "This piece of writing is no longer here. Go back to the list.")); return; }
+      const name = r.s.name || sid;
+      const q = queueOf(rows); const i = q.findIndex(x => x.r.id===sid && x.w.id===wid);
+      const rest = q.filter((_, k) => k!==i);
+      body.append(h("header", { class:"page-head" }, `<span class="label">Marking${rest.length ? ` · ${rest.length} more waiting after this` : ""}</span><h1 tabindex="-1">${esc(name)}: ${w.mode==="essay" ? "opinion essay" : "short answer"}</h1><p>M${MODULES.indexOf(m)+1} ${esc(m.title)}</p>`));
+      const after = h("div", { class:"q-actions", hidden:"" });
+      const nx = rest[0];
+      after.append(nx ? h("a", { class:"btn", href:markHref(nx.r.id, nx.w.id) }, `Next: ${esc(nx.r.s.name || nx.r.id)} →`) : h("a", { class:"btn", href:"#marking" }, "All done: back to the list"));
+      body.append(markCard(sid, name, m, w, r.X, r.G, { onSaved: () => { after.hidden = false; after.scrollIntoView({ block:"nearest" }); } }), after);
+    }catch(e){ body.innerHTML = '<p class="muted">Couldn’t load this. Check your connection and reload.</p>'; }
+  })();
+  return wrap;
 }
 
 // ---------- settings ----------

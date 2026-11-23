@@ -398,11 +398,29 @@ function renderReview() {
   const byTime = (a, b) => (ms(a.submittedAt) ?? 0) - (ms(b.submittedAt) ?? 0);
   const waiting = data.written.filter((w) => w.status === "submitted").sort(byTime);
   const reviewed = data.written.filter((w) => w.status === "reviewed").sort((a, b) => (ms(b.reviewedAt) ?? 0) - (ms(a.reviewedAt) ?? 0));
-  page("review", "Review queue",
+  const how = el("details", { class: "card how", open: waiting.length ? null : "" },
+    el("summary", {}, el("strong", {}, "How marking works"), " (read this once)"),
+    el("ol", {},
+      el("li", {}, "Only typed answers need you. Every tap-and-choose question marks itself."),
+      el("li", {}, "Read the question and the student's answer. If there is a model answer, compare."),
+      el("li", {}, "Read the rubric levels and pick the one that fits most of the answer. Essays get two marks."),
+      el("li", {}, "Error codes are optional: tick any that apply so the student knows what to fix."),
+      el("li", {}, "Write one thing they did well and one thing to work on, then Save. The student sees it at their next visit.")));
+  page("review", "Review queue", how,
     waiting.length ? el("div", {}, waiting.map((w) => reviewCard(w))) : el("p", { class: "card" }, "Nothing to mark. New written answers appear here when the student sends them."),
     reviewed.length ? el("details", { class: "card" },
       el("summary", {}, `Already marked (${reviewed.length})`),
       reviewed.map((w) => reviewCard(w))) : null);
+}
+
+// AI marking help: shown now, switched on later (it needs the tutor's own API key on the server).
+function aiButton(msg) {
+  const b = el("button", { class: "btn", type: "button" }, "✨ Suggest marks with AI");
+  b.addEventListener("click", () => {
+    msg.className = "msg";
+    msg.textContent = "AI marking is not switched on yet. When it is set up, this button will fill in suggested marks and a comment for you to check. For now, mark it yourself.";
+  });
+  return b;
 }
 
 function reviewCard(w) {
@@ -428,7 +446,7 @@ function reviewCard(w) {
   };
   const scores = scoreSet(rubric, "score-", w.rubricScore);
   const scores2 = rubric2 ? scoreSet(rubric2, "score2-", w.rubricScore2) : null;
-  const codes = el("fieldset", { class: "codes" }, el("legend", {}, "Error codes"),
+  const codes = el("fieldset", { class: "codes" }, el("legend", {}, "Error codes (optional)"),
     ...ERROR_CODES.map(([c, label]) => el("label", { class: "check" },
       el("input", { type: "checkbox", value: c, checked: (w.errorCodes || []).includes(c) }), el("span", {}, el("strong", {}, c), ` ${label}`))));
   const comment = el("textarea", { rows: "3", id: "c-" + key, maxlength: "5000" });
@@ -482,7 +500,7 @@ function reviewCard(w) {
           el("ul", { class: "rubric" }, r.levels.map((l) => el("li", {}, el("strong", {}, `${l.name || l.score}: `), l.description))))),
         scores, scores2, codes,
         el("div", { class: "field" }, el("label", { for: "c-" + key }, "Comment for the student"), comment),
-        save, msg)));
+        aiButton(msg), save, msg)));
 }
 
 // ---------------------------------------------------------------- tracker, export, delete
