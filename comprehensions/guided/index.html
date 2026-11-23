@@ -1,0 +1,1006 @@
+<!doctype html>
+<html lang="en-CA"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex, nofollow"><title>Reading | TutorWise</title><link rel="icon" href="../../faviconTW.png" type="image/png"></head><body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Poppins:wght@600;700&display=swap">
+<style>
+/* Layout: one calm column. A work-plan bar that never moves, one job per screen,
+   and the same two buttons in the same place: Help bottom-left, the next action bottom-right. */
+:root {
+  --page: #f3f6f9;
+  --paper: #ffffff;
+  --ink: #1b2330;
+  --muted: #56616f;
+  --line: #d6dde6;
+  --teal: #2a9d8f;
+  --teal-soft: #e3f3f1;
+  --found: #c5e9e4;
+  --navy: #00357a;
+  --navy-hover: #002a61;
+  --heading: #00357a;
+  --on-accent: #ffffff;
+  --note: #fff5dc;
+  --note-line: #e6c86e;
+  --note-ink: #5a4000;
+  --logo-bg: transparent;
+  --shadow: 0 6px 24px rgb(0 30 70 / 0.14);
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  --font-head: "Poppins", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  --plan-h: 86px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #10141a; --paper: #181d26; --ink: #e7ebf1; --muted: #a4aebb; --line: #2f3745;
+    --teal: #3dbbab; --teal-soft: #16302e; --found: #1f4f49;
+    --navy: #2f6fd1; --navy-hover: #2a62ba; --heading: #a3c4ff; --on-accent: #ffffff;
+    --note: #352c14; --note-line: #6e5c22; --note-ink: #f1d27c;
+    --logo-bg: #ffffff; --shadow: 0 6px 24px rgb(0 0 0 / 0.5); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #10141a; --paper: #181d26; --ink: #e7ebf1; --muted: #a4aebb; --line: #2f3745;
+  --teal: #3dbbab; --teal-soft: #16302e; --found: #1f4f49;
+  --navy: #2f6fd1; --navy-hover: #2a62ba; --heading: #a3c4ff; --on-accent: #ffffff;
+  --note: #352c14; --note-line: #6e5c22; --note-ink: #f1d27c;
+  --logo-bg: #ffffff; --shadow: 0 6px 24px rgb(0 0 0 / 0.5); color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--font-body); font-size: 1.0625rem; line-height: 1.55; }
+button, input, select, textarea { font: inherit; color: inherit; }
+h1, h2 { font-family: var(--font-head); color: var(--heading); text-wrap: balance; margin: 0; }
+h1 { font-size: 1.6rem; line-height: 1.25; }
+h2 { font-size: 1.15rem; }
+p { margin: 0; }
+button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible, textarea:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+
+/* work plan: what, how much, where I am */
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--paper); }
+.plan { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--paper); border-bottom: 1px solid var(--line); }
+.plan-in, .wrap, .bar-in { max-width: 760px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.plan-in { padding-block: 10px; display: grid; gap: 10px; }
+.plan-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.logo { height: 28px; width: auto; display: block; background: var(--logo-bg); border-radius: 6px; }
+.plan-label { font-family: var(--font-head); font-weight: 600; color: var(--heading); font-size: 1rem; text-align: right; }
+.dots { display: flex; gap: 6px; flex-wrap: wrap; }
+.dot { width: 22px; height: 8px; border-radius: 4px; background: var(--line); }
+.dot.done { background: var(--teal); }
+.dot.now { background: var(--navy); }
+.dot.gap { margin-left: 10px; }
+
+.wrap { padding-block: 0 130px; display: grid; gap: 16px; }
+.sticky { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--plan-h)); z-index: 5; background: var(--page); padding-block: 14px 2px; display: grid; gap: 8px; }
+.task { background: var(--navy); color: var(--on-accent); border-radius: 10px; padding: 12px 16px; font-size: 1.15rem; font-weight: 700; line-height: 1.4; }
+.task small { display: block; font-weight: 400; opacity: 0.85; font-size: 0.85rem; letter-spacing: 0.02em; }
+.fb { border-radius: 10px; padding: 11px 16px; border-left: 6px solid; font-size: 1.05rem; }
+.fb.yes { background: var(--teal-soft); border-color: var(--teal); }
+.fb.no { background: var(--note); border-color: var(--note-line); color: var(--note-ink); }
+.hint { border: 2px dashed var(--line); border-radius: 10px; padding: 10px 16px; background: var(--paper); }
+.hint b { font-family: var(--font-head); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); display: block; }
+
+.card { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: grid; gap: 14px; }
+.eyebrow { font-family: var(--font-head); font-weight: 600; font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.genre { color: var(--muted); font-style: italic; }
+.plan-list { margin: 0; padding-left: 1.4em; display: grid; gap: 6px; font-size: 1.15rem; }
+.question { font-size: 1.2rem; font-weight: 700; line-height: 1.45; }
+
+.passage { gap: 16px; }
+.para { font-size: 1.2rem; line-height: 1.75; max-width: 64ch; }
+.para.dim { opacity: 0.3; }
+.pn { font-weight: 700; color: var(--heading); font-size: 0.95rem; margin-right: 6px; }
+.sent { cursor: pointer; border-radius: 4px; padding: 2px 1px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.sent:hover { background: var(--teal-soft); }
+.sent:focus-visible { outline: 3px solid var(--teal); outline-offset: 1px; }
+.sent.tried, .sent.tried:hover { color: var(--muted); background: none; cursor: default; }
+.sent.found, .sent.found:hover { background: var(--found); cursor: default; }
+.sent.point { outline: 3px dashed var(--teal); outline-offset: 1px; }
+.locked .sent, .locked .sent:hover { cursor: default; }
+.locked .sent:not(.found):hover { background: none; }
+
+.opts { display: grid; gap: 10px; }
+.opt { text-align: left; background: var(--paper); border: 2px solid var(--line); border-radius: 10px; padding: 14px 16px; font-size: 1.1rem; cursor: pointer; min-height: 54px; display: grid; gap: 2px; align-content: center; }
+.opt:hover:not(:disabled) { border-color: var(--teal); }
+.opt small { color: var(--muted); font-size: 0.92rem; }
+.opt.right { border-color: var(--teal); background: var(--teal-soft); }
+.opt.wrong { border-style: dashed; color: var(--muted); }
+.opt:disabled { cursor: default; }
+.opt:disabled:not(.right):not(.wrong) { opacity: 0.55; }
+
+.have { border-left: 6px solid var(--teal); background: var(--teal-soft); border-radius: 10px; padding: 10px 16px; display: grid; gap: 6px; }
+.have .lbl { font-family: var(--font-head); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+textarea { width: 100%; min-height: 130px; resize: vertical; padding: 12px 14px; border: 2px solid var(--line); border-radius: 10px; background: var(--paper); font-size: 1.15rem; line-height: 1.6; }
+textarea:focus { border-color: var(--teal); }
+.count { color: var(--muted); font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+.count.over { color: var(--note-ink); font-weight: 700; }
+
+/* the two buttons that never move */
+.bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 8; background: var(--paper); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.bar-in { padding-block: 10px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.btn { border: 2px solid var(--navy); border-radius: 10px; min-height: 50px; padding: 10px 26px; font-family: var(--font-head); font-weight: 600; font-size: 1.05rem; cursor: pointer; background: var(--navy); color: var(--on-accent); }
+.btn:hover { background: var(--navy-hover); border-color: var(--navy-hover); }
+.btn.ghost { background: var(--paper); color: var(--heading); border-color: var(--line); }
+.btn.ghost:hover { border-color: var(--teal); background: var(--paper); }
+.btn.small { min-height: 40px; padding: 6px 16px; font-size: 0.95rem; justify-self: start; }
+.btn:disabled, .btn:disabled:hover { opacity: 0.5; cursor: default; background: var(--navy); border-color: var(--navy); }
+
+/* a quiet, predictable wait: after a miss, and while a paragraph is being read */
+.wait { display: block; height: 6px; border-radius: 3px; background: var(--note-line); overflow: hidden; margin-top: 8px; }
+.wait i { display: block; height: 100%; background: var(--note-ink); transform-origin: left; animation: fill linear both; }
+.wait-note { display: block; font-size: 0.9rem; margin-top: 6px; }
+.bar-wait .wait { margin: 0; border-radius: 0; height: 5px; background: var(--line); }
+.bar-wait .wait i { background: var(--teal); }
+@keyframes fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .wait i { animation: none; } }
+.plan-side { display: grid; justify-items: end; gap: 0; }
+.plan-count { font-size: 0.9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.selfcheck { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(86px + env(safe-area-inset-bottom, 0px)); width: min(440px, calc(100% - 32px)); z-index: 20; background: var(--paper); border: 2px solid var(--navy); border-radius: 14px; box-shadow: var(--shadow); padding: 16px; display: grid; gap: 12px; }
+.selfcheck p { font-family: var(--font-head); font-weight: 600; font-size: 1.1rem; color: var(--heading); }
+.selfcheck .row { display: flex; gap: 10px; }
+.selfcheck .btn { flex: 1; }
+
+/* tutor-only parts */
+details.tutor { border: 1px dashed var(--line); border-radius: 12px; padding: 12px 16px; color: var(--muted); }
+details.tutor summary { cursor: pointer; font-weight: 700; }
+.settings { display: grid; gap: 14px; margin-top: 12px; color: var(--ink); }
+.field { display: grid; gap: 4px; }
+.field label { font-weight: 700; font-size: 0.95rem; }
+.field select, .field input[type="text"] { padding: 9px 11px; border: 2px solid var(--line); border-radius: 8px; background: var(--paper); max-width: 100%; }
+.field small { color: var(--muted); }
+.check-row { display: flex; gap: 10px; align-items: center; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 0.76rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.big { font-family: var(--font-head); font-size: 1.5rem; font-weight: 700; color: var(--heading); }
+.answer { background: var(--page); border-radius: 8px; padding: 10px 12px; white-space: pre-wrap; }
+.muted { color: var(--muted); }
+.flag { display: inline-block; background: var(--note); color: var(--note-ink); border-radius: 999px; padding: 1px 10px; font-size: 0.82rem; font-weight: 700; margin: 0 4px 4px 0; }
+.report-out { min-height: 180px; font: 0.85rem/1.5 ui-monospace, Consolas, monospace; }
+.stack { display: grid; gap: 10px; }
+
+@media (max-width: 480px) {
+  .card { padding: 16px; }
+  h1 { font-size: 1.35rem; }
+  .para { font-size: 1.12rem; }
+  .btn { padding-inline: 20px; }
+  /* keep the pinned instruction area small so the text below stays in view */
+  .sticky { padding-block: 10px 2px; gap: 6px; }
+  .task { font-size: 1.05rem; padding: 9px 14px; line-height: 1.35; }
+  .fb { font-size: 0.98rem; padding: 8px 12px; }
+  .hint { font-size: 0.98rem; padding: 7px 12px; line-height: 1.4; }
+}
+</style>
+
+<header class="plan" id="plan">
+  <div class="plan-in">
+    <div class="plan-top">
+      <img class="logo" src="data:image/png;base64,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" alt="TutorWise">
+      <div class="plan-side">
+        <div class="plan-label" id="plan-label"></div>
+        <div class="plan-count" id="plan-count" hidden></div>
+      </div>
+    </div>
+    <div class="dots" id="dots" aria-hidden="true"></div>
+  </div>
+</header>
+<main class="wrap" id="app"></main>
+<div class="bar" id="bar" hidden><div class="bar-wait" id="bar-wait"></div><div class="bar-in" id="bar-in"></div></div>
+<div id="selfcheck-slot"></div>
+
+<script>
+(function () {
+"use strict";
+
+/* =====================================================================
+   THE READING AND ITS SMALL STEPS
+   Passage and Questions 1-3 are from record ENG-RC-G5-026 (questions 1, 3
+   and 4 of the worksheet). Everything else here (paragraph checks, steps,
+   hints, Question 4) is new scaffold content for the tutor to approve.
+   ===================================================================== */
+const YES_PART = "Yes. This paragraph is mostly about that.";
+const DETAIL = "That is in this paragraph, but it is only one small detail. Pick the one that covers the whole paragraph.";
+const NOT_HERE = "This paragraph does not say that. Pick the one that covers the whole paragraph.";
+const HELP_PART = "Mostly about means the whole paragraph. One small detail is not enough.";
+const HELP_SORT = "If you can put your finger on the answer, it is in the text. If the text only gives clues, it is text + my head.";
+const NOT_USEFUL = "That is true, but it does not help with this question. Pick the one that fits your clue.";
+
+function sortStep(answer, yes, no) {
+  return { type: "choose", name: "Sort", sort: true, prompt: "Where is the answer?", help: HELP_SORT, opts: [
+    { t: "In the text", sub: "I can point to the answer.", ok: answer === "text", why: answer === "text" ? yes : no },
+    { t: "Text + my head", sub: "The text gives clues. I add what I know.", ok: answer === "head", why: answer === "head" ? yes : no },
+  ] };
+}
+
+const R = {
+  id: "ENG-RC-G5-026",
+  title: "The Bridge Inside a Broken Bone",
+  genre: "a science article",
+  paras: [
+    { s: [
+        "A broken bone may look like a snapped branch on an X-ray, but it is not dry or lifeless.",
+        "Bone contains living cells and blood vessels.",
+        "When a break damages those vessels, blood gathers around the crack and forms a clot.",
+        "The clot helps stop bleeding and marks the place where repair must begin." ],
+      check: [
+        { t: "What a broken bone looks like on an X-ray", why: DETAIL },
+        { t: "Blood forms a clot where the repair must begin", ok: true, why: YES_PART },
+        { t: "A cast keeps the bone still", why: NOT_HERE } ] },
+    { s: [
+        "During the next few days, cleanup cells arrive.",
+        "They remove damaged pieces too small to reuse.",
+        "Other cells bring new material to the gap.",
+        "Tiny blood vessels begin growing into the area, carrying oxygen and nutrients.",
+        "The busy site is more like a road crew arriving after a washout than glue drying on a shelf." ],
+      check: [
+        { t: "Cells clean up and bring new material", ok: true, why: YES_PART },
+        { t: "Glue drying on a shelf", why: DETAIL },
+        { t: "Why a broken bone hurts", why: NOT_HERE } ] },
+    { s: [
+        "Next, the body builds a soft callus.",
+        "Collagen fibres and cartilage form a flexible scaffold between the broken ends.",
+        "It is a temporary bridge, not finished bone.",
+        "A cast or brace helps keep the pieces lined up while this delicate connection forms." ],
+      check: [
+        { t: "A cast or brace", why: DETAIL },
+        { t: "Hard new bone fills the gap", why: NOT_HERE },
+        { t: "The body builds a soft, temporary bridge", ok: true, why: YES_PART } ] },
+    { s: [
+        "Bone-building cells then replace much of the soft callus with a hard callus made of new bone.",
+        "At first, this bone is woven in a rough pattern.",
+        "It can join the pieces, but it is not arranged as neatly as the bone that was there before." ],
+      check: [
+        { t: "Blood forms a clot", why: NOT_HERE },
+        { t: "Hard new bone replaces the soft callus", ok: true, why: YES_PART },
+        { t: "The new bone has a rough pattern", why: DETAIL } ] },
+    { s: [
+        "Over many weeks or months, the bone remodels.",
+        "Some cells remove extra material while others lay down stronger layers along the lines where the bone carries loads.",
+        "The large bump around the break can gradually become smaller.",
+        "A healed spot does not stay extra strong forever; it can return close to the strength and shape it had before." ],
+      check: [
+        { t: "Over time, the bone is reshaped and made strong", ok: true, why: YES_PART },
+        { t: "The bump gets smaller", why: DETAIL },
+        { t: "Doctors take X-rays", why: NOT_HERE } ] },
+    { s: [
+        "Pain often fades before every stage is complete.",
+        "That is why a cast coming off, or an arm feeling better, does not by itself decide when a person can return to a sport.",
+        "A health professional considers the kind of break, how it is aligned, and how repair is progressing." ],
+      check: [
+        { t: "A cast coming off", why: DETAIL },
+        { t: "Bones contain living cells", why: NOT_HERE },
+        { t: "Feeling better does not mean healing is finished", ok: true, why: YES_PART } ] },
+  ],
+  questions: [
+    { id: "Q1",
+      text: "What happens to damaged blood vessels after a bone breaks, and what useful job does the result do?",
+      steps: [
+        sortStep("text", "Yes. The answer is written in the text. You can point to it.", "Look again. This answer is written in the text. You can point to it."),
+        { type: "find", name: "Find", prompt: "Tap the sentence that tells what the blood does.", accept: ["1-3"],
+          hints: [ { t: "The question asks what happens. Look for what the blood does after the break." }, { narrow: [1] }, { point: "1-3" } ] },
+        { type: "find", name: "Find", prompt: "Tap the sentence that tells what job the clot does.", accept: ["1-4"],
+          hints: [ { t: "A job is something useful. Look for what the clot helps to do." }, { narrow: [1] }, { point: "1-4" } ] },
+        { type: "write", name: "Write", prompt: "Answer the question in your own words.", evidence: ["1-3", "1-4"],
+          topic: ["clot", "bleed", "blood", "scab", "repair", "stop", "lump"],
+          offMsg: "Check your answer. Does it say what the blood does and what the clot does?",
+          hints: [ { t: "Say two things. First, what the blood does. Second, what the clot does." },
+                   { starter: "The blood " },
+                   { t: "Key words: clot · stops the bleeding · marks the place" } ] },
+      ] },
+    { id: "Q2",
+      text: "In Paragraph 3, the word scaffold most nearly means:",
+      steps: [
+        sortStep("head", "Yes. The text does not say what scaffold means. It gives clues.", "Look again. The text does not say what scaffold means. It only gives clues."),
+        { type: "find", name: "Find", prompt: "Tap a sentence in paragraph 3 that gives a clue about the word scaffold.", accept: ["3-2", "3-3"],
+          hints: [ { t: "Look near the word scaffold. Read the sentence after it too." }, { narrow: [3] }, { point: "3-3" } ] },
+        { type: "choose", name: "Choose", prompt: "Use your clue. What does scaffold mean here?",
+          help: "Look at your clue. Which meaning fits a temporary bridge?",
+          opts: [
+            { t: "a temporary framework that supports work being built", ok: true, why: "Yes. The scaffold is a temporary frame. It supports the new bone while it is built." },
+            { t: "a hard covering that prevents all movement forever", why: "Not that one. The text says the scaffold is flexible and temporary. It is not hard, and it is not forever." },
+            { t: "a tool that removes damaged pieces from the crack", why: "Not that one. Cleanup cells remove damaged pieces. The scaffold joins the broken ends." },
+            { t: "a finished layer that has its final shape and strength", why: "Not that one. The text says it is not finished bone." } ] },
+      ] },
+    { id: "Q3",
+      text: "Why would repeated movement at the break make the early repair harder, even if all the repair cells arrived?",
+      steps: [
+        sortStep("head", "Yes. No sentence says why. The text gives clues, and you add what you know.", "Look again. No sentence says why. The text only gives clues."),
+        { type: "find", name: "Find", prompt: "Tap a clue. Find a sentence that tells how strong the first bridge is.", accept: ["3-2", "3-3", "3-4"],
+          hints: [ { t: "The early repair is the soft callus. Look for words like flexible, temporary or delicate." }, { narrow: [3] }, { point: "3-4" } ] },
+        { type: "choose", name: "What I know", prompt: "What do you already know that helps?",
+          help: "Your clue says the bridge is soft and delicate. Which fact is about soft or delicate things?",
+          opts: [
+            { t: "Hair grows back after it is cut.", why: NOT_USEFUL },
+            { t: "A soft, new thing can come apart if it keeps moving.", ok: true, why: "Yes. That fits your clue." },
+            { t: "Milk has calcium in it.", why: NOT_USEFUL } ] },
+        { type: "write", name: "So", prompt: "Finish the sentence. Join your clue and what you know.", prefill: "So ", evidence: ["3-2", "3-3", "3-4"],
+          topic: ["break", "broke", "bridge", "soft", "delicate", "apart", "line", "connect", "callus", "damage", "heal", "weak", "fragile", "tear", "join", "scaffold", "flexible", "temporary", "snap", "destroy", "disturb", "still", "repair"],
+          offMsg: "Check your answer. Does it say what happens to the soft bridge when the bone moves?",
+          hints: [ { t: "Think: what happens to a soft bridge if the bone keeps moving?" },
+                   { starter: "So moving the bone would " },
+                   { t: "Key words: soft bridge · come apart · not lined up" } ] },
+      ] },
+    { id: "Q4",
+      text: "What is this whole article mostly about?",
+      steps: [
+        sortStep("head", "Yes. No one sentence says it. You put the paragraphs together.", "Look again. No one sentence says it. You put the paragraphs together."),
+        { type: "choose", name: "Who or what", prompt: "Who or what is the article about?",
+          help: "Which one is in every paragraph?",
+          opts: [
+            { t: "a road crew", why: "Not that one. The road crew is only a comparison in paragraph 2." },
+            { t: "a broken bone", ok: true, why: "Yes. The whole article is about a broken bone." },
+            { t: "a health professional", why: "Not that one. A health professional is only in the last paragraph." } ] },
+        { type: "choose", name: "Most important", prompt: "What is the most important thing about it?",
+          help: "Think about all six paragraphs. What do they show, step by step?",
+          opts: [
+            { t: "It looks like a snapped branch on an X-ray.", why: "Not that one. That is one small detail from paragraph 1." },
+            { t: "It stays extra strong forever.", why: "Not that one. Paragraph 5 says the opposite." },
+            { t: "It heals in stages, one after another.", ok: true, why: "Yes. Every paragraph is one stage of healing." } ] },
+        { type: "write", name: "Shrink", prompt: "Say the main idea in 10 words or fewer. Use your own words.", max: 10,
+          topic: ["heal", "stage", "step", "repair", "fix", "bone", "mend"],
+          offMsg: "Check your answer. Does it say who or what, and the most important thing?",
+          hints: [ { t: "Put your two answers together: who or what, and the most important thing." },
+                   { starter: "A broken bone " },
+                   { t: "Key words: heals · in stages" } ] },
+      ] },
+  ],
+};
+
+/* ============================ helpers ============================ */
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === "class") el.className = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const kid of kids.flat(Infinity)) {
+    if (kid == null || kid === false) continue;
+    el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+  }
+  return el;
+}
+const words = (s) => String(s).toLowerCase().replace(/[’']/g, "").match(/[a-z0-9]+/g) || [];
+const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+const clock = (secs) => `${Math.floor(secs / 60)}:${String(Math.round(secs) % 60).padStart(2, "0")}`;
+function stripPrefix(text, prefix) {
+  const p = (prefix || "").trim();
+  const t = text.trimStart();
+  return p && t.toLowerCase().startsWith(p.toLowerCase()) ? t.slice(p.length) : text;
+}
+
+// Every passage word with where it came from, for the copy check.
+const PW = [];
+R.paras.forEach((para, pi) => para.s.forEach((sent, si) => words(sent).forEach((w) => PW.push({ w, id: `${pi + 1}-${si + 1}`, p: pi + 1 }))));
+function longestRun(ans) {
+  let best = { len: 0, at: -1 };
+  let prev = new Array(PW.length + 1).fill(0);
+  for (let i = 1; i <= ans.length; i++) {
+    const cur = new Array(PW.length + 1).fill(0);
+    for (let j = 1; j <= PW.length; j++) {
+      if (ans[i - 1] === PW[j - 1].w) {
+        cur[j] = prev[j - 1] + 1;
+        if (cur[j] > best.len) best = { len: cur[j], at: j - cur[j] };
+      }
+    }
+    prev = cur;
+  }
+  return best;
+}
+const sentenceText = (id) => { const [p, s] = id.split("-").map(Number); return R.paras[p - 1].s[s - 1]; };
+
+/* ============================ state ============================ */
+const KEY = "tw-guided-mock:v1";
+const store = {
+  load() { try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } },
+  save(v) { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch (e) { /* private window */ } },
+};
+// startHelp: hint level already showing when a step opens (0 none .. 3 the sentence is pointed out).
+// pause: seconds the student must wait after a wrong answer before trying again (0 = off).
+const DEFAULTS = { nQ: 4, checkMin: 2, listen: false, next: "Show your tutor.", startHelp: 2, pause: 5, showCount: true };
+const HELP_NAMES = ["None", "Level 1: a reminder of what to look for", "Level 2: the right paragraph is shown", "Level 3: the sentence is pointed out"];
+const FAST_MS = 3000;            // a first answer faster than this is flagged as a likely guess
+const READ_WORDS_PER_SEC = 4;    // nobody reads faster than this; the "I have read it" button waits for it
+function fresh(settings) {
+  return { v: 2, settings: Object.assign({}, DEFAULTS, settings), phase: "start", part: 0, stage: "reading", partT0: 0,
+    q: 0, step: 0, ss: null, found: {}, picks: {}, answers: {}, log: [], reads: [],
+    clock: { read: 0, q: 0 }, self: { asked: 0, yes: 0, notyet: 0, none: 0 }, listens: 0 };
+}
+let S = store.load();
+if (!S || S.v !== 2) S = fresh();
+S.settings = Object.assign({}, DEFAULTS, S.settings);
+const save = () => store.save(S);
+const QS = () => R.questions.slice(0, S.settings.nQ);
+function newSS(step) {
+  const ss = { tries: 0, wrong: [], hint: 0, given: 0, auto: 0, early: 0, done: false, fb: null, nudged: {}, t0: Date.now(),
+    draft: step && step.prefill ? step.prefill : "", starter: "", hit: null, shrunk: 0, copyFinal: false, off: false,
+    fast: false, lockUntil: 0, lockMs: 0 };
+  if (step) {                    // help the tutor chose to show from the start
+    ss.given = Math.min(S.settings.startHelp, maxHint(step));
+    for (let level = 1; level <= ss.given; level++) { ss.hint = level; applyHint(step, ss); }
+  }
+  return ss;
+}
+const partStep = (i) => ({ type: "choose", name: "Check", prompt: "What is this paragraph mostly about?", opts: R.paras[i].check, help: HELP_PART });
+
+// Sessions finished on this device, so the tutor can see a trend.
+const HIST_KEY = "tw-guided-mock:history";
+function history() { try { return JSON.parse(localStorage.getItem(HIST_KEY)) || []; } catch (e) { return []; } }
+function pushHistory() {
+  const L = S.log;
+  const row = { when: new Date().toISOString(), reading: R.id, nQ: S.settings.nQ, startHelp: S.settings.startHelp,
+    first: L.filter((e) => e.first).length, total: L.length, guesses: L.filter((e) => e.fast).length,
+    asked: L.filter((e) => e.hint > e.given + e.auto).length, secs: S.clock.read + S.clock.q };
+  try { localStorage.setItem(HIST_KEY, JSON.stringify([row].concat(history()).slice(0, 30))); } catch (e) { /* private window */ }
+}
+
+const app = document.getElementById("app");
+const bar = document.getElementById("bar");
+const barIn = document.getElementById("bar-in");
+const slot = document.getElementById("selfcheck-slot");
+let tutorOpen = false;
+
+/* ============================ work plan bar ============================ */
+function renderPlan() {
+  const nP = R.paras.length, nQ = S.settings.nQ;
+  let done = 0, now = -1, label = "Today’s work";
+  if (S.phase === "read") { done = S.part; now = S.part; label = `Read · Paragraph ${S.part + 1} of ${nP}`; }
+  else if (S.phase === "mid") { done = nP; label = "Reading finished"; }
+  else if (S.phase === "q") { done = nP + S.q; now = nP + S.q; label = `Question ${S.q + 1} of ${nQ}`; }
+  else if (S.phase === "done" || S.phase === "report") { done = nP + nQ; label = S.phase === "report" ? "Tutor report" : "Finished"; }
+  document.getElementById("plan-label").textContent = label;
+  const count = document.getElementById("plan-count");
+  count.hidden = !S.settings.showCount || S.phase === "start" || S.phase === "report";
+  count.textContent = `First try: ${S.log.filter((e) => e.first).length}`;
+  const dots = [];
+  for (let i = 0; i < nP + nQ; i++) dots.push(h("span", { class: `dot${i < done ? " done" : ""}${i === now ? " now" : ""}${i === nP ? " gap" : ""}` }));
+  document.getElementById("dots").replaceChildren(...dots);
+}
+function measure() {
+  document.documentElement.style.setProperty("--plan-h", `${document.getElementById("plan").offsetHeight}px`);
+}
+window.addEventListener("resize", measure);
+
+function waitBar(totalMs, leftMs) {   // fills over totalMs; leftMs is how much is still to go
+  const fill = h("i", {});
+  fill.style.animationDuration = `${totalMs}ms`;
+  fill.style.animationDelay = `-${Math.max(0, totalMs - leftMs)}ms`;
+  return h("span", { class: "wait", "aria-hidden": "true" }, fill);
+}
+function setBar(helpFn, main, wait) {
+  document.getElementById("bar-wait").replaceChildren(...(wait ? [waitBar(wait.total, wait.left)] : []));
+  barIn.replaceChildren(
+    helpFn ? h("button", { class: "btn ghost", type: "button", id: "help-btn", onclick: helpFn }, "Help") : h("span", {}),
+    main ? h("button", { class: "btn", type: "button", id: "main-btn", disabled: !!main.disabled, onclick: main.fn }, main.label) : h("span", {}));
+  bar.hidden = !helpFn && !main;
+}
+const lockLeft = () => (S.ss && !S.ss.done ? Math.max(0, S.ss.lockUntil - Date.now()) : 0);
+
+/* ============================ listen (optional) ============================ */
+const canSpeak = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+function stopSpeech() { if (canSpeak) { try { speechSynthesis.cancel(); } catch (e) { /* ignore */ } } }
+function listenBtn(text) {
+  if (!S.settings.listen || !canSpeak) return null;
+  const b = h("button", { class: "btn ghost small", type: "button" }, "Listen");
+  b.addEventListener("click", () => {
+    if (speechSynthesis.speaking) { speechSynthesis.cancel(); b.textContent = "Listen"; return; }
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.9; u.lang = "en-CA";
+    u.onend = () => { b.textContent = "Listen"; };
+    S.listens++; save();
+    speechSynthesis.speak(u);
+    b.textContent = "Stop";
+  });
+  return b;
+}
+
+/* ============================ shared step parts ============================ */
+function hintText(step, level) {
+  if (step.type === "choose") return step.help;
+  const hint = step.hints[level - 1];
+  if (step.type === "find") {
+    if (hint.narrow) return `Look in paragraph ${hint.narrow.join(" or ")}. The other paragraphs are faded.`;
+    if (hint.point) return "Look at the sentence with the dashed line.";
+    return hint.t;
+  }
+  if (hint.starter) return `Try starting your answer like this: “${hint.starter.trim()} …”`;
+  return hint.t;
+}
+const maxHint = (step) => (step.type === "choose" ? 1 : step.hints.length);
+
+function taskBlock(label, prompt, step) {
+  const ss = S.ss;
+  return h("div", { class: "sticky" },
+    h("div", { class: "task" }, label && h("small", {}, label), prompt),
+    ss && ss.fb && h("p", { class: `fb ${ss.fb.k}`, role: "status" }, ss.fb.t,
+      lockLeft() > 0 && [h("span", { class: "wait-note" }, "Read this first. Then try again."), waitBar(ss.lockMs, lockLeft())]),
+    ss && step && ss.hint > 0 && !ss.done && h("div", { class: "hint" }, h("b", {}, `Hint ${ss.hint} of ${maxHint(step)}`), hintText(step, ss.hint)));
+}
+
+function ownWords(step) {          // what the student typed, without any starter we gave
+  const ss = S.ss;
+  const afterStarter = ss.starter ? stripPrefix(ss.draft, ss.starter) : ss.draft;
+  return words(afterStarter !== ss.draft ? afterStarter : stripPrefix(ss.draft, step.prefill));
+}
+function attempted(step) {
+  if (S.ss.tries > 0) return true;
+  return step.type === "write" && ownWords(step).length >= 3;
+}
+function applyHint(step, ss) {
+  ss = ss || S.ss;
+  if (step.type !== "write") return;
+  const hint = step.hints[ss.hint - 1];
+  if (hint.starter && !stripPrefix(ss.draft, step.prefill).trim()) { ss.draft = hint.starter; ss.starter = hint.starter; }
+}
+function help(step) {
+  const ss = S.ss;
+  if (ss.done) return;
+  if (!attempted(step)) { ss.early++; ss.fb = { k: "no", t: "Try first. Then press Help." }; }
+  else if (ss.hint < maxHint(step)) { ss.hint++; applyHint(step); ss.fb = null; }
+  else ss.fb = { k: "no", t: "That is all the help for this step." };
+  save(); render();
+}
+function missed(step) {            // after every second miss, the next hint arrives unasked
+  const ss = S.ss;
+  if (ss.tries % 2 === 0 && ss.hint < maxHint(step)) { ss.hint++; ss.auto++; applyHint(step); }
+}
+function whereLabel(step) {
+  return S.phase === "read" ? `Paragraph ${S.part + 1}: mostly about` : `Q${S.q + 1} step ${S.step + 1}: ${step.name}`;
+}
+function firstAnswer(step, wait) {   // called on every answer; marks a too-fast first answer, and starts the pause after a miss
+  const ss = S.ss;
+  if (ss.tries === 1 && Date.now() - ss.t0 < FAST_MS) ss.fast = true;
+  if (wait && S.settings.pause) { ss.lockMs = S.settings.pause * 1000; ss.lockUntil = Date.now() + ss.lockMs; }
+}
+function complete(step, msg) {
+  const ss = S.ss;
+  const first = ss.tries === 1 && !ss.nudged.copy && !ss.nudged.topic && !ss.shrunk;
+  ss.done = true;
+  ss.lockUntil = 0;
+  ss.fb = { k: "yes", t: first && S.settings.showCount ? `${msg} First try.` : msg };
+  S.log.push({ where: whereLabel(step), type: step.type, sort: !!step.sort, part: S.phase === "read",
+    first, fast: ss.fast, given: ss.given,
+    tries: ss.tries, hint: ss.hint, auto: ss.auto, early: ss.early,
+    copy: !!ss.nudged.copy, copyFinal: ss.copyFinal, off: ss.off, offFirst: !!ss.nudged.topic, shrunk: ss.shrunk,
+    secs: Math.round((Date.now() - ss.t0) / 1000) });
+  save(); render();
+}
+
+/* ---- choose ---- */
+function optionList(step) {
+  const ss = S.ss;
+  const paused = lockLeft() > 0;
+  return h("div", { class: "opts" }, step.opts.map((o, i) => {
+    const wrong = ss.wrong.includes(i), right = ss.done && o.ok;
+    return h("button", { type: "button", class: `opt${right ? " right" : ""}${wrong ? " wrong" : ""}`, disabled: ss.done || wrong || paused,
+      onclick: () => pick(step, i) }, o.t, o.sub && h("small", {}, o.sub));
+  }));
+}
+function pick(step, i) {
+  const ss = S.ss, o = step.opts[i];
+  if (ss.done || lockLeft() > 0) return;
+  ss.tries++;
+  firstAnswer(step, !o.ok);
+  if (o.ok) {
+    if (S.phase === "q" && !step.sort) {
+      const q = QS()[S.q];
+      (S.picks[q.id] = S.picks[q.id] || []).push({ name: step.name, t: o.t });
+    }
+    return complete(step, o.why);
+  }
+  ss.wrong.push(i);
+  ss.fb = { k: "no", t: o.why };
+  missed(step);
+  save(); render();
+}
+
+/* ---- find ---- */
+function passageCard(q, step) {
+  const ss = S.ss;
+  const narrow = ss.hint >= 2 && !ss.done ? step.hints[1].narrow : null;
+  const point = ss.hint >= 3 && !ss.done ? step.hints[2].point : null;
+  const earlier = S.found[q.id] || [];
+  const paused = lockLeft() > 0;
+  return h("section", { class: `card passage${ss.done || paused ? " locked" : ""}` }, R.paras.map((p, pi) =>
+    h("p", { class: `para${narrow && !narrow.includes(pi + 1) ? " dim" : ""}` },
+      h("span", { class: "pn" }, `[${pi + 1}]`),
+      p.s.map((sent, si) => {
+        const id = `${pi + 1}-${si + 1}`;
+        const found = earlier.includes(id), tried = ss.wrong.includes(id);
+        const open = !ss.done && !found && !tried && !paused;
+        const el = h("span", { class: `sent${found ? " found" : ""}${tried ? " tried" : ""}${point === id ? " point" : ""}`,
+          role: open ? "button" : null, tabindex: open ? "0" : null }, sent);
+        if (open) {
+          el.addEventListener("click", () => tap(q, step, id));
+          el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); tap(q, step, id); } });
+        }
+        return [el, " "];
+      }))));
+}
+function tap(q, step, id) {
+  const ss = S.ss;
+  if (ss.done || lockLeft() > 0) return;
+  ss.tries++;
+  firstAnswer(step, !step.accept.includes(id));
+  if (step.accept.includes(id)) {
+    ss.hit = id;
+    (S.found[q.id] = S.found[q.id] || []).push(id);
+    return complete(step, "Yes. You found it.");
+  }
+  ss.wrong.push(id);
+  ss.fb = { k: "no", t: "Not that one. Try another sentence." };
+  missed(step);
+  save(); render();
+}
+
+/* ---- what the student has gathered so far in this question ---- */
+function haveBox(q) {
+  const found = S.found[q.id] || [], picks = S.picks[q.id] || [];
+  if (!found.length && !picks.length) return null;
+  return h("div", { class: "have" },
+    found.length ? [h("span", { class: "lbl" }, found.length > 1 ? "You found" : "Your clue"), found.map((id) => h("p", {}, `“${sentenceText(id)}”`))] : null,
+    picks.map((p) => [h("span", { class: "lbl" }, p.name), h("p", {}, p.t)]));
+}
+
+/* ---- write ---- */
+function writeBox(q, step) {
+  const ss = S.ss;
+  const ta = h("textarea", { id: `answer-${q.id}`, "aria-label": "Your answer", spellcheck: "true", disabled: ss.done });
+  ta.value = ss.draft;
+  const count = step.max ? h("p", { class: "count" }) : null;
+  const upd = () => {
+    if (!count) return;
+    const n = words(ta.value).length;
+    count.textContent = n > step.max ? `${plural(n, "word")}. Shrink it to ${step.max} or fewer.` : `${plural(n, "word")} of ${step.max}`;
+    count.className = `count${n > step.max ? " over" : ""}`;
+  };
+  ta.addEventListener("input", () => { ss.draft = ta.value; upd(); save(); });
+  upd();
+  return h("section", { class: "card" }, ta, count);
+}
+function doneWrite(q, step) {
+  const ss = S.ss;
+  const text = ss.draft.trim();
+  const body = words(stripPrefix(text, step.prefill));
+  const no = (t) => { ss.fb = { k: "no", t }; save(); render(); };
+  if (ownWords(step).length < 3) return no("Write a little more. Use a full sentence.");
+  ss.tries++;
+  if (step.max && words(text).length > step.max) { ss.shrunk++; return no(`That is ${words(text).length} words. Shrink it to ${step.max} or fewer.`); }
+  const run = longestRun(body);
+  const copied = run.len >= 5 && (step.max ? true : run.len / body.length >= 0.6);
+  if (copied && !ss.nudged.copy) {
+    ss.nudged.copy = true;
+    const src = PW[run.at];
+    return no((step.evidence || []).includes(src.id)
+      ? "You found the right part. Now say it in your own words. Change the words, or make it shorter."
+      : `Those words are copied from paragraph ${src.p}. Look at what you found. Then say it in your own words.`);
+  }
+  const off = !!step.topic && !step.topic.some((k) => body.join(" ").includes(k));
+  if (off && !ss.nudged.topic) { ss.nudged.topic = true; return no(step.offMsg); }
+  ss.copyFinal = copied; ss.off = off;
+  S.answers[q.id] = text;
+  complete(step, "Saved.");
+}
+
+/* ============================ screens ============================ */
+function renderStart() {
+  const nP = R.paras.length, nQ = S.settings.nQ;
+  app.replaceChildren(
+    h("div", { class: "sticky" }),
+    h("section", { class: "card" },
+      h("p", { class: "eyebrow" }, "Reading"),
+      h("h1", {}, R.title),
+      h("p", { class: "genre" }, R.genre),
+      h("h2", {}, "Today’s work"),
+      h("ol", { class: "plan-list" },
+        h("li", {}, `Read ${nP} short paragraphs.`),
+        h("li", {}, `Answer ${plural(nQ, "question")}.`),
+        h("li", {}, `Then you are finished. ${S.settings.next}`))),
+    tutorPanel());
+  setBar(null, { label: "Start", fn: () => { S.phase = "read"; S.part = 0; S.stage = "reading"; S.partT0 = Date.now(); S.ss = null; save(); render(); window.scrollTo(0, 0); } });
+}
+
+function renderRead() {
+  const p = R.paras[S.part], text = p.s.join(" ");
+  const para = h("section", { class: "card" },
+    h("p", { class: "para" }, h("span", { class: "pn" }, `[${S.part + 1}]`), text), listenBtn(text));
+  if (S.stage === "reading") {
+    // The button wakes up only after the shortest time anyone could read this paragraph in.
+    const need = Math.ceil(words(text).length / READ_WORDS_PER_SEC) * 1000;
+    const left = Math.max(0, need - (Date.now() - S.partT0));
+    app.replaceChildren(taskBlock(null, "Read this paragraph.", null), para);
+    setBar(null, { label: left > 0 ? "Read first" : "I have read it", disabled: left > 0, fn: () => {
+      S.reads.push({ p: S.part + 1, secs: Math.round((Date.now() - S.partT0) / 1000), words: words(text).length });
+      S.stage = "check"; S.ss = newSS(partStep(S.part)); save(); render();
+    } }, left > 0 ? { total: need, left } : null);
+    return;
+  }
+  const step = partStep(S.part);
+  app.replaceChildren(taskBlock(null, step.prompt, step), para, optionList(step));
+  setBar(S.ss.done ? null : () => help(step), S.ss.done ? { label: "Next", fn: advance } : null);
+}
+
+function renderMid() {
+  const nQ = S.settings.nQ;
+  app.replaceChildren(
+    h("div", { class: "sticky" }),
+    h("section", { class: "card" },
+      h("h1", {}, "Reading finished."),
+      h("p", {}, `You read ${R.paras.length} paragraphs. Next: ${plural(nQ, "question")}.`),
+      h("h2", {}, "Every question has the same steps"),
+      h("ol", { class: "plan-list" },
+        h("li", {}, "Sort. Where is the answer?"),
+        h("li", {}, "Find a sentence in the text."),
+        h("li", {}, "Answer in your own words."))));
+  setBar(null, { label: "Start questions", fn: () => { S.phase = "q"; S.q = 0; S.step = 0; S.ss = newSS(QS()[0].steps[0]); save(); render(); window.scrollTo(0, 0); } });
+}
+
+function renderQuestion() {
+  const q = QS()[S.q], step = q.steps[S.step], ss = S.ss;
+  const qCard = h("section", { class: "card" },
+    h("p", { class: "eyebrow" }, `Question ${S.q + 1}`),
+    h("p", { class: "question" }, q.text),
+    listenBtn(`${q.text} ${step.prompt}`));
+  const head = taskBlock(`Step ${S.step + 1} of ${q.steps.length} · ${step.name}`, step.prompt, step);
+  let body;
+  if (step.type === "find") body = [qCard, passageCard(q, step)];
+  else if (step.type === "choose") body = [qCard, step.sort ? null : haveBox(q), optionList(step)];
+  else body = [qCard, haveBox(q), writeBox(q, step)];
+  app.replaceChildren(head, ...body.filter(Boolean));
+  setBar(ss.done ? null : () => help(step),
+    ss.done ? { label: "Next", fn: advance } : step.type === "write" ? { label: "Done", fn: () => doneWrite(q, step) } : null);
+}
+
+function advance() {
+  if (S.phase === "read") {
+    if (S.part + 1 < R.paras.length) { S.part++; S.stage = "reading"; S.partT0 = Date.now(); S.ss = null; }
+    else { S.phase = "mid"; S.ss = null; }
+  } else if (S.phase === "q") {
+    const qs = QS(), q = qs[S.q];
+    if (S.step + 1 < q.steps.length) S.step++;
+    else if (S.q + 1 < qs.length) { S.q++; S.step = 0; }
+    else { S.phase = "done"; S.ss = null; pushHistory(); save(); render(); window.scrollTo(0, 0); return; }
+    S.ss = newSS(QS()[S.q].steps[S.step]);
+  }
+  save(); render(); window.scrollTo(0, 0);
+}
+
+function renderDone() {
+  app.replaceChildren(
+    h("div", { class: "sticky" }),
+    h("section", { class: "card" },
+      h("h1", {}, "Finished."),
+      h("p", {}, `You read ${R.paras.length} paragraphs and answered ${plural(S.settings.nQ, "question")}.`),
+      S.settings.showCount && h("p", {}, `Right on the first try: ${S.log.filter((e) => e.first).length} of ${S.log.length}.`),
+      h("p", { class: "question" }, S.settings.next)),
+    h("div", { class: "row" },
+      h("button", { class: "btn ghost small", type: "button", id: "report-btn", onclick: () => { S.phase = "report"; save(); render(); window.scrollTo(0, 0); } }, "Tutor report")));
+  setBar(null, null);
+}
+
+/* ============================ tutor: settings ============================ */
+function tutorPanel() {
+  const s = S.settings;
+  const select = (id, value, options, on) => {
+    const el = h("select", { id }, options.map(([v, t]) => h("option", { value: String(v) }, t)));
+    el.value = String(value);
+    el.addEventListener("change", () => { on(el.value); save(); tutorOpen = true; render(); });
+    return el;
+  };
+  const next = h("input", { type: "text", id: "set-next", maxlength: "80" });
+  next.value = s.next;
+  next.addEventListener("change", () => { s.next = next.value.trim() || DEFAULTS.next; save(); tutorOpen = true; render(); });
+  const listen = h("input", { type: "checkbox", id: "set-listen" });
+  listen.checked = s.listen;
+  listen.addEventListener("change", () => { s.listen = listen.checked; save(); });
+  const showCount = h("input", { type: "checkbox", id: "set-count" });
+  showCount.checked = s.showCount;
+  showCount.addEventListener("change", () => { s.showCount = showCount.checked; save(); });
+  const resetRow = h("div", { class: "row" });
+  const resetBtn = h("button", { class: "btn ghost small", type: "button", id: "reset-btn" }, "Start again");
+  resetBtn.addEventListener("click", () => {
+    resetRow.replaceChildren(h("span", {}, "Erase this session’s answers and report?"),
+      h("button", { class: "btn small", type: "button", id: "reset-yes", onclick: () => { S = fresh(S.settings); save(); tutorOpen = false; render(); } }, "Yes, erase"),
+      h("button", { class: "btn ghost small", type: "button", onclick: () => { tutorOpen = true; render(); } }, "Cancel"));
+  });
+  resetRow.append(resetBtn);
+  const d = h("details", { class: "tutor", id: "tutor-panel", open: tutorOpen },
+    h("summary", {}, "Tutor settings"),
+    h("div", { class: "settings" },
+      h("p", { class: "muted" }, "Set these before the student starts. In the real app they sit on your teacher page, not here."),
+      h("div", { class: "field" }, h("label", { for: "set-nq" }, "Questions today"),
+        select("set-nq", s.nQ, [[1, "1 question"], [2, "2 questions"], [3, "3 questions"], [4, "4 questions"]], (v) => { s.nQ = Number(v); })),
+      h("div", { class: "field" }, h("label", { for: "set-help" }, "Help already showing when a step opens"),
+        select("set-help", s.startHelp, HELP_NAMES.map((t, i) => [i, t]), (v) => { s.startHelp = Number(v); }),
+        h("small", {}, "Start high, so the first tries are right. Lower it one level when the first-try score stays at 80% or more.")),
+      h("div", { class: "field" }, h("label", { for: "set-pause" }, "Pause after a wrong answer"),
+        select("set-pause", s.pause, [[0, "Off"], [5, "5 seconds"], [10, "10 seconds"]], (v) => { s.pause = Number(v); }),
+        h("small", {}, "Makes guessing slower than thinking. The explanation stays on screen during the pause.")),
+      h("div", { class: "check-row" }, showCount, h("label", { for: "set-count" }, "Show the student their first-try count")),
+      h("div", { class: "field" }, h("label", { for: "set-check" }, "“Am I working?” check"),
+        select("set-check", s.checkMin, [[0, "Off"], [1, "Every 1 minute"], [2, "Every 2 minutes"], [3, "Every 3 minutes"], [5, "Every 5 minutes"]], (v) => { s.checkMin = Number(v); }),
+        h("small", {}, "A small card the student answers Yes or Not yet. It goes away after 12 seconds."),
+        h("button", { class: "btn ghost small", type: "button", id: "preview-check", onclick: () => showSelfCheck(true) }, "Preview the check")),
+      h("div", { class: "check-row" }, listen, h("label", { for: "set-listen" }, "Show a Listen button (reads the text aloud)")),
+      h("div", { class: "field" }, h("label", { for: "set-next" }, "When finished, the screen says"), next),
+      resetRow));
+  d.addEventListener("toggle", () => { tutorOpen = d.open; });
+  return d;
+}
+
+/* ============================ tutor: report ============================ */
+const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
+const rushed = (r) => r.secs <= Math.ceil(r.words / READ_WORDS_PER_SEC) + 2;   // pressed the moment the button woke up
+function notesFor(e) {
+  const n = [];
+  if (e.fast) n.push("Answered in under 3 seconds");
+  if (e.early) n.push(`Pressed Help before trying ×${e.early}`);
+  if (e.hint > e.given + e.auto) n.push("Asked for help");
+  if (e.auto) n.push("Hint given after misses");
+  if (e.copy) n.push(e.copyFinal ? "Copied from the text, and kept it" : "Copied at first, then reworded");
+  if (e.off) n.push("May be off topic");
+  else if (e.offFirst) n.push("Off topic at first, then fixed");
+  if (e.shrunk) n.push(`Over 10 words ×${e.shrunk}`);
+  return n;
+}
+function suggestion() {
+  const L = S.log, level = S.settings.startHelp;
+  const p = pct(L.filter((e) => e.first).length, L.length);
+  const out = [];
+  if (p >= 80) out.push(level > 0
+    ? `First try was ${p}% with starting help at level ${level}. If the next session is also 80% or more, lower the starting help to level ${level - 1}.`
+    : `First try was ${p}% with no starting help. Next, give more questions or a harder reading.`);
+  else if (p < 50) out.push(level < 3
+    ? `First try was only ${p}%. Raise the starting help to level ${level + 1} next session, and do the first paragraph and the first question together.`
+    : `First try was only ${p}% even with the sentence pointed out. Do the next session side by side, and consider an easier reading.`);
+  else out.push(`First try was ${p}%. Keep the starting help at level ${level} for the next session.`);
+  const guesses = L.filter((e) => e.fast).length;
+  const early = L.reduce((n, e) => n + e.early, 0);
+  const copies = L.filter((e) => e.copy).length;
+  const sorts = L.filter((e) => e.sort), sortMiss = sorts.filter((e) => !e.first).length;
+  const rush = S.reads.filter(rushed).length;
+  if (guesses >= 3) out.push(`${guesses} first answers came in under 3 seconds, which looks like guessing. Before the next session, agree a rule together: read every choice, then tap.`);
+  else if (rush >= 3) out.push(`“I have read it” was pressed the moment it woke up on ${rush} paragraphs. Read the first paragraph together next time, or switch on Listen.`);
+  else if (sorts.length >= 2 && sortMiss >= sorts.length / 2) out.push(`The sort was missed on ${sortMiss} of ${sorts.length} questions. Practise it together: can I point to the answer, or does the text only give clues?`);
+  else if (early >= 2) out.push(`Help was pressed before trying ${early} times. Practise the rule together: try once, then Help.`);
+  else if (copies >= 1) out.push(`${plural(copies, "answer")} started as a copy of the text. Practise “cover the text, then say it” on one question together.`);
+  return out.join(" ");
+}
+const helpCell = (e) => (e.hint > e.given ? `${e.given} to ${e.hint}` : String(e.hint));
+const triesText = (n) => (n === 1 ? "1 try" : `${n} tries`);
+function reportText() {
+  const L = S.log, out = [], first = L.filter((e) => e.first).length;
+  out.push(`TutorWise guided reading report: ${R.title} (${R.id})`);
+  out.push(`Right on the first try: ${first} of ${L.length} (${pct(first, L.length)}%)`);
+  out.push(`Help showing at the start: ${HELP_NAMES[S.settings.startHelp]}`);
+  out.push(`Pause after a wrong answer: ${S.settings.pause ? S.settings.pause + " seconds" : "off"}`);
+  out.push(`Likely guesses (first answer in under 3 seconds): ${L.filter((e) => e.fast).length}`);
+  out.push(`Time: reading ${clock(S.clock.read)}, questions ${clock(S.clock.q)}`);
+  out.push(`"Am I working?" check: asked ${S.self.asked}, Yes ${S.self.yes}, Not yet ${S.self.notyet}, no answer ${S.self.none}`);
+  out.push(`Listen used: ${S.listens}`);
+  out.push("", "Reading time per paragraph:");
+  S.reads.forEach((r) => out.push(`  [${r.p}] ${r.secs}s for ${r.words} words${rushed(r) ? " (pressed as soon as allowed)" : ""}`));
+  out.push("", "Each step (tries, help level, notes):");
+  L.forEach((e) => out.push(`  ${e.where}: ${triesText(e.tries)}, help ${helpCell(e)}${notesFor(e).length ? ", " + notesFor(e).join("; ") : ""}`));
+  out.push("", "Written answers:");
+  QS().forEach((q, i) => { if (S.answers[q.id]) out.push(`  Q${i + 1}. ${q.text}`, `      ${S.answers[q.id]}`); });
+  out.push("", `Suggested next step: ${suggestion()}`);
+  return out.join("\n");
+}
+function renderReport() {
+  const L = S.log, first = L.filter((e) => e.first).length;
+  const text = reportText();
+  const past = history();
+  const outBox = h("textarea", { class: "report-out", id: "report-out", readonly: true, "aria-label": "Report as text" });
+  outBox.value = text;
+  const msg = h("span", { class: "muted", role: "status" });
+  const when = (iso) => new Date(iso).toLocaleString("en-CA", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  app.replaceChildren(
+    h("div", { class: "sticky" }),
+    h("section", { class: "card" },
+      h("p", { class: "eyebrow" }, "For the tutor"),
+      h("h1", {}, "How the session went"),
+      h("p", { class: "big" }, `${first} of ${L.length} right on the first try (${pct(first, L.length)}%)`),
+      h("p", { class: "muted" }, `Help showing at the start: ${HELP_NAMES[S.settings.startHelp]}. The aim over several sessions is to keep this score high while you lower the starting help, and to see the written answers stay good.`),
+      h("div", { class: "have" }, h("span", { class: "lbl" }, "Suggested next step"), h("p", {}, suggestion()))),
+    h("section", { class: "card" },
+      h("h2", {}, "Written answers to mark"),
+      QS().filter((q) => S.answers[q.id]).map((q) => h("div", { class: "stack" }, h("p", {}, h("strong", {}, q.text)), h("p", { class: "answer" }, S.answers[q.id]))),
+      !QS().some((q) => S.answers[q.id]) && h("p", { class: "muted" }, "No written answers in this session.")),
+    h("section", { class: "card" },
+      h("h2", {}, "Each step"),
+      h("div", { class: "table-wrap" }, h("table", {},
+        h("thead", {}, h("tr", {}, ["Step", "Tries", "Help level", "Time", "Notes"].map((t) => h("th", {}, t)))),
+        h("tbody", {}, L.map((e) => h("tr", {},
+          h("td", {}, e.where), h("td", {}, String(e.tries)), h("td", {}, helpCell(e)), h("td", {}, clock(e.secs)),
+          h("td", {}, notesFor(e).map((n) => h("span", { class: "flag" }, n)), e.first && !notesFor(e).length && h("span", { class: "muted" }, "First try")))))))),
+    h("section", { class: "card" },
+      h("h2", {}, "Reading and attention"),
+      h("div", { class: "table-wrap" }, h("table", {},
+        h("thead", {}, h("tr", {}, ["Paragraph", "Words", "Time before “I have read it”"].map((t) => h("th", {}, t)))),
+        h("tbody", {}, S.reads.map((r) => h("tr", {}, h("td", {}, `[${r.p}]`), h("td", {}, String(r.words)),
+          h("td", {}, `${r.secs} seconds `, rushed(r) && h("span", { class: "flag" }, "Pressed as soon as allowed"))))))),
+      h("p", {}, `Likely guesses (first answer in under 3 seconds): ${L.filter((e) => e.fast).length}.`),
+      h("p", {}, `Total time: reading ${clock(S.clock.read)}, questions ${clock(S.clock.q)}.`),
+      h("p", {}, `“Am I working?” check: asked ${S.self.asked}. Yes ${S.self.yes}, Not yet ${S.self.notyet}, no answer ${S.self.none}.`),
+      h("p", {}, `Listen button used ${plural(S.listens, "time")}.`)),
+    past.length > 0 && h("section", { class: "card" },
+      h("h2", {}, "Sessions finished on this device"),
+      h("p", { class: "muted" }, "Newest first. Improvement looks like the first-try score holding while the starting help comes down."),
+      h("div", { class: "table-wrap" }, h("table", {},
+        h("thead", {}, h("tr", {}, ["When", "Starting help", "First try", "Likely guesses", "Asked for help", "Time"].map((t) => h("th", {}, t)))),
+        h("tbody", {}, past.map((r) => h("tr", {},
+          h("td", {}, when(r.when)), h("td", {}, `Level ${r.startHelp}`), h("td", {}, `${r.first} of ${r.total} (${pct(r.first, r.total)}%)`),
+          h("td", {}, String(r.guesses)), h("td", {}, plural(r.asked, "step")), h("td", {}, clock(r.secs)))))))),
+    h("section", { class: "card" },
+      h("h2", {}, "Copy this report"),
+      outBox,
+      h("div", { class: "row" },
+        h("button", { class: "btn small", type: "button", id: "copy-report", onclick: async () => {
+          try { await navigator.clipboard.writeText(text); msg.textContent = "Copied."; }
+          catch (e) { outBox.focus(); outBox.select(); msg.textContent = "Press Ctrl+C to copy the selected text."; }
+        } }, "Copy report"),
+        msg,
+        h("button", { class: "btn ghost small", type: "button", onclick: () => { S.phase = "done"; save(); render(); } }, "Back"),
+        h("button", { class: "btn ghost small", type: "button", id: "again-btn", onclick: () => { S = fresh(S.settings); save(); render(); window.scrollTo(0, 0); } }, "Start a new session"))));
+  setBar(null, null);
+}
+
+/* ============================ "Am I working?" check ============================ */
+let elapsed = 0, scOpen = false, scHide = null;
+function showSelfCheck(preview) {
+  if (scOpen) return;
+  if (!preview) { S.self.asked++; save(); }
+  const close = () => { clearTimeout(scHide); slot.replaceChildren(); scOpen = false; };
+  const card = h("div", { class: "selfcheck", role: "group", "aria-label": "Working check" });
+  const answer = (k) => {
+    if (!preview) { S.self[k]++; save(); }
+    clearTimeout(scHide);
+    if (k === "notyet") { card.replaceChildren(h("p", {}, "OK. Your next step is on the screen.")); scHide = setTimeout(close, 4000); }
+    else close();
+  };
+  card.append(h("p", {}, "Am I working on my reading?"),
+    h("div", { class: "row" },
+      h("button", { class: "btn", type: "button", id: "sc-yes", onclick: () => answer("yes") }, "Yes"),
+      h("button", { class: "btn ghost", type: "button", id: "sc-notyet", onclick: () => answer("notyet") }, "Not yet")));
+  slot.replaceChildren(card);
+  scOpen = true;
+  scHide = setTimeout(() => { if (!preview) { S.self.none++; save(); } close(); }, 12000);
+}
+setInterval(() => {
+  if (document.hidden) return;
+  if (S.phase === "read") S.clock.read++;
+  else if (S.phase === "q") S.clock.q++;
+  else { elapsed = 0; return; }
+  if ((S.clock.read + S.clock.q) % 10 === 0) save();
+  if (!S.settings.checkMin || scOpen) return;
+  if (++elapsed >= S.settings.checkMin * 60) { elapsed = 0; showSelfCheck(false); }
+}, 1000);
+
+/* ============================ go ============================ */
+let wake = null;
+function render(keepSpeech) {
+  clearTimeout(wake);
+  if (keepSpeech !== true) stopSpeech();
+  renderPlan();
+  if (S.phase === "start") renderStart();
+  else if (S.phase === "read") renderRead();
+  else if (S.phase === "mid") renderMid();
+  else if (S.phase === "q") renderQuestion();
+  else if (S.phase === "done") renderDone();
+  else renderReport();
+  measure();
+  // Re-draw when a pause after a miss, or the minimum reading time, runs out.
+  let left = lockLeft();
+  if (S.phase === "read" && S.stage === "reading") {
+    const need = Math.ceil(words(R.paras[S.part].s.join(" ")).length / READ_WORDS_PER_SEC) * 1000;
+    left = Math.max(0, need - (Date.now() - S.partT0));
+  }
+  if (left > 0) wake = setTimeout(() => render(true), left + 40);
+}
+render();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+})();
+</script>
+
+</body></html>
