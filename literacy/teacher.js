@@ -85,7 +85,7 @@ function renderGradebook(){
   const add = h("section", { class:"panel" }); add.append(h("h2", {}, "Add a student"));
   add.append(h("div", { class:"planner" }, `<label for="nsName">First name<input id="nsName" type="text" autocomplete="off" maxlength="40"></label><label for="nsPin">PIN (4 to 8 digits)<input id="nsPin" type="text" inputmode="numeric" maxlength="8" autocomplete="off"></label>`));
   const ab = h("button", { class:"btn", type:"button" }, "Add student"); const am = h("span", { class:"muted", role:"status" }); const ar = h("div", { class:"q-actions" }); ar.append(ab, am); add.append(ar);
-  add.append(h("p", { class:"muted small" }, "Students sign in with this first name and PIN. PINs can’t be looked up later, so note them down; you can give a student a new PIN at any time from their page. A new student starts with all six OSSLT modules."));
+  add.append(h("p", { class:"muted small" }, "Students sign in with this first name and PIN. PINs can’t be looked up later, so note them down; you can give a student a new PIN at any time from their page. A new student starts with all the OSSLT modules. Untick any you don’t want them to see."));
   ab.onclick = async () => {
     const n = $("#nsName").value.trim(), p = $("#nsPin").value.trim();
     if(!n || !/^\d{4,8}$/.test(p)){ am.textContent = "Enter a name and a PIN of 4 to 8 digits."; return; }

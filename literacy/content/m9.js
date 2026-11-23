@@ -1,0 +1,68 @@
+// Module 9: extra writing practice with feedback, written November 2026.
+// Fifteen writing questions (conventions, organization, developing ideas) and a new opinion essay.
+MODULES.push({ id:"m9", title:"More Writing", time:"60 min",
+  blurb:"Fifteen new writing questions on sentences, punctuation, word choice and paragraphs, then a new opinion essay. You see the answer and why after each question.",
+  blocks:[
+  {k:"lesson", title:"The fix-it checklist", html:`
+    <p>About a third of the test’s questions are about writing. Most of them test a short list of things. Before you choose an answer, run through this list.</p>
+    <div class="grid2">
+      <div class="cardlet"><h3>Is it a whole sentence?</h3><p>It needs a subject and a verb, and it must make sense alone. Two sentences need a period or a joining word, not just a comma.</p></div>
+      <div class="cardlet"><h3>Do the parts match?</h3><p>Subject and verb agree (“each of the bags <b>has</b>”). The tense stays the same unless the time changes.</p></div>
+      <div class="cardlet"><h3>Is every word the right one?</h3><p>their / there / they’re, your / you’re, then / than, its / it’s. Capitals for names of people, places, days and months.</p></div>
+      <div class="cardlet"><h3>Does the paragraph hold together?</h3><p>One topic sentence, details that support it, transitions that show how ideas connect, and an ending that sums up.</p></div>
+    </div>`},
+  {k:"label", text:"Sentences and punctuation"},
+  {k:"q", type:"single", id:"ww-01", skill:"Complete sentences", fam:"W3", prompt:"Which of these is a complete sentence?",
+    options:["The gym was closed, so practice moved outside.","Because the gym was closed for the whole week.","The students in the back row who were talking.","Running down the hallway with an armful of books."], answer:0,
+    explain:"Only this one has a subject and a verb and makes sense alone. The “because” part needs another sentence to finish it, and the other two never say what the students or the runner did."},
+  {k:"q", type:"single", id:"ww-02", skill:"Run-on sentences", fam:"W3", prompt:"Which is the best way to fix this sentence? <em>“The power went out, we finished the test by flashlight.”</em>",
+    options:["The power went out, so we finished the test by flashlight.","The power went out we finished the test by flashlight.","The power went out, and, we finished the test by flashlight.","The power, went out, we finished the test by flashlight."], answer:0,
+    explain:"Two complete sentences joined by only a comma make a comma splice. Adding “so” after the comma joins them properly. Removing the comma makes a run-on, and the extra commas in the other choices are in the wrong places."},
+  {k:"q", type:"dropdown", id:"ww-03", skill:"Commas", fam:"W3", prompt:"Choose the correctly punctuated words.",
+    parts:["For the hike, we packed ", {o:["sandwiches, apples and water","sandwiches apples and water","sandwiches, apples, and, water"],a:0}, ". ", {o:["After lunch, we","After lunch we,","After, lunch we"],a:0}, " walked to the falls."],
+    explain:"Commas separate items in a list, but there is no comma after “and.” A short opening phrase such as “After lunch” can be followed by a comma, but the comma never goes after “we” or inside the phrase."},
+  {k:"q", type:"single", id:"ww-04", skill:"Apostrophes", fam:"W3", prompt:"Which sentence is correct?",
+    options:["All three students’ phones were dead by noon.","All three student’s phones were dead by noon.","All three students phones were dead by noon.","All three students’s phones were dead by noon."], answer:0,
+    explain:"Three students own the phones. For a plural that already ends in s, add only an apostrophe: students’. “Student’s” would mean one student."},
+  {k:"q", type:"single", id:"ww-05", skill:"Verb tense", fam:"W3", prompt:"Which sentence keeps the same tense all the way through?",
+    options:["We waited at the stop for an hour, but the bus never came.","We waited at the stop for an hour, but the bus never comes.","We wait at the stop for an hour, but the bus never came.","We have waited at the stop for an hour, but the bus never come."], answer:0,
+    explain:"Both actions happened in the past: “waited” and “came.” The other choices mix the past and the present, and “never come” is not a correct form."},
+  {k:"q", type:"single", id:"ww-06", skill:"Capital letters", fam:"W3", prompt:"Which sentence uses capital letters correctly?",
+    options:["Last Tuesday, my aunt drove us to Niagara Falls.","Last tuesday, my Aunt drove us to niagara falls.","Last Tuesday, my Aunt drove us to Niagara falls.","last Tuesday, my aunt drove us to niagara Falls."], answer:0,
+    explain:"Days of the week and the full name of a place get capitals: Tuesday, Niagara Falls. “Aunt” is capitalized only when it is used as part of a name, as in “Aunt Sara.”"},
+  {k:"label", text:"Word choice"},
+  {k:"q", type:"dropdown", id:"ww-07", skill:"Word choice", fam:"W3", prompt:"Choose the correct words.",
+    parts:["If ", {o:["you’re","your"],a:0}, " finished, put ", {o:["your","you’re"],a:0}, " books away. This test is harder ", {o:["than","then"],a:0}, " the last one."],
+    explain:"“You’re” means “you are” (if you are finished). “Your” shows ownership (your books). “Than” compares two things; “then” is about time."},
+  {k:"q", type:"single", id:"ww-08", skill:"Clear pronouns", fam:"W3", prompt:"Which sentence is clearest?",
+    options:["When Ana handed Leah the keys, Leah dropped them.","When Ana handed Leah the keys, she dropped them.","Ana handed Leah the keys, and she dropped them.","She dropped them when Ana handed Leah the keys."], answer:0,
+    explain:"In the other choices, “she” could mean Ana or Leah, so the reader cannot tell who dropped the keys. Naming Leah makes it clear."},
+  {k:"q", type:"single", id:"ww-09", skill:"Formal language", fam:"W3", prompt:"You are writing a letter to your principal. Which sentence is the BEST choice?",
+    options:["I would like to ask whether the library could stay open until five.","Can u keep the library open till 5 cuz it closes too early?","Honestly, the library closing so early is kind of a joke.","Keep the library open later, okay? Everyone wants that."], answer:0,
+    explain:"A letter to a principal needs polite, formal language and full words. The others use texting spelling, slang or a demanding tone."},
+  {k:"label", text:"Paragraphs"},
+  {k:"q", type:"single", id:"ww-10", skill:"Transitions", fam:"W2", prompt:"Choose the best transition. <em>“The trail was icy and steep. ______, we decided to turn back before dark.”</em>",
+    options:["As a result","However","For example","In contrast"], answer:0,
+    explain:"The icy, steep trail is the reason they turned back, so the sentence needs a cause-and-effect transition. “However” and “In contrast” signal the opposite, and “For example” introduces an example."},
+  {k:"q", type:"order", id:"ww-11", skill:"Ordering sentences", fam:"W2", prompt:"Put these sentences in the best order to make a paragraph.",
+    items:["Holding a garage sale takes some planning.","First, sort what you want to sell and put a price on each item.","Next, put up signs around the neighbourhood a few days before the sale.","Finally, set everything out early on the morning of the sale."],
+    explain:"The topic sentence comes first. Then the order words, “First,” “Next” and “Finally,” put the steps in order."},
+  {k:"q", type:"sort", id:"ww-12", skill:"Supporting details", fam:"W1", prompt:"Topic sentence: <em>“Dogs make good companions for older people.”</em> Which sentences support it?", cats:["Supports it","Does not support it"],
+    items:[["Walking a dog gets its owner outside every day.",0],["A dog can make a quiet home feel less lonely.",0],["Some breeds were first raised to herd sheep.",1],["The price of dog food went up last year.",1]],
+    explain:"A supporting sentence must show how a dog helps an older person. Sheep herding and dog food prices are about dogs, but not about companionship."},
+  {k:"q", type:"single", id:"ww-13", skill:"Topic sentences", fam:"W1", prompt:"Which is the best topic sentence for this paragraph?<em>______. In January, the temperature can drop to minus thirty. In July, it can climb above thirty. The weather can change so quickly that people joke about having four seasons in one day.</em>",
+    options:["Winnipeg’s weather has huge extremes.","Winnipeg is the capital of Manitoba.","Many people move to Winnipeg for work.","Cold weather can be bad for your health."], answer:0,
+    explain:"Every detail is about how much the weather changes: very cold, very hot, and fast changes. The other choices are true or possible, but the paragraph does not support them."},
+  {k:"q", type:"single", id:"ww-14", skill:"Supporting details", fam:"W1", prompt:"Which detail gives the MOST specific support for this topic sentence? <em>“Our town’s new bike lanes are making cycling safer.”</em>",
+    options:["Since the lanes opened in May, crashes involving cyclists have dropped by half.","Many people in town say that the new bike lanes are really good.","Bike lanes are a great idea, and every town in Ontario should build them.","Cycling is fun, it is good exercise, and it is better for the air."], answer:0,
+    explain:"Specific support gives facts: when (since May) and how much (crashes dropped by half). The others are opinions or are not about safety."},
+  {k:"q", type:"single", id:"ww-15", skill:"Conclusions", fam:"W2", prompt:"Which sentence would BEST end this paragraph?<em>Our school’s breakfast program helps students in many ways. Students who eat in the morning find it easier to concentrate. The program is free, so no one is left out. It also gives friends a few minutes to talk before class.</em>",
+    options:["For all these reasons, the breakfast program is worth keeping.","Some students would rather sleep in than eat breakfast at school.","The cafeteria also sells hot lunches at noon every day.","Our school first started serving breakfast in 2019."], answer:0,
+    explain:"A good ending sums up the main point without adding a new topic. The other choices add new information that does not wrap up the paragraph."},
+  {k:"label", text:"Opinion essay"},
+  {k:"write", id:"ww-w1", mode:"essay", title:"Opinion essay",
+    prompt:"Is it better to grow up in a small town or in a big city? Write a series of paragraphs that states your opinion and supports it with reasons and details.",
+    target:"Three or more paragraphs, up to about 500 words", min:120, max:500, planner:true,
+    checklist:["My opinion is clear and stays the same all the way through.","Each body paragraph has one main point, specific proof and an explanation.","I used transitions.","My conclusion restates my opinion without adding a new argument.","I proofread for spelling, grammar and punctuation."],
+    model:null}
+  ]});
