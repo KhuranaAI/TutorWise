@@ -439,3 +439,6 @@ Chat tab, What's next, nudges by days-to-due, wins and the weekly review. Runs w
 - Nothing stays unplaced: what does not fit in 7 days gets a date in the next 30 (budget, evening and day-off rules,
   then any day). Items added in the last 7 days that are not on the plan join it; the older backlog does not.
 - Docket taps within 0.9 s of the list changing under the finger are ignored; "stuck" and "not today" can be undone.
+- (v57, BUILD 55) Fees: the chat never volunteers balances; it talks about money owed only when the message is about
+  fees or payments. A fee sync clears this month's amount for any student who is not on this month's sheet (an old
+  amount had been kept for two students who were no longer billed).

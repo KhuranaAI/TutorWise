@@ -13,7 +13,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.nextSkip=[];
-const BUILD=54;
+const BUILD=55;
 const DH=id=>`<span class="dh" data-drag="${id}" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg></span>`;
 /* his own ranking (dragged in Tasks) decides between two ranked items */
 const ordBoth=(a,b)=>Number.isFinite(a.ord)&&Number.isFinite(b.ord)?a.ord-b.ord:0;
@@ -539,7 +539,7 @@ Inbox (unsorted): ${notesOf('inbox').map(n=>String(n.text||'').slice(0,80)).join
 Nightly planning time: ${planAt()}.
 What moves the needle: his goal right now is ${S.settings.goal?'"'+String(S.settings.goal).slice(0,160)+'"':'not written down yet'}; this week is about ${focusItems().length?focusItems().map(x=>'"'+x+'"').join(', '):'nothing he has named yet'}.
 Days off in the next week (his own time; nothing is planned there unless he put it there): ${horizon().filter(offDay).map(d=>DN[dowOf(d)]+' '+d).join(', ')||'none'}.
-Fee reminder due (mention unpaid fees on your own only if yes): ${feeNagOk()?'yes':'no'}.
+Fees: never bring up unpaid fees, balances or who owes what unless his message is about fees, payments or that family.
 Your last replies (never start the same way as any of these): ${(S.dumps||[]).slice(0,6).map(d=>'"'+String(d.reply||'').slice(0,50)+'"').join(' ')}
 `}
 function brainRules(){return `- Task details: every new task gets "cat" (personal, finances, health, work, project, home or people). Give "due", "pri" (1 critical, 2 high, 3 normal, 4 low) and "est" in minutes when he says them. When he gives no priority or no time needed, do not ask: he cannot give context every time. Judge both from what the task is, add it, and mention your guess in a few words only when it is far from obvious. He corrects you when it matters; apply corrections with set_meta. To change details on an existing task use set_meta.
@@ -570,7 +570,7 @@ function brainRules(){return `- Task details: every new task gets "cat" (persona
 - Partly done ("tidied my room a bit", "called, no answer"): keep it open, update est to what is left if he says, and set "when" if he says when he'll finish it. Never mark it done.
 - Ask a question at most once. If you asked something in an earlier reply above and he has not answered, do not ask it again; carry on without it.
 - Money: a payment he received is paid with the amount, the date and the method ("cash" = Cash, e-transfer = ET). The app writes it to his fee sheet (the month's tab of his income sheet: Date Received, Fee Received and Payment Method) and to the TutorWise Billing ledger. If he did not say how he was paid, record it anyway and ask once: "Cash or e-transfer?"; his answer is pay_method. One payment covering two children is one paid op per child. If he says a payment is already in the sheet but missing from billing, use paid with billing_only true.
-- Unpaid fees: bring them up on your own only when \"Fee reminder due\" above is yes (from two weeks into the month, then every few days; sending parents reminders resets it). When he says he sent fee reminders, mark that task done.
+- Unpaid fees: never mention them on your own, not even at the end of an unrelated reply; the app reminds him about fees itself. Only talk about money owed when he asks or his message is about fees or payments, and then use the amounts listed exactly. When he says he sent fee reminders, mark that task done.
 - Schedule questions: the lesson list above was just read fresh from the scheduler. Answer from it exactly. Teaching starts at the first lesson of his own${S.settings.name?' (teacher name '+S.settings.name+')':''} and ends at the last one.
 - What you did: the app's operation results are listed after each of your earlier replies above. Only ever describe what those results show. Never say you cannot reach his fee sheet or billing: the app does both. Never claim you saved, removed or changed anything that no op did.
 - Removing a task ("delete that", "it's not a real task", a duplicate): drop with its id, one per task. Never use week_remove for that.
