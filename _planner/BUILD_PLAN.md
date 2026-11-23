@@ -425,3 +425,17 @@ Chat tab, What's next, nudges by days-to-due, wins and the weekly review. Runs w
 - Things on hold (`s:'waiting'`) are out of the plan and listed under Loose ends with "It came through".
 - Fixes: his saved order no longer bypasses the rules for the things he didn't order; the drive home is reserved after
   teaching; past blocks drop off the docket; long block names are shortened in the greeting.
+
+## Nov 23 update 3: bug fixes (v56, BUILD 54)
+- Board sheet: tabs are written at their real length (capped at the grid, with a "… more" row if ever reached) and padded
+  to clear the previous write; grids enlarged (Week 1000 rows). Week tab covers 30 days, things on hold and project lists.
+  Today tab: section, routine and open-time rows no longer print NaN times.
+- Inbox: a row is re-checked before it is claimed, the claim is confirmed after 2.5 s, and a text already applied in the
+  last 20 minutes is not applied again. Adding a task whose name (with or without a "List:" prefix) matches an open task
+  is skipped.
+- Project lists (`isProjTask`: a project's items, or a title prefix ending in "List:") stay off the day unless pinned;
+  `add` with a project name finds or creates the project and leaves the day empty; set_meta `project`, `delegate`;
+  op `rename_group` renames every open item under a prefix.
+- Nothing stays unplaced: what does not fit in 7 days gets a date in the next 30 (budget, evening and day-off rules,
+  then any day). Items added in the last 7 days that are not on the plan join it; the older backlog does not.
+- Docket taps within 0.9 s of the list changing under the finger are ignored; "stuck" and "not today" can be undone.
