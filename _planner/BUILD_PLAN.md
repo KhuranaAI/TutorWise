@@ -404,3 +404,24 @@ Chat tab, What's next, nudges by days-to-due, wins and the weekly review. Runs w
 - Wide screens: the Jarvis panel has a bar (fold the brain, slide the panel away); a tab on the right edge brings it back;
   talking brings it back. On a phone the brain folds from a button on it. Choices are kept per device.
 - Week view on a phone (from the Calendar), one day per swipe. Page height follows the screen shown.
+
+## Nov 23 update 2: routine time, open-time picks, Jarvis's own read of every task (v55, BUILD 53)
+- Routine time (`isRtn`): things that happen anyway and are never ticked off (washroom, meals, a shower, getting ready,
+  walking the dog). Sources: the task's `rtn` (true/false, his word), Jarvis's read (`rd.type`), then a narrow title rule;
+  plus `settings.routines` [{k, x, min, win: morning|midday|evening|day, days, home}] for recurring ones. The timeline
+  holds that much room in the first free slot of its window from now ("whenever", with "Had it" → today's plan marks),
+  home routines go to the evening on centre days and never on an evening away (`awayEve`). Never picks, never scored,
+  never carried to another day. Model op `routine_time` (days → settings, date → one-day routine task).
+- Optional (`isOpt`): side projects, "if I have time", `opt:true`, or Jarvis's read for non-needle work. Listed on the day
+  as "if time", not timed, not counted, not scored; offered in the open time. `flexLen` items (projects, study sessions)
+  can be taken for however long the block is (`days/{d}.len[id]`).
+- Open time (`kind:'choice'`): gaps of 30+ minutes before teaching (or until 18:00 on a working day without teaching),
+  split into blocks of at most 90 minutes, each with up to four picks: optional things on that day, then work from later
+  in the week (not pinned, not part of a split job, not fees), then later-list items that match this week's focus. A
+  pick pins the task into that slot. Shown on Today, every day's timeline and the week board; "what's next" names it.
+- Jarvis's read (`classify`, `rd` = type, flex, energy, where, est, note, step; `rdV`): every ready or waiting task,
+  week items first, 30 per call, re-read when the title changes. Shown in the task sheet; first step fills "Start:"
+  when he gave none; `rd.est` is used when he gave no estimate; messy jobs are marked.
+- Things on hold (`s:'waiting'`) are out of the plan and listed under Loose ends with "It came through".
+- Fixes: his saved order no longer bypasses the rules for the things he didn't order; the drive home is reserved after
+  teaching; past blocks drop off the docket; long block names are shortened in the greeting.
