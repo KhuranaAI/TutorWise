@@ -442,3 +442,16 @@ Chat tab, What's next, nudges by days-to-due, wins and the weekly review. Runs w
 - (v57, BUILD 55) Fees: the chat never volunteers balances; it talks about money owed only when the message is about
   fees or payments. A fee sync clears this month's amount for any student who is not on this month's sheet (an old
   amount had been kept for two students who were no longer billed).
+
+## Nov 23 update 4: Projects tab, questions list (v58, BUILD 56)
+- The Tasks tab is Projects: a card per project (open / on hold / done counts, next step); a card opens a page with the
+  project's notes, link, an "add to this project" box, and its open, on-hold and done items with their notes and
+  Jarvis's read; status buttons. Items not in a project are listed below ("Not in a project"); search covers all.
+- Questions (`questions/q_<taskId>` or free ones from the model's `ask` op): written every 15 minutes from items that are
+  4+ days old and on the plan, in a project, carried or pushed ("Is this done?"), and from items on hold 3+ days ("Has X
+  got back to you?"); at most 12 open; answers: Done / Still to do / Drop it / It came through / Not now / Answer…
+  (a typed answer goes to Jarvis with the question and task id). Not re-asked for 10 days after an answer. Today's Loose
+  ends links to them; the model sees the open ones and puts non-urgent questions on the list instead of in replies.
+- Voice: the page runtime offers speech-to-text (Chromium tab, desktop app) and a Claude voice for reading aloud
+  (desktop only); no live voice conversation and nothing in the mobile apps, so talking to Claude in its own voice mode
+  and sending things through the Jarvis line stays the voice route.

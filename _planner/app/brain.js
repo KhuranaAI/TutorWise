@@ -13,7 +13,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.nextSkip=[];
-const BUILD=55;
+const BUILD=56;
 const DH=id=>`<span class="dh" data-drag="${id}" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg></span>`;
 /* his own ranking (dragged in Tasks) decides between two ranked items */
 const ordBoth=(a,b)=>Number.isFinite(a.ord)&&Number.isFinite(b.ord)?a.ord-b.ord:0;
@@ -46,6 +46,7 @@ function boot3(){if(!db||S.b3)return;S.b3=true;const err=e=>console.warn(e);
   db.collection('habits').where('date','>=',addD(today(),-60)).onSnapshot(q=>{S.hab=new Map(q.docs.map(d=>[d.id,d.data()]));brainSoon()},err);
   db.doc('agent/patterns').onSnapshot(d=>{S.pat=d.exists?d.data():null;brainSoon()},err);
   db.doc('agent/rank').onSnapshot(d=>{S.rank=d.exists?d.data():null;FM.clear();brainSoon()},err);
+  db.collection('questions').onSnapshot(q=>{S.qs=q.docs.map(d=>({id:d.id,...d.data()}));brainSoon();if(S.view==='all')renderList()},err);
   setInterval(tick3,60000);setTimeout(tick3,6000)}
 let brainT=0;function brainSoon(){clearTimeout(brainT);brainT=setTimeout(()=>{try{renderToday();renderChat();if(S.view==='cal')renderCal()}catch(e){console.warn(e)}},250)}
 
@@ -480,6 +481,7 @@ function brainToday(){FM.clear();const top=$('brainBox'),el=$('brainBox2');if(!t
     if((dow()===0||dow()===1)&&!dd.wr&&!dayDoc(addD(td,-1)).wr&&winsSince(reviewWeekOf()).length)le.push(`<div class="item"><div class="row" style="flex-wrap:nowrap"><div class="grow"><span class="t">Your week in review</span> <span class="m">wins, what slipped, what’s coming</span></div><button class="sm" data-act="weekReview">Open</button></div></div>`);
     const lt=laterPick();if(lt)le.push(`<div class="item"><div class="m">On your later list ${lt.age} days</div><div class="t" style="font-size:15px">${esc(T(lt.t))}</div><div class="row" style="margin-top:6px"><button class="sm" data-act="ltToday" data-id="${lt.t.id}">Do it today</button><button class="sm" data-act="ltWeek" data-id="${lt.t.id}">This week</button><button class="sm ghost" data-act="ltSnooze" data-id="${lt.t.id}">Not yet</button></div></div>`);
     for(const d of unanswered().slice(0,2))le.unshift(`<div class="item"><div class="m">A message from ${esc(chatTime(d.at))} never got an answer</div><div class="t" style="font-size:15px">${esc(short(d.text))}</div><div class="row" style="margin-top:6px"><button class="sm" data-act="chatRetry" data-id="${d.id}">Try it again</button><button class="sm ghost" data-act="chatDrop" data-id="${d.id}">Leave it</button></div></div>`);
+    {const nq=qOpen().length;if(nq)le.unshift(`<div class="item"><div class="row" style="flex-wrap:nowrap"><div class="grow"><span class="t" style="font-size:15px">Jarvis has ${nq} question${nq>1?'s':''} for you</span> <span class="m">answer whenever you have a minute</span></div><button class="sm" data-act="qGo">Open</button></div></div>`)}
     for(const t of waitingList().slice(0,3))le.push(`<div class="item"><div class="m">On hold${t.wait?' until '+esc(t.wait)+(/\b(replies|answers|confirms|gets back)\b/i.test(t.wait)?'':' gets back to you'):''}</div><div class="t" style="font-size:15px">${esc(T(t))}</div><div class="row" style="margin-top:6px"><button class="sm" data-act="waitBack" data-id="${t.id}">It came through</button><button class="sm ghost" data-act="wkItem" data-id="${t.id}">Open</button></div></div>`);
     if(le.length)c.push(`<h2>Loose ends</h2><div class="card">${le.join('')}</div>`)}
   c.push(`<h2>Streaks</h2><div class="card">${skMini()}<div class="row" style="margin-top:6px"><button class="ghost sm" data-act="goStreaks" style="padding-left:0">All streaks</button></div></div>`);
@@ -539,12 +541,14 @@ Inbox (unsorted): ${notesOf('inbox').map(n=>String(n.text||'').slice(0,80)).join
 Nightly planning time: ${planAt()}.
 What moves the needle: his goal right now is ${S.settings.goal?'"'+String(S.settings.goal).slice(0,160)+'"':'not written down yet'}; this week is about ${focusItems().length?focusItems().map(x=>'"'+x+'"').join(', '):'nothing he has named yet'}.
 Days off in the next week (his own time; nothing is planned there unless he put it there): ${horizon().filter(offDay).map(d=>DN[dowOf(d)]+' '+d).join(', ')||'none'}.
+Questions he hasn't answered yet: ${qOpen().slice(0,8).map(q=>q.q+(q.tid&&S.tasks.get(q.tid)?' ('+short(T(S.tasks.get(q.tid)))+')':'')).join('; ')||'none'}.
 Fees: never bring up unpaid fees, balances or who owes what unless his message is about fees, payments or that family.
 Your last replies (never start the same way as any of these): ${(S.dumps||[]).slice(0,6).map(d=>'"'+String(d.reply||'').slice(0,50)+'"').join(' ')}
 `}
 function brainRules(){return `- Task details: every new task gets "cat" (personal, finances, health, work, project, home or people). Give "due", "pri" (1 critical, 2 high, 3 normal, 4 low) and "est" in minutes when he says them. When he gives no priority or no time needed, do not ask: he cannot give context every time. Judge both from what the task is, add it, and mention your guess in a few words only when it is far from obvious. He corrects you when it matters; apply corrections with set_meta. To change details on an existing task use set_meta.
 - Routine time: things that happen anyway and are never ticked off (the washroom, breakfast, lunch, a shower, getting ready, walking the dog) are never tasks. Use routine_time with the minutes and the part of the day; "days" ([1,2,3,4,5] for weekdays, 0 is Sunday) when it happens on more than one day, else "date". The app keeps that much room loosely in that part of the day and the rest flows around it. Cooking or meal prep for the week is a task, not routine time. If an existing task is really routine time, set_meta "is":"routine"; if he says something is a real to-do, "is":"todo".
 - Optional work: side projects (his apps), anything he says "if I have time" about, nice-to-haves nobody is waiting on. Add them with "optional":true (or set_meta "is":"optional"). The app does not force optional things into the day: it lists them and offers them in the open time as a pick. Open time of half an hour or more before teaching is shown as "Your pick" with a few things that would move the week; that is how a day stays full without forcing anything.
+- Questions: when you need something from him that can wait (a detail, whether an old task is still wanted), do not end the reply with it; add an ask op, and it goes on his questions list. Only ask in the reply when you cannot act without the answer right now. A message that starts "(Answering your question ...)" is his answer to one of those: act on it with the task id given.
 - Project lists: when he lists jobs for a project or a list (for example a maintenance list, work to delegate), add each with "project" set to its name and no day. Project items never go on his day unless he says so; give "due" only as a target date he states, and set_meta "delegate" when someone else will do it. One message is one set of tasks: never add the same job twice, and check the list before adding.
 - Renaming a list or prefix ("call that list X") is one rename_group op; it renames every open item under it.
 - Status words go to the task he names: "on hold", "waiting on", "stuck" for the Wafa message means update that task's id only. Never mark a different task.
@@ -579,13 +583,14 @@ function brainRules(){return `- Task details: every new task gets "cat" (persona
 - Your reply must match what your ops actually do. Never say you are rebuilding, checking or updating something unless an op does it; the app re-plans by itself after every change.
 - Voice: vary your wording every time; never open the way any of your last replies did, and do not open with "Understood". Be brief, natural and a little clever, never cute. Confirm changes in a few words. Ask at most one short question. Never invent tasks, events or details he did not give.
 `}
-const brainOps=()=>`{"op":"set_meta","id":"","cat":"","due":null,"pri":null,"est":null,"messy":null,"when":null,"where":null,"needle":null,"kind":null,"is":null,"project":null,"delegate":null},{"op":"rename_group","from":"old list or prefix name","to":"new name"},{"op":"routine_time","title":"","minutes":25,"part":"morning|midday|evening|day","date":null,"days":null},{"op":"focus","items":[""],"goal":null},{"op":"block","title":"","from":"HH:MM","to":"HH:MM","date":null},{"op":"work_day","date":"YYYY-MM-DD","on":true},{"op":"note_drop","contains":"words from the note to remove"},{"op":"drop","id":""},{"op":"progress","id":"","minutes":30,"note":"","left":null,"next":null},{"op":"note","kind":"note|app|inbox","text":""},{"op":"low_energy","date":"YYYY-MM-DD","on":true},{"op":"day_start","date":"YYYY-MM-DD","at":"HH:MM","wake":false,"plan_wake":null},{"op":"routine","ready_min":75},{"op":"plan_time","at":"21:00","once":false},{"op":"chore","title":"","every_days":7,"est":30},{"op":"person","name":"","every_days":14,"how":"Message","note":""},{"op":"touched","name":""},{"op":"project","name":"","status":null,"next":"","note":"","url":null},{"op":"habit","name":"","per_week":3},{"op":"habit_done","name":"workout","date":null},{"op":"whats_next"},`;
+const brainOps=()=>`{"op":"set_meta","id":"","cat":"","due":null,"pri":null,"est":null,"messy":null,"when":null,"where":null,"needle":null,"kind":null,"is":null,"project":null,"delegate":null},{"op":"rename_group","from":"old list or prefix name","to":"new name"},{"op":"ask","q":"one short question for him","id":null},{"op":"routine_time","title":"","minutes":25,"part":"morning|midday|evening|day","date":null,"days":null},{"op":"focus","items":[""],"goal":null},{"op":"block","title":"","from":"HH:MM","to":"HH:MM","date":null},{"op":"work_day","date":"YYYY-MM-DD","on":true},{"op":"note_drop","contains":"words from the note to remove"},{"op":"drop","id":""},{"op":"progress","id":"","minutes":30,"note":"","left":null,"next":null},{"op":"note","kind":"note|app|inbox","text":""},{"op":"low_energy","date":"YYYY-MM-DD","on":true},{"op":"day_start","date":"YYYY-MM-DD","at":"HH:MM","wake":false,"plan_wake":null},{"op":"routine","ready_min":75},{"op":"plan_time","at":"21:00","once":false},{"op":"chore","title":"","every_days":7,"est":30},{"op":"person","name":"","every_days":14,"how":"Message","note":""},{"op":"touched","name":""},{"op":"project","name":"","status":null,"next":"","note":"","url":null},{"op":"habit","name":"","per_week":3},{"op":"habit_done","name":"workout","date":null},{"op":"whats_next"},`;
 async function brainAdd(id,o){const c={};if(CATS[o.cat])c.cat=o.cat;if(o.kind==='routine')c.rtn=true;if(o.optional===true)c.opt=true;if(o.messy===true)c.messy=true;if(o.project&&String(o.project).trim()){const pn=norm(o.project);let p=S.projects.find(x=>norm(x.name)===pn)||S.projects.find(x=>pn.length>5&&(norm(x.name).includes(pn)||pn.includes(norm(x.name))));
     if(!p){const ref=db.collection('projects').doc(),doc={name:String(o.project).trim().slice(0,80),status:'active',since:today(),last:today(),up:stamp()};await ref.set(doc);p={id:ref.id,...doc};S.projects=[...S.projects,p]}c.proj=p.id;if(!o.today&&!isDate(o.day||'')){c.day=null;c.pin=false}}
   if(typeof o.delegate==='string'&&o.delegate.trim())c.dlg=o.delegate.trim().slice(0,40);if(Object.keys(c).length){S.tasks.set(id,{...S.tasks.get(id),...c});await up(id,c)}}
 async function brainOp(o,out,src){const td=today();
   if(o.op==='focus'){const items=(Array.isArray(o.items)?o.items:[]).map(x=>String(x||'').trim().slice(0,80)).filter(Boolean).slice(0,3),c={};if(items.length)c.focus={items,wk:wkKey(),at:today()};if(typeof o.goal==='string'&&o.goal.trim())c.goal=o.goal.trim().slice(0,200);
     if(!Object.keys(c).length)return true;S.settings={...S.settings,...c};FM.clear();await db.doc('settings/main').update(c).catch(()=>{});out.push(items.length?'this week is about: '+items.join(', '):'goal saved');await applyWeek(false);if(typeof classifySoon==='function')classifySoon();return true}
+  if(o.op==='ask'&&o.q){const q=String(o.q).trim().slice(0,200),tid=S.tasks.has(o.id)?o.id:null;if(S.qs.some(x=>!x.ans&&norm(x.q)===norm(q)))return true;await db.collection('questions').doc().set({tid,kind:'ask',q,pr:1,at:stamp(),ans:null}).catch(()=>{});out.push('question saved for later');return true}
   if(o.op==='rename_group'&&o.from&&o.to){const f=String(o.from).trim(),to=String(o.to).trim().slice(0,80),fn=norm(f);let n=0;
     for(const t of [...S.tasks.values()]){if(!(t.s==='ready'||t.s==='waiting'))continue;const m=String(t.t).match(/^([^:]{2,80}):\s*(.*)$/);if(!m||norm(m[1])!==fn)continue;await upL(t.id,{t:(to+': '+m[2]).slice(0,200)});n++}
     out.push(`renamed ${n} item${n===1?'':'s'}: ${f} → ${to}`);return true}
@@ -708,7 +713,7 @@ async function logProgress(id,min,note,left,next){const t=S.tasks.get(id);if(!t)
 
 /* ---------- the minute tick ---------- */
 const quiet3=()=>V.state==='idle'&&$('sheet').hidden&&!(document.activeElement&&/TEXTAREA|INPUT|SELECT/.test(document.activeElement.tagName)&&document.activeElement.value);
-async function tick3(){if(today()!==S.day&&!window.__HQ_DAY&&quiet3()){location.reload();return}if(!S.loaded||!S.daysKnown||!db)return;buildCheck();if(!autoOk())return;try{await learnSave();await replanOnce();await spawnDue();
+async function tick3(){if(today()!==S.day&&!window.__HQ_DAY&&quiet3()){location.reload();return}if(!S.loaded||!S.daysKnown||!db)return;buildCheck();if(!autoOk())return;try{await learnSave();await replanOnce();await spawnDue();if(!S.qGenAt||Date.now()-S.qGenAt>15*6e4){S.qGenAt=Date.now();await qGen()}
   const dd=dayDoc(today());if(nowHM()>=planAt()&&!dd.night&&!offDay(addD(today(),1))&&!S.nightBusy&&document.visibilityState==='visible'&&quiet3()&&S.view==='today'){S.nightBusy=true;try{await nightly()}finally{S.nightBusy=false}}}catch(e){console.warn(e)}}
 
 /* ---------- hooks into the older screens ---------- */
@@ -1277,6 +1282,62 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
     waitBack:async()=>{if(!S.tasks.has(id))return;await upL(id,{s:'ready',wait:null});await pinItem(id,today());await applyWeek(false);renderAll();toast('Back on today.',1600)}};
   if(H4[a]){e.stopImmediatePropagation();e.preventDefault();try{await H4[a]()}catch(er){console.warn(er);toast('That didn’t work. Try again.',2000)}}},true);
 
+/* ---------- Projects tab: each project opens into everything about it; loose tasks sit at the bottom ---------- */
+const projOf=t=>t&&t.proj?S.projects.find(p=>p.id===t.proj)||null:null;
+function projTasks(p){return [...S.tasks.values()].filter(t=>t.proj===p.id)}
+function projCard(p){const l=projTasks(p),op=l.filter(t=>t.s==='ready').length,hd=l.filter(t=>t.s==='waiting').length,dn=l.filter(t=>t.s==='done').length;
+  return `<button class="pjc${(p.status||'active')!=='active'?' off':''}" data-act="pgOpen" data-id="${p.id}"><b>${esc(p.name)}</b><small>${op?op+' open':'nothing open'}${hd?' · '+hd+' on hold':''}${dn?' · '+dn+' done':''}${(p.status||'active')!=='active'?' · '+esc(p.status):''}</small>${p.next?`<span class="m">Next: ${esc(short(p.next))}</span>`:''}</button>`}
+function projPage(p){const l=projTasks(p),row=t=>`<div class="item" data-act="wkItem" data-id="${t.id}" role="button" tabindex="0"><div class="row" style="flex-wrap:nowrap"><div class="grow"><span class="t" style="font-size:15px">${esc((x=>x[0].toUpperCase()+x.slice(1))(T(t).replace(/^[^:]{3,80}\blist\s*:\s*/i,'')||T(t)))}</span><div class="m">${[t.day?'on '+dayWord(t.day):'',t.due?'target '+dayName(t.due):'',t.dlg?'for '+esc(t.dlg):'',t.s==='waiting'&&t.wait?'waiting on '+esc(t.wait):'',t.est?durS(estOf(t)):''].filter(Boolean).join(' · ')}</div>${t.n?`<div class="m" style="white-space:pre-wrap;margin-top:4px">${esc(String(t.n).slice(0,400))}</div>`:''}${t.rd?.note?`<div class="m" style="margin-top:2px">Jarvis’s read: ${esc(t.rd.note)}</div>`:''}</div>${t.s!=='done'?XB(t.id):''}</div></div>`;
+  const open=l.filter(t=>t.s==='ready'),hold=l.filter(t=>t.s==='waiting'),done=l.filter(t=>t.s==='done').sort((a,b)=>String(b.doneAt||'').localeCompare(String(a.doneAt||'')));
+  return `<div class="row" style="margin:0 0 8px"><button class="sm ghost" data-act="pjBack" style="padding-left:0">← All projects</button></div>
+  <div class="card"><div class="row" style="flex-wrap:nowrap;align-items:flex-start"><div class="grow"><h3 style="font:600 20px var(--disp);margin:0">${esc(p.name)}</h3><div class="m">${esc(p.status||'active')}${p.since?' · since '+esc(dayName(p.since)):''}</div></div>${p.url?`<a class="sm" href="${esc(p.url)}" target="_blank" rel="noopener">Open</a>`:''}</div>
+    ${p.n?`<p style="white-space:pre-wrap;margin:10px 0 0">${esc(p.n)}</p>`:''}${p.next?`<p class="m" style="margin:6px 0 0"><b>Next:</b> ${esc(p.next)}</p>`:''}
+    <div class="qadd" style="margin-top:12px"><input id="pjAdd" data-id="${p.id}" placeholder="Add to ${esc(p.name)}…" enterkeyhint="done" autocomplete="off" aria-label="Add a task to ${esc(p.name)}"><div class="row" style="margin-top:6px"><button class="sm pri" data-act="pjAddGo" data-id="${p.id}">Add</button><span class="m">It stays on this list, off your day, until you put it on a day.</span></div></div></div>
+  <h2>Open · ${open.length}</h2><div class="card">${open.map(row).join('')||'<div class="m">Nothing open.</div>'}</div>
+  ${hold.length?`<h2>On hold · ${hold.length}</h2><div class="card">${hold.map(row).join('')}</div>`:''}
+  ${done.length?`<h2>Done · ${done.length}</h2><div class="card">${done.slice(0,15).map(row).join('')}</div>`:''}
+  <div class="row" style="margin-top:12px">${['active','paused','done'].filter(x=>x!==(p.status||'active')).map(x=>`<button class="sm ghost" data-act="pgStatus" data-id="${p.id}" data-s="${x}">${x==='active'?'Make active':x==='paused'?'Pause':'Mark finished'}</button>`).join('')}</div>`}
+{const _rl2=renderList;renderList=function(){_rl2();const box=$('projBox');if(!box)return;const sel=S.projects.find(p=>p.id===S.projSel),tq=($('taskQ')?.value||'').trim();
+  for(const id of ['chkBox','areaChips','statChips','allList','looseH'])if($(id))$(id).hidden=!!sel;
+  if(sel){box.innerHTML=projPage(sel);return}
+  const act=S.projects.filter(p=>(p.status||'active')!=='done').sort((a,b)=>projTasks(b).filter(t=>t.s==='ready').length-projTasks(a).filter(t=>t.s==='ready').length||String(a.name).localeCompare(String(b.name))),fin=S.projects.filter(p=>p.status==='done');
+  box.innerHTML=`<h2 style="margin-top:4px">Projects</h2><div class="pjg">${act.map(projCard).join('')}<button class="pjc add" data-act="projects" data-k="edit"><b>+ New project</b><small>or say “new project: …”</small></button></div>${fin.length?`<div class="m" style="margin-top:8px">Finished: ${fin.map(p=>`<button class="lnk2" data-act="pgOpen" data-id="${p.id}">${esc(p.name)}</button>`).join(', ')}</div>`:''}${qCard(S.qAll?99:3)}<h2 id="looseH">${tq?'Search results':'Not in a project'}</h2>`}}
+/* ---------- questions Jarvis has for him: answer whenever there's time ---------- */
+S.qs=[];
+function qOpen(){return S.qs.filter(q=>!q.ans).sort((a,b)=>(b.pr||0)-(a.pr||0)||String(a.at).localeCompare(String(b.at)))}
+function qCard(lim){const l=qOpen();if(!l.length)return'';const L=l.slice(0,lim||6);
+  const btn=(q,v,t,c)=>`<button class="sm${c?' '+c:''}" data-act="qAns" data-id="${q.id}" data-v="${v}">${t}</button>`;
+  return `<h2 style="margin-top:4px">Questions for you · ${l.length}</h2><div class="card">${L.map(q=>{const t=S.tasks.get(q.tid);
+    return `<div class="item"><div class="t" style="font-size:15px">${esc(q.q)}</div>${t&&q.kind!=='ask'?`<div class="m">${esc(T(t))}${projOf(t)?' · '+esc(projOf(t).name):''}</div>`:''}<div class="row" style="margin-top:6px">${q.kind==='done'?btn(q,'done','Done','pri')+btn(q,'todo','Still to do')+btn(q,'drop','Drop it','ghost'):q.kind==='wait'?btn(q,'back','It came through','pri')+btn(q,'still','Still waiting')+btn(q,'drop','Drop it','ghost'):''}<button class="sm ghost" data-act="qSay" data-id="${q.id}">Answer…</button><button class="sm ghost" data-act="qAns" data-id="${q.id}" data-v="skip" aria-label="Not now">Not now</button></div></div>`}).join('')}${l.length>L.length?`<div class="row" style="margin-top:6px"><button class="sm ghost" data-act="qMore" style="padding-left:0">Show all ${l.length}</button></div>`:''}</div>`}
+/* the questions write themselves from the list: things that slid, sat untouched, or wait on someone */
+async function qGen(){if(!db||!S.loaded||!autoOk())return;const td=today(),have=new Map(S.qs.map(q=>[q.tid,q])),fresh=t=>{const q=have.get(t.id);return !q||(q.ans&&-dayDiff(dayOf(q.ansAt||q.at))>=10&&q.ans!=='drop')};
+  if(qOpen().length>=12)return;const out=[],age=t=>-dayDiff(dayOf(t.up)||t.since||td);
+  for(const t of S.tasks.values()){if(t.daily||t.chore||t.person||isRtn(t))continue;
+    const made=-dayDiff(t.since||dayOf(t.up)||td);if(t.s==='ready'&&made>=4&&(inPlan(t)||t.proj||t.carried||(t.defer||0)>=1)&&fresh(t))out.push({t,kind:'done',q:'Is this done?',pr:(inPlan(t)?3:0)+(t.proj?1:0)+Math.min(3,(t.defer||0))+(t.carried?2:0)+Math.min(3,made/7)});
+    else if(t.s==='waiting'&&age(t)>=3&&fresh(t))out.push({t,kind:'wait',q:t.wait?`Has ${t.wait} got back to you?`:'Is this still on hold?',pr:2})}
+  out.sort((a,b)=>b.pr-a.pr);const n=Math.max(0,12-qOpen().length);
+  for(const x of out.slice(0,n)){const doc={tid:x.t.id,kind:x.kind,q:x.q,pr:x.pr,at:stamp(),ans:null};await db.doc('questions/q_'+x.t.id).set(doc).catch(()=>{})}}
+async function qAnswer(q,v){const t=S.tasks.get(q.tid);
+  if(v==='done'&&t)await finishTask(t.id,'answered a question');
+  else if(v==='drop'&&t)await upL(t.id,{s:'parked',dropped:today()});
+  else if(v==='back'&&t){await upL(t.id,{s:'ready',wait:null});await pinItem(t.id,today())}
+  else if(v==='todo'&&t)await upL(t.id,{up:stamp()});
+  await db.doc('questions/'+q.id).update({ans:v,ansAt:stamp()}).catch(()=>{});if(t)await applyWeek(false)}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,id=b.dataset.id;
+  const H5={pgOpen:()=>{S.projSel=id;show('all');renderList();scrollTo(0,0)},pjBack:()=>{S.projSel='';renderList()},
+    qGo:()=>{S.projSel='';S.qAll=true;show('all');renderList();setTimeout(()=>document.querySelector('[data-act=qAns]')?.scrollIntoView({block:'center'}),100)},
+    qMore:()=>{S.qAll=true;renderList()},
+    pjAddGo:async()=>{const i=$('pjAdd'),x=(i?.value||'').trim(),p=S.projects.find(y=>y.id===id);if(!x||!p)return;if(dupOf(x)){toast('Already on a list.',1600);return}
+      const tid='t'+Date.now().toString(36)+'p',doc={t:x.slice(0,200),a:'other',cat:'work',s:'ready',p:3,due:null,hard:false,est:null,next:'',ai:false,n:'',proj:id,src:'project '+today(),since:today(),up:stamp()};
+      S.tasks.set(tid,{id:tid,...doc});await db.doc('tasks/'+tid).set(doc);i.value='';renderList();toast('Added to '+p.name+'.',1400);if(typeof classifySoon==='function')classifySoon()},
+    pgStatus:async()=>{await db.doc('projects/'+id).update({status:b.dataset.s,up:stamp()}).catch(()=>{});toast('Saved.',1200)},
+    qAns:async()=>{const q=S.qs.find(x=>x.id===id);if(!q)return;const v=b.dataset.v;if(v==='skip'){await db.doc('questions/'+id).update({pr:-5}).catch(()=>{});return}await qAnswer(q,v);toast(v==='done'?'Marked done.':v==='drop'?'Dropped.':v==='back'?'Back on today.':'Noted.',1400)},
+    qSay:()=>{const q=S.qs.find(x=>x.id===id);if(!q)return;const t=S.tasks.get(q.tid);S.qCtx={id,q:q.q,tid:q.tid,tt:t?T(t):''};show('chat');const i=$('chatIn');if(i){i.value='';i.placeholder='Your answer: '+(q.q+(t?' ('+short(T(t))+')':'')).slice(0,80);i.focus()}}};
+  if(H5[a]){e.stopImmediatePropagation();e.preventDefault();try{await H5[a]()}catch(er){console.warn(er);toast('That didn’t work. Try again.',2000)}}},true);
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target?.id==='pjAdd'){e.preventDefault();document.querySelector('[data-act=pjAddGo]')?.click()}});
+/* an answer typed for a question goes to Jarvis with the question attached */
+{const _r5=respond;respond=async function(text,byVoice){const c=S.qCtx;if(c&&text&&String(text).trim()){S.qCtx=null;const i=$('chatIn');if(i)i.placeholder='Message Jarvis…';db?.doc('questions/'+c.id).update({ans:'said',ansAt:stamp(),said:String(text).slice(0,300)}).catch(()=>{});
+    return _r5(`(Answering your question "${c.q}"${c.tt?` about the task "${c.tt}" (id ${c.tid})`:''}) ${text}`,byVoice)}return _r5(text,byVoice)}}
 /* ---------- fitting the screen ----------
    In the Claude app this page can sit in a frame taller than the phone's screen, with the app doing the scrolling. Then
    anything pinned to the frame's top or bottom ends up off screen. Thin markers down the page tell us which part of the
