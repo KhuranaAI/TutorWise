@@ -13,7 +13,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.nextSkip=[];
-const BUILD=51;
+const BUILD=52;
 const DH=id=>`<span class="dh" data-drag="${id}" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg></span>`;
 /* his own ranking (dragged in Tasks) decides between two ranked items */
 const ordBoth=(a,b)=>Number.isFinite(a.ord)&&Number.isFinite(b.ord)?a.ord-b.ord:0;
@@ -100,17 +100,32 @@ function autoOkOn(t,d){if(!offDay(d))return true;if((t.pin||hm(t.at||''))&&t.day
 const eveMax=()=>{const v=S.settings.eveMax;return v!==''&&v!=null&&Number.isFinite(+v)?Math.max(0,+v):60};
 /* minutes from waking to starting work: getting ready, food, the drive to the centre. What he set, else what his days show, else 75 */
 function readyMin(d){const st=+S.settings.readyMin;if(st>0)return st;const p=pat();return p.ready||75}
-function wakeOf(d){const day=dayDoc(d);if(hm(day.wake||''))return day.wake;if(d===today()){const u=(S.hab.get(d)||S.habits.get(d)||{}).upAt;if(hm(u||'')&&u<=nowHM())return u}return''}
-function dayStart(d){const day=dayDoc(d),p=pat();if(hm(day.start||''))return day.start;
-  const off=offDay(d),ready=off?45:readyMin(d),w0=wakeOf(d);if(w0)return hmS(Math.ceil((toM(w0)+ready)/15)*15);
+/* An elastic morning. The day record holds the plan (`wake` = when he means to get up, `start` = when he means to be at
+   work); what he actually did is the "up" time on that day's habits record. Wake later than planned and the start, the
+   morning blocks and the morning reminders all move later by the same amount; nothing is rewritten, it is worked out. */
+const upAtOf=d=>{const u=(S.hab.get(d)||S.habits.get(d)||{}).upAt;return hm(u||'')?u:''};
+function planWakeOf(d){const day=dayDoc(d);if(hm(day.wake||''))return day.wake;if(!hm(day.start||''))return'';
+  const b=(day.busy||[]).find(x=>hm(x.s||'')&&x.e===day.start&&/wake|get up/i.test(x.x||''));if(b)return b.s;
+  return !isWE(d)&&hm(S.settings.wake||'')&&S.settings.wake<day.start?S.settings.wake:''}
+function shiftOf(d){if(d!==today())return 0;const day=dayDoc(d),u=upAtOf(d),pw=planWakeOf(d);if(!u||!pw||!hm(day.start||'')||u>nowHM())return 0;const dl=toM(u)-toM(pw);return dl<5?0:Math.min(180,Math.round(dl/5)*5)}
+function wakeOf(d){if(d===today()){const u=upAtOf(d);if(u&&u<=nowHM())return u}return planWakeOf(d)}
+function dayStart(d){const day=dayDoc(d),p=pat();if(hm(day.start||''))return addMin(day.start,shiftOf(d));
+  const off=offDay(d),ready=off?45:readyMin(d),w0=wakeOf(d),q=d===today()&&upAtOf(d)?5:15;if(w0)return hmS(Math.ceil((toM(w0)+ready)/q)*q);
   const w=isWE(d)?p.wake?.we:p.wake?.wd;if(w)return hmS(Math.max(toM('07:00'),Math.ceil((toM(w)+ready)/15)*15));
   return off?'10:30':(S.settings.workStart||'09:00')}
+/* what to say when he gets up: how late or early, what moved, whether it all still fits, and the first thing */
+function upMsg(t){FM.clear();const td=today(),pw=planWakeOf(td),sh=shiftOf(td),ds=dayStart(td),tt=teachOf(td),centre=!!tt&&!isWE(td),tl=timeline(td),over=tl.filter(x=>x.kind==='task'&&x.s==null),first=tl.filter(x=>x.kind==='task'&&x.s!=null).sort((a,b)=>a.s-b.s)[0],dl=pw?toM(t)-toM(pw):null;
+  let m=`Up at ${t12(t)}`+(dl==null?'.':sh?`, about ${dur(sh)} later than planned.`:dl>=5?`, ${dur(dl)} later than planned.`:dl<=-5?`, ${dur(-dl)} ahead of plan.`:', right on plan.');
+  if(sh)m+=` So the whole morning moves ${dur(sh)}: ${centre?'at the centre':'you start'} at ${t12(ds)} instead of ${t12(dayDoc(td).start)}.`;
+  else if(!offDay(td))m+=` ${centre?'At the centre':'You start'} at ${t12(ds)}.`;
+  if(!offDay(td))m+=over.length?` At this pace ${over.length===1?'one thing doesn’t':over.length+' things don’t'} fit today: ${lst(over.slice(0,3).map(x=>short(x.t)))}. No harm, ${over.length===1?'it stays':'they stay'} last in line.`:' Everything still fits.';
+  return m+(first?` First: ${short(first.t)}.`:'')}
 function dayEnd(d){const tt=teachOf(d);return tt?tt.s:(isWE(d)?'20:00':'21:30')}
 const travelMin=()=>+S.settings.travel||20;
 function fixedOn(d){const evs=evOn(d).filter(e=>hm(e.s||'')),out=[];
-  for(const b of busyOn(d)){const e=evs.find(x=>x.id===b.id),tr=e?.where?travelMin():0;out.push({s:toM(b.s)-tr,e:toM(b.e)+tr,es:toM(b.s),ee:toM(b.e),t:b.x||'Busy',kind:'fixed',travel:tr,where:e?.where||'',eid:b.id||'',blk:!b.id,bs:b.s,be:b.e})}
+  for(const b of busyOn(d)){const e=evs.find(x=>x.id===b.id),tr=e?.where?travelMin():0;out.push({s:toM(b.s)-tr,e:toM(b.e)+tr,es:toM(b.s),ee:toM(b.e),t:b.x||'Busy',kind:'fixed',travel:tr,where:e?.where||'',eid:b.id||'',blk:!b.id,bs:b.s0||b.s,be:b.e0||b.e})}
   const tt=teachOf(d);if(tt)out.push({s:toM(tt.s),e:toM(tt.e),es:toM(tt.s),ee:toM(tt.e),t:'Teaching',kind:'teach'});
-  const wk=wakeOf(d),ds=dayStart(d);if(wk&&toM(ds)>toM(wk)&&!(d===today()&&nowHM()>=ds))out.push({s:toM(wk),e:toM(ds),es:toM(wk),ee:toM(ds),t:isWE(d)?'Wake up, get ready':'Wake up, get ready, get to the centre',kind:'fixed'});
+  const wk=wakeOf(d),ds=dayStart(d);if(wk&&toM(ds)>toM(wk)&&!(d===today()&&nowHM()>=ds)&&!out.some(f=>f.blk&&f.es<=toM(wk)+20&&f.ee>=toM(ds)-15))out.push({s:toM(wk),e:toM(ds),es:toM(wk),ee:toM(ds),t:isWE(d)?'Wake up, get ready':'Wake up, get ready, get to the centre',kind:'fixed'});
   return out.sort((a,b)=>a.s-b.s)}
 function travelWarn(d){const ev=evOn(d).filter(e=>hm(e.s||'')).map(e=>({...e,en:hm(e.e||'')&&e.e>e.s?e.e:addMin(e.s,60)})),w=[];
   for(let i=1;i<ev.length;i++){const a=ev[i-1],b=ev[i];if(!a.where&&!b.where)continue;if(a.where&&b.where&&norm(a.where)===norm(b.where))continue;
@@ -236,11 +251,12 @@ function timeline0(d){const live=d===today(),marks=live?(S.plan?.marks||{}):{},p
   const tt0=teachOf(d),lim=tt0?Math.min(toM('22:00'),toM(tt0.e)+eveMax()):toM('22:30'),fx=fixedOn(d),out=fx.map(f=>({...f})),taken=fx.map(f=>[f.s,f.e]);
   const items=weekItems().filter(t=>t.day===d&&!isDone(t)&&!marks[t.id]).concat(dailiesOn(d).filter(t=>!marks[t.id]&&t.last!==d));
   const deep=t=>estOf(t)>=60&&!isFill(t);
-  const mo=ordOf(d),mi=id=>{const k=mo.indexOf(id);return k<0?1e6:k},manual=mo.length>0;
+  const amT=t=>!!t&&/\b(breakfast|first thing|before work)\b/i.test((t.t||'')+' '+(t.when||''))&&!hm(t.at||'');
+  const mo=ordOf(d),mi=id=>{const k=mo.indexOf(id);return k<0?(amT(S.tasks.get(id))?-1:1e6):k},manual=mo.length>0;
   const centreDay=!!tt0&&!isWE(d),ts=tt0?toM(tt0.s):0;
   /* at the centre, personal errands wait until the work is done, unless he gave them a time or put them in order himself */
-  const gate=centreDay&&rankW().life<=-1,lifeT=t=>gate&&ctxOf(t)==='life'&&!hm(t.at||'')&&!t.daily;
-  const auto=(x,y)=>(isFill(x.t)-isFill(y.t))||(lifeT(x.t)-lifeT(y.t))||ordBoth(x.t,y.t)||(y.rk-x.rk)||String(x.t.id).localeCompare(String(y.t.id));
+  const gate=centreDay&&rankW().life<=-1,lifeT=t=>gate&&ctxOf(t)==='life'&&!hm(t.at||'')&&!t.daily&&!amT(t);
+  const auto=(x,y)=>(amT(y.t)-amT(x.t))||(isFill(x.t)-isFill(y.t))||(lifeT(x.t)-lifeT(y.t))||ordBoth(x.t,y.t)||(y.rk-x.rk)||String(x.t.id).localeCompare(String(y.t.id));
   const order=items.map(t=>({t,m:estOf(t),rk:rankOf(t)})).sort((x,y)=>manual?((mi(x.t.id)-mi(y.t.id))||auto(x,y)):auto(x,y));
   const fits=(s,m)=>!taken.some(([x,y])=>s<y&&s+m>x);
   const nextFree=(from,m)=>{let s=from;for(let i=0;i<200&&s+m<=lim;i++){const c=taken.find(([x,y])=>s<y&&s+m>x);if(!c)return s;s=c[1]}return null};
@@ -305,7 +321,12 @@ async function spawnDue(){if(!S.loaded||S.spawnAt===today()||!db)return;S.spawnA
 const habDefs=()=>{const h=Array.isArray(S.settings.habits)?S.settings.habits:[];return h.some(x=>x.k==='workout')?h:[{k:'workout',name:'Workout',per:null},...h]};
 function streak(k){let n=0,d=today();if(!(S.hab.get(d)||{})[k])d=addD(d,-1);while((S.hab.get(d)||{})[k]){n++;d=addD(d,-1)}return n}
 function weekCount(k){let n=0;for(let i=0;i<7;i++)if((S.hab.get(addD(wkKey(),i))||{})[k])n++;return n}
-async function habitMark(k,d){d=d||today();const n={...(S.hab.get(d)||S.habits.get(d)||{}),date:d,[k]:true};S.hab.set(d,n);S.habits.set(d,n);await db.doc('habits/'+d).set(n).catch(()=>{});if(k==='workout'&&d===today())logEv('workout','')}
+async function habWrite(d,patch){const cur=S.hab.get(d)||S.habits.get(d),n={...(cur||{}),date:d,...patch};S.hab.set(d,n);S.habits.set(d,n);if(!db)return;
+  try{if(!cur)throw 0;await db.doc('habits/'+d).update({date:d,...patch})}catch(e){await db.doc('habits/'+d).set(n).catch(()=>{})}}
+async function habitMark(k,d,off){d=d||today();await habWrite(d,{[k]:!off});if(k==='workout'&&d===today()&&!off)logEv('workout','')}
+async function markUp(time,quiet,noPlan){await habWrite(today(),{up:true,upAt:time});logEv('up',time);FM.clear();
+  if(noPlan){const sh=shiftOf(today());if(sh)V.brainSay=(V.brainSay||'')+` You’re up about ${dur(sh)} later than planned, so the whole morning moves ${dur(sh)}: ${t12(dayStart(today()))} instead of ${t12(dayDoc(today()).start)}.`;applyWeek(false).catch(()=>{});return false}
+  await applyWeek(false);if(!quiet){V.greeting=false;renderToday();say(upMsg(time),true)}return false}
 function freeSlot(d,m){const tl=timeline(d),taken=tl.filter(x=>x.s!=null&&x.kind!=='focus').map(x=>[x.s,x.e]);let s=Math.max(toM(dayStart(d)),d===today()?Math.ceil(toM(nowHM())/15)*15:0);
   for(let i=0;i<100&&s+m<=toM('21:30');i++){const c=taken.find(([x,y])=>s<y&&s+m>x);if(!c)return hmS(s);s=Math.ceil(c[1]/15)*15}return null}
 function habitCard(){const out=[];for(const h of habDefs()){const k=h.k,wc=weekCount(k),st=streak(k),per=h.per||(k==='workout'?Math.round(pat().workout?.perWk||0):0);
@@ -428,12 +449,13 @@ function brainToday(){FM.clear();const top=$('brainBox'),el=$('brainBox2');if(!t
     if(cu&&(dayDiff(cu)===-1||!off)){const n=Object.keys(dayDoc(cu).pl||{}).length,sc=scoreOf(cu)||{};le.push(`<div class="item"><div class="row" style="flex-wrap:nowrap"><div class="grow"><span class="t">${esc(dayName(cu))}</span> <span class="m">${sc.nd||0} of ${n} marked done</span></div><button class="sm" data-act="review" data-d="${cu}">Catch up</button><button class="sm ghost" data-act="rvSkip" data-d="${cu}">It’s right</button></div></div>`)}
     if((dow()===0||dow()===1)&&!dd.wr&&!dayDoc(addD(td,-1)).wr&&winsSince(reviewWeekOf()).length)le.push(`<div class="item"><div class="row" style="flex-wrap:nowrap"><div class="grow"><span class="t">Your week in review</span> <span class="m">wins, what slipped, what’s coming</span></div><button class="sm" data-act="weekReview">Open</button></div></div>`);
     const lt=laterPick();if(lt)le.push(`<div class="item"><div class="m">On your later list ${lt.age} days</div><div class="t" style="font-size:15px">${esc(T(lt.t))}</div><div class="row" style="margin-top:6px"><button class="sm" data-act="ltToday" data-id="${lt.t.id}">Do it today</button><button class="sm" data-act="ltWeek" data-id="${lt.t.id}">This week</button><button class="sm ghost" data-act="ltSnooze" data-id="${lt.t.id}">Not yet</button></div></div>`);
+    for(const d of unanswered().slice(0,2))le.unshift(`<div class="item"><div class="m">A message from ${esc(chatTime(d.at))} never got an answer</div><div class="t" style="font-size:15px">${esc(short(d.text))}</div><div class="row" style="margin-top:6px"><button class="sm" data-act="chatRetry" data-id="${d.id}">Try it again</button><button class="sm ghost" data-act="chatDrop" data-id="${d.id}">Leave it</button></div></div>`);
     if(le.length)c.push(`<h2>Loose ends</h2><div class="card">${le.join('')}</div>`)}
-  const hb=habitCard();if(hb)c.push(`<h2>Habits</h2><div class="card">${hb}</div>`);
+  c.push(`<h2>Streaks</h2><div class="card">${skMini()}<div class="row" style="margin-top:6px"><button class="ghost sm" data-act="goStreaks" style="padding-left:0">All streaks</button></div></div>`);
   const qp=off?null:quietProjects()[0];if(qp&&qp.p.qnd!==td)c.push(`<h2>Gone quiet</h2><div class="card"><div class="t" style="font-size:15px">${esc(qp.p.name)} <span class="m">· ${qp.q} days</span></div>${qp.p.next?`<div class="m">Next: ${esc(qp.p.next)}</div>`:''}<div class="row" style="margin-top:8px"><button class="sm" data-act="projPlan" data-id="${qp.p.id}">Book time</button><button class="sm ghost" data-act="projPause" data-id="${qp.p.id}">Pause it</button><button class="sm ghost" data-act="projLater" data-id="${qp.p.id}">Not now</button></div></div>`);
   el.innerHTML=c.join('');
   const mb=$('moreBox'),inb=notesOf('inbox').length,app=notesOf('app').length,L=(act,t,sm,k)=>`<button class="lnk" data-act="${act}"${k?` data-k="${k}"`:''}><span class="grow">${t}<small>${sm}</small></span></button>`;
-  if(mb&&!mb.querySelector('[data-brain]'))mb.insertAdjacentHTML('afterbegin',`<div data-brain><h2 style="margin-top:6px">Capture</h2>${L('notes','Inbox',inb?inb+' loose thought'+(inb>1?'s':'')+' to sort':'Nothing loose','inbox')}${L('notes','Notes',notesOf('note').length+' kept','note')}${L('notes','App updates',app?app+' ready to copy into your code tool':'Say “Jarvis should…” and it lands here','app')}
+  if(mb&&!mb.querySelector('[data-brain]'))mb.insertAdjacentHTML('afterbegin',`<div data-brain>${L('goCentre','Centre','Fees, makeups and students')}<h2>Capture</h2>${L('notes','Inbox',inb?inb+' loose thought'+(inb>1?'s':'')+' to sort':'Nothing loose','inbox')}${L('notes','Notes',notesOf('note').length+' kept','note')}${L('notes','App updates',app?app+' ready to copy into your code tool':'Say “Jarvis should…” and it lands here','app')}
     <h2>Progress</h2>${L('wins','Wins',winsSince(addD(today(),-6)).length+' finished in the last 7 days')}${L('weekReview','Weekly review','Wins, what slipped, what’s coming')}${L('projects','Projects',(()=>{const a=S.projects.filter(p=>(p.status||'active')==='active');return a.length?a.slice(0,3).map(p=>p.name).join(' · '):'Your ongoing projects and their apps'})())}${L('people','People, chores and projects',`${S.people.length} people · ${[...S.tasks.values()].filter(t=>t.s==='recurring'&&t.every).length} chores · ${S.projects.length} projects`)}<h2>Tools</h2></div>`)}
 /* ---------- Projects: his ongoing projects, each with its app or page one tap away ---------- */
 const appUrl=u=>{u=String(u||'').trim();return /^https:\/\/(claude\.ai|[\w.-]+\.tutorwise\.ca|tutorwise\.ca|docs\.google\.com|drive\.google\.com)\//.test(u)?u:''};
@@ -497,7 +519,7 @@ function brainRules(){return `- Task details: every new task gets "cat" (persona
 - His priority wins. If he gives none, the app ranks by deadline, consequences, how long it has waited and its project. If he asks why something is first, answer in one sentence from the why list in Top priorities.
 - Notes: decide whether something is a task, an event or a note. Information or an idea with no action is note kind "note". Anything about how this app should work differently ("Jarvis should…", "the app needs to…", "can you make it…") is note kind "app", rewritten as one clear instruction a developer could follow; never a task. If you truly cannot tell where something belongs, note kind "inbox".
 - Good morning / just woke up / I'm up: reply with a short rundown (three sentences at most): the top one or two priorities, today's fixed events with times, anything due within 2 days, then ask how he's feeling. If he answers that he's tired, rough, sick, stressed or low on energy, use low_energy for today and say kindly in one sentence that you kept only the must-dos (the app lists what moved). No guilt, no pep talk.
-- Waking is not working. "I'll wake up around 9" is day_start with "wake":true (the app adds his morning: getting ready and getting to the centre, about ${readyMin()} minutes, before the first task). "I'll start at 10", "I'll be at the centre by 11" or "I'm starting at noon" is day_start with that time and wake false. Late at night, before he sleeps, the date is the coming day. Use woke only when he says he is up right now.
+- Waking is not working. "I'll wake up around 9" is day_start with "wake":true (the app adds his morning: getting ready and getting to the centre, about ${readyMin()} minutes, before the first task). "I'll start at 10", "I'll be at the centre by 11" or "I'm starting at noon" is day_start with that time and wake false. Late at night, before he sleeps, the date is the coming day. When he gives both ("up at 7:30 and at the centre by 8:40"), send one day_start with the centre time, wake false, and "plan_wake" set to the wake time; do not add a block for the morning, the app shows it. Use woke only when he says he is up right now. The day is elastic: if he gets up later than planned, the app itself moves the morning, the start and everything after it later by the same amount and says so, so never rebuild his morning by hand and never treat a late start as a failure.
 - If he says how long his mornings take ("it takes me an hour and a half to get ready and get to the centre"), use routine with ready_min. the app rebuilds the day, keeps must-dos early and lists what moved.
 - "Do my planning at 10 tonight": plan_time with once true. "Plan every night at 10": once false.
 - Chores ("vacuum every week", "laundry every 4 days", "clean the back area every two weeks"): chore with every_days. People to keep in touch with ("message an old friend", "plan time with my niece"): person with every_days (14 if he gives no hint) and how ("Message" or "Plan time with"). When he says he talked to, saw or messaged someone on that list: touched.
@@ -521,7 +543,7 @@ function brainRules(){return `- Task details: every new task gets "cat" (persona
 - Your reply must match what your ops actually do. Never say you are rebuilding, checking or updating something unless an op does it; the app re-plans by itself after every change.
 - Voice: vary your wording every time; never open the way any of your last replies did, and do not open with "Understood". Be brief, natural and a little clever, never cute. Confirm changes in a few words. Ask at most one short question. Never invent tasks, events or details he did not give.
 `}
-const brainOps=()=>`{"op":"set_meta","id":"","cat":"","due":null,"pri":null,"est":null,"messy":null,"when":null,"where":null,"needle":null,"kind":null},{"op":"focus","items":[""],"goal":null},{"op":"block","title":"","from":"HH:MM","to":"HH:MM","date":null},{"op":"work_day","date":"YYYY-MM-DD","on":true},{"op":"note_drop","contains":"words from the note to remove"},{"op":"drop","id":""},{"op":"progress","id":"","minutes":30,"note":"","left":null,"next":null},{"op":"note","kind":"note|app|inbox","text":""},{"op":"low_energy","date":"YYYY-MM-DD","on":true},{"op":"day_start","date":"YYYY-MM-DD","at":"HH:MM","wake":false},{"op":"routine","ready_min":75},{"op":"plan_time","at":"21:00","once":false},{"op":"chore","title":"","every_days":7,"est":30},{"op":"person","name":"","every_days":14,"how":"Message","note":""},{"op":"touched","name":""},{"op":"project","name":"","status":null,"next":"","note":"","url":null},{"op":"habit","name":"","per_week":3},{"op":"habit_done","name":"workout","date":null},{"op":"whats_next"},`;
+const brainOps=()=>`{"op":"set_meta","id":"","cat":"","due":null,"pri":null,"est":null,"messy":null,"when":null,"where":null,"needle":null,"kind":null},{"op":"focus","items":[""],"goal":null},{"op":"block","title":"","from":"HH:MM","to":"HH:MM","date":null},{"op":"work_day","date":"YYYY-MM-DD","on":true},{"op":"note_drop","contains":"words from the note to remove"},{"op":"drop","id":""},{"op":"progress","id":"","minutes":30,"note":"","left":null,"next":null},{"op":"note","kind":"note|app|inbox","text":""},{"op":"low_energy","date":"YYYY-MM-DD","on":true},{"op":"day_start","date":"YYYY-MM-DD","at":"HH:MM","wake":false,"plan_wake":null},{"op":"routine","ready_min":75},{"op":"plan_time","at":"21:00","once":false},{"op":"chore","title":"","every_days":7,"est":30},{"op":"person","name":"","every_days":14,"how":"Message","note":""},{"op":"touched","name":""},{"op":"project","name":"","status":null,"next":"","note":"","url":null},{"op":"habit","name":"","per_week":3},{"op":"habit_done","name":"workout","date":null},{"op":"whats_next"},`;
 async function brainAdd(id,o){const c={};if(CATS[o.cat])c.cat=o.cat;if(o.messy===true)c.messy=true;if(o.project){const p=S.projects.find(x=>norm(x.name)===norm(o.project));if(p)c.proj=p.id}if(Object.keys(c).length){S.tasks.set(id,{...S.tasks.get(id),...c});await up(id,c)}}
 async function brainOp(o,out,src){const td=today();
   if(o.op==='focus'){const items=(Array.isArray(o.items)?o.items:[]).map(x=>String(x||'').trim().slice(0,80)).filter(Boolean).slice(0,3),c={};if(items.length)c.focus={items,wk:wkKey(),at:today()};if(typeof o.goal==='string'&&o.goal.trim())c.goal=o.goal.trim().slice(0,200);
@@ -537,7 +559,7 @@ async function brainOp(o,out,src){const td=today();
   if(o.op==='block'&&hm(o.from||'')&&hm(o.to||'')&&o.to>o.from){const d=isDate(o.date||'')?o.date:td,x=String(o.title||'Busy').slice(0,60);await dayWrite(d,cur=>({...cur,busy:[...(cur.busy||[]).filter(b=>!(b.s===o.from&&b.e===o.to)),{s:o.from,e:o.to,x}]}));out.push(`blocked ${o.from}–${o.to}: ${x}`);S.touch3=true;return true}
   if(o.op==='work_day'){const d=isDate(o.date||'')?o.date:td;await dayWrite(d,cur=>({...cur,workDay:o.on!==false}));const m=await relayMoves(true);out.push(`${dayWord(d)}: ${o.on!==false?'a work day':'a day off'}`);V.brainSay+=m;return true}
   if(o.op==='low_energy'){const d=isDate(o.date||'')?o.date:td;await dayWrite(d,cur=>({...cur,low:o.on!==false}));if(o.on===false)await restoreLow(d);const m=await relayMoves(true);out.push((o.on!==false?'light day ':'normal day ')+d);V.brainSay+=m;return true}
-  if(o.op==='day_start'&&hm(o.at||'')){const d=isDate(o.date||'')?o.date:addD(td,1);const wake=!!o.wake;await dayWrite(d,cur=>wake?{...cur,wake:o.at,start:null}:{...cur,start:o.at});const m=await relayMoves(true);out.push(wake?`${dayWord(d)}: up at ${o.at}, work from ${dayStart(d)}`:`${dayWord(d)} starts ${o.at}`);V.brainSay+=m;return true}
+  if(o.op==='day_start'&&hm(o.at||'')){const d=isDate(o.date||'')?o.date:addD(td,1);const wake=!!o.wake;await dayWrite(d,cur=>wake?{...cur,wake:o.at,start:null}:{...cur,start:o.at,...(hm(o.plan_wake||'')&&o.plan_wake<o.at?{wake:o.plan_wake}:{})});const m=await relayMoves(true);out.push(wake?`${dayWord(d)}: up at ${o.at}, work from ${dayStart(d)}`:`${dayWord(d)} starts ${o.at}`);V.brainSay+=m;return true}
   if(o.op==='routine'&&+o.ready_min>0){const n=Math.round(+o.ready_min);S.settings={...S.settings,readyMin:n};await db.doc('settings/main').update({readyMin:n}).catch(()=>{});out.push(`mornings: ${durS(n)} from waking to working`);S.touch3=true;return true}
   if(o.op==='plan_time'&&hm(o.at||'')){const n=o.once?{planOnce:{d:td,at:o.at}}:{planAt:o.at,planOnce:null};S.settings={...S.settings,...n};await db.doc('settings/main').update(n).catch(()=>{});if(o.once||o.at>nowHM())await dayWrite(td,cur=>({...cur,night:null}));out.push('planning at '+o.at+(o.once?' tonight':' every night'));return true}
   if(o.op==='chore'&&o.title){const id='r'+Date.now().toString(36);const doc={t:String(o.title).slice(0,120),s:'recurring',every:Math.max(1,+o.every_days||7),est:+o.est||30,a:'home',cat:'home',last:isDate(o.last||'')?o.last:null,src:'chore '+td,up:stamp()};
@@ -768,7 +790,7 @@ renderCal=function(){const el=$('calBox');if(!el||S.view!=='cal'||S.dragging)ret
     return `<button class="mc${out?' out':''}${d===td?' today':''}${d===sel?' sel':''}${d<td?' past':''}${isWE(d)?' we':''}" data-act="calDay" data-d="${d}" aria-label="${esc(fullDay(d))}${ev.length?', '+ev.length+' plan'+(ev.length>1?'s':''):''}${pl.length?', '+pl.length+' to-do'+(pl.length>1?'s':''):''}${du.length?', '+du.length+' due':''}"><span class="n">${+d.slice(8)}</span><span class="mk">${ev.slice(0,3).map(()=>'<i></i>').join('')}${pl.length?`<b>${pl.length}</b>`:''}${du.length?'<i class="du"></i>':''}${dn.length?'<i class="dn"></i>':''}</span>${ev.slice(0,2).map(e=>`<span class="lb ev">${esc((e.s?t12(e.s).replace(' ','')+' ':'')+e.t)}</span>`).join('')}${pl.length?`<span class="lb">${pl.length} to-do${pl.length>1?'s':''}</span>`:''}${du.length?`<span class="lb du">${esc(short(T(du[0])))} due</span>`:''}${dn.length?`<span class="lb dn">${dn.length} done</span>`:''}</button>`};
   const loose=wk.filter(t=>!t.day&&!isDone(t)),doneAll=wk.filter(isDone);
   const mini=t=>`<div class="wki${isDone(t)?' done':''}" data-act="wkItem" data-id="${t.id}" role="button" tabindex="0"><span class="dot"></span><span class="tt">${esc(T(t))}</span><span class="mm num">${isDone(t)?'done':durS(estOf(t))}</span>${isDone(t)?'':XB(t.id)}</div>`;
-  el.innerHTML=`<div class="calL"><div class="calh"><button data-act="calPrev" aria-label="Previous month"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>${esc(monthName(ym))}</b><button class="tdy" data-act="calToday">Today</button><button data-act="calNext" aria-label="Next month"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button></div>
+  el.innerHTML=`<div class="calL"><div class="calh"><button data-act="calPrev" aria-label="Previous month"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>${esc(monthName(ym))}</b><button class="tdy" data-act="calToday">Today</button><button class="tdy wkb" data-act="goWeek">Week</button><button data-act="calNext" aria-label="Next month"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button></div>
     <div class="mgrid">${['S','M','T','W','T','F','S'].map(x=>`<span class="wd">${x}</span>`).join('')}${monthDays(ym).map(cell).join('')}</div>
     <div class="mleg"><span><i></i> plan</span><span><b>3</b> to-dos</span><span><i class="du"></i> due</span><span><i class="dn"></i> done</span></div></div>
     <div class="calR">${dayPanel(sel,ix)}</div><div class="calB">
@@ -805,6 +827,9 @@ const QCHG=/\b(add|move|cancel|mark|book|put|change|update|delete|remove|push|ma
 const QNOT=/\b(owe|owes|owed|fees?|paid|pay|unpaid|makeups?|report cards?|grades?|parents?|month|billing|bill|this week|last week|missed|attend\w*|absent|came|free|fit|available|slot)\b/;
 function quickIntent(text){const q=QN(text);if(!q||q.split(' ').length>13)return null;let m;
   if(/^(what time is it|whats the time|what is the time|time)( right now| rn| now)?$/.test(q))return{k:'time'};
+  if((m=q.match(/^(?:i )?(?:woke|got|am|im|i am) (?:up|awake)(?: (?:late|early|now|today|this morning))*(?: (?:at|around) (\d{1,2})(?::?(\d\d))? ?(am|pm)?)?$/))||(m=q.match(/^(?:woke up|im up|i am up|im awake)$/))){
+    let t='';if(m[1]){let h=+m[1];const mi=+(m[2]||0);if(m[3]==='pm'&&h<12)h+=12;if(m[3]==='am'&&h===12)h=0;if(h<24&&mi<60)t=String(h).padStart(2,'0')+':'+String(mi).padStart(2,'0')}
+    return{k:'up',t}}
   if(/^(whats|what is|what) (up )?next$|^what (should|do|can) i (do|work on|start)( now| next| right now| first| rn)?$|^whats my next (task|thing|item)$|^what now$/.test(q))return{k:'next'};
   if(/^(whats going on|where are things|whats happening|status|how am i doing( today)?|hows (my|the) day( going| looking)?)$/.test(q))return{k:'status'};
   if(/^(whats|what is) (left|remaining)( (for )?(today|tonight)| on (my|the) (list|docket))?$|^what (did|have) i not (get |gotten )?(done|finished)( today)?$|^what do i (still )?have left( (for )?today| to do( today)?)?$|^(is there )?anything else (i have |that i have |i need |that i need )?to do( for the day| today| tonight)?$/.test(q))return{k:'left'};
@@ -843,8 +868,9 @@ function statusBrief(){const n=whatsNext(),op=openPicks(),all=(S.plan?.picks||[]
 {const _resp=respond;respond=async function(text,byVoice){let it=null;try{it=V.state!=='thinking'&&db&&S.loaded?quickIntent(String(text||'').trim()):null}catch(e){console.warn(e)}
   if(!it)return _resp(text,byVoice);
   text=String(text).trim();V.hint='';V.heard=text;V.handsFree=!!byVoice;logEv('said',text);let ans='';
-  try{if(it.k==='teach'){setState('thinking');await schedFresh(text,!!it.force)}
-    ans=it.k==='time'?`It’s ${t12(nowHM())}.`:it.k==='next'?whatsNext().txt.replace(/\. Why: [^.]*\./,'.'):it.k==='status'?statusBrief():it.k==='left'?leftBrief():it.k==='teach'?teachBrief(it.d):dayBrief(it.d)}
+  try{if(it.k==='up'){const had=upAtOf(today()),t=it.t&&it.t<=nowHM()?it.t:had||nowHM();if(t!==had)await markUp(t,true,false);ans=upMsg(t)}
+    if(it.k==='teach'){setState('thinking');await schedFresh(text,!!it.force)}
+    ans=it.k==='up'?ans:it.k==='time'?`It’s ${t12(nowHM())}.`:it.k==='next'?whatsNext().txt.replace(/\. Why: [^.]*\./,'.'):it.k==='status'?statusBrief():it.k==='left'?leftBrief():it.k==='teach'?teachBrief(it.d):dayBrief(it.d)}
   catch(e){console.warn(e);setState('idle');return _resp(text,byVoice)}
   ans=to12(ans);db.collection('dumps').doc().set({text,at:stamp(),reply:ans,ops:['answered straight from your plan']}).catch(()=>{});
   setState('idle');await say(ans,true);if(V.handsFree&&dict){V.hint='Press Space or tap the brain to answer.';renderCore()}}}
@@ -956,7 +982,7 @@ function renderWeek(){const el=$('weekBox');if(!el||S.view!=='week'||S.dragging)
       return (first?'<div class="wdv">Personal</div>':'')+`<div class="wcard${x.s==null?' ov':''}${x.life||x.home?' lf':''}${n>=2?' nd'+n:''}" data-card="${x.id}" data-act="wkItem" data-id="${x.id}" role="button" tabindex="0"><div class="wt">${esc(x.t)}</div><div class="wm num">${x.s==null?'doesn’t fit':off&&!x.set?'any time':x.life&&tt&&x.s<toM(tt.s)?'after work':esc(t12(hmS(x.s)))} · ${durS(estOf(t))}${t.pin?' · yours':''}</div></div>`}).join('');
     return `<div class="wcol${off?' off':''}${d===td?' today':''}" data-col="${d}"><div class="wch"><div class="wd">${d===td?'Today':dayDiff(d)===1?'Tomorrow':DNL[dowOf(d)]}<small>${MO3[+d.slice(5,7)-1]} ${+d.slice(8)}</small></div><div class="wsub">${off?'day off':tt?'teach '+esc(t12(tt.s))+(tt.est?' (usual)':''):'no teaching'}${min?' · '+durS(min):''}</div>${man?`<button class="wreset" data-act="ordReset" data-d="${d}">your order · reset</button>`:''}${isWE(d)&&wkndMode()!=='work'?`<button class="wreset" data-act="workDay" data-d="${d}" style="display:block">${dayDoc(d).workDay?'make it a day off again':'plan it like a work day'}</button>`:''}</div><div class="wcl">${cards}<div class="wend"></div></div><div class="wadd"><input data-wadd="${d}" placeholder="+ Add" enterkeyhint="done" autocomplete="off" aria-label="Add a to-do to ${esc(dayName(d))}"></div></div>`};
   const un=(S.unplaced||[]).map(id=>S.tasks.get(id)).filter(t=>t&&!isDone(t));
-  el.innerHTML=`<div class="wkh"><div class="m">Drag anything to another day or another spot. I learn from every move.</div><div style="flex:1 1 320px;max-width:520px">${focusLine()}</div></div><div class="wb" id="wb">${days.map(col).join('')}</div>
+  el.innerHTML=`<div class="wkh"><div class="m">${DESK.on?'Drag anything to another day or another spot. I learn from every move.':'Swipe across the days. Tap anything to change it.'}</div><div style="flex:1 1 320px;max-width:520px">${focusLine()}</div></div><div class="wb" id="wb">${days.map(col).join('')}</div>
     ${un.length?`<h2>No room in the next 7 days · ${un.length}</h2><div class="card">${un.map(t=>`<div class="due" data-act="wkItem" data-id="${t.id}" role="button" tabindex="0"><span class="grow">${esc(T(t))}<small>${durS(estOf(t))}</small></span>${XB(t.id)}</div>`).join('')}</div>`:''}`;
   if($('wb'))$('wb').scrollLeft=sl;if(keep){const i=el.querySelector(`[data-wadd="${keep.d}"]`);if(i){i.value=keep.v;i.focus()}}}
 document.addEventListener('keydown',async e=>{const i=e.target;if(e.key!=='Enter'||!i?.dataset?.wadd)return;e.preventDefault();const d=i.dataset.wadd,raw=i.value.trim();if(!raw)return;i.value='';if(await addTodoOn(d,raw)){toast(`On ${dayWord(d)}: ${short(parseWhen(raw).title)}.`,1800);renderWeek();document.querySelector(`[data-wadd="${d}"]`)?.focus()}});
@@ -985,8 +1011,8 @@ function deskApply(){const on=!!DESK.mq&&DESK.mq.matches&&!BAND.tall;if(on===DES
   const wrap=document.querySelector('.wrap'),top=$('top'),vt=$('v-today'),core=document.querySelector('.core'),chat=$('v-chat'),bar=$('chatbar'),hg=document.querySelector('.hg'),mk=(id,tag)=>{let x=$(id);if(!x){x=document.createElement(tag||'div');x.id=id}return x};
   if(!wrap||!top||!vt||!core||!chat||!bar||!hg)return;
   const rail=mk('deskRail','aside'),head=mk('deskHead'),L=mk('deskL'),R=mk('deskR'),nx=mk('deskNext');
-  if(on){wrap.insertBefore(head,vt);head.appendChild(hg);wrap.appendChild(rail);rail.append(core,bar,chat);vt.append(L,R);L.append($('brainBox'),$('topBox'),$('nowBox'));R.append(nx,$('brainBox2'),$('statBox'));if(S.view==='chat')show('today')}
-  else{document.querySelector('#top header').insertBefore(hg,$('btnMic'));top.appendChild(bar);wrap.insertBefore(chat,$('v-cal'));vt.append(core,$('brainBox'),$('topBox'),$('nowBox'),$('brainBox2'),$('statBox'));for(const x of[rail,head,L,R,nx])x.remove();if(S.view==='week')show('cal')}
+  if(on){wrap.insertBefore(head,vt);head.appendChild(hg);wrap.appendChild(rail);rail.append(core,bar,chat);railBuild(rail);vt.append(L,R);L.append($('brainBox'),$('topBox'),$('nowBox'));R.append(nx,$('brainBox2'),$('statBox'));if(S.view==='chat')show('today')}
+  else{document.querySelector('#top header').insertBefore(hg,$('btnMic'));top.appendChild(bar);wrap.insertBefore(chat,$('v-cal'));vt.append(core,$('brainBox'),$('topBox'),$('nowBox'),$('brainBox2'),$('statBox'));for(const x of[rail,head,L,R,nx])x.remove()}
   try{renderAll();if(typeof renderChat==='function')renderChat();if(S.view==='cal')renderCal()}catch(e){console.warn(e)}}
 if(DESK.mq){(DESK.mq.addEventListener?DESK.mq.addEventListener('change',deskApply):DESK.mq.addListener(deskApply));setTimeout(deskApply,0);setInterval(deskApply,4000)}
 {const _sh=show;show=function(v){if(DESK.on&&v==='chat'){const i=$('chatIn');if(i)i.focus();return}_sh(v);if(v==='week')renderWeek()}}
@@ -1008,6 +1034,91 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
     rankReset:async()=>{S.rank=null;FM.clear();await db.doc('agent/rank').set({w:{},n:0,at:stamp(),log:[]}).catch(()=>{});toast('Forgotten. I’m back to the starting rules.',2200);settingsSheet()}};
   if(H2[a]){e.stopImmediatePropagation();e.preventDefault();try{await H2[a]()}catch(er){console.warn(er);toast('That didn’t work. Try again.',2000)}}},true);
 
+/* ---------- the conversation: a full day of it, from every device, newest first ---------- */
+function chatTime(iso){try{return new Date(iso).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'America/Toronto'}).toLowerCase()}catch(e){return''}}
+const unanswered=()=>{const cut=new Date(Date.now()-24*36e5).toISOString();return (S.dumps||[]).filter(d=>!d.reply&&String(d.at||'')>=cut&&Date.now()-Date.parse(d.at||0)>12e4&&!(V.state==='thinking'&&d.text===V.heard))};
+function renderChat(){const el=$('chatList');if(!el)return;const m=$('chatMic');if(m){m.hidden=!dict;m.classList.toggle('rec',!!V.quick&&V.qEl==='chatIn')}
+  const all=S.dumps||[],cut=new Date(Date.now()-24*36e5).toISOString(),rec=all.filter(d=>String(d.at||'')>=cut),l=S.chatAll?all:(rec.length>=4?rec:all.slice(0,8));let day='',h='';
+  if(V.state==='listening'||V.state==='starting')h+=`<div class="turn"><div class="bub me dim">${esc((V.buf||'')+(V.partial?' '+V.partial:''))||'Listening… talk, then tap the mic to send.'}</div></div>`;
+  if(V.state==='thinking'&&V.heard&&!l.some(d=>d.text===V.heard&&d.reply))h+=`<div class="turn"><div class="bub me">${esc(V.heard)}</div><div class="bub ai dim">Thinking…</div></div>`;
+  for(const d of l){const dd=dayOf(d.at);if(dd!==day){day=dd;h+=`<div class="bday">${esc(dd===today()?'Today':dd===addD(today(),-1)?'Yesterday':dayName(dd))}</div>`}if(V.state==='thinking'&&d.text===V.heard&&!d.reply)continue;
+    const lost=!d.reply&&Date.now()-Date.parse(d.at||0)>12e4;
+    h+=`<div class="turn"><div class="bub me">${esc(d.text)}</div><div class="tmeta">${esc(chatTime(d.at))}${d.src==='Jarvis'?' · from your Jarvis line':''}</div>${d.reply?`<div class="bub ai">${esc(d.reply)}${canSpeak()?`<button class="say1" data-act="sayIt" data-id="${d.id}" aria-label="Read this aloud"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg></button>`:''}</div>`:lost?`<div class="bub ai dim">This one never got an answer, so nothing was changed.</div><div class="row" style="margin:4px 0 2px"><button class="sm" data-act="chatRetry" data-id="${d.id}">Try it again</button><button class="sm ghost" data-act="chatDrop" data-id="${d.id}">Leave it</button></div>`:''}</div>`}
+  if(!S.chatAll&&all.length>l.length)h+=`<div class="row" style="justify-content:center;margin-top:6px"><button class="sm ghost" data-act="chatOlder">Show older</button></div>`;
+  el.innerHTML=h||`<div class="m" style="text-align:center;padding:40px 12px">Talk to me the way you’d talk to a person.<br>Tasks, plans, notes, questions, changes to your schedule.</div>`}
+
+/* ---------- Streaks: one ring per habit; tap it when it's done ---------- */
+const SKI={drop:'<path d="M12 3.5s5.5 6 5.5 10.2a5.5 5.5 0 0 1-11 0C6.5 9.5 12 3.5 12 3.5z"/>',
+  stretch:'<circle cx="12" cy="5" r="1.8"/><path d="M5 9.5l7 1.5 7-1.5M12 11v5M12 16l-3.5 4.5M12 16l3.5 4.5"/>',
+  steps:'<path d="M9 4.2c1.5 0 2.3 1.6 2.3 3.6S10.4 12 9 12s-2.4-2-2.4-4.2S7.5 4.2 9 4.2zM7.4 14h3.2v1.6a1.6 1.6 0 0 1-3.2 0zM15.2 8c1.5 0 2.3 1.6 2.3 3.6s-.8 4.2-2.2 4.2-2.4-2-2.4-4.2S13.7 8 15.2 8zM13.6 17.8h3.2v1.4a1.6 1.6 0 0 1-3.2 0z"/>',
+  bar:'<path d="M3.5 9.5v5M6.5 7v10M17.5 7v10M20.5 9.5v5M6.5 12h11"/>',
+  book:'<path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H19v15H7.5A2.5 2.5 0 0 0 5 20.5zM5 20.5A2.5 2.5 0 0 0 7.5 21H19"/>',
+  moon:'<path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z"/>',
+  heart:'<path d="M12 20s-7-4.4-7-9.6A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 2.4C19 15.6 12 20 12 20z"/>',
+  leaf:'<path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14zM5 19l7-7"/>',
+  star:'<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
+  check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>'};
+const skIconKey=h=>SKI[h.icon]?h.icon:/water|drink/i.test(h.name)?'drop':/stretch|mobil|yoga/i.test(h.name)?'stretch':/step|walk/i.test(h.name)?'steps':/work ?out|gym|lift/i.test(h.name+' '+h.k)?'bar':/read|study|learn/i.test(h.name)?'book':/sleep|bed|phone/i.test(h.name)?'moon':'check';
+const skDaily=h=>+h.per>=7;
+const skPer=h=>skDaily(h)?7:Math.max(1,Math.min(6,+h.per||2));
+const habOn=(k,d)=>!!(S.hab.get(d)||S.habits.get(d)||{})[k];
+const wkCountOf=(k,mon)=>{let n=0;for(let i=0;i<7;i++)if(habOn(k,addD(mon,i)))n++;return n};
+function skWeeks(h){const per=skPer(h),mon=wkKey();let n=wkCountOf(h.k,mon)>=per?1:0;for(let i=1;i<=8;i++){if(wkCountOf(h.k,addD(mon,-7*i))>=per)n++;else break}return n}
+function skDetail(h){const td=today(),k=h.k,daily=skDaily(h);let best=0,run=0,n30=0,tot=0;for(let i=59;i>=0;i--){const on=habOn(k,addD(td,-i));if(on){run++;tot++;if(i<30)n30++;best=Math.max(best,run)}else if(i>0)run=0}
+  const start=addD(td,-(dowOf(td)+35)),cells=[];for(let i=0;i<42;i++){const d=addD(start,i),on=habOn(k,d);cells.push(`<button class="skd${on?' on':''}${d===td?' td':''}${d>td?' fut':''}"${d>td?' disabled':''} data-act="stkDay" data-k="${k}" data-d="${d}" aria-label="${esc(dayName(d))}${on?', done':''}">${+d.slice(8)}</button>`)}
+  const goal=daily?30:Math.max(1,Math.round(skPer(h)*30/7));
+  return `<h2>${esc(h.name)}</h2><div class="card"><div class="skst"><div><b class="num">${daily?streak(k):skWeeks(h)}</b><small>${daily?'days running':'weeks running'}</small></div><div><b class="num">${best}</b><small>best run, days</small></div><div><b class="num">${Math.min(100,Math.round(n30/goal*100))}%</b><small>last 30 days</small></div><div><b class="num">${tot}</b><small>times in 60 days</small></div></div>
+    <div class="skcal">${['S','M','T','W','T','F','S'].map(x=>`<span>${x}</span>`).join('')}${cells.join('')}</div><div class="m" style="margin-top:10px">Forgot to log one? Tap any past day to fix it.</div>
+    <div class="row" style="margin-top:10px"><button class="sm" data-act="stkEdit" data-k="${k}">Edit this streak</button></div></div>`}
+function renderStreaks(){const el=$('stkBox');if(!el||S.view!=='streaks')return;const td=today(),hs=habDefs(),sel=hs.find(h=>h.k===S.stkSel)||hs[0],C=2*Math.PI*44;
+  const ring=h=>{const daily=skDaily(h),per=skPer(h),on=habOn(h.k,td),wc=weekCount(h.k),p=daily?(on?1:0):Math.min(1,wc/per),st=daily?streak(h.k):skWeeks(h),miss=daily&&!on&&!habOn(h.k,addD(td,-1))&&[2,3,4,5,6,7].some(i=>habOn(h.k,addD(td,-i)));
+    return `<div class="skc${p>=1?' full':''}${miss?' warn':''}${sel&&sel.k===h.k?' sel':''}"><button class="skr" data-act="stkTap" data-k="${h.k}" aria-label="${esc(h.name)}: ${on?'done today, tap to undo':'tap when it is done'}"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="bg" cx="50" cy="50" r="44"/>${p>0?`<circle class="fg" cx="50" cy="50" r="44" stroke-dasharray="${(C*p).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 50 50)"/>`:''}<g transform="translate(32 32) scale(1.5)" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${SKI[skIconKey(h)]}</g></svg></button>
+      <button class="skl" data-act="stkSel" data-k="${h.k}"><b>${esc(h.name)}</b><small>${daily?(st?st+' day'+(st>1?'s':'')+(on?'':' · not yet today'):'not yet today'):`${wc} of ${per} this week${st>1?' · '+st+' weeks running':''}`}</small>${miss?'<i>don’t miss twice</i>':''}</button></div>`};
+  const dl=hs.filter(skDaily),dn=dl.filter(h=>habOn(h.k,td)).length;
+  el.innerHTML=`<div class="skh"><div><b class="num">${dn}</b><small>of ${dl.length} today</small></div><div class="m">Tap a ring when it’s done. Tap again to undo.</div><button class="sm" data-act="stkAdd">Add a streak</button></div>
+    <div class="skg">${hs.map(ring).join('')}</div>${sel?skDetail(sel):''}`}
+function skMini(){const td=today(),C=2*Math.PI*20;return `<div class="skm">${habDefs().map(h=>{const daily=skDaily(h),per=skPer(h),on=habOn(h.k,td),wc=weekCount(h.k),p=daily?(on?1:0):Math.min(1,wc/per),st=daily?streak(h.k):0;
+  return `<button class="skmi${p>=1?' full':''}" data-act="stkTap" data-k="${h.k}" aria-label="${esc(h.name)}${on?', done today, tap to undo':', tap when it is done'}"><svg viewBox="0 0 48 48" aria-hidden="true"><circle class="bg" cx="24" cy="24" r="20"/>${p>0?`<circle class="fg" cx="24" cy="24" r="20" stroke-dasharray="${(C*p).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 24 24)"/>`:''}<g transform="translate(13.9 13.9) scale(.84)" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${SKI[skIconKey(h)]}</g></svg><span>${esc(h.name)}</span><small>${daily?(st?st+(st>1?' days':' day'):'not yet'):wc+' of '+per}</small></button>`}).join('')}</div>`}
+function streakSheet(k){const h=habDefs().find(x=>x.k===k)||null,ic=h?skIconKey(h):'check',per=h?(skDaily(h)?7:skPer(h)):7;
+  sheet(`<h3 style="font:600 18px var(--disp);margin:0">${h?'Edit streak':'New streak'}</h3>
+  <label for="sk_n">What is it</label><input id="sk_n" value="${esc(h?.name||'')}" placeholder="e.g. Read 20 minutes" maxlength="40">
+  <label for="sk_p">How often</label><select id="sk_p">${[7,6,5,4,3,2,1].map(n=>`<option value="${n}"${n===per?' selected':''}>${n===7?'Every day':n+(n===1?' time':' times')+' a week'}</option>`).join('')}</select>
+  <label>Icon</label><div class="chips skic" style="flex-wrap:wrap">${Object.keys(SKI).map(i=>`<button class="${i===ic?'on':''}" data-act="stkIcon" data-i="${i}" aria-label="${i}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${SKI[i]}</svg></button>`).join('')}</div>
+  <div class="row" style="margin-top:16px"><button class="pri" data-act="stkSave" data-k="${h?h.k:''}">Save</button>${h&&h.k!=='workout'?`<button class="ghost" data-act="stkDel" data-k="${h.k}" style="color:var(--bad)">Remove</button>`:''}<button class="ghost" data-act="close">Close</button></div>`)}
+
+/* ---------- the Jarvis panel on a wide screen can slide away, and the brain can fold up ---------- */
+const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+function railSet(open){document.body.classList.toggle('norail',!open);lsSet('hq.rail',open?'1':'0');const t=$('railTab');if(t)t.setAttribute('aria-expanded',open?'true':'false')}
+function brainSet(open){document.body.classList.toggle('nobrain',!open);lsSet('hq.brain',open?'1':'0');try{orb.sync()}catch(e){}}
+function railBuild(rail){if(!$('railBar')){const b=document.createElement('div');b.id='railBar';b.innerHTML=`<span class="rb-t">Jarvis</span><button id="railMic" data-act="micTop" aria-label="Talk to Jarvis" title="Talk"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button><button data-act="railBrain" aria-label="Fold or unfold the brain" title="Fold or unfold the brain"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l6-6 6 6"/></svg></button><button data-act="railHide" aria-label="Slide Jarvis away" title="Slide Jarvis away"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 6l6 6-6 6M14 6l6 6-6 6"/></svg></button>`;rail.prepend(b)}
+  if(!$('railTab')){const t=document.createElement('button');t.id='railTab';t.dataset.act='railShow';t.setAttribute('aria-label','Bring Jarvis back');t.innerHTML='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(90deg)"><path d="M17 6l-6 6 6 6M10 6l-6 6 6 6"/></svg><span>Jarvis</span>';document.body.appendChild(t)}}
+if(lsGet('hq.rail')==='0')document.body.classList.add('norail');if(lsGet('hq.brain')==='0')document.body.classList.add('nobrain');
+/* on a phone the same fold button sits on the brain itself */
+{const c=document.querySelector('.core');if(c&&!$('coreTgl')){const b=document.createElement('button');b.id='coreTgl';b.dataset.act='railBrain';b.setAttribute('aria-label','Fold or unfold the brain');b.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l6-6 6 6"/></svg>';c.appendChild(b)}}
+
+/* ---------- buttons for all of the above ---------- */
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,id=b.dataset.id,k=b.dataset.k;
+  const H3={
+    railHide:()=>railSet(false),railShow:()=>railSet(true),railBrain:()=>brainSet(document.body.classList.contains('nobrain')),
+    chatOlder:()=>{S.chatAll=true;renderChat()},
+    chatSee:()=>{if(DESK.on){railSet(true);$('deskRail')?.scrollTo({top:0})}else show('chat')},
+    chatRetry:async()=>{const d=(S.dumps||[]).find(x=>x.id===id);if(!d)return;const key=norm(d.text).slice(0,200);S.recentT=(S.recentT||[]).filter(x=>x.k!==key);await db.doc('dumps/'+id).delete().catch(()=>{});respond(d.text,false)},
+    chatDrop:async()=>{await db.doc('dumps/'+id).update({reply:'(left as it was)'}).catch(()=>{});renderChat();renderToday()},
+    goStreaks:()=>show('streaks'),goWeek:()=>show('week'),
+    stkTap:async()=>{const was=habOn(k,today()),h=habDefs().find(x=>x.k===k);await habitMark(k,today(),was);renderStreaks();renderToday();if(!was&&h)toast(skDaily(h)?`${h.name}: day ${Math.max(1,streak(k))}.`:`${h.name}: ${weekCount(k)} of ${skPer(h)} this week.`,1500)},
+    stkSel:()=>{S.stkSel=k;renderStreaks()},
+    stkDay:async()=>{const d=b.dataset.d;if(!isDate(d)||d>today())return;await habitMark(k,d,habOn(k,d));S.stkSel=k;renderStreaks();if(d===today())renderToday()},
+    stkAdd:()=>streakSheet(''),stkEdit:()=>streakSheet(k),
+    stkIcon:()=>{document.querySelectorAll('.skic button').forEach(x=>x.classList.toggle('on',x===b))},
+    stkSave:async()=>{const name=($('sk_n')?.value||'').trim().slice(0,40),per=+$('sk_p')?.value||7,icon=document.querySelector('.skic button.on')?.dataset.i||'check';if(!name){toast('Give it a name.',1600);return}
+      const cur=habDefs(),key=k||(norm(name).slice(0,18)||'s')+Date.now().toString(36).slice(-3),h=cur.some(x=>x.k===key)?cur.map(x=>x.k===key?{...x,name,per,icon}:x):[...cur,{k:key,name,per,icon}];
+      S.settings={...S.settings,habits:h};await db.doc('settings/main').update({habits:h}).catch(()=>{});$('sheet').hidden=true;S.stkSel=key;renderStreaks();renderToday();toast('Saved.',1400)},
+    stkDel:async()=>{const h=habDefs().filter(x=>x.k!==k);S.settings={...S.settings,habits:h};await db.doc('settings/main').update({habits:h}).catch(()=>{});$('sheet').hidden=true;S.stkSel='';renderStreaks();renderToday();toast('Removed. Its history is kept in case you add it back.',2600)}};
+  if(H3[a]){e.stopImmediatePropagation();e.preventDefault();try{await H3[a]()}catch(er){console.warn(er);toast('That didn’t work. Try again.',2000)}}},true);
+window.addEventListener('click',e=>{const a=e.target.closest?.('[data-act]')?.dataset.act;if((a==='micTop'||a==='orb')&&DESK.on&&document.body.classList.contains('norail'))railSet(true)},true);
+{const _sh2=show;show=function(v){_sh2(v);if(v==='streaks')renderStreaks();if(v==='week'&&!DESK.on)document.querySelector('nav button[data-v=cal]')?.classList.add('on')}}
+{const _rt4=renderToday;renderToday=function(){_rt4();try{if(S.view==='streaks')renderStreaks()}catch(e){console.warn(e)}}}
+
 /* ---------- fitting the screen ----------
    In the Claude app this page can sit in a frame taller than the phone's screen, with the app doing the scrolling. Then
    anything pinned to the frame's top or bottom ends up off screen. Thin markers down the page tell us which part of the
@@ -1022,13 +1133,13 @@ const BAND={top:0,bot:innerHeight,tall:false};
     document.querySelectorAll('.toast').forEach(x=>x.style.top=tall?(BAND.top+tp.offsetHeight+10)+'px':'')};
   const soon=()=>{if(!raf)raf=requestAnimationFrame(apply)};
   const build=()=>{if(!('IntersectionObserver'in window))return;io?.disconnect();vis.clear();box?.remove();box=document.createElement('div');box.setAttribute('aria-hidden','true');box.style.cssText='position:absolute;left:0;top:0;width:1px;pointer-events:none;visibility:hidden';
-    const H=Math.max(document.documentElement.scrollHeight,innerHeight),step=40;box.style.height=H+'px';
+    const H=Math.max(document.body.offsetHeight,innerHeight),step=40;box.style.height=H+'px';
     io=new IntersectionObserver(es=>{for(const e of es){const t=+e.target.dataset.y;vis.set(e.target,e.isIntersecting?[t+(e.intersectionRect.top-e.boundingClientRect.top),t+(e.intersectionRect.bottom-e.boundingClientRect.top)]:null)}soon()},{threshold:[0,.25,.5,.75,1]});
     for(let y=0;y<H;y+=step){const m=document.createElement('i');m.dataset.y=y;m.style.cssText=`position:absolute;left:0;width:1px;top:${y}px;height:${Math.min(step,H-y)}px`;box.appendChild(m);io.observe(m)}
     document.body.appendChild(box)};
   let rb=0;const rebuild=()=>{clearTimeout(rb);rb=setTimeout(build,120)};
   build();addEventListener('resize',rebuild);addEventListener('scroll',soon,{passive:true});
-  if('ResizeObserver'in window){let lastH=0;new ResizeObserver(()=>{const h=document.documentElement.scrollHeight;if(Math.abs(h-lastH)>30){lastH=h;rebuild()}}).observe(document.body)}
+  if('ResizeObserver'in window){let lastH=0;new ResizeObserver(()=>{const h=document.body.offsetHeight;if(Math.abs(h-lastH)>30){lastH=h;rebuild()}}).observe(document.body)}
   {const _sh=sheet;sheet=function(html){_sh(html);soon()}}
   {const _to=toast;toast=function(...a){const r=_to(...a);soon();return r}}
   /* switching screens: start at the visible top */

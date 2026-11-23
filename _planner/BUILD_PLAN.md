@@ -386,3 +386,21 @@ Chat tab, What's next, nudges by days-to-due, wins and the weekly review. Runs w
   while a local write is in flight is lost. Outside writers should re-check today's record after a few seconds.
 - Next: a weekly briefing intake (paste or dictate the Sunday meeting notes; preview, then apply to events, tasks, focus
   and streaks), and a per-person data root so a second person can have their own planner.
+
+## Nov 23 update: Streaks, a panel that slides away, an elastic morning (v54, BUILD 52)
+- Elastic morning: the day record keeps the plan (`wake`, `start`); the habits record keeps what happened (`upAt`). On
+  today, `shiftOf(d)` = actual wake minus planned wake (rounded to 5 min, at most 3 h) moves the start, the morning blocks
+  that end by the planned start and morning reminders. Nothing is rewritten. `planWakeOf` falls back to a wake block ending
+  at the start, then the weekday wake setting. "Just woke up" / "I woke up at 7:50" is answered instantly (`quickIntent`
+  kind `up`) with what moved and what no longer fits. Breakfast and "first thing" tasks lead the morning.
+- Field-level writes: `dayWrite` sends only changed fields (`update`), habits use `habWrite`, so two open copies (phone and
+  computer) no longer overwrite each other's fields.
+- Conversation: the last 120 messages load; the history shows the last 24 hours with times and the source line, "Show
+  older" for more. A message that failed is marked (`err`) and offered again ("Try it again" / "Leave it"), in the chat
+  and under Loose ends. The phone line is read on a computer even while Jarvis is in the background.
+- Streaks tab (replaces Centre in the tabs; Centre moved under More): a ring per habit, tap to mark or undo; daily habits
+  count days in a row, weekly ones count weeks that met the target; per-habit stats and a six-week calendar where any past
+  day can be fixed; add, edit (name, how often, icon) and remove. Today shows the same rings, small.
+- Wide screens: the Jarvis panel has a bar (fold the brain, slide the panel away); a tab on the right edge brings it back;
+  talking brings it back. On a phone the brain folds from a button on it. Choices are kept per device.
+- Week view on a phone (from the Calendar), one day per swipe. Page height follows the screen shown.
