@@ -18,19 +18,32 @@
     NATIVE.receive = (m) => { if (m.type === "hf" && nativeHF) nativeHF(m); else if (m.type === "reminder") onReminderResult(m); };
     early.forEach((m) => NATIVE.receive(m));
     document.documentElement.classList.add("in-app");
+    // Swipe in from the left edge to go back, like other iPhone apps.
+    let sx = null, sy = 0;
+    document.addEventListener("touchstart", (e) => { const t = e.touches[0]; sx = t.clientX < 24 ? t.clientX : null; sy = t.clientY; }, { passive: true });
+    document.addEventListener("touchend", (e) => {
+      if (sx === null) return;
+      const t = e.changedTouches[0], dx = t.clientX - sx, dy = Math.abs(t.clientY - sy);
+      sx = null;
+      if (dx < 70 || dy > 60) return;
+      const back = [...document.querySelectorAll("#back-btn, .back-link, .back-btn")].find((b) => b.offsetParent !== null && !b.hidden);
+      if (back) back.click();
+    }, { passive: true });
   }
 
   /* ---------- Who's learning? ----------
-     The course is written for Anissa. On a phone set up for someone else, her name is swapped into every greeting
-     and sentence ("Main Leeann hoon", "Namaste Leeann!"). Same formal Hindi, same female forms. The choice is
-     saved in settings.learner (and synced with the account); changing it reloads the app. */
+     The course is written for Anissa. For anyone else, their name is swapped into every greeting and sentence
+     ("Main Leeann hoon", "Namaste Leeann!"). Same Hindi, same feminine forms. Saved in settings.learner (a short id)
+     and settings.learnerName (as she typed it), synced with the account; changing it reloads the app. */
   const LEARNERS = {
     anissa: { name: "Anissa", dv: "अनीसा", accept: ["anisa", "anisha", "annisa"] },
     leeann: { name: "Leeann", dv: "लीएन", accept: ["leeann", "leann", "leanne", "lianne", "liann", "leane", "lean", "lian"] }
   };
-  const LEARNER_ID = (() => {
-    try { const s = JSON.parse(localStorage.getItem("bolo.m1.v1") || "null"); return (s && s.settings && s.settings.learner) || null; } catch (e) { return null; }
-  })();
+  const learnerKey = (name) => String(name || "").trim().toLowerCase().replace(/[^a-z\u0900-\u097f]+/g, "");
+  const SAVED_SETTINGS = (() => { try { const s = JSON.parse(localStorage.getItem("bolo.m1.v1") || "null"); return (s && s.settings) || {}; } catch (e) { return {}; } })();
+  const LEARNER_ID = SAVED_SETTINGS.learner || null;
+  const LEARNER = LEARNERS[LEARNER_ID] || (SAVED_SETTINGS.learnerName
+    ? { name: SAVED_SETTINGS.learnerName, dv: SAVED_SETTINGS.learnerName, accept: [learnerKey(SAVED_SETTINGS.learnerName)] } : null);
   (function personalize(L) {
     if (!L || L === LEARNERS.anissa) return;
     const swaps = [["Anissa beta", L.name + " ji"], ["अनीसा बेटा", L.dv + " जी"], ["Anissa dear", L.name + " ji"], ["Anissa", L.name], ["अनीसा", L.dv]];
@@ -41,7 +54,7 @@
     };
     walk(C);
     if (C.lexicon && C.lexicon.anissa) C.lexicon.anissa[4] = L.accept.slice(); // spellings accepted when she types her name
-  })(LEARNERS[LEARNER_ID]);
+  })(LEARNER);
   const M = C.modules.find((m) => m.id === "m1"); // Module 1 ("What Am I Doing?") has its own hand-built stages
   const SP = C.speaker;
   const PART = {};
@@ -3129,7 +3142,7 @@
   }
 
   /* ---------- family chat ---------- */
-  const PEOPLE = { aunty: { name: "Aunty", avatar: "👩🏽" }, uncle: { name: "Uncle", avatar: "👨🏽" } };
+  const PEOPLE = { aunty: { name: "Aunty", avatar: "👩🏽" }, uncle: { name: "Uncle", avatar: "👨🏽" }, him: { name: C.himName || "Him 💙", avatar: "🧔🏽‍♂️" } };
   function rGChat(step) {
     const mod = MODS[step.mod], chat = mod.chat, host = PEOPLE[chat.who];
     const log = h("div", { class: "chat-log", "aria-live": "polite" });
@@ -3372,7 +3385,7 @@
           ok: true, title: creating ? "Account created! 🎉" : `Welcome back, ${SP.name}! 🎉`,
           html: (creating && hasLocalProgress() ? "Everything you've done so far is saved to your account. " : creating ? "" : "Your progress is here. ")
             + "You'll stay signed in on this phone — no need to sign in again.",
-          buttons: [{ label: "Continue", onClick: () => showStart() }]
+          buttons: [{ label: "Continue", onClick: () => (S.settings.learner ? (opts.onboarding ? location.reload() : showStart()) : showNamePicker()) }]
         });
       } catch (e) {
         msg.style.color = "";
@@ -3392,7 +3405,7 @@
       catch (e) { msg.style.color = ""; msg.textContent = Cloud.authError(e); }
     });
     const later = h("button", { class: "link-btn" }, opts.welcome ? "Not now" : "‹ Back");
-    later.addEventListener("click", () => { Sound.play("tap"); S.settings.accountSkipAt = Date.now(); writeLocal(); showStart(); });
+    later.addEventListener("click", () => { Sound.play("tap"); if (opts.onboarding) return showWelcome(); S.settings.accountSkipAt = Date.now(); writeLocal(); showStart(); });
     screen(
       h("div", { class: "acct-screen" },
         h("div", { class: "logo", style: "font-size:44px" }, "Bolo!"),
@@ -3567,7 +3580,7 @@
       h("div", { class: "home-head" },
         logo,
         h("div", { class: "home-hello" }, greet,
-          S.xp === 0 && !S.account ? h("button", { class: "link-btn", style: "padding:0;font-size:13px", onclick: () => { S.settings.learner = null; save(); location.reload(); } }, `Not ${SP.name}? Switch`) : null, h("p", { class: "small muted" }, S.xp ? `★ ${S.xp} XP so far` : "Hindi for chatting with the family"))),
+          S.xp === 0 && !S.account ? h("button", { class: "link-btn", style: "padding:0;font-size:13px", onclick: () => { S.settings.learner = null; S.settings.learnerName = null; save(); location.reload(); } }, `Not ${SP.name}? Switch`) : null, h("p", { class: "small muted" }, S.xp ? `★ ${S.xp} XP so far` : "Hindi for chatting with the family"))),
       streakCard(),
       upNextCard(target, !anyProgress),
       homeTiles(),
@@ -3926,17 +3939,48 @@
     }
   }
 
-  function showWhoPicker() {
+  // First run on a new phone: welcome → account → name.
+  function showWelcome() {
     view = "who";
     showChrome(false);
-    const pick1 = (id) => { S.settings.learner = id; save(); Sound.play("done"); setTimeout(() => location.reload(), 150); };
+    if (S.account) return showNamePicker(); // signed in already: just need a name
+    const go = (fn) => () => { Sound.play("tap"); fn(); };
+    const signIn = h("button", { class: "link-btn" }, "I already have an account — Sign in");
+    signIn.addEventListener("click", go(() => showAccount("signin", { onboarding: true })));
+    const tryIt = h("button", { class: "link-btn" }, "Try it first, without an account");
+    tryIt.addEventListener("click", go(() => { S.settings.accountSkipAt = Date.now(); writeLocal(); showNamePicker(); }));
     screen(h("div", { class: "stage-hero who-hero" },
       h("div", { class: "logo" }, "Bolo!", h("small", { lang: "hi" }, "बोलो · speak!")),
-      h("h1", {}, "Who's learning Hindi?"),
-      h("p", { class: "muted" }, "Pick your name — the app will greet you and teach you as you."),
-      h("div", { class: "who-list" }, Object.keys(LEARNERS).map((id) =>
-        h("button", { class: "btn who-btn", onclick: () => pick1(id) }, "🙋🏽‍♀️ " + LEARNERS[id].name)))));
-    actions([]);
+      h("h1", {}, "Hindi for the family"),
+      h("ul", { class: "welcome-list" },
+        h("li", {}, "🗣️ Real sentences you'll actually say to the family"),
+        h("li", {}, "🎬 Collect famous lines from classic Hindi films"),
+        h("li", {}, "🚗 Hands-free practice for the car")),
+      Cloud.enabled ? h("div", { class: "acct-links" }, signIn, tryIt) : null));
+    actions([{ label: Cloud.enabled ? "Create account" : "Get started", onClick: go(() => (Cloud.enabled ? showAccount("create", { onboarding: true }) : showNamePicker())) }]);
+  }
+  function showNamePicker() {
+    view = "who";
+    showChrome(false);
+    const input = h("input", { class: "type-box", type: "text", autocomplete: "given-name", autocapitalize: "words", maxlength: "24", placeholder: "Your first name", "aria-label": "Your first name" });
+    const msg = h("p", { class: "reply-tip" });
+    const done = (name) => {
+      name = String(name || "").trim().replace(/\s+/g, " ");
+      if (!name) { msg.textContent = "Type your first name."; return input.focus(); }
+      const known = Object.keys(LEARNERS).find((id) => learnerKey(LEARNERS[id].name) === learnerKey(name) || LEARNERS[id].accept.includes(learnerKey(name)));
+      S.settings.learner = known || "named";
+      S.settings.learnerName = known ? LEARNERS[known].name : name.charAt(0).toUpperCase() + name.slice(1);
+      save(); Sound.play("done");
+      setTimeout(() => location.reload(), 150);
+    };
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); done(input.value); } });
+    screen(h("div", { class: "stage-hero who-hero" },
+      h("div", { class: "logo" }, "Bolo!", h("small", { lang: "hi" }, "बोलो · speak!")),
+      h("h1", {}, "What should we call you?"),
+      h("p", { class: "muted" }, "The whole course uses your name — “Namaste, …!”, “Main … hoon.”"),
+      h("div", { class: "who-list" }, Object.keys(LEARNERS).map((id) => h("button", { class: "btn ghost who-btn", onclick: () => done(LEARNERS[id].name) }, "🙋🏽‍♀️ " + LEARNERS[id].name))),
+      h("p", { class: "small muted", style: "margin:16px 0 6px" }, "Someone else?"), input, msg));
+    actions([{ label: "Continue", onClick: () => done(input.value) }]);
   }
   function init() {
     // stage label + Devanagari quick toggle live in the top bar
@@ -3960,11 +4004,11 @@
     applySettings();
     updateXP();
     Speech.init(() => { if (view === "start") showStart(); });
-    if (!S.settings.learner) return showWhoPicker(); // a new phone: ask who's learning first (the app reloads after)
+    if (!S.settings.learner) { Cloud.onAdopt = () => location.reload(); return showWelcome(); } // a new phone: welcome → account → name (reloads after)
     showStart();
     // Cloud: pull a newer copy (e.g. from another phone) on launch; save when the app is backgrounded or comes back online.
     Cloud.onAdopt = () => {
-      if ((S.settings.learner || "anissa") !== (LEARNER_ID || "anissa")) return location.reload(); // signed into someone else's progress
+      if ((S.settings.learner || "anissa") !== (LEARNER_ID || "anissa") || (S.settings.learnerName || "") !== (SAVED_SETTINGS.learnerName || "")) return location.reload(); // signed into someone else's progress
       applySettings(); updateXP(); if (view === "start") showStart();
     };
     Cloud.sync();
