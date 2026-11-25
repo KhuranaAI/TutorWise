@@ -478,3 +478,19 @@ Chat tab, What's next, nudges by days-to-due, wins and the weekly review. Runs w
 - Settings: op `setting` now covers `wake`, `workStart`, `teachBuf` (minutes kept free before the first lesson, shown as
   a fixed block). A lunch he blocks himself drops the standing lunch block that day.
 - One question from the questions list is shown on Today with its answer buttons.
+
+## Nov 25 update 2: questions up front, rejig, partial credit, stale things tidy themselves (v60, BUILD 58)
+- Questions: a counter bar on Today (`qBar`, top of the right column on wide screens, above the docket on a phone)
+  opens `qSheet`, one question at a time: Done / Partly / Still to do / Drop it / Skip, then the next.
+- `part_done` op {id, done, left_title, share, on}: credits that share of the task's minutes on the day (a manual
+  extra), renames the task to what is left and shrinks its estimate. Past-day rows show the task's current name.
+- `staleSweep` (once a day, `days/{d}.sweep`): open tasks 2+ days old, the ones naming a day or the schedule first, are
+  checked against the scheduler's lessons, recent finished items and his last five days of messages. "gone" with
+  evidence parks the task (`tidy`, `tidyWhy`, `tidyDay`; at most 6) and lists it under "Jarvis tidied up" with
+  "Put it back" for two days; "ask" becomes a question. No score effect.
+- After tutoring: `settings.eveMax` 0 by default for him; `days/{d}.eve` opens an evening for one day (`evening` op,
+  or the Rejig sheet). Items he gave a time for still show.
+- Rejig (button on the docket): Lighter, Re-plan from now, Fuller (pins the next two ranked work items), energy
+  tonight, and tick-to-move "Not today".
+- Today no longer shows tomorrow on wide screens. After the last lesson a "How did today go?" card saves
+  `days/{d}.feel`, shown next to that day's score. The prompt gets today's load and a rule to say when a day is full.
