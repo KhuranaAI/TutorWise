@@ -14,8 +14,11 @@ A static, no-build web app. Open `hindi/index.html` from any static host (it's s
 
 ## The course (made for Anissa)
 
-**First run:** a new phone shows a welcome (Create account · Sign in · Try it first), then “What should we call you?” with
-quick picks for Anissa and Leeann or any typed name. For anyone but Anissa, their name is swapped into every greeting and
+**Layout:** a bottom tab bar — Home · Learn · Album · Hands-free · Profile (name, account incl. Delete account, settings,
+voices, reminder). `S.usage` keeps simple per-day numbers (opens, minutes, hands-free minutes), visible in the
+Firebase console under `users/{uid}`.
+
+**First run:** a new phone shows a welcome (Create account · Sign in · Try it first), then “What should we call you?”. For anyone but Anissa, their name is swapped into every greeting and
 sentence (`LEARNERS` / `personalize` at the top of `app.js`); the Hindi is the same. Saved in `settings.learner` /
 `settings.learnerName` and synced with the account. Phones that already had progress are Anissa's.
 

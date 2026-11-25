@@ -12,9 +12,9 @@ service cloud.firestore {
         && request.resource.data.v is int;
     }
     match /users/{uid} {
-      allow get: if request.auth != null && request.auth.uid == uid;
+      allow get, delete: if request.auth != null && request.auth.uid == uid;   // delete = "Delete account" in the app
       allow create, update: if request.auth != null && request.auth.uid == uid && validSave();
-      allow list, delete: if false;
+      allow list: if false;
     }
     match /saves/{code} {
       allow get: if code.matches('^[A-Z0-9-]{10,40}$');

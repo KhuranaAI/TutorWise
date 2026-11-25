@@ -1001,3 +1001,32 @@ html.in-app body.hf-on::before { background: #0b1220; }
 .welcome-list { list-style: none; padding: 0; margin: 14px auto 6px; max-width: 320px; text-align: left; display: grid; gap: 10px; font-size: 16px; }
 .who-hero .acct-links { margin-top: 18px; display: flex; flex-direction: column; gap: 4px; align-items: center; }
 .who-hero .type-box { max-width: 320px; margin: 0 auto; }
+
+/* ===== Tab bar: Home · Learn · Album · Hands-free · Profile ===== */
+.tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 35; display: flex; justify-content: space-around;
+  padding: 6px 6px calc(6px + var(--safe-b)); background: color-mix(in srgb, var(--card) 92%, transparent);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 -1px 0 var(--line);
+}
+.tabbar[hidden] { display: none; }
+.tab { flex: 1; max-width: 110px; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 0 4px; border-radius: 12px; color: var(--muted); background: none; }
+.tab .tab-ic { font-size: 22px; line-height: 1.1; filter: grayscale(.6); opacity: .8; }
+.tab .tab-l { font: 600 11px var(--font); }
+.tab.on { color: var(--brand-dk); }
+.tab.on .tab-ic { filter: none; opacity: 1; transform: scale(1.08); }
+body.dark .tab.on { color: var(--brand); }
+body.has-tabs #screen { padding-bottom: calc(84px + var(--safe-b)); }
+body.has-tabs .actionbar { bottom: calc(58px + var(--safe-b)); padding-bottom: 10px; }
+.tab-title { margin-top: 10px; }
+
+/* Profile */
+.profile-head { display: flex; align-items: center; gap: 16px; margin: 14px 0 12px; }
+.avatar-big { width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(150deg, var(--brand), #0f766e); color: #fff; font: 800 30px var(--font-fun); box-shadow: var(--shadow); }
+.profile-stats { margin-bottom: 4px; }
+.acct-actions { display: flex; gap: 18px; flex-wrap: wrap; }
+.danger-link { color: #c2410c !important; }
+.voice-row-wrap .set-txt { width: 100%; }
+.profile-stats { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; width: 100%; }
+.profile-stats .stat { min-width: 0; padding: 12px 4px; text-align: center; margin: 0; }
+.profile-stats .stat b { font-size: 21px; display: block; }
+.profile-stats .stat span { font-size: 10px; letter-spacing: .02em; line-height: 1.3; display: block; }

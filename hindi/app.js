@@ -13,9 +13,28 @@
   const NATIVE = window.BoloNative && window.ReactNativeWebView ? window.BoloNative : null;
   let nativeHF = null;
   const nativePost = (m) => { try { window.ReactNativeWebView.postMessage(JSON.stringify(m)); } catch (e) { /* not in the app */ } };
+  // Speech recognition through the app (iPhone's own recogniser), shaped like the browser's SpeechRecognition.
+  const nativeRecs = {};
+  let nativeRecId = 0;
+  class NativeRec {
+    constructor() { this.lang = "hi-IN"; this.maxAlternatives = 3; this.interimResults = false; }
+    start() { const id = ++nativeRecId; nativeRecs[id] = this; nativePost({ type: "listen", id, ms: 6000, hint: this.hint || "" }); }
+    stop() { nativePost({ type: "listen-stop" }); }
+    abort() { this.stop(); }
+    _heard(m) {
+      if (m.error) { if (this.onerror) this.onerror({ error: m.error }); }
+      else if (m.texts && m.texts.length) { if (this.onresult) this.onresult({ results: [m.texts.map((t) => ({ transcript: t }))] }); }
+      else if (this.onerror) this.onerror({ error: "no-speech" });
+      if (this.onend) this.onend();
+    }
+  }
   if (NATIVE) {
     const early = NATIVE.inbox || [];
-    NATIVE.receive = (m) => { if (m.type === "hf" && nativeHF) nativeHF(m); else if (m.type === "reminder") onReminderResult(m); };
+    NATIVE.receive = (m) => {
+      if (m.type === "hf" && nativeHF) nativeHF(m);
+      else if (m.type === "reminder") onReminderResult(m);
+      else if (m.type === "heard") { const r = nativeRecs[m.id]; delete nativeRecs[m.id]; if (r) r._heard(m); }
+    };
     early.forEach((m) => NATIVE.receive(m));
     document.documentElement.classList.add("in-app");
     // Swipe in from the left edge to go back, like other iPhone apps.
@@ -152,6 +171,7 @@
     s.weak = s.weak && typeof s.weak === "object" ? s.weak : {};                       // per sentence: misses / first-try wins
     s.filmi = Array.isArray(s.filmi) ? s.filmi : [];                                    // unlocked Filmi cards
     s.badges = Array.isArray(s.badges) ? s.badges : [];                                 // Filmi album badges earned
+    s.usage = Object.assign({ opens: 0, days: {}, hfMin: 0 }, s.usage);                // simple usage numbers (synced with the account)
     if (!s.settings.learner && (s.xp > 0 || s.filmi.length || Object.keys(s.modules).some((k) => s.modules[k] && (Object.keys(s.modules[k].done || {}).length || s.modules[k].run))))
       s.settings.learner = "anissa"; // phones from before profiles (real progress on them is Anissa's)
     s.modules.review = Object.assign(freshModule(), s.modules.review);
@@ -266,6 +286,17 @@
       }
     },
     resetPassword(email) { return this.authPost("accounts:sendOobCode", { requestType: "PASSWORD_RESET", email }); },
+    // Delete the account: blank the saved progress online, then delete the login. Progress on this phone stays.
+    async deleteAccount() {
+      const token = await this.idToken();
+      const url = this.docPath("users/" + encodeURIComponent(S.account.uid));
+      const blank = { v: 0, savedAt: Date.now(), deleted: true };
+      await fetch(url, { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ fields: { data: { stringValue: JSON.stringify(blank) }, savedAt: { integerValue: String(blank.savedAt) }, v: { integerValue: "0" } } }) }).catch(() => {});
+      await fetch(url, { method: "DELETE", headers: { Authorization: "Bearer " + token } }).catch(() => {}); // allowed once the new rules are published
+      await this.authPost("accounts:delete", { idToken: token });
+      S.account = null; writeLocal();
+    },
     signOut() { S.account = null; writeLocal(); }, // progress stays on this phone
     authError(e) {
       const m = String((e && e.message) || "");
@@ -406,6 +437,7 @@
       o.stop(t0 + d + 0.03);
     },
     play(kind) {
+      if (NATIVE) { const hk = { good: "success", bad: "error", done: "success", combo: "heavy", streak: "heavy", tap: "light", flip: "light" }[kind]; if (hk) nativePost({ type: "haptic", kind: hk }); }
       if (!S.settings.sound) return;
       try {
         this.ctx = this.ctx || new (window.AudioContext || window.webkitAudioContext)();
@@ -467,7 +499,12 @@
     },
     get supported() { return !!this.voice; },
     stop() { if (NATIVE) nativePost({ type: "stop" }); else try { window.speechSynthesis.cancel(); } catch (e) { /* ignore */ } },
-    sayLang(text, lang) { if (NATIVE) nativePost({ type: "say", text, lang }); else HF.speak(text, lang); },
+    sayLang(text, lang) { if (NATIVE) nativePost({ type: "say", text, lang, voice: lang === "en" ? S.settings.enVoiceURI || undefined : undefined }); else HF.speak(text, lang); },
+    enList() { // English voices, best first
+      const raw = NATIVE ? (NATIVE.voices || []).filter((v) => /^en([-_]|$)/i.test(v.language)).map((v) => ({ name: v.name, voiceURI: v.identifier, lang: v.language, quality: v.quality }))
+        : ("speechSynthesis" in window ? window.speechSynthesis.getVoices().filter((v) => /^en([-_]|$)/i.test(v.lang)) : []);
+      return raw.slice().sort((a, b) => this.score(b) - this.score(a));
+    },
     get on() { return !!this.voice && S.settings.voice; },
     say(text, manual) {
       if (!this.on || !text) return;
@@ -633,6 +670,9 @@
   const screenEl = $("screen");
   function screen(...nodes) {
     hideSheet(true);
+    const tb = document.getElementById("tabbar");
+    if (tb) tb.hidden = true;
+    document.body.classList.remove("has-tabs");
     screenEl.innerHTML = "";
     const wrap = h("div", { class: "enter", style: "display:flex;flex-direction:column;flex:1" }, nodes);
     screenEl.append(wrap);
@@ -790,6 +830,7 @@
   function goalMet(d) {
     const st = S.streak;
     if (st.last === d) return;
+    setTimeout(pushReminder, 0); // no reminder tonight — she's done
     checkStreak();
     st.count = st.last && dayDiff(st.last, d) === 1 ? st.count + 1 : 1;
     st.last = d;
@@ -1149,8 +1190,6 @@
     view = "start";
     Clip.stop();
     Clip.prepare((FILMI.find((f) => f.yt && (hasCard(f) || session.unlockAll)) || {}).yt);
-    const back = h("button", { class: "link-btn back-link" }, "‹ Home");
-    back.addEventListener("click", () => showStart());
     const earned = badgeList().filter((b) => S.badges.includes(b.id));
     const nextBadges = badgeList().filter((b) => !S.badges.includes(b.id)).sort((x, y) => (y.have / y.need) - (x.have / x.need)).slice(0, 3);
     const badgeRow = h("div", { class: "badge-row" },
@@ -1173,13 +1212,14 @@
           return b;
         })));
     });
-    screen(back, h("h2", { class: "title" }, "🎬 My Filmi Album"),
+    screen(h("h2", { class: "title tab-title" }, "🎬 My Filmi Album"),
       h("p", { class: "subtitle" }, `${S.filmi.length} of ${FILMI.length} cards collected. Every stage unlocks one — and great runs, daily gifts and reviews drop bonus cards.`),
       session.unlockAll ? h("p", { class: "small muted" }, "🔓 Test mode: every card opens, and plays as if just unlocked.") : null,
       h("div", { class: "card album-badges" }, h("div", { class: "section-title" }, `🏅 Badges · ${earned.length}/${badgeList().length}`), badgeRow,
         nextBadges.length ? h("div", { class: "next-badges" }, nextBadges.map((b) => h("div", { class: "nb" }, h("span", {}, b.icon), h("span", { class: "nb-txt" }, h("b", {}, b.name + (b.tier ? " " + b.medal : "")), h("span", { class: "small muted" }, `${Math.min(b.have, b.need)}/${b.need} · ${b.desc}`))))) : null),
       sections);
-    actions([{ label: "Back home", onClick: () => showStart() }]);
+    actions([]);
+    showTabs("album");
   }
   // "3 in a row!" banner + bonus.
   function comboBanner(n) {
@@ -2960,7 +3000,7 @@
   }
 
   /* ---------- Speak It! — answer out loud (no tiles, no typing, no English to lean on) ---------- */
-  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const SpeechRec = NATIVE && NATIVE.features && NATIVE.features.mic ? NativeRec : window.SpeechRecognition || window.webkitSpeechRecognition;
   function rGSpeak(step) {
     const mod = MODS[step.mod], it = itemOf(mod, step.item);
     let done = false, heard = "";
@@ -2993,7 +3033,7 @@
       if (done) return;
       let rec;
       try { rec = new SpeechRec(); } catch (e) { status.textContent = "The mic isn't available here — say it, then tap Show answer."; return; }
-      rec.lang = "hi-IN"; rec.interimResults = false; rec.maxAlternatives = 5;
+      rec.lang = "hi-IN"; rec.interimResults = false; rec.maxAlternatives = 5; rec.hint = it.deva;
       mic.classList.add("listening");
       status.textContent = "Listening… 👂";
       rec.onresult = (e) => {
@@ -3325,14 +3365,23 @@
   // Signed in: show where her progress is saved.
   function accountCard(card, status) {
     const out = h("button", { class: "link-btn", style: "padding-left:0" }, "Sign out");
+    const del = h("button", { class: "link-btn danger-link" }, "Delete account");
+    del.addEventListener("click", () => askConfirm({
+      title: "Delete your account?", html: "This deletes your Bolo account and the copy of your progress saved online. Progress on this phone stays. This can't be undone.",
+      yes: "Delete account", no: "Cancel",
+      onYes: async () => {
+        try { await Cloud.deleteAccount(); showSheet({ ok: true, title: "Account deleted", html: "Your account is gone. Your progress is still on this phone.", buttons: [{ label: "OK", onClick: () => showProfile() }] }); }
+        catch (e) { showSheet({ ok: false, title: "Couldn't delete it", html: "Sign out and sign in again, then try once more (Apple and Google ask for a fresh sign-in before deleting).", buttons: [{ label: "OK", onClick: () => showProfile() }] }); }
+      }
+    }));
     out.addEventListener("click", () => askConfirm({
       title: "Sign out?", html: "Your progress stays on this phone. Sign in again any time to keep saving it.",
-      yes: "Sign out", no: "Stay signed in", onYes: () => { Cloud.signOut(); showStart(); }
+      yes: "Sign out", no: "Stay signed in", onYes: () => { Cloud.signOut(); showProfile(); }
     }));
     card.append(
       h("div", { class: "section-title" }, "☁️ Your progress is saved"),
       h("p", { class: "small" }, "Signed in as ", h("b", {}, S.account.email), ". On a new phone, just sign in with the same email and password."),
-      status, out);
+      status, h("div", { class: "acct-actions" }, out, del));
     return card;
   }
   // Not signed in: a small card on the home screen that opens the account screen.
@@ -3503,13 +3552,28 @@
       giftReady() ? tile("gift ready", "🎁", "Daily gift", "Ready — tap to open!", () => openGift(() => showStart()))
         : tile("gift locked", "🎁", "Daily gift", openedToday ? "Opened ✓ — new one tomorrow" : `Hit today's goal to unlock (${Math.min(today, goalXP())}/${goalXP()} XP)`),
       tile("phrases", "🃏", "Phrase cards", `${(S.phrases || []).length}/${PHRASES.length} collected`, showPhrases),
-      tile("filmi", "🎬", "Filmi album", `${S.filmi.length}/${FILMI.length} cards · 🏅 ${S.badges.length}`, showFilmiList),
-      tile("handsfree wide", "🚗", "Hands-free practice", "Learn while driving or walking — just listen and speak", showHandsFreeSetup));
+      tile("filmi", "🎬", "Filmi album", `${S.filmi.length}/${FILMI.length} cards · 🏅 ${S.badges.length}`, showFilmiList));
+  }
+  // English voice (hands-free prompts). Premium / Enhanced voices sound far more natural than the default.
+  function enVoicePicker() {
+    const list = Speech.enList();
+    if (!list.length) return null;
+    const sel = h("select", { class: "hf-select voice-select", "aria-label": "English voice" }, list.map((v) => h("option", { value: v.voiceURI }, Speech.label(v))));
+    sel.value = S.settings.enVoiceURI && list.some((v) => v.voiceURI === S.settings.enVoiceURI) ? S.settings.enVoiceURI : list[0].voiceURI;
+    const test = h("button", { class: "btn small-btn ghost" }, "▶ Test");
+    const sample = () => { if (NATIVE) Speech.sayLang("Hello! How do you say: I'm at home?", "en"); else { HF.en = null; HF.speak("Hello! How do you say: I'm at home?", "en"); } };
+    sel.addEventListener("change", () => { S.settings.enVoiceURI = sel.value; HF.en = null; save(); sample(); });
+    test.addEventListener("click", sample);
+    const good = list.some((v) => /premium|enhanced/i.test(v.name + " " + v.voiceURI) || v.quality === "Enhanced");
+    return h("div", { class: "set-row voice-row-wrap" }, h("span", { class: "set-ic" }, "🇬🇧"),
+      h("div", { class: "set-txt" }, h("b", {}, "English voice"), h("span", { class: "d" }, "Used in hands-free practice"),
+        h("div", { class: "voice-row", style: "margin-top:8px" }, sel, test),
+        good ? null : h("p", { class: "small muted", style: "margin:6px 0 0" }, "For a natural voice: iPhone Settings → Accessibility → Spoken Content → Voices → English → download one marked Premium or Enhanced (e.g. Ava or Zoe), then reopen Bolo.")));
   }
   // ⏰ Daily reminder (in the iPhone app only).
   function reminderRow() {
     const r = S.settings.reminder = Object.assign({ on: false, hour: 19, minute: 0 }, S.settings.reminder);
-    const push = () => nativePost({ type: "reminder", on: r.on, hour: r.hour, minute: r.minute, body: `Your 🔥 streak is waiting, ${SP.name}! A few minutes of Hindi?` });
+    const push = () => pushReminder();
     const sw = h("button", { class: "toggle bare", role: "switch", "aria-checked": String(!!r.on), "aria-label": "Daily reminder" }, h("span", { class: "sw" }));
     sw.addEventListener("click", () => { r.on = !r.on; sw.setAttribute("aria-checked", String(r.on)); save(); push(); Sound.play("tap"); });
     const time = h("select", { class: "hf-select reminder-time", "aria-label": "Reminder time" },
@@ -3518,6 +3582,14 @@
     time.addEventListener("change", () => { r.hour = +time.value; r.minute = 0; save(); if (r.on) push(); });
     return h("div", { class: "set-row" }, h("span", { class: "set-ic" }, "⏰"),
       h("span", { class: "set-txt" }, h("b", {}, "Daily reminder"), h("span", { class: "d" }, "A nudge to keep your streak"), time), sw);
+  }
+  // Tell the app when to nudge: it skips today once she has met her goal, and mentions her streak.
+  function pushReminder() {
+    if (!NATIVE) return;
+    const r = S.settings.reminder;
+    if (!r) return;
+    nativePost({ type: "reminder", on: !!r.on, hour: r.hour, minute: r.minute || 0, name: SP.name,
+      doneToday: S.daily.date === dayStr() && S.daily.xp >= goalXP(), streak: S.streak.count || 0 });
   }
   function onReminderResult(m) {
     if (m.ok) return;
@@ -3548,17 +3620,28 @@
       row("🔔", "Sound effects", "Dings, pops and celebrations", "sound"),
       Speech.supported ? row("🗣️", "Hindi voice", "Read Hindi out loud on your phone", "voice") : h("p", { class: "small muted", style: "margin-top:8px" }, "🗣️ Hindi voice: download a Hindi voice in iPhone Settings → Accessibility → Spoken Content → Voices to hear Hindi read aloud."),
       Speech.supported ? voicePicker() : null,
+      enVoicePicker(),
       NATIVE ? reminderRow() : null);
   }
 
-  function showStart() {
-    Clip.stop();
-    run = null;
-    view = "start";
-    showChrome(false);
-    const mods = C.modules;
-    const anyProgress = S.xp > 0 || mods.some((m) => Object.keys(S.modules[m.id].done).length || S.modules[m.id].run);
-    const list = h("ul", { class: "mod-list" }, mods.map((m, idx) => {
+  /* ---------- Tabs: Home · Learn · Album · Hands-free · Profile ---------- */
+  const TABS = [["home", "🏠", "Home"], ["learn", "📚", "Learn"], ["album", "🎬", "Album"], ["hf", "🎧", "Hands-free"], ["profile", "👤", "Profile"]];
+  function showTabs(active) {
+    let bar = document.getElementById("tabbar");
+    if (!bar) { bar = h("nav", { class: "tabbar", id: "tabbar", "aria-label": "Sections" }); document.body.append(bar); }
+    bar.innerHTML = "";
+    const go = { home: () => showStart(), learn: () => showLearn(), album: () => showFilmiList(), hf: () => showHandsFreeSetup(), profile: () => showProfile() };
+    TABS.forEach(([id, ic, label]) => {
+      const b = h("button", { class: "tab" + (id === active ? " on" : ""), "aria-label": label, "aria-current": id === active ? "page" : null },
+        h("span", { class: "tab-ic" }, ic), h("span", { class: "tab-l" }, label));
+      b.addEventListener("click", () => { if (id === active) return window.scrollTo({ top: 0, behavior: "smooth" }); Sound.play("tap"); go[id](); });
+      bar.append(b);
+    });
+    bar.hidden = false;
+    document.body.classList.add("has-tabs");
+  }
+  function moduleList() {
+    return h("ul", { class: "mod-list" }, C.modules.map((m, idx) => {
       const st = stagesFor(m), doneN = st.filter((x) => S.modules[m.id].done[x.id]).length;
       const unlocked = moduleUnlocked(idx), complete = doneN === st.length;
       const b = h("button", { class: "mod-item" + (complete ? " done" : ""), disabled: !unlocked },
@@ -3572,38 +3655,68 @@
       b.addEventListener("click", () => { Sound.play("tap"); showModule(m.id); });
       return h("li", {}, b);
     }));
+  }
+  const anyProgress = () => S.xp > 0 || C.modules.some((m) => Object.keys(S.modules[m.id].done).length || S.modules[m.id].run);
+  function showStart() {
+    Clip.stop();
+    run = null;
+    view = "start";
+    showChrome(false);
     const logo = h("div", { class: "logo" }, "Bolo!", h("small", { lang: "hi" }, "बोलो · speak!"));
     const greet = h("p", { class: "greet" }, `Namaste, ${SP.name}! 👋`);
     holdToTest(greet);
-    const target = homeTarget();
     screen(
       h("div", { class: "home-head" },
         logo,
-        h("div", { class: "home-hello" }, greet,
-          S.xp === 0 && !S.account ? h("button", { class: "link-btn", style: "padding:0;font-size:13px", onclick: () => { S.settings.learner = null; S.settings.learnerName = null; save(); location.reload(); } }, `Not ${SP.name}? Switch`) : null, h("p", { class: "small muted" }, S.xp ? `★ ${S.xp} XP so far` : "Hindi for chatting with the family"))),
+        h("div", { class: "home-hello" }, greet, h("p", { class: "small muted" }, S.xp ? `★ ${S.xp} XP so far` : "Hindi, one real sentence at a time"))),
       streakCard(),
-      upNextCard(target, !anyProgress),
+      upNextCard(homeTarget(), !anyProgress()),
       homeTiles(),
-      h("div", { class: "card mt" }, h("div", { class: "section-title" }, "📚 Your modules"), list),
       session.unlockAll ? h("p", { class: "center small muted mt" }, "🔓 Test mode: every Filmi card opens (until the app is closed).") : null,
-      settingsCard(),
+      !S.account && Cloud.enabled && anyProgress() ? cloudCard() : null);
+    actions([]);
+    showTabs("home");
+  }
+  function showLearn() {
+    Clip.stop();
+    run = null;
+    view = "start";
+    showChrome(false);
+    const allDone = C.modules.every((m) => moduleDone(m.id));
+    screen(
+      h("h2", { class: "title tab-title" }, "📚 Learn"),
+      h("p", { class: "subtitle" }, allDone ? "Every module done — replay any one to keep it fresh." : "Every module is open — go in order, or jump to what you need."),
+      h("div", { class: "card" }, moduleList()));
+    actions([]);
+    showTabs("learn");
+  }
+  function showProfile() {
+    Clip.stop();
+    run = null;
+    view = "start";
+    showChrome(false);
+    const stat = (b, label) => h("div", { class: "stat" }, h("b", {}, String(b)), h("span", {}, label));
+    const rename = h("button", { class: "link-btn", style: "padding:0" }, "Change name");
+    rename.addEventListener("click", () => { Sound.play("tap"); showNamePicker({ rename: true }); });
+    const reset = anyProgress() ? h("button", { class: "link-btn danger-link" }, "Reset progress") : null;
+    if (reset) reset.addEventListener("click", () => askConfirm({
+      title: "Reset progress?", html: "This clears your XP, finished modules and scores on this device (and in your cloud save).",
+      yes: "Reset", no: "Cancel",
+      onYes: () => { const st = S.settings, cl = S.cloud, ac = S.account; S = fillDefaults(fresh()); S.settings = st; S.cloud = cl; S.account = ac; save(); session.streak = 0; updateXP(); showProfile(); }
+    }));
+    screen(
+      h("div", { class: "profile-head" },
+        h("div", { class: "avatar-big" }, SP.name.charAt(0).toUpperCase()),
+        h("div", {}, h("h2", { class: "title", style: "margin:0" }, SP.name), rename)),
+      h("div", { class: "stat-row profile-stats" },
+        stat(S.xp, "XP"), stat("🔥" + S.streak.count, "Day streak"), stat(S.streak.best || S.streak.count, "Best streak"), stat(S.filmi.length, "Cards")),
       cloudCard(),
+      settingsCard(),
       installTip(),
-      anyProgress ? h("p", { class: "center mt" }, h("button", {
-        class: "link-btn", onclick: () => {
-          askConfirm({
-            title: "Reset progress?", html: "This clears your XP, finished modules and scores on this device (and in your cloud save).",
-            yes: "Reset", no: "Cancel",
-            onYes: () => { const st = S.settings, cl = S.cloud, ac = S.account; S = fillDefaults(fresh()); S.settings = st; S.cloud = cl; S.account = ac; save(); session.streak = 0; updateXP(); showStart(); }
-          });
-        }
-      }, "Reset progress")) : null);
-    // Main button: carry on where she left off.
-    const allDone = mods.every((m) => moduleDone(m.id));
-    actions([{
-      label: !anyProgress ? "Start learning" : allDone ? "Play Module 1 again" : `Continue · Module ${MODS[target].number}`,
-      onClick: () => { Sound.play("tap"); playModule(allDone ? mods[0].id : target); }
-    }]);
+      h("p", { class: "center mt" }, reset),
+      h("p", { class: "center small muted" }, "Bolo! · made with 💛 by TutorWise"));
+    actions([]);
+    showTabs("profile");
   }
 
   // One module: its stages and progress.
@@ -3626,7 +3739,7 @@
       return h("li", {}, b);
     }));
     const back = h("button", { class: "link-btn back-link" }, "‹ All modules");
-    back.addEventListener("click", () => { Sound.play("tap"); showStart(); });
+    back.addEventListener("click", () => { Sound.play("tap"); showLearn(); });
     screen(
       back,
       h("div", { class: "card module-card" },
@@ -3695,6 +3808,7 @@
   const HF = {
     en: null,
     pickEn() {
+      if (S.settings.enVoiceURI && "speechSynthesis" in window) { const mine = window.speechSynthesis.getVoices().find((v) => v.voiceURI === S.settings.enVoiceURI); if (mine) return (this.en = mine); }
       if (this.en || !("speechSynthesis" in window)) return this.en;
       const score = (v) => (/premium/i.test(v.name) ? 4 : 0) + (/enhanced|neural|natural/i.test(v.name) ? 3 : 0) + (/^en[-_](IN|US|GB|CA)/i.test(v.lang) ? 1 : 0);
       this.en = window.speechSynthesis.getVoices().filter((v) => /^en([-_]|$)/i.test(v.lang)).sort((a, b) => score(b) - score(a))[0] || null;
@@ -3733,9 +3847,10 @@
   function showHandsFreeSetup() {
     view = "hf";
     showChrome(false);
-    const hf = S.settings.hf = Object.assign({ len: "10", pace: "normal", mod: "all" }, S.settings.hf);
-    const back = h("button", { class: "link-btn back-link" }, "‹ Home");
-    back.addEventListener("click", () => showStart());
+    Clip.stop();
+    run = null;
+    const hf = S.settings.hf = Object.assign({ len: "10", pace: "normal", mod: "all", mic: "on" }, S.settings.hf);
+    const canMic = !!(NATIVE && NATIVE.features && NATIVE.features.mic);
     const seg = (opts, key) => h("div", { class: "hf-seg" }, opts.map(([v, label]) => {
       const b = h("button", { class: "hf-opt" + (hf[key] === v ? " on" : "") }, label);
       b.addEventListener("click", () => { hf[key] = v; save(); Sound.play("tap"); showHandsFreeSetup(); });
@@ -3748,20 +3863,23 @@
     sel.value = MODS[hf.mod] || hf.mod === "all" ? hf.mod : "all";
     sel.addEventListener("change", () => { hf.mod = sel.value; save(); });
     const noVoice = !Speech.supported;
-    screen(back,
-      h("div", { class: "hf-hero" }, h("div", { class: "hf-car" }, "🚗"), h("h2", { class: "title" }, "Hands-free practice"),
-        h("p", { class: "subtitle" }, "A spoken lesson for driving, walking or cooking. You hear an English sentence, say it in Hindi out loud, then hear the answer. No need to look at the screen.")),
+    screen(
+      h("div", { class: "hf-hero" }, h("div", { class: "hf-car" }, "🎧"), h("h2", { class: "title" }, "Hands-free practice"),
+        h("p", { class: "subtitle" }, "A spoken lesson you can do while walking, cooking or commuting. Hear an English sentence, say it in Hindi out loud, then hear the answer — no need to look at the screen.")),
       h("div", { class: "hf-tips" },
-        h("p", {}, "🚦 ", h("b", {}, "Start it before you drive"), " and keep your eyes on the road — everything is spoken."),
-        h("p", {}, "🎧 Car buttons and AirPods work: ⏯ pause · ⏭ skip · ⏮ repeat."),
-        NATIVE ? h("p", {}, "🔒 It keeps going with the screen locked — pause and play from the lock screen.")
-          : h("p", {}, "📱 Keep Bolo open on screen (in a phone holder). If the screen locks, the lesson pauses."),
+        canMic && hf.mic === "on" ? h("p", {}, "🎤 I listen to your answer and tell you if it's right. Say “repeat”, “next” or “pause” any time.") : null,
+        h("p", {}, "🎧 Headphone and car buttons work: ⏯ pause · ⏭ skip · ⏮ repeat."),
+        NATIVE ? h("p", {}, "🔒 It keeps going with the screen locked.")
+          : h("p", {}, "📱 Keep Bolo open on screen. If the screen locks, the lesson pauses."),
         noVoice ? h("p", { class: "hf-warn" }, "🔇 No Hindi voice found on this phone. Download one first: Settings → Accessibility → Spoken Content → Voices → Hindi.") : null),
       h("div", { class: "card hf-card" },
         h("div", { class: "section-title" }, "What to practise"), sel,
         h("div", { class: "section-title mt" }, "How long"), seg(HF_LEN, "len"),
-        h("div", { class: "section-title mt" }, "Thinking time"), seg(HF_PACE, "pace")));
+        h("div", { class: "section-title mt" }, "Thinking time"), seg(HF_PACE, "pace"),
+        canMic ? h("div", { class: "section-title mt" }, "Check my answers") : null,
+        canMic ? seg([["on", "🎤 Listen to me"], ["off", "🔇 Just pause"]], "mic") : null));
     actions([{ label: "▶ Start", onClick: () => startHandsFree(), disabled: noVoice }]);
+    showTabs("hf");
   }
   // A second of silence on loop lets the car / AirPods buttons control the lesson.
   function silentAudio() {
@@ -3774,7 +3892,7 @@
     return a;
   }
   // One lesson step as a script: show (what's on screen) · en / hi (speak) · wait (thinking time).
-  function hfScript(step, think) {
+  function hfScript(step, think, mic) {
     const sh = (st, b, sm, mode) => ({ t: "show", v: [st, b || "", sm || "", mode || ""] });
     if (step.kind === "cheer") {
       const w = pick(["Shabash!", "Bahut badhiya!", "Wah!"]);
@@ -3792,13 +3910,14 @@
       sh("🗣️ Your turn", it.ask.hi, "Answer: " + it.en, "you"), { t: "en", s: "Answer: " + it.en }]
       : [sh("🗣️ How do you say…", "", it.en, "you"), { t: "en", s: pick(["How do you say:", "Say in Hindi:", "How would you say:"]) + " " + it.en }];
     return { xp: true, parts: ask.concat([
-      sh("🗣️ Your turn — say it out loud", "", step.kind === "answer" ? it.ask.hi : it.en, "you think"), { t: "wait", ms: gap },
+      sh(mic ? "🎤 Your turn — I'm listening" : "🗣️ Your turn — say it out loud", "", step.kind === "answer" ? it.ask.hi : it.en, "you think"),
+      mic ? { t: "listen", ms: gap + 1500, deva: it.deva, key: it.key } : { t: "wait", ms: gap },
       sh("✅ Answer", it.roman, it.en, "answer"), { t: "hi", s: it.deva }, { t: "wait", ms: 800 },
       { t: "hi", s: it.deva, rate: 0.72 }, { t: "wait", ms: 900 }]) };
   }
-  function hfScripts(pool, think, minSteps) { // enough of the lesson for one session, with a cheer every 12 steps
+  function hfScripts(pool, think, minSteps, mic) { // enough of the lesson for one session, with a cheer every 12 steps
     const out = [];
-    while (out.length < minSteps) hfPlan(pool).forEach((st) => { if (out.length && out.length % 13 === 12) out.push(hfScript({ kind: "cheer" }, think)); out.push(hfScript(st, think)); });
+    while (out.length < minSteps) hfPlan(pool).forEach((st) => { if (out.length && out.length % 13 === 12) out.push(hfScript({ kind: "cheer" }, think)); out.push(hfScript(st, think, mic)); });
     return out;
   }
   function startHandsFree() {
@@ -3808,7 +3927,8 @@
     const think = hf.pace === "relaxed" ? 1.6 : 1;
     const limitMs = (+hf.len || 0) * 60000;
     const t0 = Date.now();
-    const steps = hfScripts(pool, think, limitMs ? Math.max(40, (+hf.len) * 8) : 600);
+    const mic = !!(NATIVE && NATIVE.features && NATIVE.features.mic && hf.mic !== "off");
+    const steps = hfScripts(pool, think, limitMs ? Math.max(40, (+hf.len) * 8) : 600, mic);
     let pos = 0, paused = false, gen = 0, said = 0, lock = null, audio = null;
     view = "hfplay";
     showChrome(false);
@@ -3847,9 +3967,14 @@
         if (m.ev === "show") show(m.v);
         else if (m.ev === "xp") gotXP();
         else if (m.ev === "paused") showPaused(m.on);
-        else if (m.ev === "end") finish(true);
+        else if (m.ev === "heard") show([m.verdict === "right" ? "✅ Correct!" : m.verdict === "close" ? "👌 Almost!" : "👂 Not quite", "“" + m.text + "”", "", m.verdict === "right" ? "answer" : "you"]);
+        else if (m.ev === "mic" && !m.ok) counter.textContent = "🔇 Mic is off — I'll pause for you instead";
+        else if (m.ev === "end") {
+          (m.results || []).forEach((r) => { const w = S.weak[r.key] || (S.weak[r.key] = { m: 0, o: 0, t: 0 }); if (r.ok) w.o++; else w.m++; w.t = Date.now(); });
+          finish(true);
+        }
       };
-      nativePost({ type: "hf-start", steps, limitMs, hiVoice: Speech.voice ? Speech.voice.voiceURI : "", name: SP.name });
+      nativePost({ type: "hf-start", steps, limitMs, mic, hiVoice: Speech.voice ? Speech.voice.voiceURI : "", enVoice: S.settings.enVoiceURI || "", name: SP.name });
       setPaused = (p) => { nativePost({ type: "hf-cmd", cmd: p ? "pause" : "play" }); showPaused(p); };
       repeat = () => { Sound.play("tap"); nativePost({ type: "hf-cmd", cmd: "repeat" }); };
       skip = () => { Sound.play("tap"); nativePost({ type: "hf-cmd", cmd: "skip" }); };
@@ -3861,7 +3986,7 @@
         for (const p of step.parts) {
           if (g !== gen) return false;
           if (p.t === "show") show(p.v);
-          else if (p.t === "wait") { if (!(await wait(p.ms, g))) return false; }
+          else if (p.t === "wait" || p.t === "listen") { if (!(await wait(p.ms, g))) return false; }
           else await HF.speak(p.s, p.t, p.rate);
         }
         return g === gen;
@@ -3925,7 +4050,9 @@
       if (cleaned) return;
       const mins = Math.max(1, Math.round((Date.now() - t0) / 60000));
       cleanup();
-      S.lastHandsFree = dayStr(); save();
+      S.lastHandsFree = dayStr();
+      S.usage.hfMin = (S.usage.hfMin || 0) + mins;
+      save();
       if (said) setTimeout(() => Speech.sayLang(`That's it for today. ${pick(["Bahut badhiya", "Shabash", "Wah"])}, ${SP.name}!`, "en"), 200);
       Sound.play("done"); confetti();
       screen(h("div", { class: "stage-hero" },
@@ -3951,15 +4078,16 @@
     tryIt.addEventListener("click", go(() => { S.settings.accountSkipAt = Date.now(); writeLocal(); showNamePicker(); }));
     screen(h("div", { class: "stage-hero who-hero" },
       h("div", { class: "logo" }, "Bolo!", h("small", { lang: "hi" }, "बोलो · speak!")),
-      h("h1", {}, "Hindi for the family"),
+      h("h1", {}, "Speak Hindi, for real"),
       h("ul", { class: "welcome-list" },
-        h("li", {}, "🗣️ Real sentences you'll actually say to the family"),
+        h("li", {}, "🗣️ Everyday sentences you'll actually use"),
         h("li", {}, "🎬 Collect famous lines from classic Hindi films"),
-        h("li", {}, "🚗 Hands-free practice for the car")),
+        h("li", {}, "🎧 Hands-free practice — just listen and speak")),
       Cloud.enabled ? h("div", { class: "acct-links" }, signIn, tryIt) : null));
     actions([{ label: Cloud.enabled ? "Create account" : "Get started", onClick: go(() => (Cloud.enabled ? showAccount("create", { onboarding: true }) : showNamePicker())) }]);
   }
-  function showNamePicker() {
+  function showNamePicker(o) {
+    o = o || {};
     view = "who";
     showChrome(false);
     const input = h("input", { class: "type-box", type: "text", autocomplete: "given-name", autocapitalize: "words", maxlength: "24", placeholder: "Your first name", "aria-label": "Your first name" });
@@ -3978,9 +4106,11 @@
       h("div", { class: "logo" }, "Bolo!", h("small", { lang: "hi" }, "बोलो · speak!")),
       h("h1", {}, "What should we call you?"),
       h("p", { class: "muted" }, "The whole course uses your name — “Namaste, …!”, “Main … hoon.”"),
-      h("div", { class: "who-list" }, Object.keys(LEARNERS).map((id) => h("button", { class: "btn ghost who-btn", onclick: () => done(LEARNERS[id].name) }, "🙋🏽‍♀️ " + LEARNERS[id].name))),
-      h("p", { class: "small muted", style: "margin:16px 0 6px" }, "Someone else?"), input, msg));
-    actions([{ label: "Continue", onClick: () => done(input.value) }]);
+      input, msg,
+      o.rename ? h("button", { class: "link-btn", style: "margin-top:10px", onclick: () => showProfile() }, "Cancel") : null));
+    if (o.rename) input.value = SP.name;
+    actions([{ label: o.rename ? "Save" : "Continue", onClick: () => done(input.value) }]);
+    setTimeout(() => input.focus({ preventScroll: true }), 300);
   }
   function init() {
     // stage label + Devanagari quick toggle live in the top bar
@@ -4004,6 +4134,13 @@
     applySettings();
     updateXP();
     Speech.init(() => { if (view === "start") showStart(); });
+    // usage: opens per day and minutes with the app open (last 120 days)
+    const today = dayStr(), u = S.usage;
+    u.opens++; u.days[today] = u.days[today] || { o: 0, m: 0 }; u.days[today].o++;
+    Object.keys(u.days).sort().slice(0, -120).forEach((k) => delete u.days[k]);
+    setInterval(() => { if (document.visibilityState === "visible") { const d = dayStr(); u.days[d] = u.days[d] || { o: 0, m: 0 }; u.days[d].m++; writeLocal(); } }, 60000);
+    save();
+    if (S.settings.reminder && S.settings.reminder.on) pushReminder();
     if (!S.settings.learner) { Cloud.onAdopt = () => location.reload(); return showWelcome(); } // a new phone: welcome → account → name (reloads after)
     showStart();
     // Cloud: pull a newer copy (e.g. from another phone) on launch; save when the app is backgrounded or comes back online.
