@@ -498,3 +498,5 @@ Chat tab, What's next, nudges by days-to-due, wins and the weekly review. Runs w
   sheet; a typed or spoken answer goes to the model with the question and task id in the background (`applyText`,
   source "question") while the sheet moves to the next question. "Answer…" anywhere opens this sheet on that question;
   nothing sends him to the chat. Principle: an action started in a sheet finishes in that sheet.
+- (v62, BUILD 60) A copy that sees a newer build in settings reloads itself once (not while a sheet is open or text is
+  being typed; guarded per build in sessionStorage), so the "older version open elsewhere" pause clears without him.
