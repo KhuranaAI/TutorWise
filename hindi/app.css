@@ -987,3 +987,17 @@ body.hf-on { background: #0b1220; }
 .voice-row .voice-select { flex: 1; min-width: 0; padding: 10px; font-size: 14px; }
 .voice-row .btn { width: auto; flex: 0 0 auto; }
 .voice-pick p { margin: 6px 0 0; }
+
+/* ===== Inside the iPhone app (html.in-app): full-screen, so keep clear of the clock / notch and feel native ===== */
+html.in-app body { padding-top: env(safe-area-inset-top, 0px); overscroll-behavior: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+html.in-app body::before { /* solid strip behind the clock so text never scrolls under it */
+  content: ""; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 45;
+}
+html.in-app input, html.in-app textarea, html.in-app select { -webkit-user-select: text; user-select: text; }
+html.in-app * { -webkit-tap-highlight-color: transparent; }
+html.in-app body.hf-on::before { background: #0b1220; }
+
+/* First-run welcome */
+.welcome-list { list-style: none; padding: 0; margin: 14px auto 6px; max-width: 320px; text-align: left; display: grid; gap: 10px; font-size: 16px; }
+.who-hero .acct-links { margin-top: 18px; display: flex; flex-direction: column; gap: 4px; align-items: center; }
+.who-hero .type-box { max-width: 320px; margin: 0 auto; }

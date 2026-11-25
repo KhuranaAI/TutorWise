@@ -14,9 +14,15 @@ A static, no-build web app. Open `hindi/index.html` from any static host (it's s
 
 ## The course (made for Anissa)
 
-**Who's learning?** A new phone first asks who's learning (Anissa or Leeann, her mom). For Leeann, her name is swapped
-into every greeting and sentence (`LEARNERS` / `personalize` at the top of `app.js`); the Hindi is the same. The choice
-is saved in `settings.learner` and travels with the account. Phones that already had progress are Anissa's.
+**First run:** a new phone shows a welcome (Create account · Sign in · Try it first), then “What should we call you?” with
+quick picks for Anissa and Leeann or any typed name. For anyone but Anissa, their name is swapped into every greeting and
+sentence (`LEARNERS` / `personalize` at the top of `app.js`); the Hindi is the same. Saved in `settings.learner` /
+`settings.learnerName` and synced with the account. Phones that already had progress are Anissa's.
+
+**Talking to Him 💙** (module id `him`, after “What Am I Doing?”): the masculine forms for when she asks *him* things —
+casual `tum … ho`, `rahe`, `gaye`, `-oge` — built around one rule: the ending matches whoever is doing the action
+(`Main … rahi hoon` about herself, `Tum … rahe ho` about him). The chat partner's name comes from `C.himName`
+(default “Him 💙”).
 
 She always speaks as herself (female forms: rahi, gayi, aaungi) and uses **aap** + **ji** with Aunty, Uncle and
 other elders. Everyday family Hindi with plenty of Hinglish (e.g. *bhaag* for run, *shopping kar*). Every module is open from the

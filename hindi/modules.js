@@ -29,7 +29,16 @@
   C.lexicon = {
     kar: ["kar", "कर", "do", "verb", ["karr", "kr"]],
     bana: ["bana", "बना", "make", "verb", ["banaa", "bna"]],
-    ho: ["ho", "हो", "be", "aux", []],
+    ho: ["ho", "हो", "are (with tum)", "aux", []],
+    tum: ["tum", "तुम", "you (casual — him, friends)", "subject", ["tumm"]],
+    tumhe: ["tumhe", "तुम्हें", "you (casual)", "subject", ["tumhein", "tumhen", "tumhain", "tumhe"]],
+    gaye: ["gaye", "गए", "got / became (him · respect)", "aux", ["gae", "gaey", "gye"]],
+    kab: ["kab", "कब", "when", "other", ["kabb"]],
+    aaoge: ["aaoge", "आओगे", "will come (asking him)", "verb", ["aoge", "aaogey", "aaoge"]],
+    aaogi: ["aaogi", "आओगी", "will come (asking a woman)", "verb", ["aogi"]],
+    piyoge: ["piyoge", "पियोगे", "will drink (asking him)", "verb", ["pioge", "piyogey", "peeyoge"]],
+    piyogi: ["piyogi", "पियोगी", "will drink (asking a woman)", "verb", ["piogi", "peeyogi"]],
+    miss: ["miss", "मिस", "miss (Hinglish)", "verb", ["mis"]],
     ja: ["ja", "जा", "go", "verb", ["jaa"]],
     aa: ["aa", "आ", "come", "verb", ["aaa"]],
     thak: ["thak", "थक", "tire", "verb", ["thakk"]],
@@ -980,6 +989,10 @@
   // Meanings for words that only appear inside sentences (chat lines, Filmi moments…): tap a word in the app to see them.
   // word: [meaning, Devanagari, 1 if it's the same word in English]. Course words already have meanings in the lexicon.
   C.gloss = {
+    "saat": ["seven (7)", "सात"],
+    "baje": ["o'clock (‘saat baje’ = at seven)", "बजे"],
+    "piyenge": ["will drink (respectful — for elders)", "पियेंगे"],
+    "aata": ["come (he says ‘aata hoon’ = I'll come)", "आता"],
     "apni": ["your own / my own (‘apni favourite’ = my own favourite)", "अपनी"],
     "mere": ["my (‘mere paas’ = I have)", "मेरे"],
     "paas": ["near (‘mere paas’ = I have)", "पास"],
@@ -1178,7 +1191,108 @@
     "karti": ["does (she)", "करती"],
     "rehti": ["keep / live (‘hoti rehti hain’ = keep happening)", "रहती"]
   };
+
+  /* ============================ TALKING TO HIM 💙 ============================
+     Everything so far is about herself (rahi, gayi — she's a woman) or polite questions to elders (aap … hain).
+     Talking to her boyfriend she uses casual "tum … ho", and the verb follows HIM: rahe, gaye, -oge.
+     The rule she can lean on: the ending matches whoever is doing the action. */
+  const RAHI_FOR_HIM = "When you ask <b>him</b>, the ending matches <b>him</b>: <b>rahe</b>. (<b>rahi</b> is for you.)";
+  const himMod = {
+    id: "him", icon: "💙", title: "Talking to Him", tagline: "Casual “tum” — and the masculine endings for when you ask him things", minutes: "15–20",
+    stages: ["learn", "words", "quiz", "build", "transform", "chat", "challenge"],
+    stageInfo: {
+      learn: { desc: "tum … ho, and the golden rule: the ending matches who's doing it." },
+      quiz: { icon: "⚖️", title: "You or Him?", desc: "rahi or rahe? gayi or gaye? Pick the ending for who's doing it." },
+      chat: { title: "Texting Him", desc: "He's at work and tired — check on him, plan dinner, tell him you miss him." }
+    },
+    formula: [["tum", "subject"], ["…", "other"], ["rahe", "aux"], ["ho?", "aux"]],
+    formulaText: "tum + … + rahe + ho?",
+    mistakes: [{ words: ["aap"], why: "<b>aap</b> is for Aunty, Uncle and elders. With him it's the casual <b>tum</b>." }],
+    softSwaps: [],
+    confusions: [
+      ["rahi", "rahe", RAHI_FOR_HIM], ["rahe", "rahi", "This one is about <b>you</b> — you're a woman, so it's <b>rahi</b>."],
+      ["gayi", "gaye", "For <b>him</b> it's <b>gaye</b>. (<b>gayi</b> is when you're tired: Main thak gayi hoon.)"],
+      ["kaisi", "kaise", "Asking <b>him</b> → <b>kaise</b>. (<b>kaisi</b> is how people ask you.)"],
+      ["aaogi", "aaoge", "To <b>him</b> it's <b>aaoge</b>. (<b>aaogi</b> is how they'd ask you.)"],
+      ["piyogi", "piyoge", "To <b>him</b> it's <b>piyoge</b>. (Aunty asks you “Chai piyogi?”)"],
+      ["hoon", "ho", "With <b>tum</b> it's <b>ho</b>. (<b>hoon</b> is only “I am”.)"], ["hain", "ho", "<b>hain</b> goes with aap. With <b>tum</b> it's <b>ho</b>."],
+      ["ho", "hoon", "This one is about you — <b>Main … hoon</b>."],
+      ["gaye", "gayi", "This one is about <b>you</b> — you're a woman, so it's <b>gayi</b>. (<b>gaye</b> is for him.)"]
+    ],
+    cards: [
+      { id: "tum", roman: "tum", deva: "तुम", en: "you (casual — him)", emoji: "💙", sounds: "like “tum-my” without the -my" },
+      { id: "ho", roman: "ho", deva: "हो", en: "are (with tum)", emoji: "🟰", sounds: "HO" },
+      { id: "rahe", roman: "rahe", deva: "रहे", en: "…-ing (him)", emoji: "🔁", sounds: "ruh-HAY" },
+      { id: "gaye", roman: "gaye", deva: "गए", en: "got / became (him)", emoji: "😩", sounds: "guh-YAY" },
+      { id: "kab", roman: "kab", deva: "कब", en: "when", emoji: "⏰", sounds: "like “cub”" },
+      { id: "aaoge", roman: "aaoge", deva: "आओगे", en: "will you come? (him)", emoji: "🏠", sounds: "aa-OH-gay" },
+      { id: "piyoge", roman: "piyoge", deva: "पियोगे", en: "will you drink? (him)", emoji: "☕", sounds: "pee-YO-gay" },
+      { id: "tumhe", roman: "tumhe", deva: "तुम्हें", en: "you (as in “miss you”)", emoji: "🥺", sounds: "tum-HAY" }
+    ],
+    lesson: [
+      { kind: "explain", kicker: "Talking to him", title: "Tap each block to see what it means",
+        blocks: [[["tum"], "you (casual)"], [["kya"], "what"], [["kar"], "do"], [["rahe"], "…-ing (him!)"], [["ho"], "are"]],
+        roman: "Tum kya kar rahe ho?", deva: "तुम क्या कर रहे हो?", en: "What are you doing?", emoji: "💙",
+        note: "With <b>tum</b> the sentence always ends in <b>ho</b>. It's the casual “you” — for him and friends, never for elders." },
+      { kind: "tip", kicker: "The golden rule", title: "The ending matches whoever is doing it",
+        html: "You've been learning the feminine forms — and that's right, because they're about <b>you</b>. When the action is <b>his</b>, the ending switches:<ul><li>You: <b>Main</b> TV dekh <b>rahi hoon</b> · Main thak <b>gayi</b> hoon</li><li>Him: <b>Tum</b> TV dekh <b>rahe ho</b> · Tum thak <b>gaye</b> ho</li></ul>So it's not about who's speaking — it's about who's <i>doing</i> it. -i for you, -e for him.",
+        examples: ["me_tv", "t_tv", "me_thak", "t_thak"] },
+      { kind: "swap", kicker: "You or him", title: "Tap each one and watch the endings change", options: ["me_tv", "t_tv", "me_thak", "t_thak"],
+        note: "Main → <b>rahi hoon</b> / <b>gayi hoon</b>. Tum → <b>rahe ho</b> / <b>gaye ho</b>." },
+      { kind: "quiz", q: { prompt: "You're asking him if he's tired:", options: ["Tum thak gaye ho?", "Tum thak gayi ho?", "Tum thak gaye hoon?"], answer: 0,
+        whys: ["", "<b>gayi</b> is for you. He's the one who's tired → <b>gaye</b>.", "With <b>tum</b> it ends in <b>ho</b>."] } },
+      { kind: "tip", kicker: "tum or aap?", title: "Casual with him, respectful with elders",
+        html: "<ul><li><b>Him</b> (and friends): <b>tum … ho</b> — Tum kaise ho?</li><li><b>Aunty, Uncle, elders</b>: <b>aap … hain</b> — Aap kaise hain?</li></ul>The ending rule is the same either way: <b>kaise</b> and <b>rahe</b> when the person is a man.",
+        examples: ["t_kaise", "t_kya"] },
+      { kind: "tip", kicker: "Will you…?", title: "-oge for him, -ogi for you",
+        html: "To ask him what he <i>will</i> do, end the verb in <b>-oge</b>:<ul><li><b>Tum ghar kab aaoge?</b> = When will you come home?</li><li><b>Tum chai piyoge?</b> = Will you have chai?</li></ul>Aunty asks <i>you</i> with <b>-ogi</b> — “Chai piyogi?” — because you're a woman. Same rule again!",
+        examples: ["t_kab", "t_chai"] },
+      { kind: "order", item: "t_kya", chunks: [["tum"], ["kya"], ["kar"], ["rahe"], ["ho"]] }
+    ],
+    items: [
+      { id: "t_kaise", en: "How are you? (to him)", roman: "Tum kaise ho?", deva: "तुम कैसे हो?", tokens: ["tum", "kaise", "ho"], chip: "💙 How are you?", cue: "💙 him · how? 🤔" },
+      { id: "t_kya", en: "What are you doing? (to him)", roman: "Tum kya kar rahe ho?", deva: "तुम क्या कर रहे हो?", tokens: ["tum", "kya", "kar", "rahe", "ho"], alts: [["kya", "kar", "rahe", "ho"]], chip: "💙 Doing?", cue: "💙 him · doing what? 🤷🏽" },
+      { id: "t_kahan", en: "Where are you? (to him)", roman: "Tum kahan ho?", deva: "तुम कहाँ हो?", tokens: ["tum", "kahan", "ho"], alts: [["kahan", "ho"]], chip: "💙 Where?", cue: "💙 him · where? 📍" },
+      { id: "t_tv", en: "Are you watching TV? (to him)", roman: "Tum TV dekh rahe ho?", deva: "तुम टीवी देख रहे हो?", tokens: ["tum", "tv", "watch", "rahe", "ho"], alts: [["kya", "tum", "tv", "watch", "rahe", "ho"]], chip: "💙 TV?", cue: "💙 him · watching 📺?" },
+      { id: "t_khana", en: "Are you eating? (to him)", roman: "Tum khana kha rahe ho?", deva: "तुम खाना खा रहे हो?", tokens: ["tum", "khana", "eat", "rahe", "ho"], alts: [["kya", "tum", "khana", "eat", "rahe", "ho"]], chip: "💙 Eating?", cue: "💙 him · eating 🍛?" },
+      { id: "t_so", en: "Are you sleeping? (to him)", roman: "Tum so rahe ho?", deva: "तुम सो रहे हो?", tokens: ["tum", "sleep", "rahe", "ho"], alts: [["kya", "tum", "sleep", "rahe", "ho"]], chip: "💙 Sleeping?", cue: "💙 him · sleeping 😴?" },
+      { id: "t_thak", en: "Are you tired? (to him)", roman: "Tum thak gaye ho?", deva: "तुम थक गए हो?", tokens: ["tum", "thak", "gaye", "ho"], alts: [["kya", "tum", "thak", "gaye", "ho"]], chip: "💙 Tired?", cue: "💙 him · tired 😩?" },
+      { id: "t_ghar", en: "Are you at home? (to him)", roman: "Tum ghar par ho?", deva: "तुम घर पर हो?", tokens: ["tum", "ghar", "par", "ho"], alts: [["tum", "ghar", "mei", "ho"], ["kya", "tum", "ghar", "par", "ho"]], chip: "💙 Home?", cue: "💙 him · at 🏠 home?" },
+      { id: "t_kab", en: "When will you come home? (to him)", roman: "Tum ghar kab aaoge?", deva: "तुम घर कब आओगे?", tokens: ["tum", "ghar", "kab", "aaoge"], alts: [["tum", "kab", "ghar", "aaoge"], ["ghar", "kab", "aaoge"]], chip: "💙 When home?", cue: "💙 him · 🏠 home · when? ⏰" },
+      { id: "t_chai", en: "Will you have chai? (to him)", roman: "Tum chai piyoge?", deva: "तुम चाय पियोगे?", tokens: ["tum", "chai", "piyoge"], alts: [["chai", "piyoge"]], chip: "💙 Chai?", cue: "💙 him · ☕ chai · will you?" },
+      { id: "t_ache", en: "You're really sweet. (to him)", roman: "Tum bahut ache ho.", deva: "तुम बहुत अच्छे हो।", tokens: ["tum", "bahut", "ache", "ho"], chip: "💙 Sweet", cue: "💙 him · very good 🥰" },
+      { id: "me_tv", en: "I'm watching TV.", roman: "Main TV dekh rahi hoon.", deva: "मैं टीवी देख रही हूँ।", tokens: ["main", "tv", "watch", "rahi", "hoon"], chip: "🙋🏽‍♀️ Me: TV", cue: "🙋🏽‍♀️ I · watching 📺" },
+      { id: "me_thak", en: "I'm tired.", roman: "Main thak gayi hoon.", deva: "मैं थक गई हूँ।", tokens: ["main", "thak", "gayi", "hoon"], chip: "🙋🏽‍♀️ Me: tired", cue: "🙋🏽‍♀️ I · tired 😩" },
+      { id: "t_miss", en: "I'm missing you.", roman: "Main tumhe miss kar rahi hoon.", deva: "मैं तुम्हें मिस कर रही हूँ।", tokens: ["main", "tumhe", "miss", "kar", "rahi", "hoon"], chip: "🥺 Miss you", cue: "🙋🏽‍♀️ I · missing 🥺 you" }
+    ],
+    quiz: [
+      { prompt: "Ask him what he's doing:", options: ["Tum kya kar rahe ho?", "Tum kya kar rahi ho?", "Aap kya kar rahe hain?"], answer: 0, whys: ["", "He's the one doing it → <b>rahe</b>. (rahi is about you.)", "That's the polite version for elders. With him, use <b>tum … ho</b>."] },
+      { prompt: "Tell him YOU are tired:", options: ["Main thak gayi hoon.", "Main thak gaye hoon.", "Tum thak gaye ho."], answer: 0, whys: ["", "It's about you → <b>gayi</b>.", "That asks if <i>he's</i> tired!"] },
+      { prompt: "Asking him: kaise or kaisi?", options: ["Tum kaise ho?", "Tum kaisi ho?"], answer: 0, whys: ["", "<b>kaisi</b> is how people ask <i>you</i>. For him → <b>kaise</b>."] },
+      { prompt: "Which word ends a question with tum?", options: ["ho", "hain", "hoon"], answer: 0, whys: ["", "<b>hain</b> goes with aap.", "<b>hoon</b> is only “I am”."] },
+      { prompt: "Ask him when he'll come home:", options: ["Tum ghar kab aaoge?", "Tum ghar kab aaogi?", "Main ghar kab aaungi?"], answer: 0, whys: ["", "<b>aaogi</b> is how they'd ask you. To him → <b>aaoge</b>.", "That's about you coming home."] },
+      { prompt: "What does this mean?", hi: "Main tumhe miss kar rahi hoon.", dv: "मैं तुम्हें मिस कर रही हूँ।", options: ["I'm missing you.", "Are you missing me?", "I'm watching TV."], answer: 0, whys: ["", "It starts with <b>Main</b> — it's about you: I'm missing you.", "No TV here 😄 — <b>miss kar rahi hoon</b> = I'm missing (you)."] },
+      { prompt: "He texts “Kya kar rahi ho?” — who is that about?", options: ["You — rahi is the ending for you", "Him", "Aunty"], answer: 0, whys: ["", "<b>rahi</b> + <b>ho</b> — he's asking what <i>you're</i> doing.", "He'd say “Main … raha hoon” about himself."] }
+    ],
+    transforms: [["me_tv", "t_tv"], ["t_tv", "t_kya"], ["t_kahan", "t_kaise"], ["t_kya", "t_khana"], ["me_thak", "t_thak"]],
+    chat: {
+      who: "him",
+      lines: [
+        { them: "Hello! Kya kar rahi ho? 😊", dv: "हैलो! क्या कर रही हो?", en: "Hello! What are you doing? (He says rahi — it's about you.)" },
+        { pick: [{ text: "Main TV dekh rahi hoon. Tum kya kar rahe ho?", ok: true }, { text: "Main TV dekh rahe hoon. Tum kya kar rahe ho?", why: "About you it's <b>rahi</b>." }, { text: "Main TV dekh rahi hoon. Tum kya kar rahi ho?", why: "When you ask him, it's <b>rahe</b>." }] },
+        { them: "Main office mei hoon. Bahut thak gaya hoon 😩", dv: "मैं ऑफ़िस में हूँ। बहुत थक गया हूँ।", en: "I'm at the office. I'm so tired. (He says gaya — he's a man.)" },
+        { type: "t_kab", goal: "Ask him when he'll come home." },
+        { them: "Saat baje. Tum khana bana rahi ho?", dv: "सात बजे। तुम खाना बना रही हो?", en: "At seven. Are you cooking?" },
+        { pick: [{ text: "Haan! Tum chai piyoge?", ok: true }, { text: "Haan! Tum chai piyogi?", why: "<b>piyogi</b> is how they ask you. To him → <b>piyoge</b>." }, { text: "Haan! Aap chai piyenge?", why: "That's for elders. With him, keep it casual: <b>Tum chai piyoge?</b>" }] },
+        { them: "Haan please! 😍", dv: "हाँ प्लीज़!", en: "Yes please!" },
+        { type: "t_miss", goal: "Tell him you're missing him." },
+        { them: "Main bhi! 💙 Jaldi aata hoon.", dv: "मैं भी! जल्दी आता हूँ।", en: "Me too! I'll come soon." }
+      ]
+    }
+  };
+
   C.modules.unshift(classMod, classMod2);            // her classes come first, in order
+  C.modules.splice(C.modules.findIndex((m) => m.id === "m1") + 1, 0, himMod); // after "What Am I Doing?" (it reuses those verbs)
 
   // Speak It! — answer out loud, no tiles or typing. Questions (ask) and picture cues for her first class:
   const speakData = {
