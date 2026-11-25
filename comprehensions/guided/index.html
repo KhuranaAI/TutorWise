@@ -192,158 +192,33 @@ th { font-size: 0.76rem; letter-spacing: 0.05em; text-transform: uppercase; colo
 "use strict";
 
 /* =====================================================================
-   THE READING AND ITS SMALL STEPS
-   Passage and Questions 1-3 are from record ENG-RC-G5-026 (questions 1, 3
-   and 4 of the worksheet). Everything else here (paragraph checks, steps,
-   hints, Question 4) is new scaffold content for the tutor to approve.
+   THE READINGS AND THEIR SMALL STEPS
+   Passages and Questions 1-3 of each reading come from the accepted records.
+   Everything else (paragraph checks, steps, hints, Question 4) is scaffold
+   content for the tutor to approve; see CONTENT_REVIEW.md.
    ===================================================================== */
 const YES_PART = "Yes. This paragraph is mostly about that.";
 const DETAIL = "That is in this paragraph, but it is only one small detail. Pick the one that covers the whole paragraph.";
 const NOT_HERE = "This paragraph does not say that. Pick the one that covers the whole paragraph.";
 const HELP_PART = "Mostly about means the whole paragraph. One small detail is not enough.";
 const HELP_SORT = "If you can put your finger on the answer, it is in the text. If the text only gives clues, it is text + my head.";
-const NOT_USEFUL = "That is true, but it does not help with this question. Pick the one that fits your clue.";
 
-function sortStep(answer, yes, no) {
+function sortStep(s) {
   return { type: "choose", name: "Sort", sort: true, prompt: "Where is the answer?", help: HELP_SORT, opts: [
-    { t: "In the text", sub: "I can point to the answer.", ok: answer === "text", why: answer === "text" ? yes : no },
-    { t: "Text + my head", sub: "The text gives clues. I add what I know.", ok: answer === "head", why: answer === "head" ? yes : no },
+    { t: "In the text", sub: "I can point to the answer.", ok: s.answer === "text", why: s.answer === "text" ? s.yes : s.no },
+    { t: "Text + my head", sub: "The text gives clues. I add what I know.", ok: s.answer === "head", why: s.answer === "head" ? s.yes : s.no },
   ] };
 }
-
-const R = {
-  id: "ENG-RC-G5-026",
-  title: "The Bridge Inside a Broken Bone",
-  genre: "a science article",
-  paras: [
-    { s: [
-        "A broken bone may look like a snapped branch on an X-ray, but it is not dry or lifeless.",
-        "Bone contains living cells and blood vessels.",
-        "When a break damages those vessels, blood gathers around the crack and forms a clot.",
-        "The clot helps stop bleeding and marks the place where repair must begin." ],
-      check: [
-        { t: "What a broken bone looks like on an X-ray", why: DETAIL },
-        { t: "Blood forms a clot where the repair must begin", ok: true, why: YES_PART },
-        { t: "A cast keeps the bone still", why: NOT_HERE } ] },
-    { s: [
-        "During the next few days, cleanup cells arrive.",
-        "They remove damaged pieces too small to reuse.",
-        "Other cells bring new material to the gap.",
-        "Tiny blood vessels begin growing into the area, carrying oxygen and nutrients.",
-        "The busy site is more like a road crew arriving after a washout than glue drying on a shelf." ],
-      check: [
-        { t: "Cells clean up and bring new material", ok: true, why: YES_PART },
-        { t: "Glue drying on a shelf", why: DETAIL },
-        { t: "Why a broken bone hurts", why: NOT_HERE } ] },
-    { s: [
-        "Next, the body builds a soft callus.",
-        "Collagen fibres and cartilage form a flexible scaffold between the broken ends.",
-        "It is a temporary bridge, not finished bone.",
-        "A cast or brace helps keep the pieces lined up while this delicate connection forms." ],
-      check: [
-        { t: "A cast or brace", why: DETAIL },
-        { t: "Hard new bone fills the gap", why: NOT_HERE },
-        { t: "The body builds a soft, temporary bridge", ok: true, why: YES_PART } ] },
-    { s: [
-        "Bone-building cells then replace much of the soft callus with a hard callus made of new bone.",
-        "At first, this bone is woven in a rough pattern.",
-        "It can join the pieces, but it is not arranged as neatly as the bone that was there before." ],
-      check: [
-        { t: "Blood forms a clot", why: NOT_HERE },
-        { t: "Hard new bone replaces the soft callus", ok: true, why: YES_PART },
-        { t: "The new bone has a rough pattern", why: DETAIL } ] },
-    { s: [
-        "Over many weeks or months, the bone remodels.",
-        "Some cells remove extra material while others lay down stronger layers along the lines where the bone carries loads.",
-        "The large bump around the break can gradually become smaller.",
-        "A healed spot does not stay extra strong forever; it can return close to the strength and shape it had before." ],
-      check: [
-        { t: "Over time, the bone is reshaped and made strong", ok: true, why: YES_PART },
-        { t: "The bump gets smaller", why: DETAIL },
-        { t: "Doctors take X-rays", why: NOT_HERE } ] },
-    { s: [
-        "Pain often fades before every stage is complete.",
-        "That is why a cast coming off, or an arm feeling better, does not by itself decide when a person can return to a sport.",
-        "A health professional considers the kind of break, how it is aligned, and how repair is progressing." ],
-      check: [
-        { t: "A cast coming off", why: DETAIL },
-        { t: "Bones contain living cells", why: NOT_HERE },
-        { t: "Feeling better does not mean healing is finished", ok: true, why: YES_PART } ] },
-  ],
-  questions: [
-    { id: "Q1",
-      text: "What happens to damaged blood vessels after a bone breaks, and what useful job does the result do?",
-      steps: [
-        sortStep("text", "Yes. The answer is written in the text. You can point to it.", "Look again. This answer is written in the text. You can point to it."),
-        { type: "find", name: "Find", prompt: "Tap the sentence that tells what the blood does.", accept: ["1-3"],
-          hints: [ { t: "The question asks what happens. Look for what the blood does after the break." }, { narrow: [1] }, { point: "1-3" } ] },
-        { type: "find", name: "Find", prompt: "Tap the sentence that tells what job the clot does.", accept: ["1-4"],
-          hints: [ { t: "A job is something useful. Look for what the clot helps to do." }, { narrow: [1] }, { point: "1-4" } ] },
-        { type: "write", name: "Write", prompt: "Answer the question in your own words.", evidence: ["1-3", "1-4"],
-          topic: ["clot", "bleed", "blood", "scab", "repair", "stop", "lump"],
-          offMsg: "Check your answer. Does it say what the blood does and what the clot does?",
-          hints: [ { t: "Say two things. First, what the blood does. Second, what the clot does." },
-                   { starter: "The blood " },
-                   { t: "Key words: clot · stops the bleeding · marks the place" } ] },
-      ] },
-    { id: "Q2",
-      text: "In Paragraph 3, the word scaffold most nearly means:",
-      steps: [
-        sortStep("head", "Yes. The text does not say what scaffold means. It gives clues.", "Look again. The text does not say what scaffold means. It only gives clues."),
-        { type: "find", name: "Find", prompt: "Tap a sentence in paragraph 3 that gives a clue about the word scaffold.", accept: ["3-2", "3-3"],
-          hints: [ { t: "Look near the word scaffold. Read the sentence after it too." }, { narrow: [3] }, { point: "3-3" } ] },
-        { type: "choose", name: "Choose", prompt: "Use your clue. What does scaffold mean here?",
-          help: "Look at your clue. Which meaning fits a temporary bridge?",
-          opts: [
-            { t: "a temporary framework that supports work being built", ok: true, why: "Yes. The scaffold is a temporary frame. It supports the new bone while it is built." },
-            { t: "a hard covering that prevents all movement forever", why: "Not that one. The text says the scaffold is flexible and temporary. It is not hard, and it is not forever." },
-            { t: "a tool that removes damaged pieces from the crack", why: "Not that one. Cleanup cells remove damaged pieces. The scaffold joins the broken ends." },
-            { t: "a finished layer that has its final shape and strength", why: "Not that one. The text says it is not finished bone." } ] },
-      ] },
-    { id: "Q3",
-      text: "Why would repeated movement at the break make the early repair harder, even if all the repair cells arrived?",
-      steps: [
-        sortStep("head", "Yes. No sentence says why. The text gives clues, and you add what you know.", "Look again. No sentence says why. The text only gives clues."),
-        { type: "find", name: "Find", prompt: "Tap a clue. Find a sentence that tells how strong the first bridge is.", accept: ["3-2", "3-3", "3-4"],
-          hints: [ { t: "The early repair is the soft callus. Look for words like flexible, temporary or delicate." }, { narrow: [3] }, { point: "3-4" } ] },
-        { type: "choose", name: "What I know", prompt: "What do you already know that helps?",
-          help: "Your clue says the bridge is soft and delicate. Which fact is about soft or delicate things?",
-          opts: [
-            { t: "Hair grows back after it is cut.", why: NOT_USEFUL },
-            { t: "A soft, new thing can come apart if it keeps moving.", ok: true, why: "Yes. That fits your clue." },
-            { t: "Milk has calcium in it.", why: NOT_USEFUL } ] },
-        { type: "write", name: "So", prompt: "Finish the sentence. Join your clue and what you know.", prefill: "So ", evidence: ["3-2", "3-3", "3-4"],
-          topic: ["break", "broke", "bridge", "soft", "delicate", "apart", "line", "connect", "callus", "damage", "heal", "weak", "fragile", "tear", "join", "scaffold", "flexible", "temporary", "snap", "destroy", "disturb", "still", "repair"],
-          offMsg: "Check your answer. Does it say what happens to the soft bridge when the bone moves?",
-          hints: [ { t: "Think: what happens to a soft bridge if the bone keeps moving?" },
-                   { starter: "So moving the bone would " },
-                   { t: "Key words: soft bridge · come apart · not lined up" } ] },
-      ] },
-    { id: "Q4",
-      text: "What is this whole article mostly about?",
-      steps: [
-        sortStep("head", "Yes. No one sentence says it. You put the paragraphs together.", "Look again. No one sentence says it. You put the paragraphs together."),
-        { type: "choose", name: "Who or what", prompt: "Who or what is the article about?",
-          help: "Which one is in every paragraph?",
-          opts: [
-            { t: "a road crew", why: "Not that one. The road crew is only a comparison in paragraph 2." },
-            { t: "a broken bone", ok: true, why: "Yes. The whole article is about a broken bone." },
-            { t: "a health professional", why: "Not that one. A health professional is only in the last paragraph." } ] },
-        { type: "choose", name: "Most important", prompt: "What is the most important thing about it?",
-          help: "Think about all six paragraphs. What do they show, step by step?",
-          opts: [
-            { t: "It looks like a snapped branch on an X-ray.", why: "Not that one. That is one small detail from paragraph 1." },
-            { t: "It stays extra strong forever.", why: "Not that one. Paragraph 5 says the opposite." },
-            { t: "It heals in stages, one after another.", ok: true, why: "Yes. Every paragraph is one stage of healing." } ] },
-        { type: "write", name: "Shrink", prompt: "Say the main idea in 10 words or fewer. Use your own words.", max: 10,
-          topic: ["heal", "stage", "step", "repair", "fix", "bone", "mend"],
-          offMsg: "Check your answer. Does it say who or what, and the most important thing?",
-          hints: [ { t: "Put your two answers together: who or what, and the most important thing." },
-                   { starter: "A broken bone " },
-                   { t: "Key words: heals · in stages" } ] },
-      ] },
-  ],
-};
+const CHECK_WHY = { main: YES_PART, detail: DETAIL, not_here: NOT_HERE };
+// The readings are written in readings/*.json. build_mockup.py checks them against
+// the accepted records and puts them here.
+const READINGS = ([{"id": "ENG-RC-G5-026", "title": "The Bridge Inside a Broken Bone", "genre": "a science article", "paras": [{"s": ["A broken bone may look like a snapped branch on an X-ray, but it is not dry or lifeless.", "Bone contains living cells and blood vessels.", "When a break damages those vessels, blood gathers around the crack and forms a clot.", "The clot helps stop bleeding and marks the place where repair must begin."], "check": [{"t": "What a broken bone looks like on an X-ray", "kind": "detail"}, {"t": "Blood forms a clot where the repair must begin", "kind": "main"}, {"t": "A cast keeps the bone still", "kind": "not_here"}]}, {"s": ["During the next few days, cleanup cells arrive.", "They remove damaged pieces too small to reuse.", "Other cells bring new material to the gap.", "Tiny blood vessels begin growing into the area, carrying oxygen and nutrients.", "The busy site is more like a road crew arriving after a washout than glue drying on a shelf."], "check": [{"t": "Cells clean up and bring new material", "kind": "main"}, {"t": "Glue drying on a shelf", "kind": "detail"}, {"t": "Why a broken bone hurts", "kind": "not_here"}]}, {"s": ["Next, the body builds a soft callus.", "Collagen fibres and cartilage form a flexible scaffold between the broken ends.", "It is a temporary bridge, not finished bone.", "A cast or brace helps keep the pieces lined up while this delicate connection forms."], "check": [{"t": "A cast or brace", "kind": "detail"}, {"t": "Hard new bone fills the gap", "kind": "not_here"}, {"t": "The body builds a soft, temporary bridge", "kind": "main"}]}, {"s": ["Bone-building cells then replace much of the soft callus with a hard callus made of new bone.", "At first, this bone is woven in a rough pattern.", "It can join the pieces, but it is not arranged as neatly as the bone that was there before."], "check": [{"t": "Blood forms a clot", "kind": "not_here"}, {"t": "Hard new bone replaces the soft callus", "kind": "main"}, {"t": "The new bone has a rough pattern", "kind": "detail"}]}, {"s": ["Over many weeks or months, the bone remodels.", "Some cells remove extra material while others lay down stronger layers along the lines where the bone carries loads.", "The large bump around the break can gradually become smaller.", "A healed spot does not stay extra strong forever; it can return close to the strength and shape it had before."], "check": [{"t": "Over time, the bone is reshaped and made strong", "kind": "main"}, {"t": "The bump gets smaller", "kind": "detail"}, {"t": "Doctors take X-rays", "kind": "not_here"}]}, {"s": ["Pain often fades before every stage is complete.", "That is why a cast coming off, or an arm feeling better, does not by itself decide when a person can return to a sport.", "A health professional considers the kind of break, how it is aligned, and how repair is progressing."], "check": [{"t": "A cast coming off", "kind": "detail"}, {"t": "Bones contain living cells", "kind": "not_here"}, {"t": "Feeling better does not mean healing is finished", "kind": "main"}]}], "questions": [{"id": "Q1", "record_q": 1, "text": "What happens to damaged blood vessels after a bone breaks, and what useful job does the result do?", "steps": [{"type": "sort", "answer": "text", "yes": "Yes. The answer is written in the text. You can point to it.", "no": "Look again. This answer is written in the text. You can point to it."}, {"type": "find", "prompt": "Tap the sentence that tells what the blood does.", "accept": ["1-3"], "hints": [{"t": "The question asks what happens. Look for what the blood does after the break."}, {"narrow": [1]}, {"point": "1-3"}]}, {"type": "find", "prompt": "Tap the sentence that tells what job the clot does.", "accept": ["1-4"], "hints": [{"t": "A job is something useful. Look for what the clot helps to do."}, {"narrow": [1]}, {"point": "1-4"}]}, {"type": "write", "name": "Write", "prompt": "Answer the question in your own words.", "evidence": ["1-3", "1-4"], "topic": ["clot", "bleed", "blood", "scab", "repair", "stop", "lump"], "offMsg": "Check your answer. Does it say what the blood does and what the clot does?", "hints": [{"t": "Say two things. First, what the blood does. Second, what the clot does."}, {"starter": "The blood "}, {"t": "Key words: clot · stops the bleeding · marks the place"}]}]}, {"id": "Q2", "record_q": 3, "text": "In Paragraph 3, the word scaffold most nearly means:", "steps": [{"type": "sort", "answer": "head", "yes": "Yes. The text does not say what scaffold means. It gives clues.", "no": "Look again. The text does not say what scaffold means. It only gives clues."}, {"type": "find", "prompt": "Tap a sentence in paragraph 3 that gives a clue about the word scaffold.", "accept": ["3-2", "3-3"], "hints": [{"t": "Look near the word scaffold. Read the sentence after it too."}, {"narrow": [3]}, {"point": "3-3"}]}, {"type": "choose", "name": "Choose", "record_options": true, "prompt": "Use your clue. What does scaffold mean here?", "help": "Look at your clue. Which meaning fits a temporary bridge?", "opts": [{"t": "a temporary framework that supports work being built", "ok": true, "why": "Yes. The scaffold is a temporary frame. It supports the new bone while it is built."}, {"t": "a hard covering that prevents all movement forever", "why": "Not that one. The text says the scaffold is flexible and temporary. It is not hard, and it is not forever."}, {"t": "a tool that removes damaged pieces from the crack", "why": "Not that one. Cleanup cells remove damaged pieces. The scaffold joins the broken ends."}, {"t": "a finished layer that has its final shape and strength", "why": "Not that one. The text says it is not finished bone."}]}]}, {"id": "Q3", "record_q": 4, "text": "Why would repeated movement at the break make the early repair harder, even if all the repair cells arrived?", "steps": [{"type": "sort", "answer": "head", "yes": "Yes. No sentence says why. The text gives clues, and you add what you know.", "no": "Look again. No sentence says why. The text only gives clues."}, {"type": "find", "prompt": "Tap a clue. Find a sentence that tells how strong the first bridge is.", "accept": ["3-2", "3-3", "3-4"], "hints": [{"t": "The early repair is the soft callus. Look for words like flexible, temporary or delicate."}, {"narrow": [3]}, {"point": "3-4"}]}, {"type": "choose", "name": "What I know", "prompt": "What do you already know that helps?", "help": "Your clue says the bridge is soft and delicate. Which fact is about soft or delicate things?", "opts": [{"t": "Hair grows back after it is cut.", "why": "That is true, but it does not help with this question. Pick the one that fits your clue."}, {"t": "A soft, new thing can come apart if it keeps moving.", "ok": true, "why": "Yes. That fits your clue."}, {"t": "Milk has calcium in it.", "why": "That is true, but it does not help with this question. Pick the one that fits your clue."}]}, {"type": "write", "name": "So", "prompt": "Finish the sentence. Join your clue and what you know.", "prefill": "So ", "evidence": ["3-2", "3-3", "3-4"], "topic": ["break", "broke", "bridge", "soft", "delicate", "apart", "line", "connect", "callus", "damage", "heal", "weak", "fragile", "tear", "join", "scaffold", "flexible", "temporary", "snap", "destroy", "disturb", "still", "repair"], "offMsg": "Check your answer. Does it say what happens to the soft bridge when the bone moves?", "hints": [{"t": "Think: what happens to a soft bridge if the bone keeps moving?"}, {"starter": "So moving the bone would "}, {"t": "Key words: soft bridge · come apart · not lined up"}]}]}, {"id": "Q4", "record_q": null, "text": "What is this whole article mostly about?", "steps": [{"type": "sort", "answer": "head", "yes": "Yes. No one sentence says it. You put the paragraphs together.", "no": "Look again. No one sentence says it. You put the paragraphs together."}, {"type": "choose", "name": "Who or what", "prompt": "Who or what is the article about?", "help": "Which one is in every paragraph?", "opts": [{"t": "a road crew", "why": "Not that one. The road crew is only a comparison in paragraph 2."}, {"t": "a broken bone", "ok": true, "why": "Yes. The whole article is about a broken bone."}, {"t": "a health professional", "why": "Not that one. A health professional is only in the last paragraph."}]}, {"type": "choose", "name": "Most important", "prompt": "What is the most important thing about it?", "help": "Think about all six paragraphs. What do they show, step by step?", "opts": [{"t": "It looks like a snapped branch on an X-ray.", "why": "Not that one. That is one small detail from paragraph 1."}, {"t": "It stays extra strong forever.", "why": "Not that one. Paragraph 5 says the opposite."}, {"t": "It heals in stages, one after another.", "ok": true, "why": "Yes. Every paragraph is one stage of healing."}]}, {"type": "write", "name": "Shrink", "prompt": "Say the main idea in 10 words or fewer. Use your own words.", "max": 10, "topic": ["heal", "stage", "step", "repair", "fix", "bone", "mend"], "offMsg": "Check your answer. Does it say who or what, and the most important thing?", "hints": [{"t": "Put your two answers together: who or what, and the most important thing."}, {"starter": "A broken bone "}, {"t": "Key words: heals · in stages"}]}]}]}, {"id": "ENG-RC-G5-035", "title": "Moving One Frame at a Time", "genre": "an arts and technology article", "paras": [{"s": ["In stop-motion animation, a puppet may cross a room without ever taking a continuous step.", "An animator places the puppet, takes one picture, moves it a tiny amount, and takes another.", "When the pictures play quickly in order, the separate poses appear to become motion."], "check": [{"t": "A puppet crossing a room", "kind": "detail"}, {"t": "How sound is added to a film", "kind": "not_here"}, {"t": "Many separate pictures, played quickly, look like movement", "kind": "main"}]}, {"s": ["A single second may require twelve or twenty-four pictures, depending on how the film is made.", "That means a five-second walk can require dozens of careful changes.", "If the puppet moves too far between pictures, it may seem to jump.", "If it moves by smaller, consistent amounts, the action often looks smoother."], "check": [{"t": "Small, even moves between many pictures make the action smooth", "kind": "main"}, {"t": "A five-second walk", "kind": "detail"}, {"t": "How the puppet's face is changed", "kind": "not_here"}]}, {"s": ["The puppet must also hold each pose.", "Many stop-motion figures contain a jointed metal skeleton called an armature.", "Animators bend its joints, while the outer model provides the character's shape and clothing.", "Some productions use replacement mouths, eyes, or whole faces so expressions can change from frame to frame."], "check": [{"t": "How many pictures make one second", "kind": "not_here"}, {"t": "How the puppet is built so it can hold a pose and change its face", "kind": "main"}, {"t": "Replacement mouths and eyes", "kind": "detail"}]}, {"s": ["The set needs patience too.", "A bumped table can make the background appear to leap.", "A lamp that shifts can make shadows flicker.", "Animators secure objects, control lighting, and compare each new image with earlier frames.", "They may carefully mark equipment positions and keep all loose tools well away from the set between photographs.", "Small accidental changes become surprisingly loud when the finished film plays."], "check": [{"t": "How voices and music are added", "kind": "not_here"}, {"t": "A lamp that shifts", "kind": "detail"}, {"t": "Small accidents on the set show in the film, so animators are careful", "kind": "main"}]}, {"s": ["Not every change is an error.", "Animators plan details that viewers may barely notice: a coat settling after a turn, fingers closing around a cup, or a character pausing before answering.", "These choices create weight and feeling.", "The model is still, but the sequence can suggest thought."], "check": [{"t": "Animators plan small changes on purpose to show feeling", "kind": "main"}, {"t": "A bumped table", "kind": "not_here"}, {"t": "Fingers closing around a cup", "kind": "detail"}]}, {"s": ["Sound is usually added separately.", "Footsteps, voices, music, and room noises help sell the movement, even though the photographed puppet made no sound.", "Stop motion joins sculpture, photography, performance, and sound.", "Its illusion depends on many tiny decisions staying connected across time."], "check": [{"t": "Footsteps and music", "kind": "detail"}, {"t": "Sound is added afterwards, and all the parts must fit together", "kind": "main"}, {"t": "How the metal skeleton bends", "kind": "not_here"}]}], "questions": [{"id": "Q1", "record_q": 1, "text": "What four actions are repeated to make a stop-motion puppet appear to move?", "steps": [{"type": "sort", "answer": "text", "yes": "Yes. The answer is written in the text. You can point to it.", "no": "Look again. This answer is written in the text. You can point to it."}, {"type": "find", "prompt": "Tap the sentence that lists what the animator does.", "accept": ["1-2"], "hints": [{"t": "The question asks for actions. Look for the sentence about what the animator does."}, {"narrow": [1]}, {"point": "1-2"}]}, {"type": "write", "name": "Write", "prompt": "Answer the question in your own words.", "evidence": ["1-2"], "topic": ["place", "put", "picture", "photo", "move", "take", "pose", "shift"], "offMsg": "Check your answer. Does it list the four things the animator does?", "hints": [{"t": "List four actions, in order. What does the animator do first?"}, {"starter": "The animator "}, {"t": "Key words: places · takes a picture · moves · takes another"}]}]}, {"id": "Q2", "record_q": 3, "text": "In Paragraph 3, armature most nearly means:", "steps": [{"type": "sort", "answer": "text", "yes": "Yes. One sentence tells you what an armature is. You can point to it.", "no": "Look again. One sentence tells you what an armature is. You can point to it."}, {"type": "find", "prompt": "Tap the sentence that tells what an armature is.", "accept": ["3-2"], "hints": [{"t": "Find the word armature. The same sentence tells you what it is."}, {"narrow": [3]}, {"point": "3-2"}]}, {"type": "choose", "name": "Choose", "record_options": true, "prompt": "Use the sentence you found. What does armature mean here?", "help": "Look at the sentence you found. Which choice means a jointed skeleton inside the puppet?", "opts": [{"t": "a jointed inner framework that supports and poses a puppet", "ok": true, "why": "Yes. An armature is the jointed skeleton inside the puppet. It lets the puppet hold a pose."}, {"t": "a replacement face used to change a puppet's expression", "why": "Not that one. Replacement faces are a different part. The armature is the metal skeleton."}, {"t": "the clothing and outer shape seen by the audience", "why": "Not that one. The outer model gives the shape and clothing. The armature is inside it."}, {"t": "a camera setting that plays pictures quickly", "why": "Not that one. The armature is part of the puppet, not part of the camera."}]}]}, {"id": "Q3", "record_q": 4, "text": "A one-second action should contain twelve evenly spaced poses, but one middle pose is missing. What might viewers notice, and what should the animator change when planning the action again?", "steps": [{"type": "sort", "answer": "head", "yes": "Yes. The text does not talk about a missing pose. It gives clues, and you add what you know.", "no": "Look again. The text does not talk about a missing pose. It only gives clues."}, {"type": "find", "prompt": "Tap a clue. Find a sentence that tells what happens when the puppet moves too far.", "accept": ["2-3", "2-4"], "hints": [{"t": "A missing pose leaves a bigger gap. Look for a sentence about moving too far between pictures."}, {"narrow": [2]}, {"point": "2-3"}]}, {"type": "choose", "name": "What I know", "prompt": "What do you already know that helps?", "help": "Your clue is about moving too far. Which fact is about a bigger gap?", "opts": [{"t": "Cameras need batteries.", "why": "That is true, but it does not help with this question. Pick the one that fits your clue."}, {"t": "Puppets can be made of clay.", "why": "That is true, but it does not help with this question. Pick the one that fits your clue."}, {"t": "If one step is missing, the gap to the next step is bigger.", "ok": true, "why": "Yes. That fits your clue."}]}, {"type": "write", "name": "So", "prompt": "Finish the sentence. Join your clue and what you know.", "prefill": "So ", "evidence": ["2-3", "2-4"], "topic": ["jump", "jerk", "skip", "gap", "far", "smooth", "pose", "small", "add", "back", "missing", "sudden"], "offMsg": "Check your answer. Does it say what viewers would see, and what the animator should change?", "hints": [{"t": "Say two things: what viewers would see, and what the animator should do next time."}, {"starter": "So viewers would see "}, {"t": "Key words: a jump · put the pose back · smaller moves"}]}]}, {"id": "Q4", "record_q": null, "text": "What is this whole article mostly about?", "steps": [{"type": "sort", "answer": "head", "yes": "Yes. No one sentence says it. You put the paragraphs together.", "no": "Look again. No one sentence says it. You put the paragraphs together."}, {"type": "choose", "name": "Who or what", "prompt": "Who or what is the article about?", "help": "Which one is in every paragraph?", "opts": [{"t": "a lamp", "why": "Not that one. A lamp is one small detail in paragraph 4."}, {"t": "music", "why": "Not that one. Music is only in the last paragraph."}, {"t": "stop-motion animation", "ok": true, "why": "Yes. The whole article is about stop-motion animation."}]}, {"type": "choose", "name": "Most important", "prompt": "What is the most important thing about it?", "help": "Think about all six paragraphs. What do animators do again and again?", "opts": [{"t": "It is made from many tiny, careful changes.", "ok": true, "why": "Yes. Every paragraph is about small, careful changes."}, {"t": "Its puppets have metal skeletons.", "why": "Not that one. That is one detail from paragraph 3."}, {"t": "It is quick and easy to make.", "why": "Not that one. The article says it takes patience and many careful changes."}]}, {"type": "write", "name": "Shrink", "prompt": "Say the main idea in 10 words or fewer. Use your own words.", "max": 10, "topic": ["stop", "motion", "animat", "tiny", "small", "careful", "picture", "change", "frame", "move", "puppet"], "offMsg": "Check your answer. Does it say who or what, and the most important thing?", "hints": [{"t": "Put your two answers together: who or what, and the most important thing."}, {"starter": "Stop-motion animation "}, {"t": "Key words: many · tiny · careful changes"}]}]}]}, {"id": "ENG-RC-G5-028", "title": "Why the Bicycle Slows Down", "genre": "a science article", "paras": [{"s": ["When a cyclist presses a pedal, the crank turns the chain, and the chain turns the rear wheel.", "The tire pushes backward on the road.", "At the same time, the road pushes the tire forward.", "That forward push helps the bicycle speed up.", "The rider is not storing a supply of force inside the wheels."], "check": [{"t": "Pedalling makes the road push the bicycle forward", "kind": "main"}, {"t": "The chain turns the rear wheel", "kind": "detail"}, {"t": "Brakes get warm", "kind": "not_here"}]}, {"s": ["Once the bicycle is moving, it has motion that tends to continue.", "However, other forces oppose it.", "The tires and their bearings have rolling resistance.", "Air pushes against the rider and bicycle, creating drag.", "These forces act even when the rider stops pedalling."], "check": [{"t": "How gears work", "kind": "not_here"}, {"t": "Air pushes against the rider", "kind": "detail"}, {"t": "A moving bicycle keeps going, but some forces push against it", "kind": "main"}]}, {"s": ["On level ground, a coasting bicycle slows because resistance and drag are no longer balanced by a forward push from pedalling.", "It has not run out of force, since a moving bicycle does not need a force inside it to keep going.", "Instead, the unbalanced forces change its motion.", "A headwind can increase air drag, while a smooth, well-inflated tire can reduce some rolling resistance."], "check": [{"t": "A well-inflated tire", "kind": "detail"}, {"t": "A coasting bicycle slows because the forces are not balanced", "kind": "main"}, {"t": "Brake pads press on the wheel", "kind": "not_here"}]}, {"s": ["Brakes create another opposing force.", "When brake pads press against a wheel rim or disc, friction makes the bicycle slow more quickly.", "Some of the bicycle's energy of motion becomes thermal energy in the brakes and nearby parts.", "That is why brakes can warm during use."], "check": [{"t": "Brakes slow the bicycle with friction, and they get warm", "kind": "main"}, {"t": "A headwind makes more drag", "kind": "not_here"}, {"t": "A wheel rim or disc", "kind": "detail"}]}, {"s": ["Gears do not remove the forces.", "A low gear lets the rider turn the pedals more easily, but the pedals must turn more times to cover the same distance.", "A high gear can move the bicycle farther with each pedal turn, but it usually requires a harder push.", "The gear changes the trade-off between force and distance."], "check": [{"t": "A high gear needs a harder push", "kind": "detail"}, {"t": "Hills can speed up a bicycle", "kind": "not_here"}, {"t": "A gear trades how hard you push for how far you go", "kind": "main"}]}, {"s": ["A bicycle ride is therefore a changing balance from moment to moment.", "Pedalling can produce a forward force, hills can speed or slow the bicycle, and resistance, drag, and braking oppose motion.", "Looking carefully at which forces are balanced—and which are not—explains the change without pretending that motion simply disappears."], "check": [{"t": "The crank turns the chain", "kind": "not_here"}, {"t": "A ride is a changing balance of forces", "kind": "main"}, {"t": "Hills can slow the bicycle", "kind": "detail"}]}], "questions": [{"id": "Q1", "record_q": 2, "text": "Name the two forces in Paragraph 2 that oppose a moving bicycle.", "steps": [{"type": "sort", "answer": "text", "yes": "Yes. The answer is written in the text. You can point to it.", "no": "Look again. This answer is written in the text. You can point to it."}, {"type": "find", "prompt": "Tap the sentence that names the force from the tires.", "accept": ["2-3"], "hints": [{"t": "A force that opposes the bicycle pushes against it. Look for the sentence about the tires."}, {"narrow": [2]}, {"point": "2-3"}]}, {"type": "find", "prompt": "Tap the sentence that names the force from the air.", "accept": ["2-4"], "hints": [{"t": "Look for the sentence about air."}, {"narrow": [2]}, {"point": "2-4"}]}, {"type": "write", "name": "Write", "prompt": "Answer the question in your own words.", "evidence": ["2-3", "2-4"], "topic": ["rolling", "resistance", "drag", "air", "tire", "tyre", "friction"], "offMsg": "Check your answer. Does it name the two forces?", "hints": [{"t": "Name two forces. One comes from the tires. One comes from the air."}, {"starter": "The two forces are "}, {"t": "Key words: rolling resistance · drag"}]}]}, {"id": "Q2", "record_q": 3, "text": "In Paragraph 5, trade-off most nearly means:", "steps": [{"type": "sort", "answer": "head", "yes": "Yes. The text does not say what trade-off means. It gives clues.", "no": "Look again. The text does not say what trade-off means. It only gives clues."}, {"type": "find", "prompt": "Tap a sentence in paragraph 5 that shows the rider getting one thing and giving up another.", "accept": ["5-2", "5-3"], "hints": [{"t": "Look for a sentence with the word but. It shows a good side and a cost."}, {"narrow": [5]}, {"point": "5-2"}]}, {"type": "choose", "name": "Choose", "record_options": true, "prompt": "Use your clue. What does trade-off mean here?", "help": "Look at your clue. The rider gets something and gives something up. Which choice says that?", "opts": [{"t": "a choice where gaining one advantage involves giving up another", "ok": true, "why": "Yes. In a trade-off you gain one thing and give up another. An easier push costs more pedal turns."}, {"t": "a repair that replaces a worn bicycle part", "why": "Not that one. Nothing is being repaired in paragraph 5."}, {"t": "a contest between a cyclist and a headwind", "why": "Not that one. Paragraph 5 is about gears, not about wind."}, {"t": "a supply of force stored inside a gear", "why": "Not that one. The article says force is not stored inside the bicycle."}]}]}, {"id": "Q3", "record_q": 4, "text": "Imagine a bicycle coasting on level ground in a place where none of the opposing forces in Paragraph 2 could act on it. Predict what would happen to its speed, and use an idea from Paragraph 2 or 3 about moving objects to explain your prediction.", "steps": [{"type": "sort", "answer": "head", "yes": "Yes. The text does not describe that place. It gives clues, and you work out the answer.", "no": "Look again. The text does not describe that place. It only gives clues."}, {"type": "find", "prompt": "Tap a clue. Find a sentence that tells what a moving bicycle does when nothing stops it.", "accept": ["2-1", "3-2"], "hints": [{"t": "Look for a sentence that says motion continues, or that a moving bicycle keeps going."}, {"narrow": [2, 3]}, {"point": "2-1"}]}, {"type": "choose", "name": "What I know", "prompt": "What do you already know that helps?", "help": "Your clue says motion tends to continue. Which fact is about what slows a moving thing?", "opts": [{"t": "If nothing pushes against a moving thing, nothing slows it down.", "ok": true, "why": "Yes. That fits your clue."}, {"t": "Bicycles have two wheels.", "why": "That is true, but it does not help with this question. Pick the one that fits your clue."}, {"t": "Helmets keep riders safe.", "why": "That is true, but it does not help with this question. Pick the one that fits your clue."}]}, {"type": "write", "name": "So", "prompt": "Finish the sentence. Join your clue and what you know.", "prefill": "So ", "evidence": ["2-1", "3-2"], "topic": ["same", "stay", "keep", "continu", "slow", "stop", "speed", "going", "forever", "change"], "offMsg": "Check your answer. Does it say what would happen to the speed, and why?", "hints": [{"t": "Say what the speed would do. Then say why, using your clue."}, {"starter": "So the bicycle's speed would "}, {"t": "Key words: stay the same · nothing slows it · motion continues"}]}]}, {"id": "Q4", "record_q": null, "text": "What is this whole article mostly about?", "steps": [{"type": "sort", "answer": "head", "yes": "Yes. No one sentence says it. You put the paragraphs together.", "no": "Look again. No one sentence says it. You put the paragraphs together."}, {"type": "choose", "name": "Who or what", "prompt": "Who or what is the article about?", "help": "Which one is in every paragraph?", "opts": [{"t": "the forces on a moving bicycle", "ok": true, "why": "Yes. Every paragraph is about forces on a bicycle."}, {"t": "a bicycle's brakes", "why": "Not that one. Brakes are only in paragraph 4."}, {"t": "a headwind", "why": "Not that one. A headwind is one small detail in paragraph 3."}]}, {"type": "choose", "name": "Most important", "prompt": "What is the most important thing about it?", "help": "Think about all six paragraphs. What changes the bicycle's speed?", "opts": [{"t": "A bicycle stops because it runs out of force.", "why": "Not that one. Paragraph 3 says the opposite."}, {"t": "A bicycle speeds up or slows down when the forces are not balanced.", "ok": true, "why": "Yes. Unbalanced forces change the bicycle's motion."}, {"t": "Brakes can get warm.", "why": "Not that one. That is one detail from paragraph 4."}]}, {"type": "write", "name": "Shrink", "prompt": "Say the main idea in 10 words or fewer. Use your own words.", "max": 10, "topic": ["force", "balanc", "slow", "speed", "push", "drag", "bicycle", "bike", "motion", "move"], "offMsg": "Check your answer. Does it say who or what, and the most important thing?", "hints": [{"t": "Put your two answers together: who or what, and the most important thing."}, {"starter": "Forces on a bicycle "}, {"t": "Key words: unbalanced forces · change its speed"}]}]}]}]).map((r) => ({
+  id: r.id, title: r.title, genre: r.genre,
+  paras: r.paras.map((para) => ({ s: para.s, check: para.check.map((c) => ({ t: c.t, ok: c.kind === "main", why: CHECK_WHY[c.kind] })) })),
+  questions: r.questions.map((q) => ({ id: q.id, text: q.text,
+    steps: q.steps.map((s) => (s.type === "sort" ? sortStep(s) : s.type === "find" ? Object.assign({ name: "Find" }, s) : s)) })),
+}));
+let R = READINGS[0];              // the reading in use; set by useReading()
 
 /* ============================ helpers ============================ */
 function h(tag, attrs, ...kids) {
@@ -370,8 +245,12 @@ function stripPrefix(text, prefix) {
 }
 
 // Every passage word with where it came from, for the copy check.
-const PW = [];
-R.paras.forEach((para, pi) => para.s.forEach((sent, si) => words(sent).forEach((w) => PW.push({ w, id: `${pi + 1}-${si + 1}`, p: pi + 1 }))));
+let PW = [];
+function useReading(id) {
+  R = READINGS.find((r) => r.id === id) || READINGS[0];
+  PW = [];
+  R.paras.forEach((para, pi) => para.s.forEach((sent, si) => words(sent).forEach((w) => PW.push({ w, id: `${pi + 1}-${si + 1}`, p: pi + 1 }))));
+}
 function longestRun(ans) {
   let best = { len: 0, at: -1 };
   let prev = new Array(PW.length + 1).fill(0);
@@ -391,26 +270,40 @@ const sentenceText = (id) => { const [p, s] = id.split("-").map(Number); return 
 
 /* ============================ state ============================ */
 const KEY = "tw-guided-mock:v1";
+const HIST_KEY = "tw-guided-mock:history";
 const store = {
   load() { try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } },
   save(v) { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch (e) { /* private window */ } },
 };
+// Sessions finished on this device, so the tutor can see a trend.
+function history() { try { return JSON.parse(localStorage.getItem(HIST_KEY)) || []; } catch (e) { return []; } }
+const doneIds = () => history().map((r) => r.reading);
+const nextReading = () => (READINGS.find((r) => !doneIds().includes(r.id)) || READINGS[0]).id;   // first one not yet finished here
+const titleOf = (id) => (READINGS.find((r) => r.id === id) || { title: id }).title;
+
 // startHelp: hint level already showing when a step opens (0 none .. 3 the sentence is pointed out).
 // pause: seconds the student must wait after a wrong answer before trying again (0 = off).
 const DEFAULTS = { nQ: 4, checkMin: 2, listen: false, next: "Show your tutor.", startHelp: 2, pause: 5, showCount: true };
 const HELP_NAMES = ["None", "Level 1: a reminder of what to look for", "Level 2: the right paragraph is shown", "Level 3: the sentence is pointed out"];
 const FAST_MS = 3000;            // a first answer faster than this is flagged as a likely guess
 const READ_WORDS_PER_SEC = 4;    // nobody reads faster than this; the "I have read it" button waits for it
-function fresh(settings) {
-  return { v: 2, settings: Object.assign({}, DEFAULTS, settings), phase: "start", part: 0, stage: "reading", partT0: 0,
+function fresh(settings, rid) {
+  return { v: 2, rid: rid || nextReading(), settings: Object.assign({}, DEFAULTS, settings), phase: "start", part: 0, stage: "reading", partT0: 0,
     q: 0, step: 0, ss: null, found: {}, picks: {}, answers: {}, log: [], reads: [],
     clock: { read: 0, q: 0 }, self: { asked: 0, yes: 0, notyet: 0, none: 0 }, listens: 0 };
 }
 let S = store.load();
 if (!S || S.v !== 2) S = fresh();
 S.settings = Object.assign({}, DEFAULTS, S.settings);
+if (!READINGS.some((r) => r.id === S.rid)) S.rid = READINGS[0].id;   // a session saved before there was a choice of reading
+useReading(S.rid);
 const save = () => store.save(S);
 const QS = () => R.questions.slice(0, S.settings.nQ);
+function newSession(sameReading) {
+  S = fresh(S.settings, sameReading ? S.rid : null);
+  useReading(S.rid);
+  save();
+}
 function newSS(step) {
   const ss = { tries: 0, wrong: [], hint: 0, given: 0, auto: 0, early: 0, done: false, fb: null, nudged: {}, t0: Date.now(),
     draft: step && step.prefill ? step.prefill : "", starter: "", hit: null, shrunk: 0, copyFinal: false, off: false,
@@ -422,10 +315,6 @@ function newSS(step) {
   return ss;
 }
 const partStep = (i) => ({ type: "choose", name: "Check", prompt: "What is this paragraph mostly about?", opts: R.paras[i].check, help: HELP_PART });
-
-// Sessions finished on this device, so the tutor can see a trend.
-const HIST_KEY = "tw-guided-mock:history";
-function history() { try { return JSON.parse(localStorage.getItem(HIST_KEY)) || []; } catch (e) { return []; } }
 function pushHistory() {
   const L = S.log;
   const row = { when: new Date().toISOString(), reading: R.id, nQ: S.settings.nQ, startHelp: S.settings.startHelp,
@@ -800,7 +689,7 @@ function tutorPanel() {
   const resetBtn = h("button", { class: "btn ghost small", type: "button", id: "reset-btn" }, "Start again");
   resetBtn.addEventListener("click", () => {
     resetRow.replaceChildren(h("span", {}, "Erase this session’s answers and report?"),
-      h("button", { class: "btn small", type: "button", id: "reset-yes", onclick: () => { S = fresh(S.settings); save(); tutorOpen = false; render(); } }, "Yes, erase"),
+      h("button", { class: "btn small", type: "button", id: "reset-yes", onclick: () => { newSession(true); tutorOpen = false; render(); } }, "Yes, erase"),
       h("button", { class: "btn ghost small", type: "button", onclick: () => { tutorOpen = true; render(); } }, "Cancel"));
   });
   resetRow.append(resetBtn);
@@ -808,6 +697,9 @@ function tutorPanel() {
     h("summary", {}, "Tutor settings"),
     h("div", { class: "settings" },
       h("p", { class: "muted" }, "Set these before the student starts. In the real app they sit on your teacher page, not here."),
+      h("div", { class: "field" }, h("label", { for: "set-reading" }, "Reading"),
+        select("set-reading", S.rid, READINGS.map((r) => [r.id, `${r.title}${doneIds().includes(r.id) ? " (done on this device)" : ""}`]), (v) => { S.rid = v; useReading(v); }),
+        h("small", {}, "A new session starts on the next reading not yet done on this device.")),
       h("div", { class: "field" }, h("label", { for: "set-nq" }, "Questions today"),
         select("set-nq", s.nQ, [[1, "1 question"], [2, "2 questions"], [3, "3 questions"], [4, "4 questions"]], (v) => { s.nQ = Number(v); })),
       h("div", { class: "field" }, h("label", { for: "set-help" }, "Help already showing when a step opens"),
@@ -926,11 +818,11 @@ function renderReport() {
       h("p", {}, `Listen button used ${plural(S.listens, "time")}.`)),
     past.length > 0 && h("section", { class: "card" },
       h("h2", {}, "Sessions finished on this device"),
-      h("p", { class: "muted" }, "Newest first. Improvement looks like the first-try score holding while the starting help comes down."),
+      h("p", { class: "muted" }, "Newest first. Improvement looks like the first-try score holding on new readings while the starting help comes down."),
       h("div", { class: "table-wrap" }, h("table", {},
-        h("thead", {}, h("tr", {}, ["When", "Starting help", "First try", "Likely guesses", "Asked for help", "Time"].map((t) => h("th", {}, t)))),
+        h("thead", {}, h("tr", {}, ["When", "Reading", "Starting help", "First try", "Likely guesses", "Asked for help", "Time"].map((t) => h("th", {}, t)))),
         h("tbody", {}, past.map((r) => h("tr", {},
-          h("td", {}, when(r.when)), h("td", {}, `Level ${r.startHelp}`), h("td", {}, `${r.first} of ${r.total} (${pct(r.first, r.total)}%)`),
+          h("td", {}, when(r.when)), h("td", {}, titleOf(r.reading)), h("td", {}, `Level ${r.startHelp}`), h("td", {}, `${r.first} of ${r.total} (${pct(r.first, r.total)}%)`),
           h("td", {}, String(r.guesses)), h("td", {}, plural(r.asked, "step")), h("td", {}, clock(r.secs)))))))),
     h("section", { class: "card" },
       h("h2", {}, "Copy this report"),
@@ -942,7 +834,7 @@ function renderReport() {
         } }, "Copy report"),
         msg,
         h("button", { class: "btn ghost small", type: "button", onclick: () => { S.phase = "done"; save(); render(); } }, "Back"),
-        h("button", { class: "btn ghost small", type: "button", id: "again-btn", onclick: () => { S = fresh(S.settings); save(); render(); window.scrollTo(0, 0); } }, "Start a new session"))));
+        h("button", { class: "btn ghost small", type: "button", id: "again-btn", onclick: () => { newSession(false); render(); window.scrollTo(0, 0); } }, "Start a new session"))));
   setBar(null, null);
 }
 
