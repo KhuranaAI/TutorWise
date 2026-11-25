@@ -13,7 +13,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.nextSkip=[];
-const BUILD=58;
+const BUILD=59;
 const DH=id=>`<span class="dh" data-drag="${id}" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg></span>`;
 /* his own ranking (dragged in Tasks) decides between two ranked items */
 const ordBoth=(a,b)=>Number.isFinite(a.ord)&&Number.isFinite(b.ord)?a.ord-b.ord:0;
@@ -1348,7 +1348,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
       S.tasks.set(tid,{id:tid,...doc});await db.doc('tasks/'+tid).set(doc);i.value='';renderList();toast('Added to '+p.name+'.',1400);if(typeof classifySoon==='function')classifySoon()},
     pgStatus:async()=>{await db.doc('projects/'+id).update({status:b.dataset.s,up:stamp()}).catch(()=>{});toast('Saved.',1200)},
     qAns:async()=>{const q=S.qs.find(x=>x.id===id);if(!q)return;const v=b.dataset.v;if(v==='skip'){await db.doc('questions/'+id).update({pr:-5}).catch(()=>{});return}await qAnswer(q,v);toast(v==='done'?'Marked done.':v==='drop'?'Dropped.':v==='back'?'Back on today.':'Noted.',1400)},
-    qSay:()=>{const q=S.qs.find(x=>x.id===id);if(!q)return;const t=S.tasks.get(q.tid);S.qCtx={id,q:q.q,tid:q.tid,tt:t?T(t):''};show('chat');const i=$('chatIn');if(i){i.value='';i.placeholder='Your answer: '+(q.q+(t?' ('+short(T(t))+')':'')).slice(0,80);i.focus()}}};
+    qSay:()=>{qSheet(id)}};
   if(H5[a]){e.stopImmediatePropagation();e.preventDefault();try{await H5[a]()}catch(er){console.warn(er);toast('That didn’t work. Try again.',2000)}}},true);
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target?.id==='pjAdd'){e.preventDefault();document.querySelector('[data-act=pjAddGo]')?.click()}});
 /* an answer typed for a question goes to Jarvis with the question attached */
@@ -1446,12 +1446,16 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
 /* ---------- questions: a count on the main page, answered one after another ---------- */
 S.qSkip=new Set();
 const qLeft=()=>qOpen().filter(q=>!S.qSkip.has(q.id));
-function qSheet(){const l=qLeft(),q=l[0];if(!q){$('sheet').hidden=true;toast('That’s all of them. Thank you, sir.',2200);renderAll();return}
-  const t=S.tasks.get(q.tid),b=(v,x,c)=>`<button class="${c||''}" data-act="qsAns" data-id="${q.id}" data-v="${v}" style="flex:1 1 130px">${x}</button>`;
-  sheet(`<div class="m">Question ${qOpen().length-l.length+1} of ${qOpen().length}</div><h3 style="font:600 20px/1.3 var(--disp);margin:8px 0 4px">${esc(q.kind==='ask'||!t?q.q:T(t))}</h3>
+function qSheet(only){const l=qLeft(),q=(only&&S.qs.find(x=>x.id===only&&!x.ans))||l[0];if(!q){$('sheet').hidden=true;quickMicOff();toast('That’s all of them. Thank you, sir.',2200);renderAll();return}
+  quickMicOff();const t=S.tasks.get(q.tid),all=qOpen(),ix=Math.max(0,all.findIndex(x=>x.id===q.id)),b=(v,x,c)=>`<button class="${c||''}" data-act="qsAns" data-id="${q.id}" data-v="${v}" style="flex:1 1 120px">${x}</button>`;
+  sheet(`<div class="m">Question ${ix+1} of ${all.length}</div><h3 style="font:600 20px/1.3 var(--disp);margin:8px 0 4px">${esc(q.kind==='ask'||!t?q.q:T(t))}</h3>
   ${t&&q.kind!=='ask'?`<p class="why" style="margin:0 0 4px">${esc(q.q)}</p><div class="m">${[projOf(t)?projOf(t).name:'',t.day?'planned '+dayWord(t.day):'',t.since?'on your list since '+dayName(t.since):''].filter(Boolean).map(esc).join(' · ')}</div>${t.rd?.note?`<p class="m" style="margin-top:6px">${esc(t.rd.note)}</p>`:''}`:''}
-  <div class="row" style="margin-top:14px;gap:8px">${q.kind==='done'?b('done','Done','pri')+b('part','Partly')+b('todo','Still to do')+b('drop','Drop it','ghost'):q.kind==='wait'?b('back','It came through','pri')+b('still','Still waiting')+b('drop','Drop it','ghost'):`<button class="pri" data-act="qSay" data-id="${q.id}" style="flex:1 1 130px">Answer</button>`}</div>
-  <div class="row" style="margin-top:10px"><button class="sm ghost" data-act="qsAns" data-id="${q.id}" data-v="skip">Skip for now</button>${q.kind!=='ask'?`<button class="sm ghost" data-act="qSay" data-id="${q.id}">Say more…</button>`:''}<button class="sm ghost" data-act="close">Close</button></div>`)}
+  ${q.kind==='done'?`<div class="row" style="margin-top:14px;gap:8px">${b('done','Done','pri')+b('todo','Still to do')+b('drop','Drop it','ghost')}</div>`:q.kind==='wait'?`<div class="row" style="margin-top:14px;gap:8px">${b('back','It came through','pri')+b('still','Still waiting')+b('drop','Drop it','ghost')}</div>`:''}
+  <label for="qsText" style="margin-top:14px">${q.kind==='ask'?'Your answer':'Or tell me in your own words'}</label>
+  <textarea id="qsText" data-id="${q.id}" placeholder="${q.kind==='ask'?'Type or talk…':'e.g. half done: bought the holder, still need the mirror'}" style="width:100%;min-height:76px"></textarea>
+  <div class="row" style="margin-top:8px"><button class="sm pri" data-act="qsSend" data-id="${q.id}">Send</button>${dict?`<button class="sm" id="qMic" data-act="qsMic">Talk</button>`:''}<span class="grow"></span><button class="sm ghost" data-act="qsAns" data-id="${q.id}" data-v="skip">Skip</button><button class="sm ghost" data-act="close">Close</button></div>
+  ${dict?'':'<p class="m" style="margin-top:6px">On the phone, the microphone on your keyboard works here.</p>'}`);
+  if(q.kind==='ask'&&DESK.on)setTimeout(()=>$('qsText')?.focus(),60)}
 function qBar(){const n=qOpen().length;if(!n)return'';return `<button class="qbar" data-act="qsOpen"><b class="num">${n}</b><span class="grow">question${n>1?'s':''} for you<small>Tap to go through them. A few seconds each.</small></span><span class="go">Answer</span></button>`}
 /* ---------- how the day felt, in his words ---------- */
 const FEEL={great:'Great',good:'Good',ok:'OK',rough:'Rough'};
@@ -1503,8 +1507,13 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
   const H10={qsOpen:()=>{S.qSkip=new Set();qSheet()},
     qsAns:async()=>{const q=S.qs.find(x=>x.id===id);if(!q)return qSheet();const v=b.dataset.v;
       if(v==='skip'){S.qSkip.add(id);return qSheet()}
-      if(v==='part'){const t=S.tasks.get(q.tid);S.qCtx={id,q:'What part of this is done, and what is left?',tid:q.tid,tt:t?T(t):''};$('sheet').hidden=true;show('chat');const i=$('chatIn');if(i){i.value='';i.placeholder='What’s done and what’s left?';i.focus()}return}
-      S.qSkip.add(id);await qAnswer(q,v);qSheet()},
+      S.qSkip.add(id);S.qOnly='';await qAnswer(q,v);qSheet()},
+    qsMic:()=>{if(V.quick){quickMicOff();return}V.qEl='qsText';quickMic();V.qEl='qsText'},
+    qsSend:async()=>{const el=$('qsText'),x=(el?.value||'').trim(),q=S.qs.find(y=>y.id===id);if(!x){el?.focus();toast('Type or say your answer first.',1600);return}if(!q)return qSheet();quickMicOff();
+      const t=S.tasks.get(q.tid),msg=`(Answering your question "${q.q}"${t?` about the task "${T(t)}" (id ${q.tid})`:''}) ${x}`;S.qSkip.add(id);
+      db.doc('questions/'+id).update({ans:'said',ansAt:stamp(),said:x.slice(0,300)}).catch(()=>{});
+      applyText(msg,'question').then(r=>{toast(r?String(r).slice(0,180):'I couldn’t take that in. It’s back on your questions.',r?4200:3200);if(!r)db.doc('questions/'+id).update({ans:null}).catch(()=>{});renderAll()}).catch(()=>{});
+      S.qOnly='';qSheet()},
     rejig:()=>rejigSheet(),
     rjLow:async()=>{const on=!dayDoc(td).low;await dayWrite(td,cur=>({...cur,low:on}));if(!on)await restoreLow(td);const m=await relayMoves(true);await done((on?'Lighter day: only what has to happen.':'Back to a normal day.')+m)},
     rjPlan:async()=>{const m=await relayMoves(true);await done('Laid out again from now.'+m)},

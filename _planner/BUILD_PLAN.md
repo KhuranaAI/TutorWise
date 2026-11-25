@@ -494,3 +494,7 @@ Chat tab, What's next, nudges by days-to-due, wins and the weekly review. Runs w
   tonight, and tick-to-move "Not today".
 - Today no longer shows tomorrow on wide screens. After the last lesson a "How did today go?" card saves
   `days/{d}.feel`, shown next to that day's score. The prompt gets today's load and a rule to say when a day is full.
+- (v61, BUILD 59) The question sheet answers in place: one-tap buttons plus a text box with Talk and Send in the same
+  sheet; a typed or spoken answer goes to the model with the question and task id in the background (`applyText`,
+  source "question") while the sheet moves to the next question. "Answer…" anywhere opens this sheet on that question;
+  nothing sends him to the chat. Principle: an action started in a sheet finishes in that sheet.
