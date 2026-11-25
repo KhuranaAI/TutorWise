@@ -455,3 +455,26 @@ Chat tab, What's next, nudges by days-to-due, wins and the weekly review. Runs w
 - Voice: the page runtime offers speech-to-text (Chromium tab, desktop app) and a Claude voice for reading aloud
   (desktop only); no live voice conversation and nothing in the mobile apps, so talking to Claude in its own voice mode
   and sending things through the Jarvis line stays the voice route.
+
+## Nov 25 update: "done" sticks, the day behind you, umbrella projects (v59, BUILD 57)
+- Cause of "I told it and it wasn't marked": the model answered "did X yesterday" with `add` + `done_on`, which made a new
+  finished copy and left the planned item open. `doneMatch(title, day)` (word overlap, that day's plan first) now ticks
+  the existing item; the prompt gets "Yesterday's plan (id|title|state)" and a rule to find the item before adding.
+  `add` with `done_on` today finishes the new item.
+- Score: a planned item that was later dropped no longer counts against its day; `days/{d}.cap` records the most work
+  that fit that day (timed tasks + done minutes) and the score is earned minutes out of min(planned, cap).
+- The last planned day is on screen: a "Yesterday" card on Today (top of the right column on wide screens, under the
+  docket on a phone), a first column on the Week board, and the Calendar's past-day panel; each lists what was planned
+  with Did it / Done toggles in place (`pastBody`, `pdYes`/`pdNo`), plus "Also done that day". `scoreP` computes a
+  full score for days not yet reviewed.
+- Projects: `projects/{id}.side` marks a side list (kept off the day; switch on the project page). All other projects
+  are umbrellas whose tasks are planned normally; `classify` (RDV 2) files unassigned tasks under a project; the week
+  layout prefers a day with fewer than two items from the same project. Side-list target dates never show as late.
+- Morning attendance check (`attCheck`): if the previous weekday has unmarked lessons in the scheduler, one pinned
+  first task is added (`first:true` outranks everything); it closes itself once the scheduler shows them logged.
+- Student notes: op `student_note` → `stunotes/{studentId}.log` [{d, x}]; sheet under Centre; latest note per student
+  is in the prompt.
+- Project page: "Save as PDF" (a built-in one-font PDF writer, saved through the `downloads` capability).
+- Settings: op `setting` now covers `wake`, `workStart`, `teachBuf` (minutes kept free before the first lesson, shown as
+  a fixed block). A lunch he blocks himself drops the standing lunch block that day.
+- One question from the questions list is shown on Today with its answer buttons.

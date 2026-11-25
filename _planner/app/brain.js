@@ -13,7 +13,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.nextSkip=[];
-const BUILD=56;
+const BUILD=57;
 const DH=id=>`<span class="dh" data-drag="${id}" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg></span>`;
 /* his own ranking (dragged in Tasks) decides between two ranked items */
 const ordBoth=(a,b)=>Number.isFinite(a.ord)&&Number.isFinite(b.ord)?a.ord-b.ord:0;
@@ -46,6 +46,7 @@ function boot3(){if(!db||S.b3)return;S.b3=true;const err=e=>console.warn(e);
   db.collection('habits').where('date','>=',addD(today(),-60)).onSnapshot(q=>{S.hab=new Map(q.docs.map(d=>[d.id,d.data()]));brainSoon()},err);
   db.doc('agent/patterns').onSnapshot(d=>{S.pat=d.exists?d.data():null;brainSoon()},err);
   db.doc('agent/rank').onSnapshot(d=>{S.rank=d.exists?d.data():null;FM.clear();brainSoon()},err);
+  db.collection('stunotes').onSnapshot(q=>{S.stuNotes=new Map(q.docs.map(d=>[d.id,d.data()]))},err);
   db.collection('questions').onSnapshot(q=>{S.qs=q.docs.map(d=>({id:d.id,...d.data()}));brainSoon();if(S.view==='all')renderList()},err);
   setInterval(tick3,60000);setTimeout(tick3,6000)}
 let brainT=0;function brainSoon(){clearTimeout(brainT);brainT=setTimeout(()=>{try{renderToday();renderChat();if(S.view==='cal')renderCal()}catch(e){console.warn(e)}},250)}
@@ -222,7 +223,7 @@ function layoutWeek(full){FM.clear();const days=horizon(),last=days[days.length-
   const okFor=t=>{const lim=t.due&&isDate(t.due)&&t.due>=days[0]&&t.due<=last?t.due:last;return{lim,ok:days.filter(x=>x<=lim&&!(lowD(x)&&!mustDo(t))&&autoOkOn(t,x)&&!(t.messy&&!messyOk(x))&&homeFits(t,x))}},took=new Set();
   for(const t of wait){if(took.has(t.id))continue;const e=estOf(t),must=mustDo(t),o0=okFor(t),lim=o0.lim,ok=offFirst(t)?[...o0.ok.filter(offDay),...o0.ok.filter(x=>!offDay(x))]:o0.ok;
     const g=grpOf(t),mates=g?wait.filter(q=>q!==t&&!took.has(q.id)&&grpOf(q)===g):[],gd=g?days.find(x=>by.get(x).some(q=>grpOf(q)===g)):null,tot=e+mates.reduce((a,q)=>a+estOf(q),0);
-    let d=(gd&&ok.includes(gd)&&load(gd)+e<=dayBudget(gd)?gd:null)||(mates.length?ok.find(x=>load(x)+tot<=dayBudget(x)&&mates.every(q=>okFor(q).ok.includes(x))):null)||ok.find(x=>load(x)+e<=dayBudget(x));
+    let d=(gd&&ok.includes(gd)&&load(gd)+e<=dayBudget(gd)?gd:null)||(mates.length?ok.find(x=>load(x)+tot<=dayBudget(x)&&mates.every(q=>okFor(q).ok.includes(x))):null)||(t.proj?ok.find(x=>load(x)+e<=dayBudget(x)&&by.get(x).filter(q=>q.proj===t.proj).length<2):null)||ok.find(x=>load(x)+e<=dayBudget(x));
     if(!d&&(must||(t.due&&lim<last)))d=ok.length?ok.reduce((m,x)=>load(x)-dayBudget(x)<load(m)-dayBudget(m)?x:m,ok[0]):(days.find(x=>!offDay(x)&&!lowD(x))||days[0]);
     if(!d)d=days.filter(x=>!lowD(x)&&autoOkOn(t,x)&&homeFits(t,x)).find(x=>load(x)+e<=dayBudget(x))||null;
     if(!d){unplaced.push(t.id);continue}
@@ -367,7 +368,7 @@ function projLast(p){let l=p.last||dayOf(p.up)||p.since||'';for(const t of S.tas
 const quietProjects=()=>S.projects.filter(p=>(p.status||'active')==='active').map(p=>({p,q:projLast(p)?-dayDiff(projLast(p)):99})).filter(x=>x.q>=10).sort((a,b)=>b.q-a.q);
 
 /* ---------- nudges: firmer as the deadline gets closer ---------- */
-function nudges(){const td=today();return [...S.tasks.values()].filter(t=>t.s==='ready'&&!t.chore&&!t.person&&t.due&&isDate(t.due)&&dayDiff(t.due)<=7).map(t=>{const d=dayDiff(t.due);return{t,d,lvl:d<=2?'push':d<=3?'clear':'light'}}).sort((a,b)=>a.d-b.d)}
+function nudges(){const td=today();return [...S.tasks.values()].filter(t=>t.s==='ready'&&!t.chore&&!t.person&&t.due&&isDate(t.due)&&dayDiff(t.due)<=7&&!(isProjTask(t)&&!t.pin)).map(t=>{const d=dayDiff(t.due);return{t,d,lvl:d<=2?'push':d<=3?'clear':'light'}}).sort((a,b)=>a.d-b.d)}
 function nudgeLine(x){const n=short(T(x.t)),when=x.t.day?(x.t.day===today()?'it’s on today':`it’s planned for ${dayWord(x.t.day)}`):'it isn’t planned yet';
   if(x.d<0)return vary([`${n} is ${-x.d} day${x.d<-1?'s':''} overdue. ${when[0].toUpperCase()+when.slice(1)}.`,`Overdue: ${n}. Let’s clear it, ${when}.`],x.t.id);
   if(x.d<=2)return vary([`${n} is due ${x.d===0?'today':x.d===1?'tomorrow':'in 2 days'}. This one has to happen; ${when}.`,`Real push: ${n}, due ${x.d===0?'today':x.d===1?'tomorrow':dayWord(x.t.due)}. ${when[0].toUpperCase()+when.slice(1)}.`],x.t.id);
@@ -481,7 +482,7 @@ function brainToday(){FM.clear();const top=$('brainBox'),el=$('brainBox2');if(!t
     if((dow()===0||dow()===1)&&!dd.wr&&!dayDoc(addD(td,-1)).wr&&winsSince(reviewWeekOf()).length)le.push(`<div class="item"><div class="row" style="flex-wrap:nowrap"><div class="grow"><span class="t">Your week in review</span> <span class="m">wins, what slipped, what’s coming</span></div><button class="sm" data-act="weekReview">Open</button></div></div>`);
     const lt=laterPick();if(lt)le.push(`<div class="item"><div class="m">On your later list ${lt.age} days</div><div class="t" style="font-size:15px">${esc(T(lt.t))}</div><div class="row" style="margin-top:6px"><button class="sm" data-act="ltToday" data-id="${lt.t.id}">Do it today</button><button class="sm" data-act="ltWeek" data-id="${lt.t.id}">This week</button><button class="sm ghost" data-act="ltSnooze" data-id="${lt.t.id}">Not yet</button></div></div>`);
     for(const d of unanswered().slice(0,2))le.unshift(`<div class="item"><div class="m">A message from ${esc(chatTime(d.at))} never got an answer</div><div class="t" style="font-size:15px">${esc(short(d.text))}</div><div class="row" style="margin-top:6px"><button class="sm" data-act="chatRetry" data-id="${d.id}">Try it again</button><button class="sm ghost" data-act="chatDrop" data-id="${d.id}">Leave it</button></div></div>`);
-    {const nq=qOpen().length;if(nq)le.unshift(`<div class="item"><div class="row" style="flex-wrap:nowrap"><div class="grow"><span class="t" style="font-size:15px">Jarvis has ${nq} question${nq>1?'s':''} for you</span> <span class="m">answer whenever you have a minute</span></div><button class="sm" data-act="qGo">Open</button></div></div>`)}
+    {const qh=qOne();if(qh)le.unshift(qh)}
     for(const t of waitingList().slice(0,3))le.push(`<div class="item"><div class="m">On hold${t.wait?' until '+esc(t.wait)+(/\b(replies|answers|confirms|gets back)\b/i.test(t.wait)?'':' gets back to you'):''}</div><div class="t" style="font-size:15px">${esc(T(t))}</div><div class="row" style="margin-top:6px"><button class="sm" data-act="waitBack" data-id="${t.id}">It came through</button><button class="sm ghost" data-act="wkItem" data-id="${t.id}">Open</button></div></div>`);
     if(le.length)c.push(`<h2>Loose ends</h2><div class="card">${le.join('')}</div>`)}
   c.push(`<h2>Streaks</h2><div class="card">${skMini()}<div class="row" style="margin-top:6px"><button class="ghost sm" data-act="goStreaks" style="padding-left:0">All streaks</button></div></div>`);
@@ -541,6 +542,8 @@ Inbox (unsorted): ${notesOf('inbox').map(n=>String(n.text||'').slice(0,80)).join
 Nightly planning time: ${planAt()}.
 What moves the needle: his goal right now is ${S.settings.goal?'"'+String(S.settings.goal).slice(0,160)+'"':'not written down yet'}; this week is about ${focusItems().length?focusItems().map(x=>'"'+x+'"').join(', '):'nothing he has named yet'}.
 Days off in the next week (his own time; nothing is planned there unless he put it there): ${horizon().filter(offDay).map(d=>DN[dowOf(d)]+' '+d).join(', ')||'none'}.
+Yesterday's plan (id|title|state), for when he says what he did: ${(()=>{const d=typeof lastPlanDay==='function'?lastPlanDay():'';if(!d)return'none';const sc=scoreP(d);return d+': '+((sc?.plan||[]).map(x=>`${x.id}|${short(x.t)}|${x.done?'done':'not done'}`).join('; ')||'none')})()}
+Latest note per student: ${[...S.students.values()].filter(x=>stuLog(x.id).length).slice(0,30).map(x=>{const e=stuLog(x.id).slice(-1)[0];return x.name+' '+e.d.slice(5)+': '+String(e.x).slice(0,70)}).join(' | ')||'none yet'}
 Questions he hasn't answered yet: ${qOpen().slice(0,8).map(q=>q.q+(q.tid&&S.tasks.get(q.tid)?' ('+short(T(S.tasks.get(q.tid)))+')':'')).join('; ')||'none'}.
 Fees: never bring up unpaid fees, balances or who owes what unless his message is about fees, payments or that family.
 Your last replies (never start the same way as any of these): ${(S.dumps||[]).slice(0,6).map(d=>'"'+String(d.reply||'').slice(0,50)+'"').join(' ')}
@@ -549,7 +552,10 @@ function brainRules(){return `- Task details: every new task gets "cat" (persona
 - Routine time: things that happen anyway and are never ticked off (the washroom, breakfast, lunch, a shower, getting ready, walking the dog) are never tasks. Use routine_time with the minutes and the part of the day; "days" ([1,2,3,4,5] for weekdays, 0 is Sunday) when it happens on more than one day, else "date". The app keeps that much room loosely in that part of the day and the rest flows around it. Cooking or meal prep for the week is a task, not routine time. If an existing task is really routine time, set_meta "is":"routine"; if he says something is a real to-do, "is":"todo".
 - Optional work: side projects (his apps), anything he says "if I have time" about, nice-to-haves nobody is waiting on. Add them with "optional":true (or set_meta "is":"optional"). The app does not force optional things into the day: it lists them and offers them in the open time as a pick. Open time of half an hour or more before teaching is shown as "Your pick" with a few things that would move the week; that is how a day stays full without forcing anything.
 - Questions: when you need something from him that can wait (a detail, whether an old task is still wanted), do not end the reply with it; add an ask op, and it goes on his questions list. Only ask in the reply when you cannot act without the answer right now. A message that starts "(Answering your question ...)" is his answer to one of those: act on it with the task id given.
-- Project lists: when he lists jobs for a project or a list (for example a maintenance list, work to delegate), add each with "project" set to its name and no day. Project items never go on his day unless he says so; give "due" only as a target date he states, and set_meta "delegate" when someone else will do it. One message is one set of tasks: never add the same job twice, and check the list before adding.
+- Every task belongs to a project. On every add set "project" to the best fit from the Projects list (Personal for his own life; a new name only when he names a new project). Most projects are umbrellas: their tasks are planned into his days like anything else, and the app takes a little from several projects each day. Projects marked "(side list)" (a maintenance or construction list, work to delegate, a client's or a side project's list) are kept off his day: add those with "project" and no day; they only go on a day when he says so. Give "due" only as a target date he states, and set_meta "delegate" when someone else will do it.
+- Standing changes ("on a normal day I wake at 8:30", "I start work at 10 now", "keep 30 minutes free before my first lesson") are the setting op: key wake or workStart with an HH:MM value, or teachBuf with minutes. A change for one day only is day_start. Never say a standing change is saved unless a setting op is in your ops.
+- Student notes: when he says what a student did, covered or struggled with in a lesson, use student_note once per student with the name as listed, the lesson date (today unless he says) and what they did in his words. It is that student's running history, not a task and not a general note. A test or deadline coming up for a student is still a note.
+- A lunch or meal he blocks himself (a midday break at home that includes lunch) replaces the usual lunch slot that day; the app drops the standing one, so do not add or mention a second lunch. One message is one set of tasks: never add the same job twice, and check the list before adding.
 - Renaming a list or prefix ("call that list X") is one rename_group op; it renames every open item under it.
 - Status words go to the task he names: "on hold", "waiting on", "stuck" for the Wafa message means update that task's id only. Never mark a different task.
 - How he works: at the centre his head is on the business. The app puts work that moves the week first and keeps personal errands (his car, personal money, family, gifts) until the day's work is done, the evening or a day off. An old date that has passed does not make something urgent. Never tell him to start a work day with a personal errand.
@@ -585,11 +591,12 @@ function brainRules(){return `- Task details: every new task gets "cat" (persona
 `}
 const brainOps=()=>`{"op":"set_meta","id":"","cat":"","due":null,"pri":null,"est":null,"messy":null,"when":null,"where":null,"needle":null,"kind":null,"is":null,"project":null,"delegate":null},{"op":"rename_group","from":"old list or prefix name","to":"new name"},{"op":"ask","q":"one short question for him","id":null},{"op":"routine_time","title":"","minutes":25,"part":"morning|midday|evening|day","date":null,"days":null},{"op":"focus","items":[""],"goal":null},{"op":"block","title":"","from":"HH:MM","to":"HH:MM","date":null},{"op":"work_day","date":"YYYY-MM-DD","on":true},{"op":"note_drop","contains":"words from the note to remove"},{"op":"drop","id":""},{"op":"progress","id":"","minutes":30,"note":"","left":null,"next":null},{"op":"note","kind":"note|app|inbox","text":""},{"op":"low_energy","date":"YYYY-MM-DD","on":true},{"op":"day_start","date":"YYYY-MM-DD","at":"HH:MM","wake":false,"plan_wake":null},{"op":"routine","ready_min":75},{"op":"plan_time","at":"21:00","once":false},{"op":"chore","title":"","every_days":7,"est":30},{"op":"person","name":"","every_days":14,"how":"Message","note":""},{"op":"touched","name":""},{"op":"project","name":"","status":null,"next":"","note":"","url":null},{"op":"habit","name":"","per_week":3},{"op":"habit_done","name":"workout","date":null},{"op":"whats_next"},`;
 async function brainAdd(id,o){const c={};if(CATS[o.cat])c.cat=o.cat;if(o.kind==='routine')c.rtn=true;if(o.optional===true)c.opt=true;if(o.messy===true)c.messy=true;if(o.project&&String(o.project).trim()){const pn=norm(o.project);let p=S.projects.find(x=>norm(x.name)===pn)||S.projects.find(x=>pn.length>5&&(norm(x.name).includes(pn)||pn.includes(norm(x.name))));
-    if(!p){const ref=db.collection('projects').doc(),doc={name:String(o.project).trim().slice(0,80),status:'active',since:today(),last:today(),up:stamp()};await ref.set(doc);p={id:ref.id,...doc};S.projects=[...S.projects,p]}c.proj=p.id;if(!o.today&&!isDate(o.day||'')){c.day=null;c.pin=false}}
+    if(!p){const ref=db.collection('projects').doc(),doc={name:String(o.project).trim().slice(0,80),status:'active',since:today(),last:today(),up:stamp()};await ref.set(doc);p={id:ref.id,...doc};S.projects=[...S.projects,p]}c.proj=p.id;if(p.side&&!o.today&&!isDate(o.day||'')){c.day=null;c.pin=false}}
   if(typeof o.delegate==='string'&&o.delegate.trim())c.dlg=o.delegate.trim().slice(0,40);if(Object.keys(c).length){S.tasks.set(id,{...S.tasks.get(id),...c});await up(id,c)}}
 async function brainOp(o,out,src){const td=today();
   if(o.op==='focus'){const items=(Array.isArray(o.items)?o.items:[]).map(x=>String(x||'').trim().slice(0,80)).filter(Boolean).slice(0,3),c={};if(items.length)c.focus={items,wk:wkKey(),at:today()};if(typeof o.goal==='string'&&o.goal.trim())c.goal=o.goal.trim().slice(0,200);
     if(!Object.keys(c).length)return true;S.settings={...S.settings,...c};FM.clear();await db.doc('settings/main').update(c).catch(()=>{});out.push(items.length?'this week is about: '+items.join(', '):'goal saved');await applyWeek(false);if(typeof classifySoon==='function')classifySoon();return true}
+  if(o.op==='student_note'&&o.student&&o.text){const st=findStu(o.student);if(st){await stuNoteAdd(st,o.text,isDate(o.date||'')&&o.date<=td?o.date:td);out.push('student note: '+st.name)}else out.push('no student called '+String(o.student).slice(0,40));return true}
   if(o.op==='ask'&&o.q){const q=String(o.q).trim().slice(0,200),tid=S.tasks.has(o.id)?o.id:null;if(S.qs.some(x=>!x.ans&&norm(x.q)===norm(q)))return true;await db.collection('questions').doc().set({tid,kind:'ask',q,pr:1,at:stamp(),ans:null}).catch(()=>{});out.push('question saved for later');return true}
   if(o.op==='rename_group'&&o.from&&o.to){const f=String(o.from).trim(),to=String(o.to).trim().slice(0,80),fn=norm(f);let n=0;
     for(const t of [...S.tasks.values()]){if(!(t.s==='ready'||t.s==='waiting'))continue;const m=String(t.t).match(/^([^:]{2,80}):\s*(.*)$/);if(!m||norm(m[1])!==fn)continue;await upL(t.id,{t:(to+': '+m[2]).slice(0,200)});n++}
@@ -601,7 +608,7 @@ async function brainOp(o,out,src){const td=today();
       FM.clear();out.push(`routine time: ${x}, about ${durS(min)}, ${rtnDays(r)}`);return true}
     const d=isDate(o.date||'')&&o.date>=td?o.date:td,id='t'+Date.now().toString(36)+'r',doc={t:x,a:'health',cat:'personal',s:'ready',p:3,due:null,hard:false,est:min,next:'',ai:false,n:'',rtn:part?{win:part}:true,src:'talk '+td,since:td,up:stamp(),wk:monOf(d),wkN:nextN(),day:d,pin:true};
     S.tasks.set(id,{id,...doc});await db.doc('tasks/'+id).set(doc);FM.clear();out.push(`routine time ${dayWord(d)}: ${x}, about ${durS(min)}`);return true}
-  if(o.op==='set_meta'&&S.tasks.has(o.id)){const c={};if(CATS[o.cat])c.cat=o.cat;if(isDate(o.due||''))c.due=o.due;if([1,2,3,4].includes(o.pri))c.p=o.pri;if(+o.est)c.est=+o.est;if(typeof o.messy==='boolean')c.messy=o.messy;if(['home','centre'].includes(o.where))c.where=o.where;if([0,1,2,3].includes(o.needle)){c.nd=o.needle;c.ndBy='me'}if(typeof o.delegate==='string')c.dlg=o.delegate.trim().slice(0,40)||null;if(typeof o.project==='string'&&o.project.trim()){const pn=norm(o.project),p=S.projects.find(x=>norm(x.name)===pn)||S.projects.find(x=>pn.length>5&&(norm(x.name).includes(pn)||pn.includes(norm(x.name))));if(p){c.proj=p.id;if(!S.tasks.get(o.id).pin)c.day=null}}if(o.is==='routine'){c.rtn=true;c.opt=false}else if(o.is==='optional'){c.opt=true;c.rtn=false}else if(o.is==='todo'){c.rtn=false;c.opt=false}if(['work','life','home'].includes(o.kind)){c.ctx=o.kind;c.ndBy='me';if(o.kind==='home')c.where='home';else if(c.where==null&&S.tasks.get(o.id).where==='home')c.where=null}
+  if(o.op==='set_meta'&&S.tasks.has(o.id)){const c={};if(CATS[o.cat])c.cat=o.cat;if(isDate(o.due||''))c.due=o.due;if([1,2,3,4].includes(o.pri))c.p=o.pri;if(+o.est)c.est=+o.est;if(typeof o.messy==='boolean')c.messy=o.messy;if(['home','centre'].includes(o.where))c.where=o.where;if([0,1,2,3].includes(o.needle)){c.nd=o.needle;c.ndBy='me'}if(typeof o.delegate==='string')c.dlg=o.delegate.trim().slice(0,40)||null;if(typeof o.project==='string'&&o.project.trim()){const pn=norm(o.project),p=S.projects.find(x=>norm(x.name)===pn)||S.projects.find(x=>pn.length>5&&(norm(x.name).includes(pn)||pn.includes(norm(x.name))));if(p){c.proj=p.id;if(p.side&&!S.tasks.get(o.id).pin)c.day=null}}if(o.is==='routine'){c.rtn=true;c.opt=false}else if(o.is==='optional'){c.opt=true;c.rtn=false}else if(o.is==='todo'){c.rtn=false;c.opt=false}if(['work','life','home'].includes(o.kind)){c.ctx=o.kind;c.ndBy='me';if(o.kind==='home')c.where='home';else if(c.where==null&&S.tasks.get(o.id).where==='home')c.where=null}
     {const t0=S.tasks.get(o.id),w=String(o.when||''),d=t0.day&&t0.day>=today()?t0.day:today(),tt=teachOf(d);let at=null;
       if(hm(w))at=w;else if(/after.?(teach|tutor|lesson|class)|evening|tonight/i.test(w))at=tt?hmS(toM(tt.e)+15):'19:30';else if(/later|retry|again/i.test(w))at=hmS(Math.min(toM('21:00'),Math.ceil((toM(nowHM())+120)/15)*15));else if(/morning|first/i.test(w))at=null;
       if(at){c.at=at;c.day=d;c.wk=monOf(d);c.pin=true}}if(Object.keys(c).length){await upL(o.id,c);S.touch3=true;out.push('filed: '+T(S.tasks.get(o.id)))}return true}
@@ -713,7 +720,7 @@ async function logProgress(id,min,note,left,next){const t=S.tasks.get(id);if(!t)
 
 /* ---------- the minute tick ---------- */
 const quiet3=()=>V.state==='idle'&&$('sheet').hidden&&!(document.activeElement&&/TEXTAREA|INPUT|SELECT/.test(document.activeElement.tagName)&&document.activeElement.value);
-async function tick3(){if(today()!==S.day&&!window.__HQ_DAY&&quiet3()){location.reload();return}if(!S.loaded||!S.daysKnown||!db)return;buildCheck();if(!autoOk())return;try{await learnSave();await replanOnce();await spawnDue();if(!S.qGenAt||Date.now()-S.qGenAt>15*6e4){S.qGenAt=Date.now();await qGen()}
+async function tick3(){if(today()!==S.day&&!window.__HQ_DAY&&quiet3()){location.reload();return}if(!S.loaded||!S.daysKnown||!db)return;buildCheck();if(!autoOk())return;try{await learnSave();await replanOnce();await spawnDue();if(!S.qGenAt||Date.now()-S.qGenAt>15*6e4){S.qGenAt=Date.now();await qGen()}await attCheck();
   const dd=dayDoc(today());if(nowHM()>=planAt()&&!dd.night&&!offDay(addD(today(),1))&&!S.nightBusy&&document.visibilityState==='visible'&&quiet3()&&S.view==='today'){S.nightBusy=true;try{await nightly()}finally{S.nightBusy=false}}}catch(e){console.warn(e)}}
 
 /* ---------- hooks into the older screens ---------- */
@@ -824,8 +831,8 @@ function dayPanel(d,ix){const td=today(),dd=dayDiff(d),ev=evOn(d),hzIn=horizon()
   const evRow=e=>`<div class="tl fx tap" data-act="evOpen" data-id="${e.id}" data-d="${d}" role="button" tabindex="0"><span class="tm num">${e.s?esc(t12(e.s)):e.approx?'around':'all day'}</span><span class="tx">${esc(e.t)}<small>${[e.s&&e.e?'until '+t12(e.e):'',repWord(e),e.where,e.n].filter(Boolean).map(esc).join(' · ')}</small></span></div>`;
   const tRow=(t,tag)=>`<div class="tl" data-act="wkItem" data-id="${t.id}" role="button" tabindex="0"><span class="tm num">${esc(tag)}</span><span class="tx">${esc(T(t))}<small>${durS(estOf(t))}</small></span>${XB(t.id)}</div>`;
   const pl=(ix.plan.get(d)||[]),du=(ix.due.get(d)||[]),dn=(ix.done.get(d)||[]);let body='',sub=rel+(off&&dd>=0?' · day off':'');
-  if(dd<0){const sc=day.score;sub+=Number.isFinite(sc?.s)?` · score ${sc.s}`:'';
-    body=`<div class="tlw">${ev.map(evRow).join('')}${dn.map(t=>`<div class="tl dn"><span class="tm">done</span><span class="tx">${esc(T(t))}</span></div>`).join('')}</div>${!ev.length&&!dn.length?'<div class="m">Nothing recorded for this day.</div>':''}${day.pl&&Object.keys(day.pl).length&&dd>=-14?`<div class="row" style="margin-top:8px"><button class="sm" data-act="review" data-d="${d}">Fix what got done</button></div>`:''}`}
+  if(dd<0){const sc=scoreP(d)||day.score;sub+=Number.isFinite(sc?.s)?` · score ${sc.s}`:'';
+    body=`${ev.length?`<div class="tlw">${ev.map(evRow).join('')}</div>`:''}${day.pl&&Object.keys(day.pl).length?pastBody(d,'pd'):`<div class="tlw">${dn.map(t=>`<div class="tl dn"><span class="tm">done</span><span class="tx">${esc(T(t))}</span></div>`).join('')}</div>${!ev.length&&!dn.length?'<div class="m">Nothing recorded for this day.</div>':''}`}${day.pl&&Object.keys(day.pl).length&&dd>=-14?`<div class="row" style="margin-top:8px"><button class="sm" data-act="review" data-d="${d}">Add something else you did</button></div>`:''}`}
   else if(hzIn){const ld=pl.reduce((a,t)=>a+estOf(t),0),bud=dayBudget(d);if(ld&&!off)sub+=` · ${durS(ld)} planned`+(ld>bud+20?', more than fits':'');
     const dueOnly=du.filter(t=>t.day!==d);
     body=`<div class="tlw">${ev.filter(e=>!hm(e.s||'')).map(evRow).join('')}</div>${tlHtml(d)}${dueOnly.length?`<div class="m" style="margin:10px 0 4px">Due this day</div><div class="tlw">${dueOnly.map(t=>tRow(t,t.day?DN[dowOf(t.day)]:'due')).join('')}</div>`:''}${dn.length?`<div class="m" style="margin-top:10px">Done: ${dn.map(t=>esc(short(T(t)))).join(', ')}</div>`:''}`}
@@ -1000,7 +1007,7 @@ function roomPicks(){const td=today(),dd=dayDoc(td);if(offDay(td)||dd.low||dd.ro
 
 /* ---------- reading each task once, in the background: where it belongs and how much it moves the week ---------- */
 const CLS={busy:false,at:0,fail:0};
-const RDV=1;
+const RDV=2;
 function classifyNeed(){const fk=focusKey(),wk=new Set(weekItems().map(t=>t.id)),need=t=>(t.ndBy!=='me'&&(t.ndT!==t.t||t.ndF!==fk))||t.rdV!==RDV||t.rdT!==t.t;
   return [...S.tasks.values()].filter(t=>(t.s==='ready'||t.s==='waiting')&&!t.daily&&need(t)).sort((a,b)=>(wk.has(b.id)-wk.has(a.id))||String(b.up||'').localeCompare(String(a.up||''))).slice(0,30)}
 async function classify(force){if(CLS.busy||typeof sample==='undefined'||!sample||!db||!S.loaded||S.stale||!autoOk()||document.visibilityState!=='visible')return;const now=Date.now();if(!force&&now-CLS.at<(CLS.fail?30:8)*6e4)return;
@@ -1023,9 +1030,10 @@ For every task below decide:
 "messy": true only for dusty or dirty physical jobs.
 "note": one plain sentence on what this really is and what done looks like, from his words and notes only. Never invent names, numbers, prices or dates.
 "step": the first concrete step, a few words.
+"proj": the one project it belongs to, exactly as written in this list: ${S.projects.filter(p=>(p.status||'active')!=='done').map(p=>'"'+p.name+'"').join(', ')||'"Personal"'}. Use "Personal" for his own life when no other fits; "" only when truly none fits.
 ${mine.length?'He set these himself; follow the same judgment:\n'+mine.join('\n')+'\n':''}${kinds.length?'He said what kind of thing these are:\n'+kinds.join('\n')+'\n':''}${moves.length?'How he has been re-ordering things lately:\n'+moves.join('\n')+'\n':''}Tasks:
 ${need.map(t=>JSON.stringify({id:t.id,t:String(t.t).slice(0,140),...(t.n?{note:String(t.n).slice(0,160)}:{}),area:t.cat||t.a||'',...(t.due?{due:t.due}:{}),...(t.est?{his_est:t.est}:{}),...(t.p===1?{marked:'critical'}:{}),...(t.s==='waiting'?{on_hold:t.wait||true}:{})})).join('\n')}
-Reply with JSON only: {"items":[{"id":"...","ctx":"work","nd":2,"why":"...","type":"task","flex":"week","energy":"light","where":"centre","est":30,"messy":false,"note":"...","step":"..."}]}`;
+Reply with JSON only: {"items":[{"id":"...","ctx":"work","nd":2,"why":"...","type":"task","flex":"week","energy":"light","where":"centre","est":30,"messy":false,"note":"...","step":"...","proj":"..."}]}`;
     const r=await sample.json(p,{modelTier:'default',cache:false}),items=Array.isArray(r)?r:Array.isArray(r?.items)?r.items:[];if(!items.length){CLS.fail++;return}
     CLS.fail=0;const jobs=[],seen=new Set();let moved=false;
     for(const x of items){const t=S.tasks.get(String(x?.id||''));if(!t||seen.has(t.id)||!(t.s==='ready'||t.s==='waiting'))continue;seen.add(t.id);
@@ -1034,6 +1042,7 @@ Reply with JSON only: {"items":[{"id":"...","ctx":"work","nd":2,"why":"...","typ
       if(+x.est>=5&&+x.est<=240)rd.est=Math.max(5,Math.round(+x.est/5)*5);if(typeof x.note==='string'&&x.note.trim())rd.note=x.note.trim().slice(0,220);if(typeof x.step==='string'&&x.step.trim())rd.step=x.step.trim().slice(0,120);
       if(Object.keys(rd).length)patch.rd=rd;
       if(x.messy===true&&t.messy==null)patch.messy=true;
+      if(!t.proj&&typeof x.proj==='string'&&x.proj.trim()){const pn=norm(x.proj),p=S.projects.find(y=>norm(y.name)===pn);if(p&&!p.side)patch.proj=p.id}
       if(t.ndBy!=='me'){const n=[0,1,2,3].includes(+x.nd)?+x.nd:null;let c=['work','life','home'].includes(x.ctx)?x.ctx:null;
         if(n!=null&&c){if(t.where==='home')c='home';else if(t.where==='centre'&&c==='home')c='work';Object.assign(patch,{nd:c==='work'?n:0,ctx:c,ndBy:'ai',ndT:t.t,ndF:fk,ndWhy:String(x.why||'').slice(0,80)})}}
       const was=[ctxOf(t),isRtn(t),isOpt(t),estOf(t)].join();S.tasks.set(t.id,{...t,...patch});const nt=S.tasks.get(t.id);if([ctxOf(nt),isRtn(nt),isOpt(nt),estOf(nt)].join()!==was)moved=true;
@@ -1209,11 +1218,11 @@ function rtnTitleHit(t){const x=String(t?.t||'').toLowerCase().replace(/[^a-z0-9
 function isRtn(t){return !!t&&t.rtn!==false&&!t.daily&&!t.chore&&(!!t.rtn||t.rd?.type==='routine'||rtnTitleHit(t))}
 function rtnHome(t){return !!t&&(t.where==='home'||t.rd?.where==='home'||/\b(walk|dog|shower|laundry)\b/i.test(String(t.t||t.x||'')))}
 function awayEve(d){return evOn(d).some(e=>/\b(sleep(?:s|ing)? (?:there|over|at)|stay(?:s|ing)? (?:the night|over|at)|night at)\b/i.test((e.t||'')+' '+(e.n||'')))}
-function isProjTask(t){return !!t&&!t.daily&&(!!t.proj&&!S.projects.some(p=>p.id===t.proj&&p.app)||/^[^:]{3,80}\blist\s*:/i.test(t.t||''))&&!(catOf(t)==='project'&&t.pin)}
+function isProjTask(t){return !!t&&!t.daily&&(!!t.proj&&S.projects.some(p=>p.id===t.proj&&p.side)||/^[^:]{3,80}\blist\s*:/i.test(t.t||''))&&!(catOf(t)==='project'&&t.pin)}
 /* the same thing said twice is one task: compare names with and without a "List:" prefix */
 function dupOf(title){const a=norm(title),b=norm(String(title).replace(/^[^:]{3,80}:\s*/,''));if(!a)return null;
   return [...S.tasks.values()].find(t=>(t.s==='ready'||t.s==='waiting')&&(norm(t.t)===a||(b.length>=12&&norm(String(t.t).replace(/^[^:]{3,80}:\s*/,''))===b)))||null}
-function projQ(t){return !!t&&(!!t.proj||catOf(t)==='project')}
+function projQ(t){return !!t&&((!!t.proj&&S.projects.some(p=>p.id===t.proj&&p.side))||catOf(t)==='project')}
 function isOpt(t){if(!t||t.opt===false||isRtn(t)||hm(t.at||'')||hardNow(t)||t.p===1||(t.due&&isDate(t.due)&&dayDiff(t.due)<=1))return false;if(t.opt===true)return true;
   if(projQ(t)||/\b(if (?:i have |there'?s |there is |i get )?(?:the )?time|if time (?:allows|is left)|time permitting|optional(?:ly)?|if possible|when i can|nice to have)\b/i.test((t.t||'')+' '+(t.n||'')+' '+(t.when||'')))return true;
   return t.rd?.type==='optional'&&needle(t)<2&&!t.pin}
@@ -1296,7 +1305,7 @@ function projPage(p){const l=projTasks(p),row=t=>`<div class="item" data-act="wk
   <h2>Open · ${open.length}</h2><div class="card">${open.map(row).join('')||'<div class="m">Nothing open.</div>'}</div>
   ${hold.length?`<h2>On hold · ${hold.length}</h2><div class="card">${hold.map(row).join('')}</div>`:''}
   ${done.length?`<h2>Done · ${done.length}</h2><div class="card">${done.slice(0,15).map(row).join('')}</div>`:''}
-  <div class="row" style="margin-top:12px">${['active','paused','done'].filter(x=>x!==(p.status||'active')).map(x=>`<button class="sm ghost" data-act="pgStatus" data-id="${p.id}" data-s="${x}">${x==='active'?'Make active':x==='paused'?'Pause':'Mark finished'}</button>`).join('')}</div>`}
+  <div class="row" style="margin-top:12px">${['active','paused','done'].filter(x=>x!==(p.status||'active')).map(x=>`<button class="sm ghost" data-act="pgStatus" data-id="${p.id}" data-s="${x}">${x==='active'?'Make active':x==='paused'?'Pause':'Mark finished'}</button>`).join('')}<button class="sm" data-act="pgPdf" data-id="${p.id}">Save as PDF</button><button class="sm ghost" data-act="pgSide" data-id="${p.id}">${p.side?'Plan its tasks into my days':'Keep it off my day (side list)'}</button></div><p class="m" style="margin-top:6px">${p.side?'A side list: nothing here goes on your day unless you put it there.':'Tasks here are planned into your days like any other.'}</p>`}
 {const _rl2=renderList;renderList=function(){_rl2();const box=$('projBox');if(!box)return;const sel=S.projects.find(p=>p.id===S.projSel),tq=($('taskQ')?.value||'').trim();
   for(const id of ['chkBox','areaChips','statChips','allList','looseH'])if($(id))$(id).hidden=!!sel;
   if(sel){box.innerHTML=projPage(sel);return}
@@ -1338,6 +1347,95 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target?.id==='pjAd
 /* an answer typed for a question goes to Jarvis with the question attached */
 {const _r5=respond;respond=async function(text,byVoice){const c=S.qCtx;if(c&&text&&String(text).trim()){S.qCtx=null;const i=$('chatIn');if(i)i.placeholder='Message Jarvis…';db?.doc('questions/'+c.id).update({ans:'said',ansAt:stamp(),said:String(text).slice(0,300)}).catch(()=>{});
     return _r5(`(Answering your question "${c.q}"${c.tt?` about the task "${c.tt}" (id ${c.tid})`:''}) ${text}`,byVoice)}return _r5(text,byVoice)}}
+/* ---------- "I did that": find the thing he means before adding a new finished one ---------- */
+const dmTok=s=>{const x=String(s||'').toLowerCase().replace(/\([^)]*\)/g,' ').replace(/^[^:]{3,80}\blist\s*:/i,' ').replace(/[^a-z0-9 ]+/g,' ').split(/\s+/).filter(w=>w.length>1&&!/^(the|and|for|with|from|that|this|his|her|my|our|all|any|some|then|them|into|about|of|to|in|on|at|an|it|is|up|out|get|do|did|done|least|hour|hours|minutes|min)$/.test(w)).map(w=>w.replace(/ied$/,'y').replace(/(ing|ed|es|s)$/,m=>w.length-m.length>=4?'':m));return new Set(x)};
+function doneMatch(title,d){const a=dmTok(title);if(!a.size)return null;const pl=(dayDoc(d).pl)||{};let best=null,bs=0;
+  for(const t of S.tasks.values()){if(!(t.s==='ready'||t.s==='waiting')||t.daily||t.s==='recurring')continue;const b=dmTok(t.t);if(!b.size)continue;let n=0;for(const w of a)if(b.has(w))n++;
+    const small=Math.min(a.size,b.size),c=n/small,onPlan=!!pl[t.id]||t.day===d,ok=(small>=2&&c>=(onPlan?.66:.8))||(small===1&&n===1&&a.size===1&&b.size===1);
+    if(ok){const sc=c+(onPlan?.5:0)+n/20;if(sc>bs){bs=sc;best=t}}}
+  return best}
+/* ---------- a past day at a glance: the score, what was planned, what got done, and fixing it in place ---------- */
+function scoreP(d){const day=S.days.get(d);if(!day||day.rv||d===today())return scoreOf(d);S.days.set(d,{...day,rv:true});try{return scoreOf(d)}finally{S.days.set(d,day)}}
+function lastPlanDay(){for(let k=1;k<=5;k++){const d=addD(today(),-k),pl=dayDoc(d).pl;if(pl&&Object.keys(pl).length)return d}return''}
+function pastRows(d,act){const day=dayDoc(d),pl=day.pl||{},sc=scoreP(d)||{plan:[],extras:[]},rows=[];
+  for(const x of sc.plan){const t=S.tasks.get(x.id),where=x.done?'':!t?'':t.s==='parked'?'dropped':t.s==='waiting'?'on hold':t.day&&t.day>d?'now on '+dayWord(t.day):'';
+    rows.push(`<div class="item row pdr${x.done?' dn':''}" style="flex-wrap:nowrap"><div class="grow">${esc(x.t)}${where?`<small class="m" style="display:block">${esc(where)}</small>`:''}</div><button class="sm${x.done?' pri':''}" data-act="${x.done?act+'No':act+'Yes'}" data-id="${x.id}" data-d="${d}" aria-pressed="${!!x.done}">${x.done?'Done ✓':'Did it'}</button></div>`)}
+  const ex=sc.extras||[];
+  return{sc,html:(rows.join('')||'<div class="m">Nothing was planned that day.</div>'),extras:ex.length?ex.map(x=>`<div class="item row pdr dn" style="flex-wrap:nowrap"><div class="grow">${esc(x.t)}</div><span class="pill good">Done</span></div>`).join(''):''}}
+function pastHead(d){const sc=scoreP(d),day=dayDoc(d);if(!sc)return`<div class="m">No plan was recorded for this day.</div>`;const lv=scoreLevel(sc.s);
+  return `<div class="pdh"><b class="num">${sc.s}</b><span class="pill ${lv[1]}">${lv[0]}</span><span class="m">${sc.nd} of ${sc.np} planned done${sc.nx?` · ${sc.nx} more done`:''}${day.cap&&day.cap<sc.pm?` · ${durS(sc.pm)} was planned, ${durS(day.cap)} fit`:''}</span></div>`}
+function pastBody(d,act){const r=pastRows(d,act||'pd');return `${pastHead(d)}<div class="card" style="margin-top:8px">${r.html}</div>${r.extras?`<div class="m" style="margin:10px 0 4px">Also done that day</div><div class="card">${r.extras}</div>`:''}`}
+function reviewSheet(d){const day=dayDoc(d);
+  sheet(`<h3 style="font:600 18px var(--disp);margin:0">${esc(fullDay(d))}</h3><p class="why" style="margin:4px 0 8px">Tap what got done. What wasn’t done is already carried forward.</p>${pastBody(d,'rv')}
+  ${day.sum?`<p class="m" style="margin-top:10px">${esc(String(day.sum).replace(/^"|"$/g,''))}</p>`:''}
+  <label>Something else you got done that day</label><textarea id="rvText" placeholder="e.g. paid a teacher, cleaned the back room"></textarea>
+  <div class="row" style="margin-top:10px"><button class="sm" data-act="rvMore" data-d="${d}">Add it</button><button class="sm pri" data-act="rvAll" data-d="${d}">That’s everything</button><button class="sm ghost" data-act="close">Close</button></div>`)}
+function ydCard(){const d=lastPlanDay();if(!d)return'';const sc=scoreP(d);if(!sc)return'';const lv=scoreLevel(sc.s),left=sc.plan.filter(x=>!x.done).length;
+  return `<button class="sc yd" data-act="review" data-d="${d}" aria-label="${esc(dayName(d))}: score ${sc.s}. Open the day"><span class="scn"><span class="lbl">${dayDiff(d)===-1?'Yesterday':esc(dayName(d))}</span><b class="num">${sc.s}</b><span class="pill ${lv[1]}">${lv[0]}</span></span><span class="scm"><span>${sc.nd} of ${sc.np} planned done${sc.nx?` · ${sc.nx} more done`:''}</span><span>${left?`${left} not marked done · tap to see the day and fix it`:'Tap to see the day'}</span></span></button>`}
+{const _rt9=renderToday;renderToday=function(){_rt9();try{let yb=$('ydBox');if(!yb){yb=document.createElement('div');yb.id='ydBox'}const h=S.loaded?ydCard():'';yb.innerHTML=h;const R=$('deskR'),sb=$('statBox');if(DESK.on&&R&&R.isConnected){if(R.firstChild!==yb)R.insertBefore(yb,R.firstChild)}else{const nb=$('nowBox');if(nb&&nb.parentNode&&nb.nextSibling!==yb)nb.parentNode.insertBefore(yb,nb.nextSibling)}}catch(e){console.warn(e)}}}
+/* the week board opens with the last day behind it */
+{const _rw9=renderWeek;renderWeek=function(){const had=!!$('wb');_rw9();try{const wb=$('wb'),d=lastPlanDay();if(!wb||!d)return;const sc=scoreP(d);if(!sc)return;
+    const cards=sc.plan.map(x=>`<div class="wcard pd${x.done?' dn':''}" data-act="${x.done?'pdNo':'pdYes'}" data-id="${x.id}" data-d="${d}" role="button" tabindex="0"><div class="wt">${x.done?'✓ ':''}${esc(x.t)}</div><div class="wm">${x.done?'done':'not done · tap if you did it'}</div></div>`).join('')+(sc.extras||[]).map(x=>`<div class="wcard pd dn"><div class="wt">✓ ${esc(x.t)}</div><div class="wm">also done</div></div>`).join('');
+    wb.insertAdjacentHTML('afterbegin',`<div class="wcol past"><div class="wch"><div class="wd">${dayDiff(d)===-1?'Yesterday':DNL[dowOf(d)]}<small>${MO3[+d.slice(5,7)-1]} ${+d.slice(8)}</small></div><div class="wsub">score ${sc.s} · ${sc.nd} of ${sc.np} done</div><button class="wreset" data-act="review" data-d="${d}" style="display:block">open the day</button></div><div class="wcl">${cards}</div></div>`);
+    if(!had){const t=wb.querySelector('.wcol.today');if(t&&!DESK.on)wb.scrollLeft=t.offsetLeft-12}}catch(e){console.warn(e)}}}
+/* ---------- yesterday's attendance: checked against the scheduler each morning ---------- */
+async function attCheck(){const td=today();if(S.attAt===td||!S.settings.schedConn||!S.sched||dayOf(S.sched.at)!==td||nowHM()<'05:00'||typeof schCall!=='function')return;
+  let y='';for(let k=1;k<=4;k++){const d=addD(td,-k);if(dowOf(d)>=1&&dowOf(d)<=5){y=d;break}}if(!y)return;
+  let l=(S.sched.sessions||[]).filter(x=>x.d===y).map(x=>x.st);
+  if(y<(S.sched.week||td)){try{const w=await schCall('get_week',{week_start:monOf(y)});l=(w.sessions||[]).filter(x=>x.date===y).map(x=>x.status==='unmarked'?'':x.status)}catch(e){return}}
+  S.attAt=td;const un=l.filter(x=>!x).length,id='tatt'+td.replace(/-/g,''),ex=S.tasks.get(id);
+  if(un&&!ex){const p=S.projects.find(x=>/operations/i.test(x.name||'')),doc={t:'Log yesterday’s attendance in the scheduler',a:'tutorwise',cat:'work',s:'ready',p:1,due:td,hard:false,est:10,next:'',ai:false,n:`${un} lesson${un>1?'s':''} on ${dayName(y)} ${un>1?'are':'is'} still unmarked.`,first:true,ctx:'work',nd:2,ndBy:'me',...(p?{proj:p.id}:{}),src:'scheduler '+td,since:td,up:stamp(),wk:monOf(td),wkN:0,day:td,pin:true};
+    S.tasks.set(id,{id,...doc});await db.doc('tasks/'+id).set(doc).catch(()=>{});FM.clear();await applyWeek(false)}
+  else if(!un&&ex&&ex.s==='ready'){await upL(id,{s:'done',doneAt:stamp(),ev:'the scheduler shows it logged'});await applyWeek(false)}}
+{const _rk9=rankOf;rankOf=function(t,n){return t&&t.first?1e6:_rk9(t,n)}}
+/* ---------- the half hour before the first lesson is his, never work ---------- */
+{const _fx9=fixedOn;fixedOn=function(d){const l=_fx9(d),b=+S.settings.teachBuf||0,tt=teachOf(d);if(b>0&&tt){const s=toM(tt.s)-b,e=toM(tt.s);if(!l.some(f=>f.kind==='fixed'&&f.s<e&&f.e>s))l.push({s,e,es:s,ee:e,t:'Eat, reset, small things before teaching',kind:'fixed',buf:true});l.sort((a,x)=>a.s-x.s)}return l}}
+/* ---------- student notes: what each student did, kept as a running history ---------- */
+S.stuNotes=new Map();
+const stuLog=id=>((S.stuNotes.get(id)||{}).log||[]);
+async function stuNoteAdd(st,text,d){const x=String(text||'').trim().slice(0,600);if(!st||!x)return false;const day=isDate(d||'')?d:today(),log=stuLog(st.id).slice(),i=log.findIndex(e=>e.d===day);
+  if(i>=0){if(norm(log[i].x).includes(norm(x)))return true;log[i]={...log[i],x:(log[i].x+' '+x).slice(0,1200)}}else log.push({d:day,x});
+  log.sort((a,b)=>a.d.localeCompare(b.d));const doc={name:st.name,log:log.slice(-300),up:stamp()};S.stuNotes.set(st.id,doc);await db.doc('stunotes/'+st.id).set(doc);return true}
+function stuNotesSheet(id){const st=id&&S.students.get(id);
+  if(st){const log=stuLog(id).slice().reverse();
+    sheet(`<div class="row" style="margin:0 0 6px"><button class="sm ghost" data-act="snAll" style="padding-left:0">← All students</button></div><h3 style="font:600 18px var(--disp);margin:0">${esc(st.name)}</h3><p class="why" style="margin:4px 0 0">What they did, lesson by lesson. Say it to Jarvis after tutoring, or type it here.</p>
+    <label>Today’s note</label><textarea id="snText" placeholder="e.g. finished section 1 of logarithms, struggles with change of base"></textarea><div class="row" style="margin-top:8px"><button class="sm pri" data-act="snSave" data-id="${id}">Save</button><button class="sm ghost" data-act="close">Close</button></div>
+    <h2>History · ${log.length}</h2><div class="card">${log.map(e=>`<div class="item"><div class="m">${esc(dayName(e.d))}</div><div style="white-space:pre-wrap">${esc(e.x)}</div></div>`).join('')||'<div class="m">No notes yet.</div>'}</div>`);return}
+  const all=[...S.students.values()].filter(x=>x.active!==false).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+  sheet(`<h3 style="font:600 18px var(--disp);margin:0">Student notes</h3><p class="why" style="margin:4px 0 8px">After tutoring, tell Jarvis what each student did. Each one keeps a history.</p><div class="card">${all.map(s=>{const l=stuLog(s.id),e=l[l.length-1];return `<button class="item row lnk" style="flex-wrap:nowrap;width:100%;text-align:left" data-act="snOpen" data-id="${s.id}"><span class="grow">${esc(s.name)}<small>${e?esc(dayName(e.d))+': '+esc(short(e.x)):'no notes yet'}</small></span><span class="m">${l.length||''}</span></button>`}).join('')||'<div class="m">No students on file.</div>'}</div><div class="row" style="margin-top:10px"><button class="sm ghost" data-act="close">Close</button></div>`)}
+{const _rc9=renderCentre;renderCentre=function(){_rc9();try{const v=$('v-centre');if(v&&!$('snCard')){const c=document.createElement('div');c.id='snCard';c.innerHTML=`<button class="lnk" data-act="snAll" style="width:100%"><span class="grow">Student notes<small>What each student did, lesson by lesson</small></span></button>`;v.insertBefore(c,v.firstChild)}}catch(e){console.warn(e)}}}
+/* ---------- a project list as a printable checklist ---------- */
+function pdfBytes(title,sub,items){const W=612,H=792,M=54,cl=s=>String(s==null?'':s).replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,'-').replace(/…/g,'...').replace(/[^\x20-\x7e\xa1-\xff]/g,'?'),pe=s=>cl(s).replace(/([\\()])/g,'\\$1');
+  const wrap=(s,n)=>{const out=[];let cur='';for(const w of cl(s).split(/\s+/)){if((cur+' '+w).trim().length>n){if(cur)out.push(cur);cur=w.length>n?w.slice(0,n):w}else cur=(cur+' '+w).trim()}if(cur)out.push(cur);return out.length?out:['']};
+  const pages=[];let ops=[],y=H-M;const np=()=>{if(ops.length)pages.push(ops.join('\n'));ops=[];y=H-M},tx=(s,x,sz,g)=>ops.push(`BT /F1 ${sz} Tf ${g?'0.42 g':'0 g'} ${x} ${y} Td (${pe(s)}) Tj ET`);
+  for(const l of wrap(title,52)){tx(l,M,17);y-=22}tx(sub,M,10,true);y-=26;
+  for(const it of items){const tl=wrap(it.t,84),ml=it.m?wrap(it.m,100):[],need=tl.length*15+ml.length*12+8;if(y-need<M)np();
+    ops.push(`0.35 G 0.8 w ${M} ${y-1} 9 9 re S`);for(const l of tl){tx(l,M+18,11);y-=15}for(const l of ml){tx(l,M+18,9,true);y-=12}y-=8}
+  np();const objs=[];const add=s=>{objs.push(s);return objs.length};
+  add('<< /Type /Catalog /Pages 2 0 R >>');add('');add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');const kids=[];
+  for(const c of pages){const cn=add(`<< /Length ${c.length} >>\nstream\n${c}\nendstream`),pn=add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R >> >> /Contents ${cn} 0 R >>`);kids.push(pn+' 0 R')}
+  objs[1]=`<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${kids.length} >>`;
+  let out='%PDF-1.4\n';const off=[];objs.forEach((o,i)=>{off.push(out.length);out+=`${i+1} 0 obj\n${o}\nendobj\n`});const xr=out.length;
+  out+=`xref\n0 ${objs.length+1}\n0000000000 65535 f \n${off.map(o=>String(o).padStart(10,'0')+' 00000 n \n').join('')}trailer\n<< /Size ${objs.length+1} /Root 1 0 R >>\nstartxref\n${xr}\n%%EOF`;
+  const u=new Uint8Array(out.length);for(let i=0;i<out.length;i++)u[i]=out.charCodeAt(i)&255;return u}
+async function projPdf(p){const l=projTasks(p).filter(t=>t.s==='ready'||t.s==='waiting').sort((a,b)=>String(a.due||'9').localeCompare(String(b.due||'9'))||String(a.since||'').localeCompare(String(b.since||'')));
+  if(!l.length){toast('Nothing open on this list.',1800);return}
+  const items=l.map(t=>({t:T(t).replace(/^[^:]{3,80}\blist\s*:\s*/i,''),m:[t.due?'Target: '+dayName(t.due):'',t.dlg?'For: '+t.dlg:'',t.s==='waiting'?'On hold'+(t.wait?' ('+t.wait+')':''):'',t.n?String(t.n).replace(/\s+/g,' ').slice(0,160):''].filter(Boolean).join('  |  ')}));
+  const data=pdfBytes(p.name,`${l.length} open item${l.length>1?'s':''}  |  ${dayName(today())}`,items),name=String(p.name).replace(/[^A-Za-z0-9 _-]+/g,'').trim().replace(/\s+/g,'-').slice(0,60)||'list';
+  let dl=null;try{dl=await claude.use('downloads')}catch(e){}
+  if(!dl){toast('Saving files isn’t available in this view. Open Jarvis in Claude on a computer.',3200);return}
+  try{await dl.save({filename:`${name}-${today()}.pdf`,data:new Blob([data],{type:'application/pdf'})});toast('Saved.',1400)}catch(e){if(e?.code!=='declined')toast('Couldn’t save the PDF here.',2400)}}
+/* ---------- one question at a time, right on Today ---------- */
+function qOne(){const l=qOpen(),q=l[0];if(!q)return'';const t=S.tasks.get(q.tid),b=(v,x,c)=>`<button class="sm${c?' '+c:''}" data-act="qAns" data-id="${q.id}" data-v="${v}">${x}</button>`;
+  return `<div class="item"><div class="m">A question from Jarvis${l.length>1?` · ${l.length-1} more`:''}</div><div class="t" style="font-size:15px">${esc(q.kind==='ask'||!t?q.q:(q.kind==='done'?'Is this done? ':'')+T(t))}</div>${q.kind==='wait'&&t?`<div class="m">${esc(q.q)}</div>`:''}<div class="row" style="margin-top:6px">${q.kind==='done'?b('done','Done','pri')+b('todo','Still to do')+b('drop','Drop it','ghost'):q.kind==='wait'?b('back','It came through','pri')+b('still','Still waiting')+b('drop','Drop it','ghost'):`<button class="sm pri" data-act="qSay" data-id="${q.id}">Answer</button>`}${b('skip','Later','ghost')}${l.length>1?'<button class="sm ghost" data-act="qGo">All</button>':''}</div></div>`}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,id=b.dataset.id;
+  const H9={pdYes:async()=>{await doneBack(id,b.dataset.d);toast('Marked done for '+dayWord(b.dataset.d)+'.',1400);renderAll();if(S.view==='cal')renderCal();if(S.view==='week')renderWeek()},
+    pdNo:async()=>{await undoneBack(id,b.dataset.d);toast('Back to not done.',1400);renderAll();if(S.view==='cal')renderCal();if(S.view==='week')renderWeek()},
+    snAll:()=>stuNotesSheet(),snOpen:()=>stuNotesSheet(id),
+    snSave:async()=>{const st=S.students.get(id),x=($('snText')?.value||'').trim();if(!st||!x)return;await stuNoteAdd(st,x,today());stuNotesSheet(id);toast('Saved to '+st.name+'.',1400)},
+    pgPdf:async()=>{const p=S.projects.find(y=>y.id===id);if(p)await projPdf(p)},
+    pgSide:async()=>{const p=S.projects.find(y=>y.id===id);if(!p)return;const side=!p.side;S.projects=S.projects.map(y=>y.id===id?{...y,side}:y);await db.doc('projects/'+id).update({side,up:stamp()}).catch(()=>{});FM.clear();await applyWeek(false);renderList();toast(side?'Kept off your day: a side list.':'Its tasks are now planned into your days.',2200)}};
+  if(H9[a]){e.stopImmediatePropagation();e.preventDefault();try{await H9[a]()}catch(er){console.warn(er);toast('That didn’t work. Try again.',2000)}}},true);
 /* ---------- fitting the screen ----------
    In the Claude app this page can sit in a frame taller than the phone's screen, with the app doing the scrolling. Then
    anything pinned to the frame's top or bottom ends up off screen. Thin markers down the page tell us which part of the
