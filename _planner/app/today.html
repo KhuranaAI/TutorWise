@@ -2190,7 +2190,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.nextSkip=[];
-const BUILD=60;
+const BUILD=61;
 const DH=id=>`<span class="dh" data-drag="${id}" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg></span>`;
 /* his own ranking (dragged in Tasks) decides between two ranked items */
 const ordBoth=(a,b)=>Number.isFinite(a.ord)&&Number.isFinite(b.ord)?a.ord-b.ord:0;
@@ -2204,7 +2204,7 @@ const stab=o=>o&&typeof o==='object'?(Array.isArray(o)?'['+o.map(stab).join(',')
 let WI={k:'',v:null};weekItems=()=>{const k=TV+'|'+today();if(WI.k!==k)WI={k,v:[...S.tasks.values()].filter(inPlan).sort((a,b)=>(a.wkN??999)-(b.wkN??999)||a.id.localeCompare(b.id))};return WI.v};
 /* two open copies must never fight over the same record: background saves stop on a stale day, an older build, or a burst */
 const WR=[];function autoOk(){return S.day===today()&&!S.stale&&!(S.hot&&Date.now()<S.hot)}
-{const _dw=dayWrite;dayWrite=function(date,fn){const n=Date.now();WR.push(n);while(WR.length&&n-WR[0]>60000)WR.shift();if(WR.length>45&&!(S.hot&&n<S.hot)){S.hot=n+6e5;console.warn('too many saves: pausing background saves for 10 minutes')}return _dw(date,fn)}}
+{const _dw=dayWrite;dayWrite=function(date,fn){const n=Date.now();WR.push(n);while(WR.length&&n-WR[0]>60000)WR.shift();if(WR.length>150&&!(S.hot&&n<S.hot)){S.hot=n+12e4;console.warn('too many saves: pausing background saves for 2 minutes')}return _dw(date,fn)}}
 {const _tp=trackPlan;trackPlan=function(){if(autoOk()&&S.loaded&&S.planKnown)return _tp()}}
 /* the saved score is compared field by field: the database hands fields back in its own order, and comparing text made this save on every refresh */
 scoreSync=function(){if(!autoOk()||!S.daysKnown||!S.loaded||!db)return;const sc=scoreOf(today()),small=sc?{s:sc.s,pm:sc.pm,dm:sc.dm,xm:sc.xm,np:sc.np,nd:sc.nd,nx:sc.nx,ni:sc.ni}:null;
@@ -2646,7 +2646,7 @@ function weekReviewSheet(){const mon=reviewWeekOf(),sun=addD(mon,6),wins=winsSin
 function brainToday(){FM.clear();const top=$('brainBox'),el=$('brainBox2');if(!top||!el||!S.loaded)return;const td=today(),dd=dayDoc(td),a=[],c=[];
   if(S.stale)a.push(`<div class="card warnc" style="margin-top:12px"><div class="t" style="font-size:15px">This copy of Jarvis is out of date</div><div class="m">A newer version is open somewhere else. Reload so the two don’t undo each other’s changes.</div><div class="row" style="margin-top:8px"><button class="sm pri" data-act="reload">Reload</button></div></div>`);
   else if(S.ghost&&Date.now()-S.ghost<15*6e4)a.push(`<div class="card warnc" style="margin-top:12px"><div class="t" style="font-size:15px">An old copy of Jarvis is open somewhere</div><div class="m">It keeps saving over your day, so this screen can look out of date. Close Jarvis on your other devices (and quit the installed app on your computer), then open it again.</div></div>`);
-  else if(S.hot&&Date.now()<S.hot)a.push(`<div class="card warnc" style="margin-top:12px"><div class="t" style="font-size:15px">Another copy of Jarvis is open on an older version</div><div class="m">Close or reload Jarvis on your other devices. Until then I’ve paused background saving here so nothing gets undone.</div></div>`);
+  else if(S.hot&&Date.now()<S.hot)a.push(`<div class="card warnc" style="margin-top:12px"><div class="t" style="font-size:15px">Catching up</div><div class="m">A lot just came in at once, so I’m holding my own re-planning for a couple of minutes. Everything you do still saves.</div></div>`);
   if(nowHM()>=planAt()&&!dd.night&&!offDay(addD(td,1)))a.push(`<div class="card" style="margin-top:12px"><div class="row" style="flex-wrap:nowrap"><div class="grow"><div class="t" style="font-size:15px">Plan tomorrow</div><div class="m">Two minutes: tomorrow’s timeline${notesOf('inbox').length?' and your inbox':''}.</div></div><button class="sm pri" data-act="nightNow">Start</button></div></div>`);
   else if(dd.night&&nowHM()>=planAt())a.push(`<div class="row" style="margin-top:12px"><button class="sm" data-act="nightShow">Tomorrow’s plan</button>${notesOf('inbox').length?`<button class="sm" data-act="notes" data-k="inbox">Inbox · ${notesOf('inbox').length}</button>`:''}</div>`);
   a.push(focusLine());{const hb=S.hab.get(td)||{},left=dailyHabs().filter(h=>!hb[h.k]);if(nowHM()>='20:30'&&left.length&&dd.streakAsk!==td)a.unshift(`<div class="card" style="margin-top:12px"><div class="t" style="font-size:15px">Which streaks did you hit today?</div><div class="chips" style="flex-wrap:wrap;margin-top:8px">${left.map(h=>`<button data-act="habDone" data-k="${h.k}">${esc(h.name)}</button>`).join('')}<button class="ghost" data-act="streakSkip">That’s all</button></div></div>`)}top.innerHTML=a.join('');
@@ -3700,6 +3700,9 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
     feel:async()=>{await dayWrite(b.dataset.d,cur=>({...cur,feel:b.dataset.v}));renderAll();toast('Noted, sir.',1400)},
     tidyUndo:async()=>{const t=S.tasks.get(id);if(!t)return;await upL(id,{s:'ready',dropped:null,tidy:null,tidyWhy:null,day:t.tidyDay||null});await applyWeek(false);renderAll();toast('Back on your list.',1600)}};
   if(H10[a]){e.stopImmediatePropagation();e.preventDefault();try{await H10[a]()}catch(er){console.warn(er);toast('That didn’t work. Try again.',2000)}}},true);
+/* ---------- background record-keeping is spaced out, and silent in a hidden or out-of-date copy ---------- */
+{const gate=(fn,ms)=>{let last=0,tm=null;return function(){if(S.stale||document.visibilityState!=='visible')return;const n=Date.now(),w=last+ms-n;if(w<=0){last=n;return fn()}if(!tm)tm=setTimeout(()=>{tm=null;if(S.stale||document.visibilityState!=='visible')return;last=Date.now();try{fn()}catch(e){console.warn(e)}},w+50)}};
+  scoreSync=gate(scoreSync,20000);trackPlan=gate(trackPlan,20000)}
 /* ---------- fitting the screen ----------
    In the Claude app this page can sit in a frame taller than the phone's screen, with the app doing the scrolling. Then
    anything pinned to the frame's top or bottom ends up off screen. Thin markers down the page tell us which part of the

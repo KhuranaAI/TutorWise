@@ -500,3 +500,7 @@ Chat tab, What's next, nudges by days-to-due, wins and the weekly review. Runs w
   nothing sends him to the chat. Principle: an action started in a sheet finishes in that sheet.
 - (v62, BUILD 60) A copy that sees a newer build in settings reloads itself once (not while a sheet is open or text is
   being typed; guarded per build in sessionStorage), so the "older version open elsewhere" pause clears without him.
+- (v63, BUILD 61) The "another copy on an older version" banner was the save-rate guard (45 day-record saves a minute),
+  which a burst of messages from the phone line trips by itself. Guard raised to 150 a minute with a 2-minute hold and
+  an honest "Catching up" wording. `scoreSync` and `trackPlan` are gated: at most one write each per 20 s, none from a
+  hidden or out-of-date copy, so two copies can no longer rewrite each other's score.
