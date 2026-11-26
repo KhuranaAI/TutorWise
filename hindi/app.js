@@ -3714,7 +3714,10 @@
       settingsCard(),
       installTip(),
       h("p", { class: "center mt" }, reset),
-      h("p", { class: "center small muted" }, "Bolo! · made with 💛 by TutorWise · ", h("a", { href: "privacy.html", class: "muted" }, "Privacy")));
+      h("p", { class: "center small muted" }, "Bolo! · made with 💛 by TutorWise · ", h("a", { href: "privacy.html", class: "muted" }, "Privacy")),
+      h("p", { class: "center small muted", style: "margin-top:-6px" }, NATIVE
+        ? `iPhone app v${NATIVE.version || 1}${NATIVE.features && NATIVE.features.mic ? " · 🎤 mic ready" : " · update in TestFlight for the mic"}`
+        : "Web version"));
     actions([]);
     showTabs("profile");
   }
