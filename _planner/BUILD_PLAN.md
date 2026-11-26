@@ -509,3 +509,35 @@ Chat tab, What's next, nudges by days-to-due, wins and the weekly review. Runs w
   cards on the week board do nothing on tap, and the docket's tick on a done row asks via a toast action before
   `undoTask`. Rule: one tap never reopens something finished. `rejigSheet(d)` works for any day; the nightly plan sheet
   has "Rejig this day" for tomorrow (lighter, lay out again, fuller, evening, tick to move off).
+
+## Nov 26 upgrade: time log, evening review, balance, Life tab, tucking away (v65, BUILD 63)
+One release built from the agreed ideas list (brainstorm session, Nov 26). Items 1, 2, 4, 5, 6, 7 and a first monthly
+Wrapped; item 3 (phone calendar) waits on his answer about what bothered him; item 8 (Fitbit) needs a one-time setup.
+
+- Time log (`timelog/{date}`): `segs` [{s, e, c, x, p, w, by, fx}], s/e in half hours from midnight, c one of sleep,
+  health, social, life ("Everyday": getting ready, meals, driving, errands, chores), teach, work, rest, hobby; `ok` when
+  he has checked the day; `sig` is the evidence it was built from. `segNorm` keeps a day covered, sorted and merged.
+- Jarvis fills it (`logBuild`): `logGuess` is the first pass from what is on record (wake, start, scheduler lessons,
+  calendar and blocked time, finished work laid by the minute into the working hours, his usual pattern from days he
+  has confirmed via `tPrior`); then one model call (`logPrompt` / `logParse`) places things from what he said that day.
+  Known lessons (`fx`) and anything he set (`by:'u'`) always survive. `logTick` backfills a day a minute for the last
+  month and refreshes yesterday and today when their evidence changes. He is never asked hour by hour.
+- Learning: a label he corrects is remembered (`settings.tcatL`), a project he re-files gets `projects/{id}.tcat`.
+- Model ops: `time_log` (date, from, to, cat, what, project, person), `review` (opens the review), `feature` (bring
+  back / tuck away). The prompt carries today's and yesterday's log, the balance line and what is tucked away.
+- Evening review (`rvOpen`, `rvDraw`): one sheet, four steps, each finished in place: the day's strip (tap a stretch:
+  kind, start/end by half hours, what, project or person, split; streak chips), how it went (one tap), what is open
+  (unticked planned items, what Jarvis cleared, up to five questions), tomorrow (timeline, rejig, take things off).
+  A text box on every step sends words to Jarvis with the step as context. `days/{d}.rvw` when finished, `rvAsk`
+  when it was offered. Offered from the planning time, never straight after teaching; the next morning a one-line
+  "Yesterday's review" with Skip. `nightly()` now opens the review; `nightPlan()` runs when he reaches tomorrow.
+- Today lost the questions bar, the "How did today go?" card, the Yesterday card, the "Jarvis tidied up" card, the
+  20:30 streak question, the catch-up line and "Close the day". Late items show under Due soon only for hard dates.
+- Work-life balance (`settings.balance` {k, t}): presets Growth, Balanced, Health first, People first; work with
+  teaching is a weekly ceiling (scaled to working days logged), health, social, hobby and rest are weekly floors,
+  sleep is hours a night. `balCheck` is the only judge of overwork.
+- Life tab (was Streaks): week or month, tiles, stacked bars per day or week (fixed order, palette validated on the
+  app's surface with the dataviz validator; Everyday is neutral grey), a meter list against the balance, hours by
+  project and person, a table view, tooltips; `wrapSheet` is the month so far. Streaks sit below.
+- Tucking away (`agent/use`): a tab not opened or a Today card not tapped for 14 days hides itself; More lists what is
+  tucked away with "Bring back". Counting starts the day this build first runs.
