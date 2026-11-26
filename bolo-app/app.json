@@ -28,7 +28,8 @@
           "securetoken.googleapis.com",
           "fonts.googleapis.com",
           "fonts.gstatic.com"
-        ]
+        ],
+        "NSPhotoLibraryUsageDescription": "Bolo doesn't use your photos. Apple asks for this because a built-in Expo file component can open the photo library."
       }
     },
     "android": {
