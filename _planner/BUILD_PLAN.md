@@ -504,3 +504,8 @@ Chat tab, What's next, nudges by days-to-due, wins and the weekly review. Runs w
   which a burst of messages from the phone line trips by itself. Guard raised to 150 a minute with a 2-minute hold and
   an honest "Catching up" wording. `scoreSync` and `trackPlan` are gated: at most one write each per 20 s, none from a
   hidden or out-of-date copy, so two copies can no longer rewrite each other's score.
+- (v64, BUILD 62) Finished tasks were being reopened: the old review sheet showed done items as a button labelled
+  "Done" whose tap called `undoneBack`. Now a done item is a label with a small "undo" that asks first (`pdAsk`), done
+  cards on the week board do nothing on tap, and the docket's tick on a done row asks via a toast action before
+  `undoTask`. Rule: one tap never reopens something finished. `rejigSheet(d)` works for any day; the nightly plan sheet
+  has "Rejig this day" for tomorrow (lighter, lay out again, fuller, evening, tick to move off).

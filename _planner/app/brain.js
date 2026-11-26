@@ -13,7 +13,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.nextSkip=[];
-const BUILD=61;
+const BUILD=62;
 const DH=id=>`<span class="dh" data-drag="${id}" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg></span>`;
 /* his own ranking (dragged in Tasks) decides between two ranked items */
 const ordBoth=(a,b)=>Number.isFinite(a.ord)&&Number.isFinite(b.ord)?a.ord-b.ord:0;
@@ -450,7 +450,7 @@ function nightSheet(d,txt){const inb=notesOf('inbox');
   sheet(`<h3 style="font:600 18px var(--disp);margin:0">${esc(dayName(d))}</h3>${txt?`<p class="why" style="margin:4px 0 10px">${esc(txt)}</p>`:''}${tlHtml(d)}
   <p class="m" style="margin-top:8px">Not how you’d do it? Drag the dots to put it in your order. I learn from every move.</p>
   ${inb.length?`<h2>Inbox · ${inb.length}</h2><div class="card">${inb.map(n=>`<div class="item"><div style="white-space:pre-wrap">${esc(n.text)}</div><div class="row" style="margin-top:6px"><button class="sm" data-act="inTask" data-id="${n.id}">Task</button><button class="sm" data-act="inNote" data-id="${n.id}">Note</button><button class="sm ghost" data-act="noteDrop" data-id="${n.id}" data-k="inbox">Drop</button></div></div>`).join('')}</div>`:''}
-  <p class="m" style="margin-top:10px">Planning runs at ${esc(t12(planAt()))}. Say “do my planning at 10 tonight” to change it.</p><div class="row" style="margin-top:8px"><button class="sm pri" data-act="close">Looks good</button></div>`)}
+  <p class="m" style="margin-top:10px">Planning runs at ${esc(t12(planAt()))}. Say “do my planning at 10 tonight” to change it.</p><div class="row" style="margin-top:8px"><button class="sm pri" data-act="close">Looks good</button><button class="sm" data-act="rejig" data-d="${d}">Rejig this day</button></div>`)}
 
 /* ---------- wins and the weekly review ---------- */
 function winsSince(d){return [...S.tasks.values()].filter(t=>t.s==='done'&&dayOf(t.doneAt)>=d).sort((a,b)=>String(b.doneAt).localeCompare(String(a.doneAt)))}
@@ -1366,7 +1366,7 @@ function scoreP(d){const day=S.days.get(d);if(!day||day.rv||d===today())return s
 function lastPlanDay(){for(let k=1;k<=5;k++){const d=addD(today(),-k),pl=dayDoc(d).pl;if(pl&&Object.keys(pl).length)return d}return''}
 function pastRows(d,act){const day=dayDoc(d),pl=day.pl||{},sc=scoreP(d)||{plan:[],extras:[]},rows=[];
   for(const x of sc.plan){const t=S.tasks.get(x.id),where=x.done?'':!t?'':t.s==='parked'?'dropped':t.s==='waiting'?'on hold':t.day&&t.day>d?'now on '+dayWord(t.day):'';
-    rows.push(`<div class="item row pdr${x.done?' dn':''}" style="flex-wrap:nowrap"><div class="grow">${esc(t&&!x.done?T(t):x.t)}${where?`<small class="m" style="display:block">${esc(where)}</small>`:''}</div><button class="sm${x.done?' pri':''}" data-act="${x.done?act+'No':act+'Yes'}" data-id="${x.id}" data-d="${d}" aria-pressed="${!!x.done}">${x.done?'Done ✓':'Did it'}</button></div>`)}
+    rows.push(`<div class="item row pdr${x.done?' dn':''}" style="flex-wrap:nowrap"><div class="grow">${esc(t&&!x.done?T(t):x.t)}${where?`<small class="m" style="display:block">${esc(where)}</small>`:''}</div>${x.done?`<span class="pill good">Done ✓</span><button class="lnk2 m" data-act="pdAsk" data-id="${x.id}" data-d="${d}" style="font-size:12px;margin-left:8px">undo</button>`:`<button class="sm" data-act="${act}Yes" data-id="${x.id}" data-d="${d}">Did it</button>`}</div>`)}
   const ex=sc.extras||[];
   return{sc,html:(rows.join('')||'<div class="m">Nothing was planned that day.</div>'),extras:ex.length?ex.map(x=>`<div class="item row pdr dn" style="flex-wrap:nowrap"><div class="grow">${esc(x.t)}</div><span class="pill good">Done</span></div>`).join(''):''}}
 function pastHead(d){const sc=scoreP(d),day=dayDoc(d);if(!sc)return`<div class="m">No plan was recorded for this day.</div>`;const lv=scoreLevel(sc.s);
@@ -1382,7 +1382,7 @@ function ydCard(){const d=lastPlanDay();if(!d)return'';const sc=scoreP(d);if(!sc
 {const _rt9=renderToday;renderToday=function(){_rt9();try{let yb=$('ydBox');if(!yb){yb=document.createElement('div');yb.id='ydBox'}const h=S.loaded?ydCard():'';yb.innerHTML=h;const R=$('deskR'),sb=$('statBox');if(DESK.on&&R&&R.isConnected){if(R.firstChild!==yb)R.insertBefore(yb,R.firstChild)}else{const nb=$('nowBox');if(nb&&nb.parentNode&&nb.nextSibling!==yb)nb.parentNode.insertBefore(yb,nb.nextSibling)}}catch(e){console.warn(e)}}}
 /* the week board opens with the last day behind it */
 {const _rw9=renderWeek;renderWeek=function(){const had=!!$('wb');_rw9();try{const wb=$('wb'),d=lastPlanDay();if(!wb||!d)return;const sc=scoreP(d);if(!sc)return;
-    const cards=sc.plan.map(x=>`<div class="wcard pd${x.done?' dn':''}" data-act="${x.done?'pdNo':'pdYes'}" data-id="${x.id}" data-d="${d}" role="button" tabindex="0"><div class="wt">${x.done?'✓ ':''}${esc(!x.done&&S.tasks.get(x.id)?T(S.tasks.get(x.id)):x.t)}</div><div class="wm">${x.done?'done':'not done · tap if you did it'}</div></div>`).join('')+(sc.extras||[]).map(x=>`<div class="wcard pd dn"><div class="wt">✓ ${esc(x.t)}</div><div class="wm">also done</div></div>`).join('');
+    const cards=sc.plan.map(x=>`<div class="wcard pd${x.done?' dn':''}" data-act="${x.done?'pdNop':'pdYes'}" data-id="${x.id}" data-d="${d}" role="button" tabindex="0"><div class="wt">${x.done?'✓ ':''}${esc(!x.done&&S.tasks.get(x.id)?T(S.tasks.get(x.id)):x.t)}</div><div class="wm">${x.done?'done':'not done · tap if you did it'}</div></div>`).join('')+(sc.extras||[]).map(x=>`<div class="wcard pd dn"><div class="wt">✓ ${esc(x.t)}</div><div class="wm">also done</div></div>`).join('');
     wb.insertAdjacentHTML('afterbegin',`<div class="wcol past"><div class="wch"><div class="wd">${dayDiff(d)===-1?'Yesterday':DNL[dowOf(d)]}<small>${MO3[+d.slice(5,7)-1]} ${+d.slice(8)}</small></div><div class="wsub">score ${sc.s} · ${sc.nd} of ${sc.np} done</div><button class="wreset" data-act="review" data-d="${d}" style="display:block">open the day</button></div><div class="wcl">${cards}</div></div>`);
     if(!had){const t=wb.querySelector('.wcol.today');if(t&&!DESK.on)wb.scrollLeft=t.offsetLeft-12}}catch(e){console.warn(e)}}}
 /* ---------- yesterday's attendance: checked against the scheduler each morning ---------- */
@@ -1438,6 +1438,7 @@ function qOne(){const l=qOpen(),q=l[0];if(!q)return'';const t=S.tasks.get(q.tid)
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,id=b.dataset.id;
   const H9={pdYes:async()=>{await doneBack(id,b.dataset.d);toast('Marked done for '+dayWord(b.dataset.d)+'.',1400);renderAll();if(S.view==='cal')renderCal();if(S.view==='week')renderWeek()},
     pdNo:async()=>{await undoneBack(id,b.dataset.d);toast('Back to not done.',1400);renderAll();if(S.view==='cal')renderCal();if(S.view==='week')renderWeek()},
+    pdNop:()=>{},pdAsk:()=>{const d=b.dataset.d,inSheet=!$('sheet').hidden;toast('Mark it not done?',4200,{label:'Yes, not done',fn:async()=>{await undoneBack(id,d);renderAll();if(inSheet)reviewSheet(d);if(S.view==='cal')renderCal();if(S.view==='week')renderWeek()}})},
     snAll:()=>stuNotesSheet(),snOpen:()=>stuNotesSheet(id),
     snSave:async()=>{const st=S.students.get(id),x=($('snText')?.value||'').trim();if(!st||!x)return;await stuNoteAdd(st,x,today());stuNotesSheet(id);toast('Saved to '+st.name+'.',1400)},
     pgPdf:async()=>{const p=S.projects.find(y=>y.id===id);if(p)await projPdf(p)},
@@ -1462,13 +1463,14 @@ const FEEL={great:'Great',good:'Good',ok:'OK',rough:'Rough'};
 function feelCard(){const td=today(),tt=teachOf(td),day=dayDoc(td);if(day.feel||!S.loaded)return'';if(nowHM()<(tt?tt.e:'19:00'))return'';
   return `<div class="card" style="margin:10px 0"><div class="t" style="font-size:15px">How did today go, sir?</div><div class="m">Your own read of the day, kept next to the score.</div><div class="row" style="margin-top:8px">${Object.entries(FEEL).map(([k,v])=>`<button class="sm" data-act="feel" data-v="${k}" data-d="${td}">${v}</button>`).join('')}</div></div>`}
 /* ---------- rejig the day ---------- */
-function rejigSheet(){const td=today(),day=dayDoc(td),rows=agenda().rows.filter(r=>!r.fx&&!r.soft&&!r.choice&&!r.div&&r.st!=='done'&&r.t&&!r.t.daily),over=rows.filter(r=>r.over).length,tt=teachOf(td);
-  sheet(`<h3 style="font:600 18px var(--disp);margin:0">Rejig today</h3><p class="why" style="margin:4px 0 10px">${rows.length} open${over?`, ${over} of them won’t fit`:''}. Pick how the rest of the day should feel.</p>
-  <div class="rjg"><button data-act="rjLow"><b>${day.low?'Back to normal':'Lighter'}</b><small>${day.low?'Bring back what I moved':'Only what has to happen today; the rest moves on'}</small></button>
-  <button data-act="rjPlan"><b>Re-plan from now</b><small>Same load, laid out again from this minute</small></button>
-  <button data-act="rjMore"><b>Fuller</b><small>Pull in the next two things that move the week</small></button>
-  ${tt?`<button data-act="rjEve"><b>${+day.eve>0?'Nothing after tutoring':'I have energy tonight'}</b><small>${+day.eve>0?'Clear the evening again':'Allow about an hour of work after tutoring, today only'}</small></button>`:''}</div>
-  ${rows.length?`<h2>Not today</h2><p class="m" style="margin:0 0 6px">Tick anything you don’t want today. It moves to the next day that has room.</p><div class="card">${rows.map(r=>`<label class="item row rjr" style="flex-wrap:nowrap;cursor:pointer"><input type="checkbox" class="rjc" value="${r.t.id}"><span class="grow">${esc(T(r.t))}<small class="m" style="display:block">${r.over?'won’t fit · ':''}${durS(estOf(r.t))}</small></span></label>`).join('')}</div><div class="row" style="margin-top:10px"><button class="sm pri" data-act="rjPush">Move the ticked ones</button><button class="sm ghost" data-act="close">Close</button></div>`:'<div class="row"><button class="sm ghost" data-act="close">Close</button></div>'}`)}
+function rejigSheet(d){const td=today();d=isDate(d||'')&&d>=td?d:td;const day=dayDoc(d),isT=d===td,tt=teachOf(d),w=isT?'today':dayWord(d).toLowerCase();
+  const rows=isT?agenda().rows.filter(r=>!r.fx&&!r.soft&&!r.choice&&!r.div&&r.st!=='done'&&r.t&&!r.t.daily).map(r=>({t:r.t,over:!!r.over})):timeline(d).filter(x=>x.kind==='task'&&x.id&&S.tasks.get(x.id)&&!S.tasks.get(x.id).daily).map(x=>({t:S.tasks.get(x.id),over:x.s==null&&!x.opt})),over=rows.filter(r=>r.over).length;
+  sheet(`<h3 style="font:600 18px var(--disp);margin:0">Rejig ${esc(w)}</h3><p class="why" style="margin:4px 0 10px">${rows.length} planned${over?`, ${over} of them won’t fit`:''}. Pick how the day should feel.</p>
+  <div class="rjg"><button data-act="rjLow" data-d="${d}"><b>${day.low?'Back to normal':'Lighter'}</b><small>${day.low?'Bring back what I moved':'Only what has to happen that day; the rest moves on'}</small></button>
+  <button data-act="rjPlan" data-d="${d}"><b>${isT?'Re-plan from now':'Lay it out again'}</b><small>Same load, laid out fresh</small></button>
+  <button data-act="rjMore" data-d="${d}"><b>Fuller</b><small>Pull in the next two things that move the week</small></button>
+  ${tt?`<button data-act="rjEve" data-d="${d}"><b>${+day.eve>0?'Nothing after tutoring':isT?'I have energy tonight':'Work after tutoring too'}</b><small>${+day.eve>0?'Clear the evening again':'Allow about an hour of work after tutoring, that day only'}</small></button>`:''}</div>
+  ${rows.length?`<h2>Not ${esc(w)}</h2><p class="m" style="margin:0 0 6px">Tick anything you don’t want ${esc(w)}. It moves to the next day that has room.</p><div class="card">${rows.map(r=>`<label class="item row rjr" style="flex-wrap:nowrap;cursor:pointer"><input type="checkbox" class="rjc" value="${r.t.id}"><span class="grow">${esc(T(r.t))}<small class="m" style="display:block">${r.over?'won’t fit · ':''}${durS(estOf(r.t))}</small></span></label>`).join('')}</div><div class="row" style="margin-top:10px"><button class="sm pri" data-act="rjPush" data-d="${d}">Move the ticked ones</button><button class="sm ghost" data-act="close">Close</button></div>`:'<div class="row"><button class="sm ghost" data-act="close">Close</button></div>'}`)}
 /* ---------- stale things tidy themselves: checked once a day against the scheduler and what he has said ---------- */
 const TIDY={busy:false};
 const tidied=()=>[...S.tasks.values()].filter(t=>t.tidy&&dayDiff(t.tidy)>=-2&&t.s==='parked');
@@ -1514,12 +1516,14 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
       db.doc('questions/'+id).update({ans:'said',ansAt:stamp(),said:x.slice(0,300)}).catch(()=>{});
       applyText(msg,'question').then(r=>{toast(r?String(r).slice(0,180):'I couldn’t take that in. It’s back on your questions.',r?4200:3200);if(!r)db.doc('questions/'+id).update({ans:null}).catch(()=>{});renderAll()}).catch(()=>{});
       S.qOnly='';qSheet()},
-    rejig:()=>rejigSheet(),
-    rjLow:async()=>{const on=!dayDoc(td).low;await dayWrite(td,cur=>({...cur,low:on}));if(!on)await restoreLow(td);const m=await relayMoves(true);await done((on?'Lighter day: only what has to happen.':'Back to a normal day.')+m)},
-    rjPlan:async()=>{const m=await relayMoves(true);await done('Laid out again from now.'+m)},
-    rjMore:async()=>{const l=weekItems().filter(t=>t.day&&t.day>td&&!t.pin&&!isDone(t)&&!isRtn(t)&&!isOpt(t)&&ctxOf(t)==='work'&&!hm(t.at||'')).sort((x,y)=>rankOf(y)-rankOf(x)).slice(0,2);for(const t of l)await pinItem(t.id,td);await applyWeek(false);await done(l.length?'Pulled in: '+l.map(t=>short(T(t))).join('; ')+'.':'Nothing else is waiting this week.')},
-    rjEve:async()=>{const on=!(+dayDoc(td).eve>0);await dayWrite(td,cur=>({...cur,eve:on?60:0}));FM.clear();const m=await relayMoves(true);await done((on?'An hour after tutoring is open tonight.':'Nothing after tutoring.')+m)},
-    rjPush:async()=>{const ids=[...document.querySelectorAll('.rjc:checked')].map(x=>x.value);if(!ids.length){toast('Tick the ones you don’t want today.',1800);return}for(const i of ids)await pushItem(i);await done(`Moved ${ids.length} off today.`)},
+    rejig:()=>rejigSheet(b.dataset.d),
+    rjLow:async()=>{const d=b.dataset.d||td,on=!dayDoc(d).low;await dayWrite(d,cur=>({...cur,low:on}));if(!on)await restoreLow(d);const m=await relayMoves(true);await done((on?'Lighter: only what has to happen.':'Back to a normal day.')+m)},
+    rjPlan:async()=>{const m=await relayMoves(true);await done('Laid out again.'+m)},
+    rjMore:async()=>{const d=b.dataset.d||td,l=weekItems().filter(t=>t.day&&t.day>d&&!t.pin&&!isDone(t)&&!isRtn(t)&&!isOpt(t)&&ctxOf(t)==='work'&&!hm(t.at||'')).sort((x,y)=>rankOf(y)-rankOf(x)).slice(0,2);for(const t of l)await pinItem(t.id,d);await applyWeek(false);await done(l.length?'Pulled in: '+l.map(t=>short(T(t))).join('; ')+'.':'Nothing else is waiting this week.')},
+    rjEve:async()=>{const d=b.dataset.d||td,on=!(+dayDoc(d).eve>0);await dayWrite(d,cur=>({...cur,eve:on?60:0}));FM.clear();const m=await relayMoves(true);await done((on?'An hour after tutoring is open.':'Nothing after tutoring.')+m)},
+    rjPush:async()=>{const d=b.dataset.d||td,ids=[...document.querySelectorAll('.rjc:checked')].map(x=>x.value);if(!ids.length){toast('Tick the ones you don’t want.',1800);return}
+      if(d===td){for(const i of ids)await pushItem(i)}else{const nx=horizon().find(x=>x>d&&!offDay(x))||addD(d,1);for(const i of ids){const t=S.tasks.get(i);if(t)await upL(i,{day:nx,wk:monOf(nx),pin:false,at:null,defer:(t.defer||0)+1})}await applyWeek(false)}
+      await done(`Moved ${ids.length} off ${d===td?'today':dayWord(d).toLowerCase()}.`)},
     feel:async()=>{await dayWrite(b.dataset.d,cur=>({...cur,feel:b.dataset.v}));renderAll();toast('Noted, sir.',1400)},
     tidyUndo:async()=>{const t=S.tasks.get(id);if(!t)return;await upL(id,{s:'ready',dropped:null,tidy:null,tidyWhy:null,day:t.tidyDay||null});await applyWeek(false);renderAll();toast('Back on your list.',1600)}};
   if(H10[a]){e.stopImmediatePropagation();e.preventDefault();try{await H10[a]()}catch(er){console.warn(er);toast('That didn’t work. Try again.',2000)}}},true);
