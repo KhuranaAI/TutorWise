@@ -3714,7 +3714,7 @@
       settingsCard(),
       installTip(),
       h("p", { class: "center mt" }, reset),
-      h("p", { class: "center small muted" }, "Bolo! · made with 💛 by TutorWise"));
+      h("p", { class: "center small muted" }, "Bolo! · made with 💛 by TutorWise · ", h("a", { href: "privacy.html", class: "muted" }, "Privacy")));
     actions([]);
     showTabs("profile");
   }
