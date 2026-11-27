@@ -589,3 +589,9 @@ in lesson hours; the queue as its own screen or only in the evening review.
 
 Month end finding (Nov 27): the admin records hold a parent contact for only a few students, so WhatsApp links cannot
 open a specific chat yet; the send list uses WhatsApp's share link (the chat is picked by hand) until numbers are added.
+
+## Nov 27: makeup balance agent (project in Jarvis; notes in `_planner/agents/makeup-balance/`)
+- A fifth agent project, "Agent: Makeup Balance", with its four stages. The owner wrote the job description; a name-free
+  copy is `JOB.md`, the named copy is on the project page.
+- First dry run (stage 1 notes in `STAGE1.md`): the written rules reproduce 11 of 14 stored balances; 3 differ and one
+  data check needs an answer. Nothing saved. Findings to fold into the job description after the owner's rulings.
