@@ -15,3 +15,14 @@ Every agent is built in four stages, never skipping one:
 
 The owner sets up each scheduled run himself, so he can attach the connectors it needs. An agent he ignores for two
 weeks is switched off. No names, fees or other personal data belong in this folder: it is a public repository.
+
+## Agent list (status, 2026-11-27)
+Each is a project in Jarvis with its four stages as tasks. Paused ones are ideas or waiting their turn.
+- Active: Centre Admin (stage 1 pending), Makeup Balance (stage 1 dry run done, rulings pending).
+- Paused, in build order: Marketing, Front Desk, Business Advisor, Balance Coach.
+- Ideas, paused: Video Editor (raw footage to a finished edit), Carousel Maker (one idea to every slide), Email
+  Marketer (newsletters), SEO and AEO (posts that rank on search and in AI answers), AI Sales Rep (enquiries, finding
+  customers, a CRM; overlaps Front Desk and Marketing), Personal Content (own channels, reuses the video and carousel
+  agents).
+Rules that hold for all of them: output waits in the approval queue; nothing is sent, posted or published without the
+owner's approval; agents do not talk to each other.
