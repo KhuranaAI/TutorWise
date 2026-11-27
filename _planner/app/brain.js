@@ -13,7 +13,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.nextSkip=[];
-const BUILD=64;
+const BUILD=65;
 const DH=id=>`<span class="dh" data-drag="${id}" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg></span>`;
 /* his own ranking (dragged in Tasks) decides between two ranked items */
 const ordBoth=(a,b)=>Number.isFinite(a.ord)&&Number.isFinite(b.ord)?a.ord-b.ord:0;
@@ -48,6 +48,8 @@ function boot3(){if(!db||S.b3)return;S.b3=true;const err=e=>console.warn(e);
   db.doc('agent/rank').onSnapshot(d=>{S.rank=d.exists?d.data():null;FM.clear();brainSoon()},err);
   db.collection('timelog').where('date','>=',addD(today(),-400)).onSnapshot(q=>{const m=new Map(),now=Date.now(),held=k=>TL.hold[k]&&now<TL.hold[k]&&S.tlog.has(k);for(const d of q.docs)m.set(d.id,held(d.id)?S.tlog.get(d.id):d.data());for(const [k,v] of S.tlog)if(!m.has(k)&&held(k))m.set(k,v);S.tlog=m;S.tlKnown=true;FM.clear();if(S.view==='streaks')renderTime();if(rvOn()&&S.rv.step===0&&S.rv.seg==null)rvDraw();brainSoon()},err);
   db.doc('agent/use').onSnapshot(d=>{if(d.exists){S.use=d.data();if(!S.use._since){S.use={...S.use,_since:today()};db.doc('agent/use').update({_since:today()}).catch(()=>{})}}else{S.use={_since:today()};db.doc('agent/use').update({_seen:today()}).catch(()=>db.doc('agent/use').set(S.use).catch(()=>{}))}featApply()},err);
+  db.collection('queue').onSnapshot(q=>{S.queue=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(b.at).localeCompare(String(a.at)));brainSoon();agRedraw()},err);
+  db.collection('agentruns').onSnapshot(q=>{S.aruns=q.docs.map(d=>({id:d.id,...d.data()}));agRedraw()},err);
   db.collection('stunotes').onSnapshot(q=>{S.stuNotes=new Map(q.docs.map(d=>[d.id,d.data()]))},err);
   db.collection('questions').onSnapshot(q=>{S.qs=q.docs.map(d=>({id:d.id,...d.data()}));brainSoon();if(S.view==='all')renderList()},err);
   setInterval(tick3,60000);setTimeout(tick3,6000)}
@@ -473,7 +475,7 @@ function brainToday(){FM.clear();const top=$('brainBox'),el=$('brainBox2');if(!t
   if(S.stale)a.push(`<div class="card warnc" style="margin-top:12px"><div class="t" style="font-size:15px">This copy of Jarvis is out of date</div><div class="m">A newer version is open somewhere else. Reload so the two don’t undo each other’s changes.</div><div class="row" style="margin-top:8px"><button class="sm pri" data-act="reload">Reload</button></div></div>`);
   else if(S.ghost&&Date.now()-S.ghost<15*6e4)a.push(`<div class="card warnc" style="margin-top:12px"><div class="t" style="font-size:15px">An old copy of Jarvis is open somewhere</div><div class="m">It keeps saving over your day, so this screen can look out of date. Close Jarvis on your other devices (and quit the installed app on your computer), then open it again.</div></div>`);
   else if(S.hot&&Date.now()<S.hot)a.push(`<div class="card warnc" style="margin-top:12px"><div class="t" style="font-size:15px">Catching up</div><div class="m">A lot just came in at once, so I’m holding my own re-planning for a couple of minutes. Everything you do still saves.</div></div>`);
-  {const rc=rvCard();if(rc)a.push(rc)}
+  {const rc=rvCard();if(rc)a.push(rc);const at=agTodayCard();if(at)a.push(at)}
   if(nowHM()>=planAt()&&!dd.night&&!offDay(addD(td,1)))a.push(`<div class="card" style="margin-top:12px"><div class="row" style="flex-wrap:nowrap"><div class="grow"><div class="t" style="font-size:15px">Plan tomorrow</div><div class="m">Two minutes: tomorrow’s timeline${notesOf('inbox').length?' and your inbox':''}.</div></div><button class="sm pri" data-act="nightNow">Start</button></div></div>`);
   else if(dd.night&&nowHM()>=planAt())a.push(`<div class="row" style="margin-top:12px"><button class="sm" data-act="nightShow">Tomorrow’s plan</button>${notesOf('inbox').length?`<button class="sm" data-act="notes" data-k="inbox">Inbox · ${notesOf('inbox').length}</button>`:''}</div>`);
   a.push(`<div data-feat="focus">${focusLine()}</div>`);{const hb=S.hab.get(td)||{},left=dailyHabs().filter(h=>!hb[h.k]);if(nowHM()>='20:30'&&left.length&&dd.streakAsk!==td)a.unshift(`<div class="card" style="margin-top:12px"><div class="t" style="font-size:15px">Which streaks did you hit today?</div><div class="chips" style="flex-wrap:wrap;margin-top:8px">${left.map(h=>`<button data-act="habDone" data-k="${h.k}">${esc(h.name)}</button>`).join('')}<button class="ghost" data-act="streakSkip">That’s all</button></div></div>`)}top.innerHTML=a.join('');
@@ -494,7 +496,7 @@ function brainToday(){FM.clear();const top=$('brainBox'),el=$('brainBox2');if(!t
   el.innerHTML=c.join('');
   const mb=$('moreBox'),inb=notesOf('inbox').length,app=notesOf('app').length,L=(act,t,sm,k)=>`<button class="lnk" data-act="${act}"${k?` data-k="${k}"`:''}><span class="grow">${t}<small>${sm}</small></span></button>`;
   if(mb&&!mb.querySelector('[data-brain]'))mb.insertAdjacentHTML('afterbegin',`<div data-brain>${L('goCentre','Centre','Fees, makeups and students')}<h2>Capture</h2>${L('notes','Inbox',inb?inb+' loose thought'+(inb>1?'s':'')+' to sort':'Nothing loose','inbox')}${L('notes','Notes',notesOf('note').length+' kept','note')}${L('notes','App updates',app?app+' ready to copy into your code tool':'Say “Jarvis should…” and it lands here','app')}
-    <h2>Progress</h2>${L('rvStart','Evening review','Your day, how it went, what’s open, tomorrow')}${L('wins','Wins',winsSince(addD(today(),-6)).length+' finished in the last 7 days')}${L('weekReview','Weekly review','Wins, what slipped, what’s coming')}${L('projects','Projects',(()=>{const a=S.projects.filter(p=>(p.status||'active')==='active');return a.length?a.slice(0,3).map(p=>p.name).join(' · '):'Your ongoing projects and their apps'})())}${L('people','People, chores and projects',`${S.people.length} people · ${[...S.tasks.values()].filter(t=>t.s==='recurring'&&t.every).length} chores · ${S.projects.length} projects`)}<h2>Tools</h2></div>`)}
+    <h2>Progress</h2>${L('agents','Agents',(()=>{const w=qWait().length;return (w?w+' waiting for you · ':'')+agents().length+' agents'})())}${L('rvStart','Evening review','Your day, how it went, what’s open, tomorrow')}${L('wins','Wins',winsSince(addD(today(),-6)).length+' finished in the last 7 days')}${L('weekReview','Weekly review','Wins, what slipped, what’s coming')}${L('projects','Projects',(()=>{const a=S.projects.filter(p=>(p.status||'active')==='active');return a.length?a.slice(0,3).map(p=>p.name).join(' · '):'Your ongoing projects and their apps'})())}${L('people','People, chores and projects',`${S.people.length} people · ${[...S.tasks.values()].filter(t=>t.s==='recurring'&&t.every).length} chores · ${S.projects.length} projects`)}<h2>Tools</h2></div>`)}
 /* ---------- Projects: his ongoing projects, each with its app or page one tap away ---------- */
 const appUrl=u=>{u=String(u||'').trim();return /^https:\/\/(claude\.ai|[\w.-]+\.tutorwise\.ca|tutorwise\.ca|docs\.google\.com|drive\.google\.com)\//.test(u)?u:''};
 function projectsSheet(edit){const L=[...S.projects].sort((a,b)=>((a.status||'active')==='done')-((b.status||'active')==='done')||(!!b.url-!!a.url)||String(a.name).localeCompare(String(b.name)));
@@ -1842,6 +1844,58 @@ function featTag(){const sb=$('statBox');if(sb){const sc=sb.querySelector('.sc:n
 document.addEventListener('click',e=>{const f=e.target.closest&&e.target.closest('[data-feat]');if(f)featTouch(f.dataset.feat);const b=e.target.closest&&e.target.closest('[data-act="featBack"]');if(b){featTouch(b.dataset.k);toast(FEAT[b.dataset.k]+' is back.',1800)}},true);
 {const _sh65=sheet;sheet=function(h){$('sheet').classList.remove('full');return _sh65(h)}}
 {const _sw65=show;show=function(v){_sw65(v);featTouch('tab:'+v);if(v==='streaks')renderTime()}}
+/* ====================== Agents: each agent's card, its page, and one shared "Waiting for you" list ======================
+   projects with agent:true are the agents; their stage is the highest stage task marked done (tasks titled "... stage N:").
+   agentruns/{id} = {agent, at, kind:'rehearsal'|'live'|'by hand', title, found, changes:[...], saved:false}
+   queue/{id} = {agent, at, kind:'draft'|'change'|'question', title, body, options:[...], status:'waiting'|'approved'|'rejected'|'answered',
+                 rehearsal, answer, doneAt}. Approving records the decision; the agent (or Claude) acts on approved items. */
+S.aruns=[];S.queue=[];S.agSel='';
+const AGST=['By hand','Written','Rehearsal','Live'];
+const agents=()=>S.projects.filter(p=>p.agent).sort((a,b)=>((a.status||'active')!=='active')-((b.status||'active')!=='active')||String(a.name).localeCompare(String(b.name)));
+const agName=p=>String(p.name||'').replace(/^Agent:\s*/,'');
+function agStage(p){if(Number.isFinite(+p.stage))return +p.stage;let n=0;for(const t of S.tasks.values()){if(t.proj!==p.id||t.s!=='done')continue;const m=String(t.t).match(/stage (\d)/i);if(m)n=Math.max(n,+m[1])}return n}
+const agJob=p=>{const m=String(p.n||'').match(/Job:\s*([^\n]+)/i);return m?m[1].trim():String(p.n||'').split('\n').find(l=>l.trim()&&!/^idea from|^job description/i.test(l))||''};
+const qWait=a=>S.queue.filter(x=>x.status==='waiting'&&(!a||x.agent===a));
+const agRuns=a=>S.aruns.filter(r=>r.agent===a).sort((x,y)=>String(y.at).localeCompare(String(x.at)));
+const agWhen=iso=>{const d=dayOf(iso);return d?(d===today()?'today':dayDiff(d)===-1?'yesterday':dayName(d))+(iso.length>11?' '+t12(new Date(iso).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'America/Toronto'})):''):''};
+function agDots(n){return `<span class="agd" aria-label="Stage: ${n?AGST[n-1]+' done':'not started'}">${AGST.map((x,i)=>`<i class="${i<n?'on':''}" title="${x}"></i>`).join('')}</span>`}
+function agCard(p){const n=agStage(p),r=agRuns(p.id)[0],w=qWait(p.id).length,off=(p.status||'active')!=='active';
+  return `<button class="agc${off?' off':''}" data-act="agOpen" data-id="${p.id}"><span class="agh"><b>${esc(agName(p))}</b>${w?`<span class="pill warn">${w} waiting</span>`:''}</span><small>${esc(short(agJob(p))||'')}</small>
+    <span class="agm">${agDots(n)}<span class="m">${n?AGST[n-1]:off?'Paused':'Not started'}</span></span>
+    <span class="m">${r?`Last run ${esc(agWhen(r.at))}: ${esc(short(r.title))}`:'No runs yet'}${p.nextRun?` · next ${esc(p.nextRun)}`:''}</span></button>`}
+function qItem(x){const p=S.projects.find(y=>y.id===x.agent),ed=S.qEdit===x.id;
+  return `<div class="item qi"><div class="m">${esc(p?agName(p):'Agent')}${x.rehearsal?' · <b>rehearsal: nothing was saved</b>':''}${x.at?' · '+esc(agWhen(x.at)):''}</div><div class="t" style="font-size:15px">${esc(x.title)}</div>
+    ${ed?`<textarea id="qiText" data-id="${x.id}" style="width:100%;min-height:110px">${esc(x.body||'')}</textarea>`:x.body?`<div class="m" style="white-space:pre-wrap;margin-top:4px">${esc(x.body)}</div>`:''}
+    <div class="row" style="margin-top:8px;gap:6px">${x.kind==='question'&&(x.options||[]).length?x.options.map(o=>`<button class="sm" data-act="qiAns" data-id="${x.id}" data-v="${esc(o)}">${esc(o)}</button>`).join('')
+      :ed?`<button class="sm pri" data-act="qiSave" data-id="${x.id}">Save edit</button><button class="sm ghost" data-act="qiEditX">Cancel</button>`
+      :`<button class="sm pri" data-act="qiOk" data-id="${x.id}">Approve</button><button class="sm" data-act="qiEdit" data-id="${x.id}">Edit</button><button class="sm ghost" data-act="qiNo" data-id="${x.id}">Reject</button>${x.body?`<button class="sm ghost" data-act="qiCopy" data-id="${x.id}">Copy</button>`:''}`}</div></div>`}
+function waitList(a){const l=qWait(a);return l.length?`<div class="card">${l.map(qItem).join('')}</div>`:'<div class="card"><div class="m">Nothing waiting.</div></div>'}
+function agentsSheet(){const sel=S.projects.find(p=>p.id===S.agSel&&p.agent);
+  if(sel){const runs=agRuns(sel.id).slice(0,4),n=agStage(sel);
+    sheet(`<div class="row" style="margin:0 0 6px"><button class="sm ghost" data-act="agBack" style="padding-left:0">← All agents</button></div>
+    <h3 style="font:600 20px var(--disp);margin:0">${esc(agName(sel))}</h3><div class="agm" style="margin:6px 0">${agDots(n)}<span class="m">${n?AGST[n-1]:'Not started'}${(sel.status||'active')!=='active'?' · paused':''}</span></div>
+    ${sel.next?`<p class="m" style="margin:4px 0"><b>Next:</b> ${esc(sel.next)}</p>`:''}
+    <h2>Waiting for you</h2>${waitList(sel.id)}
+    <h2>Last runs</h2><div class="card">${runs.map(r=>`<div class="item"><div class="m">${esc(agWhen(r.at))} · ${esc(r.kind||'run')}${r.saved?'':' · nothing was saved'}</div><div class="t" style="font-size:15px">${esc(r.title)}</div>${r.found?`<div class="m" style="white-space:pre-wrap;margin-top:4px">${esc(r.found)}</div>`:''}${(r.changes||[]).length?`<div class="m" style="margin-top:4px"><b>Would have changed:</b> ${r.changes.map(esc).join('; ')}</div>`:''}</div>`).join('')||'<div class="m">No runs yet.</div>'}</div>
+    <h2>Job description</h2><div class="card"><div style="white-space:pre-wrap;font-size:14px">${esc(sel.n||'Not written yet.')}</div></div>
+    <div class="row" style="margin-top:12px"><button class="sm ghost" data-act="close">Close</button></div>`);$('sheet').classList.add('full');return}
+  const l=agents(),w=qWait();
+  sheet(`<h3 style="font:600 20px var(--disp);margin:0">Agents</h3><p class="why" style="margin:4px 0 0">Your staff. Each does one job; what it produces waits here for you.</p>
+    <h2>Waiting for you${w.length?' · '+w.length:''}</h2>${waitList('')}
+    <h2>All agents · ${l.length}</h2><div class="agg">${l.map(agCard).join('')}</div>
+    <div class="row" style="margin-top:12px"><button class="sm ghost" data-act="close">Close</button></div>`);$('sheet').classList.add('full')}
+const agRedraw=()=>{if(!$('sheet').hidden&&$('sheetBody').querySelector('.agg,[data-act=agBack]'))agentsSheet()};
+function agTodayCard(){const w=qWait();if(!w.length)return'';const by={};for(const x of w)by[x.agent]=(by[x.agent]||0)+1;
+  return `<button class="lnk agt" data-act="agents"><span class="grow">Agents: ${w.length} waiting for you<small>${Object.entries(by).map(([a,c])=>{const p=S.projects.find(y=>y.id===a);return esc(p?agName(p):'Agent')+' '+c}).join(' · ')}</small></span></button>`}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,id=b.dataset.id;
+  const H={agents:()=>{S.agSel='';agentsSheet()},agOpen:()=>{S.agSel=id;agentsSheet();$('sheetBody').scrollTop=0},agBack:()=>{S.agSel='';agentsSheet()},
+    qiOk:async()=>{await db.doc('queue/'+id).update({status:'approved',doneAt:stamp()});toast('Approved.',1400)},
+    qiNo:async()=>{await db.doc('queue/'+id).update({status:'rejected',doneAt:stamp()});toast('Rejected.',1400)},
+    qiAns:async()=>{await db.doc('queue/'+id).update({status:'answered',answer:b.dataset.v,doneAt:stamp()});toast('Answered: '+b.dataset.v,1600)},
+    qiEdit:()=>{S.qEdit=id;agRedraw()},qiEditX:()=>{S.qEdit='';agRedraw()},
+    qiSave:async()=>{const v=($('qiText')?.value||'');S.qEdit='';await db.doc('queue/'+id).update({body:v,edited:stamp()});toast('Saved. Approve it when it’s right.',1800)},
+    qiCopy:async()=>{const x=S.queue.find(y=>y.id===id);try{await navigator.clipboard.writeText(x?.body||'');toast('Copied',1200)}catch(er){toast('Couldn’t copy.',1600)}}};
+  if(H[a]){e.stopImmediatePropagation();e.preventDefault();try{await H[a]()}catch(er){console.warn(er);toast('That didn’t work. Try again.',2000)}}},true);
 /* ---------- background record-keeping is spaced out, and silent in a hidden or out-of-date copy ---------- */
 {const gate=(fn,ms)=>{let last=0,tm=null;return function(){if(S.stale||document.visibilityState!=='visible')return;const n=Date.now(),w=last+ms-n;if(w<=0){last=n;return fn()}if(!tm)tm=setTimeout(()=>{tm=null;if(S.stale||document.visibilityState!=='visible')return;last=Date.now();try{fn()}catch(e){console.warn(e)}},w+50)}};
   scoreSync=gate(scoreSync,20000);trackPlan=gate(trackPlan,20000)}

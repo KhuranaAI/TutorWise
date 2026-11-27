@@ -43,8 +43,15 @@ Flag to the owner instead of guessing:
 - Sessions marked attended that also have a cancel reason.
 - Sessions that may not have happened, or hours far above a student's usual week.
 
+## Manual adjustments (kept on top of every recalculation)
+The owner sometimes changes a balance by hand (a promise to a family, a free lesson, a correction). Those changes live in
+a list, one entry per change: student, hours (+ or -), date, reason. Every recalculation adds the list on top, so
+"set to" never erases a change he made by hand. Source of the list: the Jarvis records (`agent/makeup_manual`), plus any
+entry in the scheduler's makeup history that was not written by this agent: ask him once whether to keep it, then add
+it to the list. Show the manual part separately in the reason, e.g. "... Manual +1 (free lesson, Nov 12)."
+
 ## Step 4: save
-Balance = sum of all month and week results. Set it with adjust_makeup_balance (set_to_hours) with a reason that shows
+Balance = sum of all month and week results, plus the student's manual adjustments. Set it with adjust_makeup_balance (set_to_hours) with a reason that shows
 the breakdown, for example: "Oct +4 (billed 16h, attended 12h). Nov vs 4h/week: wk Nov 2 2h (+2), wk Nov 9 4h (0),
 wk Nov 16 4h (0). Week of Nov 23 not yet counted."
 
