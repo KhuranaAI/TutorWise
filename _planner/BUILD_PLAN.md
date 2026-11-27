@@ -655,3 +655,10 @@ open a specific chat yet; the send list uses WhatsApp's share link (the chat is 
   stage, last runs, waiting items, instructions and the last 12 messages, and may return ops: answer / approve / reject /
   edit a waiting item, instruct (standing rule), next (one-off request for the next run), pause / resume. Claims of a
   change with no op get the usual correction. Standing instructions are listed with Remove. See agents/README.md.
+### v76 (BUILD 74) — "do it now" starts a real run, with an ETA
+- Agent page footer: Run now. Chat op `run_now`. If the agent project has `trigger` (the id of his on-demand stored task,
+  no schedule, "new session each time"), the page writes `agentruns/<run_now_...>` {status:'running', startedAt, eta}
+  and calls Claude Code Remote `fire_trigger` with "REQUEST: ...\nRUN_ID: ...". The run finishes that document. ETA =
+  average of the last finished runs, else `etaMin` or 12 minutes. A "Running now · ready around ..." banner counts down.
+- No trigger yet: the request is saved to `nextAsk` and he is told why. Capability: Claude Code Remote [fire_trigger].
+- The run-now task texts live with him (they contain his Jarvis link), not in this repo.
