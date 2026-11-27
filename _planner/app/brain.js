@@ -13,7 +13,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.nextSkip=[];
-const BUILD=68;
+const BUILD=69;
 const DH=id=>`<span class="dh" data-drag="${id}" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg></span>`;
 /* his own ranking (dragged in Tasks) decides between two ranked items */
 const ordBoth=(a,b)=>Number.isFinite(a.ord)&&Number.isFinite(b.ord)?a.ord-b.ord:0;
@@ -1884,7 +1884,7 @@ function agentsSheet(){const sel=S.projects.find(p=>p.id===S.agSel&&p.agent);
     <h2>Waiting for you${w.length?' · '+w.length:''}</h2>${waitList('')}
     <h2>All agents · ${l.length}</h2><div class="agg">${l.map(agCard).join('')}</div>
     <div class="row" style="margin-top:12px"><button class="sm ghost" data-act="close">Close</button></div>`);$('sheet').classList.add('full')}
-const agRedraw=()=>{if(!$('sheet').hidden&&$('sheetBody').querySelector('.agg,[data-act=agBack]'))agentsSheet()};
+let agRedraw=()=>{if(!$('sheet').hidden&&$('sheetBody').querySelector('.agg,[data-act=agBack]'))agentsSheet()};
 function agTodayCard(){const w=qWait();if(!w.length)return'';const by={};for(const x of w)by[x.agent]=(by[x.agent]||0)+1;
   return `<button class="lnk agt" data-act="agents"><span class="grow">Agents: ${w.length} waiting for you<small>${Object.entries(by).map(([a,c])=>{const p=S.projects.find(y=>y.id===a);return esc(p?agName(p):'Agent')+' '+c}).join(' · ')}</small></span></button>`}
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,id=b.dataset.id;
@@ -1933,6 +1933,56 @@ const lookRedraw=()=>{const x=$('lookBox');if(x)x.outerHTML=lookBlock()};
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;
   const H={lookNew:()=>LOOK.set('look','new'),lookOld:()=>LOOK.set('look','old'),thDark:()=>LOOK.set('theme','dark'),thLight:()=>LOOK.set('theme','light')};
   if(H[a]){e.stopImmediatePropagation();e.preventDefault();H[a]();lookRedraw()}},true);
+/* ---------- new look step 2 (v71): five tabs (Today, Week, Calendar, Agents, Life) and the N button; old look unchanged ---------- */
+const isNL=()=>document.documentElement.getAttribute('data-look')==='new';
+const NLI={agents:'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',life:'M3 12h4l2-5 4 10 2-5h6'};
+(function nlMount(){try{
+  const nav=$('nav'),cal=nav&&nav.querySelector('button[data-v=cal]');if(!nav||$('v-agents'))return;
+  const tb=(v,l)=>`<button data-v="${v}" class="nl-only"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${NLI[v]}"/></svg>${l}<span class="nlb" hidden></span></button>`;
+  cal.insertAdjacentHTML('afterend',tb('agents','Agents')+tb('life','Life'));
+  $('v-more').insertAdjacentHTML('afterend','<section id="v-agents" hidden></section><section id="v-life" hidden></section>');
+  const st=document.querySelector('#top header button[data-act=settings]');if(st)st.insertAdjacentHTML('beforebegin','<button class="nl-only nlN" data-act="nlN" aria-label="Settings and more">N</button>');
+}catch(e){console.warn(e)}})();
+function nlBadge(){const n=(typeof qWait==='function'?qWait().length:0);document.querySelectorAll('#nav button[data-v=agents] .nlb').forEach(b=>{b.hidden=!n;b.textContent=n})}
+function renderNLAgents(){const el=$('v-agents');if(!el)return;const l=agents(),w=qWait();
+  el.innerHTML=`<p class="why" style="margin:4px 0 0">Your staff. Each does one job; what it produces waits here for you.</p>
+    <h2>Waiting for you${w.length?' · '+w.length:''}</h2>${waitList('')}
+    <h2>All agents · ${l.length}</h2><div class="agg">${l.map(agCard).join('')}</div>`}
+function renderNLLife(){const el=$('v-life');if(!el)return;const R=(act,t,s,v)=>`<button class="lnk" data-act="${act}"${v?` data-v="${v}"`:''}><span class="grow">${t}<small>${s}</small></span></button>`;
+  const ap=S.projects.filter(p=>(p.status||'active')==='active'&&!p.agent);
+  el.innerHTML=`<p class="why" style="margin:4px 0 8px">Your streaks, where your time goes, your projects and the people in your life.</p>
+    ${R('nlGo','Streaks and where my time went','Your habits and your balance','streaks')}
+    ${R('nlGo','Projects',ap.length?ap.slice(0,3).map(p=>esc(p.name)).join(' · '):'Your ongoing projects','all')}
+    ${R('people','People, chores and projects',`${S.people.length} people`)}
+    ${R('wins','Wins',winsSince(addD(today(),-6)).length+' finished in the last 7 days')}
+    ${R('rvStart','Evening review','Your day, how it went, what’s open, tomorrow')}
+    ${R('weekReview','Weekly review','Wins, what slipped, what’s coming')}`}
+function nlMoreTop(){const m=$('v-more');if(!m||!isNL()||$('nlMoreTop'))return;const R=(act,t,s,v)=>`<button class="lnk" data-act="${act}"${v?` data-v="${v}"`:''}><span class="grow">${t}<small>${s}</small></span></button>`;
+  m.insertAdjacentHTML('afterbegin',`<div id="nlMoreTop">${R('settings','Settings','Look, light or dark, voice, how I plan your days')}${R('nlGo','Chat with Jarvis','Everything you’ve said and what I answered','chat')}</div>`)}
+{const _sh71=show;show=function(v){_sh71(v);try{for(const k of['agents','life']){const x=$('v-'+k);if(x)x.hidden=k!==v}
+  if(v==='agents'||v==='life'){$('hTitle').textContent=v==='agents'?'Agents':'Life';$('btnBack').hidden=true;window.scrollTo(0,0);if(v==='agents')renderNLAgents();else renderNLLife()}
+  if(isNL()){const tab=['all','streaks'].includes(v)?'life':v;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===tab));if(v==='more'){nlMoreTop();$('hTitle').textContent='Settings and more'}
+    if(['all','streaks'].includes(v)&&!DESK.on)$('btnBack').hidden=false}
+  nlBadge()}catch(e){console.warn(e)}}}
+{const _ar71=agRedraw;agRedraw=function(){_ar71();try{nlBadge();if(S.view==='agents')renderNLAgents()}catch(e){}}}
+/* the More tab is hidden in the new look: if he was on it (or on Chat on a phone) when switching, go to Today */
+{const _ls71=LOOK.set;LOOK.set=function(k,v){_ls71.call(LOOK,k,v);if(k==='look'){if(v!=='new'&&['agents','life'].includes(S.view))show('today');else if(v==='new'&&S.view==='more')show('more');nlBadge()}}}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;
+  if(a==='nlN'){e.stopImmediatePropagation();e.preventDefault();$('sheet').hidden=true;show('more');return}
+  if(a==='nlGo'){e.stopImmediatePropagation();e.preventDefault();show(b.dataset.v);return}},true);
+setTimeout(nlBadge,1500);
+/* phone, new look: the tab bar sits at the bottom; inside a tall frame (the Claude app) it follows the visible band like the top bar does */
+function nlBotPos(){const w=$('nlBot');if(!w||w.hidden)return;if(BAND.tall){w.classList.add('band');w.style.transform=`translateY(${Math.max(0,BAND.bot-w.offsetHeight)}px)`}else{w.classList.remove('band');w.style.transform=''}}
+function nlPlaceNav(){try{const nav=$('nav'),top=$('top');if(!nav||!top)return;let w=$('nlBot');
+  if(!w){w=document.createElement('div');w.id='nlBot';w.hidden=true;document.body.appendChild(w)}
+  const want=isNL()&&!DESK.on;
+  if(want&&nav.parentElement!==w){w.appendChild(nav);w.hidden=false;document.body.classList.add('nlbot')}
+  else if(!want&&nav.parentElement===w){const h=top.querySelector('header');if(h)h.insertAdjacentElement('afterend',nav);else top.appendChild(nav);w.hidden=true;document.body.classList.remove('nlbot')}
+  nlBotPos()}catch(e){console.warn(e)}}
+{const _da71=deskApply;deskApply=function(){_da71.apply(this,arguments);nlPlaceNav()}}
+{const _ls71b=LOOK.set;LOOK.set=function(k,v){_ls71b.call(LOOK,k,v);if(k==='look')nlPlaceNav()}}
+try{new MutationObserver(nlBotPos).observe($('top'),{attributes:true,attributeFilter:['style']})}catch(e){}
+addEventListener('resize',()=>setTimeout(nlPlaceNav,60));setTimeout(nlPlaceNav,0);setTimeout(nlPlaceNav,1200);
 /* ---------- background record-keeping is spaced out, and silent in a hidden or out-of-date copy ---------- */
 {const gate=(fn,ms)=>{let last=0,tm=null;return function(){if(S.stale||document.visibilityState!=='visible')return;const n=Date.now(),w=last+ms-n;if(w<=0){last=n;return fn()}if(!tm)tm=setTimeout(()=>{tm=null;if(S.stale||document.visibilityState!=='visible')return;last=Date.now();try{fn()}catch(e){console.warn(e)}},w+50)}};
   scoreSync=gate(scoreSync,20000);trackPlan=gate(trackPlan,20000)}

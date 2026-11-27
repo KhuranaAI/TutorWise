@@ -621,3 +621,12 @@ open a specific chat yet; the send list uses WhatsApp's share link (the chat is 
 - Settings > Look: New/Old and Dark/Light, kept in localStorage (`jv.look`, `jv.theme`), applied in <head> before paint.
   Uses `data-jt`, not `data-theme`, because the host page may set `data-theme`; the orb is nudged to recolour.
 - Old look untouched underneath; switching to Old restores it exactly.
+### v71 (BUILD 69) — step 2: five tabs and the N button
+- New look only: tabs Today, Week, Calendar, Agents, Life (`.nl-only` buttons added after Calendar; Chat, Projects, Streaks
+  and More are hidden from the bar, not removed). Agents tab = `#v-agents` (waiting list + agent cards, badge = waiting count).
+  Life tab = `#v-life`: Streaks and time, Projects, People, Wins, Evening review, Weekly review. Projects/Streaks light the
+  Life tab and get a back button on the phone.
+- N button (header on phone, rail on desktop) opens the More page, titled "Settings and more", with Settings and Chat added
+  at the top, so everything from More and the Chat tab stays reachable.
+- Phone: the tab bar moves to the bottom (`#nlBot`), fixed in a browser; in a tall frame it follows the visible band via
+  the same BAND numbers the top bar uses. Old look moves it back to the top.
