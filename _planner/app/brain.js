@@ -13,7 +13,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.nextSkip=[];
-const BUILD=67;
+const BUILD=68;
 const DH=id=>`<span class="dh" data-drag="${id}" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg></span>`;
 /* his own ranking (dragged in Tasks) decides between two ranked items */
 const ordBoth=(a,b)=>Number.isFinite(a.ord)&&Number.isFinite(b.ord)?a.ord-b.ord:0;
@@ -1922,6 +1922,17 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
       b.disabled=true;try{await tpCall('log_lesson',{student:x.student,date:S.lnDue.d,covered:c,...(h?{homework:h}:{})});S.lnDue.list.splice(i,1);toast('Saved '+String(x.student).split(' ')[0]+'’s note.',1600);lnSheet();if(S.view==='today')try{renderToday()}catch(er){}}
       catch(er){b.disabled=false;toast(er?.code==='not_granted'?'The teacher portal isn’t allowed for this page yet.':'Couldn’t save that note. Try again.',2400)}}};
   if(H[a]){e.stopImmediatePropagation();e.preventDefault();try{await H[a]()}catch(er){console.warn(er);toast('That didn’t work. Try again.',2000)}}},true);
+/* ---------- new look (v70): New/Old and Dark/Light, remembered on this device ---------- */
+const LOOK={get look(){return document.documentElement.getAttribute('data-look')||'new'},get theme(){return document.documentElement.getAttribute('data-jt')||'dark'},
+  set(k,v){const d=document.documentElement;d.setAttribute(k==='look'?'data-look':'data-jt',v);try{localStorage.setItem(k==='look'?'jv.look':'jv.theme',v)}catch(e){}
+    const t=d.getAttribute('data-theme');if(t==null){d.setAttribute('data-theme','');d.removeAttribute('data-theme')}else d.setAttribute('data-theme',t)}};
+function lookBlock(){const L=LOOK.look,T=LOOK.theme,b=(act,on,txt)=>`<button class="sm${on?' on':''}" data-act="${act}" aria-pressed="${on}">${txt}</button>`;
+  return `<div id="lookBox"><label>Look</label><div class="lookrow">${b('lookNew',L==='new','New look')}${b('lookOld',L!=='new','Old look')}</div>${L==='new'?`<div class="lookrow">${b('thDark',T!=='light','Dark')}${b('thLight',T==='light','Light')}</div>`:''}<small style="color:var(--mute)">Saved on this device. Old look is here for a week while you try the new one.</small></div>`}
+{const _ss7=settingsSheet;settingsSheet=function(){_ss7.apply(this,arguments);try{const h=$('sheetBody').querySelector('h3');if(h&&!$('lookBox'))h.insertAdjacentHTML('afterend',lookBlock())}catch(e){console.warn(e)}}}
+const lookRedraw=()=>{const x=$('lookBox');if(x)x.outerHTML=lookBlock()};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;
+  const H={lookNew:()=>LOOK.set('look','new'),lookOld:()=>LOOK.set('look','old'),thDark:()=>LOOK.set('theme','dark'),thLight:()=>LOOK.set('theme','light')};
+  if(H[a]){e.stopImmediatePropagation();e.preventDefault();H[a]();lookRedraw()}},true);
 /* ---------- background record-keeping is spaced out, and silent in a hidden or out-of-date copy ---------- */
 {const gate=(fn,ms)=>{let last=0,tm=null;return function(){if(S.stale||document.visibilityState!=='visible')return;const n=Date.now(),w=last+ms-n;if(w<=0){last=n;return fn()}if(!tm)tm=setTimeout(()=>{tm=null;if(S.stale||document.visibilityState!=='visible')return;last=Date.now();try{fn()}catch(e){console.warn(e)}},w+50)}};
   scoreSync=gate(scoreSync,20000);trackPlan=gate(trackPlan,20000)}

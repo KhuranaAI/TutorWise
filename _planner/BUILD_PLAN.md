@@ -612,3 +612,12 @@ open a specific chat yet; the send list uses WhatsApp's share link (the chat is 
   until he types it and taps Save. Capability: TeacherPortal [my_day, log_lesson] added to the mcp manifest.
 - App-updates sweep (notes kind `app`): 22 of 25 already built; panel width (v68) and lesson notes (v69) built now; the colour
   and visual redesign is deliberately not built: it is its own later project, designed first in Claude Design.
+
+## Redesign (approved Nov 27; design canvas "Jarvis redesign", built in 5 steps, old look switchable for a week)
+### v70 (BUILD 68) — step 1: colours, type, dark/light
+- `html[data-look=new]` overrides the shared colour variables (meaning colours: Centre teal, Growth coral, Health green,
+  People purple; amber only for needs-you and the active tab). `[data-jt=light]` gives the light palette. Fonts: Fraunces
+  for big headings and the greeting, Space Grotesk for labels/numbers, Inter for body.
+- Settings > Look: New/Old and Dark/Light, kept in localStorage (`jv.look`, `jv.theme`), applied in <head> before paint.
+  Uses `data-jt`, not `data-theme`, because the host page may set `data-theme`; the orb is nudged to recolour.
+- Old look untouched underneath; switching to Old restores it exactly.
