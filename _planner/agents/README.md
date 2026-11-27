@@ -41,3 +41,10 @@ owner's approval; agents do not talk to each other.
   needs different connectors or timing.
 - Project pages in Jarvis carry this in their notes (`parent` on each sub-agent project); the Projects tab has no
   hierarchy view yet.
+
+## Another idea, pinned
+- Lesson Planner (paused, may never happen): plans lessons and makes content for students (worksheets, practice
+  questions, outlines) from the owner's instructions or from the notes on each student's file. For the owner first,
+  possibly the other teachers later. Separate from the Marketing family. Drafts only; learning documents are read only
+  on request. Builds on the lesson notes in the teacher portal, the student files in the admin system and the existing
+  reading-comprehension work.
