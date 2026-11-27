@@ -638,3 +638,9 @@ open a specific chat yet; the send list uses WhatsApp's share link (the chat is 
 - Team: `p.team` if set, else Marketing for `ag_marketing` and its sub-agents, Business for the advisor and balance coach,
   else Centre. Icon: `p.icon` if set, else chosen from the agent id. State label: Paused / Live / Rehearsal / By hand / Planned.
 - Tapping an icon still opens the existing agent sheet until step 4.
+### v73 (BUILD 71) — step 4: an agent's own page
+- New look: tapping an agent (Agents tab icon, Today's "Agents" card) opens its page inside the Agents tab instead of the
+  sheet (`agentsSheet` wrapped; old look still uses the sheet). Back link, big icon, name, one-line job + team, 4-step
+  stage bar (done in team colour, current in amber), three views: Output (last run, "Rehearsal · nothing saved" tag, its
+  waiting items with the same Approve/Edit/Reject/Copy/answer buttons), Runs (history), How it works (job description,
+  "Works with" chips read from the job text). Footer: next run (`p.nextRun`) and Pause/Resume (writes `projects/<id>.status`).
