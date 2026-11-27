@@ -599,3 +599,6 @@ open a specific chat yet; the send list uses WhatsApp's share link (the chat is 
 - Agents are organised in families per business (Marketing plus content-maker sub-agents, coordinating through records
   and the approval queue, one written job description per role and one business profile per instance). About six months
   out; see `agents/README.md`. The sub-agent projects carry `parent: ag_marketing` in Jarvis.
+
+## v68 (BUILD 66) — calendar panel width
+- Desktop calendar: the time column on every timeline row is pinned to 66px, so "Your pick" cards and task rows wrap words normally instead of one word per line. Addition only (CSS).
