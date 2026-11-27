@@ -26,3 +26,18 @@ Each is a project in Jarvis with its four stages as tasks. Paused ones are ideas
   agents).
 Rules that hold for all of them: output waits in the approval queue; nothing is sent, posted or published without the
 owner's approval; agents do not talk to each other.
+
+## Families (a plan for about six months out; nothing here is built)
+- An agent family belongs to one business: a Marketing agent plus its sub-agents (content makers: video editor,
+  carousel maker, email marketer, SEO and AEO). The AI sales rep sits beside Marketing, not under it (marketing finds
+  customers, sales converts them); it may merge with Front Desk.
+- Sub-agents do not call each other or the Marketing agent. Coordination goes through records: the Marketing agent
+  writes a brief per content maker, each content maker reads its brief and puts drafts in the approval queue.
+- Write each job description once (as a skill). Each business gets its own instance with a business profile: offer,
+  audience, voice, brand colours, channels, approval rules. TutorWise is the first instance; a personal-content family
+  would be a second; each later business gets its own.
+- Run allowance: scheduled runs count against the plan's daily run allowance. Prefer one scheduled run per family that
+  applies its sub-agent skills in turn over many separate schedules; give a sub-agent its own schedule only when it
+  needs different connectors or timing.
+- Project pages in Jarvis carry this in their notes (`parent` on each sub-agent project); the Projects tab has no
+  hierarchy view yet.

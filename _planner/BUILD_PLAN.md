@@ -595,3 +595,7 @@ open a specific chat yet; the send list uses WhatsApp's share link (the chat is 
   copy is `JOB.md`, the named copy is on the project page.
 - First dry run (stage 1 notes in `STAGE1.md`): the written rules reproduce 11 of 14 stored balances; 3 differ and one
   data check needs an answer. Nothing saved. Findings to fold into the job description after the owner's rulings.
+
+- Agents are organised in families per business (Marketing plus content-maker sub-agents, coordinating through records
+  and the approval queue, one written job description per role and one business profile per instance). About six months
+  out; see `agents/README.md`. The sub-agent projects carry `parent: ag_marketing` in Jarvis.
