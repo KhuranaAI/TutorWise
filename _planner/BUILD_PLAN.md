@@ -630,3 +630,11 @@ open a specific chat yet; the send list uses WhatsApp's share link (the chat is 
   at the top, so everything from More and the Chat tab stays reachable.
 - Phone: the tab bar moves to the bottom (`#nlBot`), fixed in a browser; in a tall frame it follows the visible band via
   the same BAND numbers the top bar uses. Old look moves it back to the top.
+### v72 (BUILD 70) — step 3: Agents tab, network map and app icons
+- `#v-agents`: summary line, an SVG network map built from the agent projects (Jarvis in the middle, Centre / Marketing /
+  Business team nodes, one dot per agent: filled = running, ring = planned or paused), the shared "Waiting for you" list
+  behind an amber row, then each team's agents as 64 px icon tiles (team colour when running, outlined otherwise, amber
+  count badge). Marketing sub-agents (`parent:'ag_marketing'`) are 52 px under their lead.
+- Team: `p.team` if set, else Marketing for `ag_marketing` and its sub-agents, Business for the advisor and balance coach,
+  else Centre. Icon: `p.icon` if set, else chosen from the agent id. State label: Paused / Live / Rehearsal / By hand / Planned.
+- Tapping an icon still opens the existing agent sheet until step 4.

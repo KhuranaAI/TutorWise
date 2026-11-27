@@ -13,7 +13,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.nextSkip=[];
-const BUILD=69;
+const BUILD=70;
 const DH=id=>`<span class="dh" data-drag="${id}" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg></span>`;
 /* his own ranking (dragged in Tasks) decides between two ranked items */
 const ordBoth=(a,b)=>Number.isFinite(a.ord)&&Number.isFinite(b.ord)?a.ord-b.ord:0;
@@ -1983,6 +1983,33 @@ function nlPlaceNav(){try{const nav=$('nav'),top=$('top');if(!nav||!top)return;l
 {const _ls71b=LOOK.set;LOOK.set=function(k,v){_ls71b.call(LOOK,k,v);if(k==='look')nlPlaceNav()}}
 try{new MutationObserver(nlBotPos).observe($('top'),{attributes:true,attributeFilter:['style']})}catch(e){}
 addEventListener('resize',()=>setTimeout(nlPlaceNav,60));setTimeout(nlPlaceNav,0);setTimeout(nlPlaceNav,1200);
+/* ---------- new look step 3 (v72): Agents tab = network map + each team's agents as app icons ---------- */
+const AGI={admin:'M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6',clock:'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18M12 7v5l3 3',desk:'M4 5h16v11H9l-5 4z',book:'M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM8 7h7',
+  mega:'M3 10v4h4l8 5V5l-8 5zM18 9a4 4 0 0 1 0 6',layers:'M12 3l9 5-9 5-9-5zM3 13l9 5 9-5',play:'M6 4l13 8-13 8z',mail:'M3 6h18v12H3zM3 6l9 7 9-7',search:'M10 3a7 7 0 1 0 0 14a7 7 0 1 0 0-14M15 15l6 6',
+  chart:'M4 20V11M10 20V5M16 20v-6M2 20h20',scale:'M12 4v16M5 8h14M5 8l-3 6h6zM19 8l-3 6h6z',phone:'M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z',cam:'M4 7h11v10H4zM15 10l5-3v10l-5-3',bot:'M5 8h14v11H5zM12 4v4M9 13h.01M15 13h.01'};
+const AGT={centre:{n:'Centre',c:'--centre'},marketing:{n:'Marketing',c:'--growth'},business:{n:'Business',c:'--people'}};
+function agTeam(p){if(p.team&&AGT[p.team])return p.team;if(p.parent==='ag_marketing'||p.id==='ag_marketing')return'marketing';if(/advisor|balance_coach/.test(p.id))return'business';return'centre'}
+function agIcon(p){const id=p.id;return AGI[p.icon]||AGI[/centre_admin/.test(id)?'admin':/makeup/.test(id)?'clock':/front_desk/.test(id)?'desk':/lesson/.test(id)?'book':id==='ag_marketing'?'mega':/carousel/.test(id)?'layers':/video/.test(id)?'play':/email/.test(id)?'mail':/seo/.test(id)?'search':/sales/.test(id)?'phone':/personal/.test(id)?'cam':/advisor/.test(id)?'chart':/balance_coach/.test(id)?'scale':'bot']}
+function agState(p){const n=agStage(p),off=(p.status||'active')!=='active',runs=agRuns(p.id).length;const on=!off&&(n>=1||runs>0);
+  return {on,label:off?'Paused':n>=4?'Live':n>=2?'Rehearsal':on?'By hand':'Planned',col:off?'var(--dim)':n>=4?'var(--health)':n>=2||on?'var(--needt,var(--need))':'var(--dim)'}}
+function agTeams(){const l=agents(),T={centre:[],marketing:[],business:[]};for(const p of l)T[agTeam(p)].push(p);
+  T.marketing.sort((a,b)=>(a.id==='ag_marketing'?-1:0)-(b.id==='ag_marketing'?-1:0));return T}
+function agMap(T){const J=[175,58],H={centre:[70,70,[100,260],46],marketing:[280,70,[-80,80],50],business:[175,118,[-10,190],26]};let L='',D='',N='';
+  for(const k of ['centre','marketing','business']){const [x,y,[a0,a1],r]=H[k],l=T[k],c=`var(${AGT[k].c})`;L+=`<line x1="${J[0]}" y1="${J[1]}" x2="${x}" y2="${y}"/>`;
+    l.forEach((p,i)=>{const a=(l.length>1?a0+(a1-a0)*i/(l.length-1):(a0+a1)/2)*Math.PI/180,px=Math.round(Math.min(342,Math.max(8,x+Math.cos(a)*r*(k==='business'?1.7:1)))),py=Math.round(Math.min(134,Math.max(6,y+Math.sin(a)*r*(k==='business'?.45:1)))),s=agState(p);
+      L+=`<line x1="${x}" y1="${y}" x2="${px}" y2="${py}"/>`;D+=s.on?`<circle cx="${px}" cy="${py}" r="6" fill="${c}"/>`:`<circle cx="${px}" cy="${py}" r="5" fill="none" stroke="${c}" stroke-width="1.5"/>`});
+    N+=`<circle cx="${x}" cy="${y}" r="${k==='business'?11:13}" fill="color-mix(in srgb,${c} 22%,var(--panel))" stroke="${c}" stroke-width="2"/>`}
+  return `<svg class="agmap" viewBox="0 0 350 140" role="img" aria-label="Network map: Jarvis in the middle, connected to the Centre, Marketing and Business teams and their agents"><g stroke="var(--line2)" stroke-width="1.5">${L}</g>${D}${N}<circle cx="175" cy="58" r="22" fill="var(--need)"/><path d="M175 44l3.2 8.3 8.3 3.2-8.3 3.2-3.2 8.3-3.2-8.3-8.3-3.2 8.3-3.2z" fill="var(--need-ink)"/></svg>`}
+function agTile(p,small){const s=agState(p),w=qWait(p.id).length,c=`var(${AGT[agTeam(p)].c})`;
+  return `<button class="agi${small?' sm':''}${s.on?' on':''}" style="--tc:${c}" data-act="agOpen" data-id="${p.id}" aria-label="${esc(agName(p))}: ${s.label}${w?', '+w+' waiting':''}"><span class="agx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${agIcon(p)}"/></svg>${w?`<i>${w}</i>`:''}</span><b>${esc(agName(p).replace(/\s*\(.*\)$/,''))}</b><small style="color:${s.col}">${s.label}</small></button>`}
+renderNLAgents=function(){const el=$('v-agents');if(!el)return;const T=agTeams(),l=agents(),w=qWait(),reh=l.filter(p=>agState(p).label==='Rehearsal'||agState(p).label==='By hand').length;
+  const sec=k=>{const a=T[k];if(!a.length)return'';const lead=k==='marketing'&&a[0]?.id==='ag_marketing';
+    return `<section class="agsec"><div class="agsh"><i style="background:var(${AGT[k].c})"></i><h3>${AGT[k].n}</h3><small>${lead?`lead + ${a.length-1} sub-agents`:a.length+' agent'+(a.length>1?'s':'')}</small></div><div class="agig">${a.map((p,i)=>agTile(p,lead&&i>0)).join('')}</div></section>`};
+  el.innerHTML=`<p class="m" style="margin:2px 0 10px">${l.length} agents · ${reh} being trained${w.length?` · <b style="color:var(--needt,var(--need))">${w.length} waiting for you</b>`:''}</p>
+    <div class="card agmapc">${agMap(T)}<div class="aglg"><span>Filled = running</span><span>Ring = planned or paused</span></div></div>
+    ${w.length?`<button class="lnk agt" data-act="nlWait" aria-expanded="${!!S.nlWait}"><span class="grow">${w.length} waiting for you<small>Approve, edit, answer or reject</small></span></button>${S.nlWait?waitList(''):''}`:''}
+    ${sec('centre')}${sec('marketing')}${sec('business')}`}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act=nlWait]');if(!b)return;e.stopImmediatePropagation();e.preventDefault();S.nlWait=!S.nlWait;renderNLAgents()},true);
 /* ---------- background record-keeping is spaced out, and silent in a hidden or out-of-date copy ---------- */
 {const gate=(fn,ms)=>{let last=0,tm=null;return function(){if(S.stale||document.visibilityState!=='visible')return;const n=Date.now(),w=last+ms-n;if(w<=0){last=n;return fn()}if(!tm)tm=setTimeout(()=>{tm=null;if(S.stale||document.visibilityState!=='visible')return;last=Date.now();try{fn()}catch(e){console.warn(e)}},w+50)}};
   scoreSync=gate(scoreSync,20000);trackPlan=gate(trackPlan,20000)}
