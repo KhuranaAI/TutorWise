@@ -48,3 +48,14 @@ owner's approval; agents do not talk to each other.
   possibly the other teachers later. Separate from the Marketing family. Drafts only; learning documents are read only
   on request. Builds on the lesson notes in the teacher portal, the student files in the admin system and the existing
   reading-comprehension work.
+
+## Talking to an agent (from v75)
+Each agent's page in Jarvis has a Talk tab and a message box. What he says there can:
+- answer, approve, reject or edit that agent's waiting items (`queue/<id>`, marked `via: 'agent chat'`);
+- add a standing instruction: `projects/<agent>.instr` = [{t, at}];
+- add a one-off request for the next run: `projects/<agent>.nextAsk` = [{t, at, done?}];
+- pause or resume the agent (`status`).
+The conversation is kept in the `agentchat` collection ({agent, who: me|agent, text, at, ops}).
+
+**Every run of an agent must first read its `instr` and open `nextAsk` items and follow them**, then mark each `nextAsk`
+it handled as `done: true`, saying so in its run summary. The chat never runs the job itself and never sends anything out.

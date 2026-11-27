@@ -650,3 +650,8 @@ open a specific chat yet; the send list uses WhatsApp's share link (the chat is 
   to the old/new look". It acts at once and answers "Done, sir: ...". Longer or odd phrasings reach the model, whose
   prompt now offers `{"op":"screen","go","agent","theme","look"}`; `applyOps` performs it. Light/dark from the old look
   switches to the new look first. Asking by Claude voice through the connector is for later, not built.
+### v75 (BUILD 73) — talk to each agent
+- Agent page gets a Talk tab and a message box (any view). Claude (page `sample`) answers as that agent with its job,
+  stage, last runs, waiting items, instructions and the last 12 messages, and may return ops: answer / approve / reject /
+  edit a waiting item, instruct (standing rule), next (one-off request for the next run), pause / resume. Claims of a
+  change with no op get the usual correction. Standing instructions are listed with Remove. See agents/README.md.

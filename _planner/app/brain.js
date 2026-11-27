@@ -13,7 +13,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.nextSkip=[];
-const BUILD=72;
+const BUILD=73;
 const DH=id=>`<span class="dh" data-drag="${id}" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg></span>`;
 /* his own ranking (dragged in Tasks) decides between two ranked items */
 const ordBoth=(a,b)=>Number.isFinite(a.ord)&&Number.isFinite(b.ord)?a.ord-b.ord:0;
@@ -2058,6 +2058,50 @@ function screenIntent(text){let q=String(text||'').toLowerCase().replace(/[’']
 {const _ip74=intakePrompt;intakePrompt=function(t){return _ip74(t)+`\nScreen op: only when he asks to see or open part of the app, open an agent, or switch light/dark or old/new look, add {"op":"screen","go":"today|week|calendar|agents|life|settings|chat|projects|streaks","agent":"agent name if he named one","theme":"light|dark if asked","look":"new|old if asked"} (leave out fields he did not ask for). The app does it at once; say it in a few words.`}}
 {const _ao74=applyOps;applyOps=async function(ops,src,wasCheck){const l=Array.isArray(ops)?ops:[],sc=l.filter(o=>o&&o.op==='screen'),rest=l.filter(o=>!o||o.op!=='screen');
   const done=[];for(const o of sc.slice(0,2)){try{done.push(...scrGo(o))}catch(e){console.warn(e)}}const a=await _ao74(rest,src,wasCheck);return [...(Array.isArray(a)?a:[]),...done.map(x=>'screen: '+x)]}}
+/* ---------- v75: talk to each agent from its page (answer its questions, standing instructions, next-run requests, pause) ---------- */
+S.achat=[];
+function acSub(){if(S.acSubbed||!db)return;S.acSubbed=true;db.collection('agentchat').onSnapshot(q=>{S.achat=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(a.at).localeCompare(String(b.at)));if(S.view==='agents'&&S.nlAg)renderNLAgents()},e=>console.warn(e))}
+const acOf=a=>S.achat.filter(x=>x.agent===a);
+function acPrompt(p,text){const runs=agRuns(p.id).slice(0,3),w=qWait(p.id),hist=acOf(p.id).slice(-12);
+  return `You are "${agName(p)}", one of Nimish's agents (he is "sir"). You have one job, described below. He is talking to you on your page in his Jarvis app.
+Your job description:\n${String(p.n||'not written yet').slice(0,6000)}
+Status: ${(p.status||'active')==='active'?'active':'paused'}; training stage: ${AGST[Math.max(0,agStage(p)-1)]||'not started'} (stages: by hand, written, rehearsal, live).
+Standing instructions he gave you: ${(p.instr||[]).map((x,i)=>`${i+1}. ${x.t}`).join(' ')||'none'}
+Requests for your next run: ${(p.nextAsk||[]).filter(x=>!x.done).map(x=>x.t).join(' | ')||'none'}
+Your last runs: ${runs.map(r=>`[${agWhen(r.at)}${r.saved?'':', rehearsal, nothing saved'}] ${r.title}${r.found?': '+String(r.found).slice(0,600):''}`).join('\n')||'none yet'}
+Waiting for his answer: ${w.map(x=>`{id:"${x.id}", kind:${x.kind||'item'}, title:"${x.title}"${x.body?`, body:"${String(x.body).slice(0,500)}"`:''}${(x.options||[]).length?`, options:${JSON.stringify(x.options)}`:''}}`).join('\n')||'nothing'}
+Conversation so far:\n${hist.map(x=>(x.who==='me'?'Nimish: ':'You: ')+x.text).join('\n')||'(new conversation)'}
+Nimish now says: ${text}
+Rules: you cannot run your job right now (runs happen on schedule or when a build session runs you), so a "do it now" becomes a request for your next run and you say so. You never send anything to a parent, post anything, or spend money; anything for outside goes to his approval list. You don't talk to other agents. Never say you changed something unless you include the op for it. Keep the reply short and plain (1-3 sentences), call him sir.
+Ops you can use: {"op":"answer","id":"<waiting id>","answer":"<his answer>"} for a waiting question; {"op":"approve","id"} / {"op":"reject","id"} for a waiting draft; {"op":"edit","id","body":"<new text>"} to change a draft; {"op":"instruct","text":"<a rule for all future runs, in his words, tidied>"}; {"op":"next","text":"<a one-off request for the next run>"}; {"op":"pause"}; {"op":"resume"}.
+Return JSON only: {"reply":"...","ops":[...]}`}
+async function acApply(p,ops){const done=[],ids=new Set(qWait(p.id).map(x=>x.id));
+  for(const o of (Array.isArray(ops)?ops:[]).slice(0,6)){try{
+    if(o.op==='answer'&&ids.has(o.id)&&o.answer){await db.doc('queue/'+o.id).update({status:'answered',answer:String(o.answer).slice(0,300),doneAt:stamp(),via:'agent chat'});done.push('answered')}
+    else if(o.op==='approve'&&ids.has(o.id)){await db.doc('queue/'+o.id).update({status:'approved',doneAt:stamp(),via:'agent chat'});done.push('approved')}
+    else if(o.op==='reject'&&ids.has(o.id)){await db.doc('queue/'+o.id).update({status:'rejected',doneAt:stamp(),via:'agent chat'});done.push('rejected')}
+    else if(o.op==='edit'&&ids.has(o.id)&&o.body){await db.doc('queue/'+o.id).update({body:String(o.body).slice(0,4000),edited:stamp()});done.push('draft edited')}
+    else if(o.op==='instruct'&&o.text){const l=[...(p.instr||[]),{t:String(o.text).slice(0,400),at:stamp()}].slice(-30);await db.doc('projects/'+p.id).update({instr:l,up:stamp()});p.instr=l;done.push('instruction saved')}
+    else if(o.op==='next'&&o.text){const l=[...(p.nextAsk||[]).filter(x=>!x.done),{t:String(o.text).slice(0,400),at:stamp()}].slice(-20);await db.doc('projects/'+p.id).update({nextAsk:l,up:stamp()});p.nextAsk=l;done.push('saved for the next run')}
+    else if(o.op==='pause'||o.op==='resume'){const st=o.op==='pause'?'paused':'active';await db.doc('projects/'+p.id).update({status:st,up:stamp()});p.status=st;done.push(o.op==='pause'?'paused':'resumed')}
+  }catch(e){console.warn(e)}}return done}
+async function acSend(p,text){text=String(text||'').trim();if(!text||S.acBusy)return;if(!sample){toast('Talking to agents needs Claude in this page; it isn’t available here.',2600);return}
+  S.acBusy=p.id;const me=db.collection('agentchat').doc();await me.set({agent:p.id,who:'me',text:text.slice(0,2000),at:stamp()}).catch(()=>{});S.nlAgV='talk';renderNLAgents();
+  let reply='',done=[];try{const r=await sample.json(acPrompt(p,text),{modelTier:'default',cache:false});done=await acApply(p,r?.ops);reply=String(r?.reply||'Noted, sir.')}
+  catch(e){reply=e?.code==='not_granted'?'Claude isn’t allowed for this page yet, sir.':'I couldn’t think that through just now. Try again, sir.'}
+  if(!done.length&&/\b(I(?:'|’)ve|I have|I)\s+(?:just\s+)?(saved|answered|approved|rejected|paused|resumed|changed|updated|noted|added)\b/i.test(reply))reply+=' (Nothing was actually changed. Say it again and I’ll do it.)';
+  await db.collection('agentchat').doc().set({agent:p.id,who:'agent',text:reply.slice(0,2000),at:stamp(),ops:done}).catch(()=>{});S.acBusy='';renderNLAgents()}
+function acView(p){const h=acOf(p.id).slice(-30);
+  return `<div class="acth">${h.length?h.map(x=>`<div class="acm ${x.who==='me'?'me':'ag'}"><div>${esc(x.text)}</div>${(x.ops||[]).length?`<small>${esc(x.ops.join(' · '))}</small>`:''}</div>`).join(''):`<div class="m">Ask ${esc(agName(p))} anything about its job, answer what it’s waiting on, or give it an instruction for its next runs.</div>`}${S.acBusy===p.id?'<div class="acm ag"><div class="m">Thinking…</div></div>':''}</div>
+    ${(p.instr||[]).length?`<div class="m" style="margin:12px 0 6px">Standing instructions</div><div class="card">${p.instr.map((x,i)=>`<div class="item" style="display:flex;gap:8px;align-items:flex-start"><div class="grow" style="font-size:14px">${esc(x.t)}</div><button class="sm ghost" data-act="acDel" data-i="${i}" aria-label="Remove instruction">Remove</button></div>`).join('')}</div>`:''}
+    ${(p.nextAsk||[]).filter(x=>!x.done).length?`<div class="m" style="margin:12px 0 6px">For the next run</div><div class="card">${p.nextAsk.filter(x=>!x.done).map(x=>`<div class="item" style="font-size:14px">${esc(x.t)}</div>`).join('')}</div>`:''}`}
+{const _ap75=agPage;agPage=function(p){acSub();let h=_ap75(p);const v=S.nlAgV||'output';
+  h=h.replace('<div class="agvt" role="group" aria-label="View">',`<div class="agvt four" role="group" aria-label="View"><button class="${v==='talk'?'on':''}" data-act="nlAgV" data-v="talk" aria-pressed="${v==='talk'}">Talk</button>`);
+  if(v==='talk'){const av=acView(p);h=h.replace(/<div class="agpb">[\s\S]*?<\/div>\s*<div class="agft">/,()=>`<div class="agpb">${av}</div>\n    <div class="agft">`)}
+  const box=`<form class="acin" data-ag="${p.id}"><input id="acText" placeholder="Talk to ${esc(agName(p))}…" autocomplete="off" aria-label="Message ${esc(agName(p))}"${S.acBusy?' disabled':''}><button class="sm" type="submit" aria-label="Send"${S.acBusy?' disabled':''}>Send</button></form>`;
+  return h.replace('<div class="agft">',()=>box+'<div class="agft">')}}
+document.addEventListener('submit',e=>{const f=e.target.closest('.acin');if(!f)return;e.preventDefault();const p=S.projects.find(x=>x.id===f.dataset.ag);const i=$('acText');if(p&&i&&i.value.trim()){const t=i.value;i.value='';acSend(p,t)}},true);
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-act=acDel]');if(!b)return;e.stopImmediatePropagation();e.preventDefault();const p=S.projects.find(x=>x.id===S.nlAg);if(!p)return;const l=(p.instr||[]).filter((x,i)=>i!==+b.dataset.i);await db.doc('projects/'+p.id).update({instr:l,up:stamp()}).catch(()=>{});p.instr=l;renderNLAgents();toast('Instruction removed.',1400)},true);
 /* ---------- background record-keeping is spaced out, and silent in a hidden or out-of-date copy ---------- */
 {const gate=(fn,ms)=>{let last=0,tm=null;return function(){if(S.stale||document.visibilityState!=='visible')return;const n=Date.now(),w=last+ms-n;if(w<=0){last=n;return fn()}if(!tm)tm=setTimeout(()=>{tm=null;if(S.stale||document.visibilityState!=='visible')return;last=Date.now();try{fn()}catch(e){console.warn(e)}},w+50)}};
   scoreSync=gate(scoreSync,20000);trackPlan=gate(trackPlan,20000)}
