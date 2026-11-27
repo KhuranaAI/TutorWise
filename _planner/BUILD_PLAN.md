@@ -564,3 +564,28 @@ v65 had removed things the older list said to remove. v66 is v64 plus every v65 
   (`tasks/tag_*`). Only the first stage of the first agent is on a day.
 - Order from here: B1 Centre Admin agent stage 1 (month end by hand), then A1 approval queue, A2 agents screen, A3's
   missing pieces, A5 phone calendar (after asking what got in the way).
+
+## Nov 27 final list: the roadmap from here (replaces every earlier list)
+Rules: not a rebuild; every change is an addition; nothing on screen is removed, moved or renamed until its replacement
+has had a week of use and the owner says so; one thing at a time; new things show up in what Jarvis says, not as new
+buttons; explain plainly and briefly. A hands-free voice conversation inside the HQ page is not possible: do not try.
+Agents are scheduled runs with one job, a written job description and access to Jarvis's records; they do not talk to
+each other; everything they produce waits in one approval queue; nothing reaches a parent or the public without his
+approval. Four stages each (by hand, written down, rehearsal, live); he sets up each scheduled run himself.
+
+Built (v65 to v66): time log, evening review card, work-life balance, where my time went, tucking away, agent projects.
+
+Do now: (1) month end by hand, centre admin agent stage 1, ending in a send list (one family at a time, message
+pre-written, a button that opens WhatsApp, a Given tap that marks the statement given); (2) the connector plan
+(`_planner/CONNECTOR_PLAN.md`, plan only).
+Then, one at a time: (3) the connector if approved; (4) HQ's Jarvis thinking in steps beside the current way, with a
+switch back and a comparison on real messages; (5) approval queue and agents screen; (6) the evening review's missing
+pieces (queue step, 9 pm notification; never right after teaching); (7) centre admin agent stages 2 to 4, then the
+weekly job; (8) marketing agent; (9) front desk agent; (10) business advisor agent; (11) balance coach agent.
+Between them: background jobs off the page, registration clean-up, skills, a setup-checklist project for the new
+service, notes area, phone calendar (ask first), hands-free on the computer as an option, Fitbit, yearly wrapped.
+Parked: Jarvis as its own app, a rented server, WhatsApp automation, a recorder. Undecided: opening to the text box
+in lesson hours; the queue as its own screen or only in the evening review.
+
+Month end finding (Nov 27): the admin records hold a parent contact for only a few students, so WhatsApp links cannot
+open a specific chat yet; the send list uses WhatsApp's share link (the chat is picked by hand) until numbers are added.
