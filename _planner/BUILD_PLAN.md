@@ -644,3 +644,9 @@ open a specific chat yet; the send list uses WhatsApp's share link (the chat is 
   stage bar (done in team colour, current in amber), three views: Output (last run, "Rehearsal · nothing saved" tag, its
   waiting items with the same Approve/Edit/Reject/Copy/answer buttons), Runs (history), How it works (job description,
   "Works with" chips read from the job text). Footer: next run (`p.nextRun`) and Pause/Resume (writes `projects/<id>.status`).
+### v74 (BUILD 72) — step 5: Jarvis controls the screen
+- `screenIntent(text)` matches short commands on the device before any model call: "show my agents", "open Makeup
+  Balance" (any agent name), "go to the calendar / week / life / settings / chat", "switch to light/dark mode", "switch
+  to the old/new look". It acts at once and answers "Done, sir: ...". Longer or odd phrasings reach the model, whose
+  prompt now offers `{"op":"screen","go","agent","theme","look"}`; `applyOps` performs it. Light/dark from the old look
+  switches to the new look first. Asking by Claude voice through the connector is for later, not built.

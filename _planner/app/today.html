@@ -2386,7 +2386,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.nextSkip=[];
-const BUILD=71;
+const BUILD=72;
 const DH=id=>`<span class="dh" data-drag="${id}" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg></span>`;
 /* his own ranking (dragged in Tasks) decides between two ranked items */
 const ordBoth=(a,b)=>Number.isFinite(a.ord)&&Number.isFinite(b.ord)?a.ord-b.ord:0;
@@ -4407,6 +4407,30 @@ document.addEventListener('click',async e=>{const nb=e.target.closest('#nav butt
   const H={nlAgBack:()=>{S.nlAg='';S.agSel='';renderNLAgents();$('hTitle').textContent='Agents';window.scrollTo(0,0)},nlAgV:()=>{S.nlAgV=b.dataset.v;renderNLAgents()},
     nlAgPause:async()=>{const p=S.projects.find(x=>x.id===b.dataset.id);if(!p)return;const nx=(p.status||'active')==='active'?'paused':'active';await db.doc('projects/'+p.id).update({status:nx,up:stamp()});p.status=nx;renderNLAgents();toast(nx==='paused'?'Paused. It won’t run until you resume it.':'Resumed.',1800)}};
   if(H[a]){e.stopImmediatePropagation();e.preventDefault();try{await H[a]()}catch(er){console.warn(er);toast('That didn’t work. Try again.',2000)}}},true);
+/* ---------- new look step 5 (v74): Jarvis controls the screen ("show my agents", "open Makeup Balance", "switch to light mode") ---------- */
+function scrGo(o){const out=[];const T={today:'today',week:'week',calendar:'cal',cal:'cal',agents:'agents',life:'life',settings:'more',more:'more',chat:'chat',projects:'all',streaks:'streaks'};
+  if(o.look==='new'||o.look==='old'){LOOK.set('look',o.look);out.push(o.look==='new'?'switched to the new look':'switched to the old look')}
+  if(o.theme==='light'||o.theme==='dark'){if(!isNL())LOOK.set('look','new');LOOK.set('theme',o.theme);out.push(o.theme+' mode on')}
+  if(o.agent){const q=String(o.agent).toLowerCase().replace(/\bagent\b/g,'').trim(),l=agents(),p=l.find(x=>agName(x).toLowerCase()===q)||l.find(x=>q.length>=4&&agName(x).toLowerCase().includes(q))||l.find(x=>q.includes(agName(x).toLowerCase()));
+    if(p){S.agSel=p.id;agentsSheet();out.push('opened '+agName(p))}}
+  else if(o.go&&T[o.go]){const v=T[o.go];$('sheet').hidden=true;if(v==='agents'){S.agSel='';S.nlAg='';if(isNL())show('agents');else agentsSheet()}else if(v==='life'&&!isNL())show('streaks');else show(v);out.push('opened '+o.go)}
+  return out}
+function screenIntent(text){let q=String(text||'').toLowerCase().replace(/[’']/g,'').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
+  q=q.replace(/^(?:(?:hey|ok|okay|jarvis|please|can you|could you|would you)\s+)+/,'').replace(/\s+(?:please|now|for me)$/,'').trim();if(!q||q.split(' ').length>8)return null;let m;
+  if((m=q.match(/^(?:(?:switch|change|go|turn|put)\s+)?(?:(?:it|the app|the screen|back)\s+)?(?:(?:to|into|on)\s+)?(?:the\s+)?(old|new)\s+(?:look|design|layout)$/)))return{look:m[1]};
+  if((m=q.match(/^(?:(?:switch|change|go|turn|put|make)\s+)?(?:(?:it|the app|the screen|everything)\s+)?(?:(?:to|into|on)\s+)?(light|dark)\s*(?:mode|theme)?(?:\s+on)?$/)))return{theme:m[1]};
+  const vb=/^(?:show me|show|open up|open|go to|take me to|bring up|switch to|pull up|see)\s+(?:my\s+|the\s+)?/;if(!vb.test(q))return null;const rest=q.replace(vb,'').replace(/\s+(?:tab|page|view|screen)$/,'').trim();
+  if((m=rest.match(/^(today|week|calendar|agents|life|settings|chat|projects|streaks)$/)))return{go:m[1]};
+  const an=rest.replace(/\s+agent$/,'').trim();if(an.length>=4){const l=agents().map(p=>agName(p).toLowerCase());if(l.some(n=>n===an||n.includes(an)||an.includes(n)))return{agent:an}}
+  return null}
+{const _r74=respond;respond=async function(text,byVoice){let it=null;try{it=V.state!=='thinking'&&S.loaded?screenIntent(text):null}catch(e){console.warn(e)}
+  if(!it)return _r74(text,byVoice);text=String(text).trim();V.hint='';V.heard=text;V.handsFree=!!byVoice;logEv('said',text);
+  const done=scrGo(it);if(!done.length)return _r74(text,byVoice);
+  const ans=`Done, ${sir()}: ${done.join(', ')}.`;db?.collection('dumps').doc().set({text,at:stamp(),reply:ans,ops:['screen: '+done.join(', ')]}).catch(()=>{});
+  setState('idle');await say(ans,true)}}
+{const _ip74=intakePrompt;intakePrompt=function(t){return _ip74(t)+`\nScreen op: only when he asks to see or open part of the app, open an agent, or switch light/dark or old/new look, add {"op":"screen","go":"today|week|calendar|agents|life|settings|chat|projects|streaks","agent":"agent name if he named one","theme":"light|dark if asked","look":"new|old if asked"} (leave out fields he did not ask for). The app does it at once; say it in a few words.`}}
+{const _ao74=applyOps;applyOps=async function(ops,src,wasCheck){const l=Array.isArray(ops)?ops:[],sc=l.filter(o=>o&&o.op==='screen'),rest=l.filter(o=>!o||o.op!=='screen');
+  const done=[];for(const o of sc.slice(0,2)){try{done.push(...scrGo(o))}catch(e){console.warn(e)}}const a=await _ao74(rest,src,wasCheck);return [...(Array.isArray(a)?a:[]),...done.map(x=>'screen: '+x)]}}
 /* ---------- background record-keeping is spaced out, and silent in a hidden or out-of-date copy ---------- */
 {const gate=(fn,ms)=>{let last=0,tm=null;return function(){if(S.stale||document.visibilityState!=='visible')return;const n=Date.now(),w=last+ms-n;if(w<=0){last=n;return fn()}if(!tm)tm=setTimeout(()=>{tm=null;if(S.stale||document.visibilityState!=='visible')return;last=Date.now();try{fn()}catch(e){console.warn(e)}},w+50)}};
   scoreSync=gate(scoreSync,20000);trackPlan=gate(trackPlan,20000)}
