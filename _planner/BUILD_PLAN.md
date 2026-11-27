@@ -541,3 +541,26 @@ Wrapped; item 3 (phone calendar) waits on his answer about what bothered him; it
   project and person, a table view, tooltips; `wrapSheet` is the month so far. Streaks sit below.
 - Tucking away (`agent/use`): a tab not opened or a Today card not tapped for 14 days hides itself; More lists what is
   tucked away with "Bring back". Counting starts the day this build first runs.
+
+## Nov 27: new working rules, and v65 brought in line with them (v66, BUILD 64)
+Rules from the Nov 27 build list, which govern everything from here:
+- Not a rebuild. Every change is an addition. Nothing on screen is removed, moved or renamed until its replacement has
+  had a week of real use and he says so. One thing at a time; he uses it for a few days before the next starts.
+- Agents are separate projects, not part of the app build (`_planner/agents/`): four stages each (by hand, written
+  down, rehearsal, live). He sets up each scheduled run himself. He only ever talks to Jarvis.
+
+v65 had removed things the older list said to remove. v66 is v64 plus every v65 feature as an addition:
+- Back on Today, exactly as before: the questions bar, the "How did today go?" card, the Yesterday card, "Jarvis tidied
+  up", the 8:30 pm streak question, the catch-up line, "Close the day", late items under Due soon. The nightly plan
+  pops up at the planning time as it did; `nightly()` = `nightPlan()` + the sheet.
+- The evening review is a card beside them (from the planning time; next morning "Yesterday's review"), under More,
+  or "start my review". It does not open by itself. Still to add when A3's turn comes: the approval-queue step and
+  the 9 pm phone notification. The old cards come off Today only after a week of use and his word.
+- The tab is "Streaks" again; "Where my time went" is a section below the streaks. The time log, balance setting,
+  month-so-far Wrapped and tucking-away stay as shipped (Part D of the list is otherwise parked until the agents
+  are steady).
+- `noq:true` on a task keeps it out of the automatic questions (used for agent stages).
+- Jarvis data: five agent projects (`projects/ag_*`, `agent:true`, side lists), four stage tasks each
+  (`tasks/tag_*`). Only the first stage of the first agent is on a day.
+- Order from here: B1 Centre Admin agent stage 1 (month end by hand), then A1 approval queue, A2 agents screen, A3's
+  missing pieces, A5 phone calendar (after asking what got in the way).
