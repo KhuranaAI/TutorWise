@@ -13,7 +13,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.nextSkip=[];
-const BUILD=66;
+const BUILD=67;
 const DH=id=>`<span class="dh" data-drag="${id}" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg></span>`;
 /* his own ranking (dragged in Tasks) decides between two ranked items */
 const ordBoth=(a,b)=>Number.isFinite(a.ord)&&Number.isFinite(b.ord)?a.ord-b.ord:0;
@@ -475,7 +475,7 @@ function brainToday(){FM.clear();const top=$('brainBox'),el=$('brainBox2');if(!t
   if(S.stale)a.push(`<div class="card warnc" style="margin-top:12px"><div class="t" style="font-size:15px">This copy of Jarvis is out of date</div><div class="m">A newer version is open somewhere else. Reload so the two don’t undo each other’s changes.</div><div class="row" style="margin-top:8px"><button class="sm pri" data-act="reload">Reload</button></div></div>`);
   else if(S.ghost&&Date.now()-S.ghost<15*6e4)a.push(`<div class="card warnc" style="margin-top:12px"><div class="t" style="font-size:15px">An old copy of Jarvis is open somewhere</div><div class="m">It keeps saving over your day, so this screen can look out of date. Close Jarvis on your other devices (and quit the installed app on your computer), then open it again.</div></div>`);
   else if(S.hot&&Date.now()<S.hot)a.push(`<div class="card warnc" style="margin-top:12px"><div class="t" style="font-size:15px">Catching up</div><div class="m">A lot just came in at once, so I’m holding my own re-planning for a couple of minutes. Everything you do still saves.</div></div>`);
-  {const rc=rvCard();if(rc)a.push(rc);const at=agTodayCard();if(at)a.push(at)}
+  {const rc=rvCard();if(rc)a.push(rc);const at=agTodayCard();if(at)a.push(at);const ln=lnTodayCard();if(ln)a.push(ln)}
   if(nowHM()>=planAt()&&!dd.night&&!offDay(addD(td,1)))a.push(`<div class="card" style="margin-top:12px"><div class="row" style="flex-wrap:nowrap"><div class="grow"><div class="t" style="font-size:15px">Plan tomorrow</div><div class="m">Two minutes: tomorrow’s timeline${notesOf('inbox').length?' and your inbox':''}.</div></div><button class="sm pri" data-act="nightNow">Start</button></div></div>`);
   else if(dd.night&&nowHM()>=planAt())a.push(`<div class="row" style="margin-top:12px"><button class="sm" data-act="nightShow">Tomorrow’s plan</button>${notesOf('inbox').length?`<button class="sm" data-act="notes" data-k="inbox">Inbox · ${notesOf('inbox').length}</button>`:''}</div>`);
   a.push(`<div data-feat="focus">${focusLine()}</div>`);{const hb=S.hab.get(td)||{},left=dailyHabs().filter(h=>!hb[h.k]);if(nowHM()>='20:30'&&left.length&&dd.streakAsk!==td)a.unshift(`<div class="card" style="margin-top:12px"><div class="t" style="font-size:15px">Which streaks did you hit today?</div><div class="chips" style="flex-wrap:wrap;margin-top:8px">${left.map(h=>`<button data-act="habDone" data-k="${h.k}">${esc(h.name)}</button>`).join('')}<button class="ghost" data-act="streakSkip">That’s all</button></div></div>`)}top.innerHTML=a.join('');
@@ -1895,6 +1895,32 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
     qiEdit:()=>{S.qEdit=id;agRedraw()},qiEditX:()=>{S.qEdit='';agRedraw()},
     qiSave:async()=>{const v=($('qiText')?.value||'');S.qEdit='';await db.doc('queue/'+id).update({body:v,edited:stamp()});toast('Saved. Approve it when it’s right.',1800)},
     qiCopy:async()=>{const x=S.queue.find(y=>y.id===id);try{await navigator.clipboard.writeText(x?.body||'');toast('Copied',1200)}catch(er){toast('Couldn’t copy.',1600)}}};
+  if(H[a]){e.stopImmediatePropagation();e.preventDefault();try{await H[a]()}catch(er){console.warn(er);toast('That didn’t work. Try again.',2000)}}},true);
+/* ---------- lesson notes: each morning, attended students with no note in the teacher portal ---------- */
+const TP='TeacherPortal';
+async function tpCall(tool,input){const r=await mcp.callTool(TP,tool,input||{},{cache:false});let j=r?.payload??r?.structuredContent;if(!j){const tx=(r?.content||[]).find(c=>c.type==='text')?.text;try{j=JSON.parse(tx||'{}')}catch(e){j={error:tx}}}if(r?.isError||j?.error)throw new Error(plainErr(j?.error||'refused'));return j}
+function lnPrevDay(td){for(let k=1;k<=4;k++){const d=addD(td,-k);if(dowOf(d)>=1&&dowOf(d)<=5)return d}return''}
+async function lnCheck(force){const td=today();if(!mcp||!S.settings.schedConn)return;if(!force&&(S.lnAt===td||nowHM()<'05:00'))return;
+  const att=S.tasks.get('tatt'+td.replace(/-/g,''));if(!force&&att&&att.s!=='done')return; /* wait until yesterday's attendance is logged */
+  const y=lnPrevDay(td);if(!y)return;S.lnAt=td;
+  try{const r=await tpCall('my_day',{date:y});S.lnDue={d:y,list:(r.schedule||[]).filter(x=>x.attendance==='attended'&&(x.needs_log||!x.logged)).map(x=>({student:x.student,grade:x.grade||'',time:x.time||'',last:x.last_lesson?.covered||''}))};S.lnErr=''}
+  catch(e){S.lnDue=null;S.lnErr=e?.code||String(e?.message||e)}
+  if(typeof renderToday==='function'&&S.view==='today')try{renderToday()}catch(e){}}
+{const _ac8=attCheck;attCheck=async function(){await _ac8();try{await lnCheck()}catch(e){console.warn(e)}}}
+function lnTodayCard(){const l=S.lnDue?.list||[];if(!l.length)return'';const f=s=>esc(String(s).split(' ')[0]);
+  return `<button class="lnk agt" data-act="lnOpen"><span class="grow">Lesson notes to write: ${l.length} from ${esc(dayName(S.lnDue.d))}<small>${l.map(x=>f(x.student)).join(' · ')} attended but have no note yet</small></span></button>`}
+function lnSheet(){const l=S.lnDue?.list||[];if(!l.length){$('sheet').hidden=true;return}
+  sheet(`<h2>Lesson notes · ${esc(dayName(S.lnDue.d))}</h2><p class="muted" style="margin:0 0 10px">What did each one work on, sir? Saving writes it as that lesson’s note in the teacher portal.</p>
+  ${l.map((x,i)=>`<div class="qi" style="margin-bottom:10px"><b>${esc(x.student)}</b>${x.grade?` <small class="muted">Grade ${esc(x.grade)}</small>`:''}${x.last?`<div class="muted" style="font-size:13px;margin:4px 0">Last time: ${esc(x.last)}</div>`:''}
+    <textarea id="lnC${i}" rows="3" placeholder="What ${esc(String(x.student).split(' ')[0])} worked on" style="width:100%;box-sizing:border-box;margin-top:6px"></textarea>
+    <input id="lnH${i}" placeholder="Homework set (optional)" style="width:100%;box-sizing:border-box;margin-top:6px">
+    <div class="row" style="margin-top:8px"><button class="sm" data-act="lnSave" data-i="${i}">Save note</button></div></div>`).join('')}
+  <div class="row"><button class="sm ghost" data-act="close">Close</button></div>`)}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;
+  const H={lnOpen:()=>lnSheet(),
+    lnSave:async()=>{const i=+b.dataset.i,x=S.lnDue?.list?.[i];if(!x)return;const c=($('lnC'+i)?.value||'').trim(),h=($('lnH'+i)?.value||'').trim();if(!c){toast('Say what '+String(x.student).split(' ')[0]+' worked on first.',1800);return}
+      b.disabled=true;try{await tpCall('log_lesson',{student:x.student,date:S.lnDue.d,covered:c,...(h?{homework:h}:{})});S.lnDue.list.splice(i,1);toast('Saved '+String(x.student).split(' ')[0]+'’s note.',1600);lnSheet();if(S.view==='today')try{renderToday()}catch(er){}}
+      catch(er){b.disabled=false;toast(er?.code==='not_granted'?'The teacher portal isn’t allowed for this page yet.':'Couldn’t save that note. Try again.',2400)}}};
   if(H[a]){e.stopImmediatePropagation();e.preventDefault();try{await H[a]()}catch(er){console.warn(er);toast('That didn’t work. Try again.',2000)}}},true);
 /* ---------- background record-keeping is spaced out, and silent in a hidden or out-of-date copy ---------- */
 {const gate=(fn,ms)=>{let last=0,tm=null;return function(){if(S.stale||document.visibilityState!=='visible')return;const n=Date.now(),w=last+ms-n;if(w<=0){last=n;return fn()}if(!tm)tm=setTimeout(()=>{tm=null;if(S.stale||document.visibilityState!=='visible')return;last=Date.now();try{fn()}catch(e){console.warn(e)}},w+50)}};

@@ -602,3 +602,13 @@ open a specific chat yet; the send list uses WhatsApp's share link (the chat is 
 
 ## v68 (BUILD 66) — calendar panel width
 - Desktop calendar: the time column on every timeline row is pinned to 66px, so "Your pick" cards and task rows wrap words normally instead of one word per line. Addition only (CSS).
+
+## v69 (BUILD 67) — lesson notes check, and the real cause of squeezed rows
+- Root cause found: the v65 "Where my time went" meters reused the class `.tm` (a 4-column grid), which hijacked every time
+  cell in the app (Today docket, calendar timeline). Scoped to `.tml>.tm`. The v68 width rule stays as a harmless guard.
+- Lesson notes (addition): each morning, once yesterday's attendance is logged, the page calls TeacherPortal `my_day` for the
+  previous weekday. Attended students with no note show as a Today card, "Lesson notes to write". The sheet has one box per
+  student (what they worked on, optional homework) and Save calls `log_lesson` for that student and date. Nothing is written
+  until he types it and taps Save. Capability: TeacherPortal [my_day, log_lesson] added to the mcp manifest.
+- App-updates sweep (notes kind `app`): 22 of 25 already built; panel width (v68) and lesson notes (v69) built now; the colour
+  and visual redesign is deliberately not built: it is its own later project, designed first in Claude Design.
