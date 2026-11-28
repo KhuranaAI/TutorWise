@@ -680,3 +680,10 @@ open a specific chat yet; the send list uses WhatsApp's share link (the chat is 
   Tag sits by the time on desktop and under the title on phones. Drag, tap menu, undo and the tap guard are unchanged.
 - `#nlWk` "This week so far": from the time log; phone = one stacked bar with hours and the balance mode; desktop = bars
   against the balance targets, at the top of the right column. Everything else on Today stays below.
+### v79 (BUILD 77) — agent page: Output and Runs
+- Two views. Output: "Questions for you" (the agent's waiting items with their buttons, plus a box to answer in his own
+  words, saved as `answered` with `via:'typed'`), then each run as a card, newest first (found, would change / changed,
+  rehearsal / saved / failed tag). Runs: when, rehearsal or live, done / error / running, one-line result.
+- Job (job description, Run now setup) and Talk (agent chat) are kept behind small header links, not removed.
+- Each active agent now also has its own Claude chat session that owns its job files and dry runs; they were given the
+  agentruns / queue record format and their open questions.

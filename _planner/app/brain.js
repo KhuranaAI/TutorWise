@@ -13,7 +13,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.nextSkip=[];
-const BUILD=76;
+const BUILD=77;
 const DH=id=>`<span class="dh" data-drag="${id}" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg></span>`;
 /* his own ranking (dragged in Tasks) decides between two ranked items */
 const ordBoth=(a,b)=>Number.isFinite(a.ord)&&Number.isFinite(b.ord)?a.ord-b.ord:0;
@@ -2242,6 +2242,26 @@ function nlToday(){const vt=$('v-today');if(!vt)return;let h=$('nlHero'),w=$('nl
 {const _da78=deskApply;deskApply=function(){_da78.apply(this,arguments);try{nlToday()}catch(e){}}}
 {const _ar78=agRedraw;agRedraw=function(){_ar78();try{if(S.view==='today'&&isNL())nlToday()}catch(e){}}}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act=nlWaitGo]');if(!b)return;e.stopImmediatePropagation();e.preventDefault();if(!qWait().length&&qOpen().length){typeof qSheet==='function'?qSheet():show('more');return}S.nlAg='';S.agSel='';S.nlWait=true;show('agents')},true);
+/* ---------- v79: agent page = Output (questions on top, then output history) and Runs; Job and Talk behind header links ---------- */
+function agOutHist(p){const runs=agRuns(p.id).filter(r=>r.status!=='running');if(!runs.length)return'<div class="card"><div class="m">No output yet. Press Run now, or it will show here after its next run.</div></div>';
+  return runs.slice(0,12).map(r=>`<div class="card agout"><div class="agoh"><span class="m">${esc(agWhen(r.at))}${r.kind?' · '+esc(r.kind):''}</span>${r.status==='failed'?'<span class="agrh bad">Failed</span>':r.saved?'<span class="agrh ok">Saved</span>':'<span class="agrh">Rehearsal · nothing saved</span>'}</div>
+    <div class="agot">${esc(r.title||'')}</div>${r.found?`<div class="m" style="white-space:pre-wrap;margin-top:6px">${esc(r.found)}</div>`:''}
+    ${(r.changes||[]).length?`<div class="m" style="margin-top:8px"><b>${r.saved?'Changed':'Would change'}:</b></div><ul class="agch">${r.changes.map(c=>`<li>${esc(c)}</li>`).join('')}</ul>`:''}</div>`).join('')}
+function agQs(p){const w=qWait(p.id);if(!w.length)return'';
+  return `<div class="agwh"><h3>Questions for you</h3><small>${w.length}</small></div>${w.map(x=>`<div class="agq">${qItem(x)}${x.kind!=='draft'?`<form class="qans" data-id="${x.id}"><input placeholder="Or answer in your own words" aria-label="Your answer"><button class="sm" type="submit">Save</button></form>`:''}</div>`).join('')}`}
+function agRunList(p){const runs=agRuns(p.id);if(!runs.length)return'<div class="card"><div class="m">No runs yet.</div></div>';
+  return `<div class="card">${runs.slice(0,30).map(r=>{const st=r.status==='running'?['run','Running']:r.status==='failed'?['bad','Error']:['ok','Done'];
+    return `<div class="item agrl"><span class="agrd ${st[0]}" aria-hidden="true"></span><div class="grow"><div class="m">${esc(agWhen(r.at))} · ${esc(r.kind==='live'?'live':'rehearsal')} · ${st[1]}</div><div class="t" style="font-size:15px">${esc(short(r.status==='failed'?(r.found||r.title||'Failed'):(r.title||'')))}</div></div></div>`}).join('')}</div>`}
+{const _ap79=agPage;agPage=function(p){let v=S.nlAgV||'output';if(!['output','runs','talk','job'].includes(v))v='output';S.nlAgV=v;let h=_ap79(p);
+  const tab=(k,l)=>`<button class="${v===k?'on':''}" data-act="nlAgV" data-v="${k}" aria-pressed="${v===k}">${l}</button>`;
+  h=h.replace(/<div class="agvt[^"]*" role="group" aria-label="View">[\s\S]*?<\/div>/,()=>`<div class="agvt two" role="group" aria-label="View">${tab('output','Output')}${tab('runs','Runs')}</div>`);
+  h=h.replace(/<div class="agsbar"/,(m)=>`<div class="aglinks"><button class="${v==='job'?'on':''}" data-act="nlAgV" data-v="job">Job</button><button class="${v==='talk'?'on':''}" data-act="nlAgV" data-v="talk">Talk</button></div>`+m);
+  if(v!=='talk')h=h.replace(/<form class="acin" data-ag[\s\S]*?<\/form>/,'');
+  if(v==='output'||v==='runs'){const body=v==='output'?agQs(p)+`<div class="agwh"><h3>Output</h3><small>newest first</small></div>`+agOutHist(p):agRunList(p);
+    h=h.replace(/<div class="agpb">[\s\S]*?<\/div>\s*(<form class="acin"|<div class="agft">)/,(m,g)=>`<div class="agpb">${body}</div>\n    ${g}`)}
+  return h}}
+document.addEventListener('submit',async e=>{const f=e.target.closest('.qans');if(!f)return;e.preventDefault();e.stopImmediatePropagation();const v=(f.querySelector('input')?.value||'').trim();if(!v)return;
+  try{await db.doc('queue/'+f.dataset.id).update({status:'answered',answer:v.slice(0,500),doneAt:stamp(),via:'typed'});toast('Saved. Its next run will use your answer.',1800)}catch(er){toast('Couldn’t save that. Try again.',2000)}},true);
 /* ---------- background record-keeping is spaced out, and silent in a hidden or out-of-date copy ---------- */
 {const gate=(fn,ms)=>{let last=0,tm=null;return function(){if(S.stale||document.visibilityState!=='visible')return;const n=Date.now(),w=last+ms-n;if(w<=0){last=n;return fn()}if(!tm)tm=setTimeout(()=>{tm=null;if(S.stale||document.visibilityState!=='visible')return;last=Date.now();try{fn()}catch(e){console.warn(e)}},w+50)}};
   scoreSync=gate(scoreSync,20000);trackPlan=gate(trackPlan,20000)}
