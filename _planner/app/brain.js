@@ -13,7 +13,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.nextSkip=[];
-const BUILD=75;
+const BUILD=76;
 const DH=id=>`<span class="dh" data-drag="${id}" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg></span>`;
 /* his own ranking (dragged in Tasks) decides between two ranked items */
 const ordBoth=(a,b)=>Number.isFinite(a.ord)&&Number.isFinite(b.ord)?a.ord-b.ord:0;
@@ -2199,6 +2199,49 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
   const H={naOpen:()=>{S.naD=null;S.naF=null;naSheet()},naDraft:naDraft,naCreate:naCreate,
     rnCopy:async()=>{const p=S.projects.find(x=>x.id===b.dataset.id);if(!p)return;try{await navigator.clipboard.writeText(runText(p));toast('Copied. Paste it into a new scheduled task.',2000)}catch(er){sheet(`<h3 style="margin:0">Run-now task text</h3><p class="m">Select all and copy.</p><textarea rows="18" style="width:100%">${esc(runText(p))}</textarea><div class="row"><button class="sm ghost" data-act="close">Close</button></div>`)}}};
   if(H[a]){e.stopImmediatePropagation();e.preventDefault();try{await H[a]()}catch(er){console.warn(er);toast('That didn’t work. Try again.',2000)}}},true);
+/* ---------- v78: new-look Today (score ring, Next up, Waiting strip, coloured docket tags, This week card); old look untouched ---------- */
+const NLCAT={centre:['Centre','--centre'],growth:['Growth','--growth'],health:['Health','--health'],people:['People','--people'],life:['Life','--dim']};
+function nlCat(t){if(!t)return'life';const a=String(t.a||'').toLowerCase(),c=String(t.cat||'').toLowerCase(),x=T(t);
+  if(a==='growth'||/\b(aba|rba|lead|leads|marketing|flyer|seo|ads?|instagram|tiktok|content|vlog)\b/i.test(x))return'growth';
+  if(a==='health'||c==='health'||/\b(workout|gym|run|doctor|dentist|sleep|walk)\b/i.test(x))return'health';
+  if(['centre','students','staff','materials','finance','tutorwise'].includes(a)||(c==='work'&&!['planner','tech','reno','home','car'].includes(a)))return'centre';
+  if(c==='people'||['party','brother','judah','anissa','family','friends'].includes(a))return'people';
+  return'life'}
+const nlTagTxt=(k,t)=>k==='growth'&&/\b(aba|rba)\b/i.test(T(t||{}))?'ABA':NLCAT[k][0];
+function nlHero(){const sc=S.loaded?scoreOf(today()):null,te=teachOf(),fin=nowHM()>=(te?.e||'20:00'),s=sc?sc.s:0,C=2*Math.PI*30,arc=Math.max(0,Math.min(100,s))/100*C;
+  const lv=sc?(fin?scoreLevel(s)[0]:'so far'):'no plan yet';
+  const ring=`<div class="nlring" aria-label="Today’s score ${sc?s:'not started'}"><svg viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="30" fill="none" stroke="var(--line)" stroke-width="8"/><circle cx="38" cy="38" r="30" fill="none" stroke="var(--need)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${arc.toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 38 38)"/></svg><span><b class="num">${sc?s:'–'}</b><small>${esc(lv)}</small></span></div>`;
+  const op=openPicks(),cur=op[0],t=cur?.t,tl=t?timeline(today()).find(x=>x.id===t.id):null,len=t?(tl?tl.e-tl.s:minOf(t.est)):0;
+  const bef=te&&!fin&&nowHM()<te.s?` · before teaching at ${t12(te.s)}`:'';
+  const nx=t?`<button class="nlnx" data-act="row" data-id="${t.id}"><span class="nlk">Next up${tl?' · '+esc(t12(String(Math.floor(tl.s/60)).padStart(2,'0')+':'+String(tl.s%60).padStart(2,'0'))):''}</span><b>${esc(T(t))}</b><small>${len?'About '+esc(durS(len)):''}${bef}</small></button>`
+    :`<div class="nlnx"><span class="nlk">Next up</span><b>${S.loaded?(op.length?'':'Nothing left open'):'Loading…'}</b><small>${sc&&sc.np&&sc.nd>=sc.np?'Everything planned is done.':''}</small></div>`;
+  return `<button class="nlsc" data-act="scoreSheet">${ring}<span class="nlst"><span class="nlk">Today so far</span><b>${sc?`${sc.nd} of ${sc.np} done`:'No plan yet'}</b><small>${sc?(fin?'Teaching’s done':sc.s>=60?'On track for a full day':'Plenty of day left'):''}</small></span></button>${nx}`}
+function nlWaitStrip(){const a=qWait(),q=qOpen().length,n=a.length+q;if(!n)return'';const by={};for(const x of a){const p=S.projects.find(y=>y.id===x.agent);const k=p?agName(p):'Agent';by[k]=(by[k]||0)+1}
+  const sum=[...Object.entries(by).map(([k,c])=>k+(c>1?' '+c:'')),q?q+' question'+(q>1?'s':''):''].filter(Boolean).join(' · ');
+  return `<button class="nlws" data-act="nlWaitGo"><span class="nlwi" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${NLI.agents}"/></svg></span><span class="grow"><b>${a.length?`${a.length} thing${a.length>1?'s':''} waiting from your agents`:`${q} question${q>1?'s':''} for you`}</b><small>${esc(sum)}</small></span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>`}
+function nlWeek(){if(!S.tlKnown)return'';const ag=tAgg(monOf(today()),today()),B=balOf(),keys=['teach','work','health','social','hobby','rest','life'].filter(k=>(ag.cat[k]||0)>0.05);if(!keys.length)return'';
+  const tot=keys.reduce((a,k)=>a+ag.cat[k],0),nm={teach:'Teaching',work:'Work',health:'Health',social:'People',hobby:'Hobby',rest:'Rest',life:'Everyday'};
+  const tg=B.t||{},wd=Math.max(1,ag.wd||1);
+  const bars=DESK.on?`<div class="nlwk-l">${keys.map(k=>{const tgt=k==='teach'?0:(tg[k]||0)*(k==='work'?1:1)*(wd/5),v=ag.cat[k]||0,pc=tgt?Math.min(100,v/tgt*100):Math.min(100,v/tot*100);return `<div class="nlwkr"><div><span>${nm[k]}</span><span class="num">${hrs(v)}${tgt?' of '+hrs(tgt):''}</span></div><i><b style="width:${pc.toFixed(0)}%;background:var(--tc-${k})"></b></i></div>`}).join('')}</div>`
+    :`<div class="nlwkb">${keys.map(k=>`<i style="flex:${(ag.cat[k]).toFixed(2)};background:var(--tc-${k})"></i>`).join('')}</div><div class="nlwkt">${keys.map(k=>`<span><i style="background:var(--tc-${k})"></i>${nm[k]} ${hrs(ag.cat[k])}</span>`).join('')}</div>`;
+  return `<button class="card nlwk" data-act="nlGo" data-v="streaks"><div class="nlwkh"><b>This week so far</b><small>${esc(BAL[B.k]?.[0]||'')}${BAL[B.k]?' mode':''}</small></div>${bars}</button>`}
+function nlDecorate(){const box=$('nowBox');if(!box)return;
+  for(const li of box.querySelectorAll('li.r[data-row]')){if(li.dataset.nl)continue;li.dataset.nl='1';const t=S.tasks.get(li.dataset.row),k=nlCat(t);li.classList.add('nlc');li.style.setProperty('--tc',`var(${NLCAT[k][1]})`);
+    const w=DESK.on?li.querySelector('.rmw'):null;const tag=`<span class="nltag" style="--tc:var(${NLCAT[k][1]})">${esc(nlTagTxt(k,t))}</span>`;if(w)w.insertAdjacentHTML('afterbegin',tag);else li.querySelector('.rt')?.insertAdjacentHTML('beforeend',' '+tag)}
+  for(const li of box.querySelectorAll('li.r.fx:not(.soft)')){if(li.dataset.nl)continue;li.dataset.nl='1';li.querySelector('.rt')?.insertAdjacentHTML('beforeend',' <span class="nltag fx">fixed</span>')}}
+function nlToday(){const vt=$('v-today');if(!vt)return;let h=$('nlHero'),w=$('nlWk');
+  if(!isNL()){h?.remove();w?.remove();document.body.classList.remove('nltoday');return}
+  document.body.classList.add('nltoday');
+  if(!h){h=document.createElement('div');h.id='nlHero'}h.innerHTML=`<div class="nlhg">${nlHero()}${DESK.on?nlWaitStrip()||'<div class="nlws empty"><span class="grow"><b>Nothing waiting</b><small>Your agents and questions are clear</small></span></div>':''}</div>${DESK.on?'':nlWaitStrip()}`;
+  if(vt.firstChild!==h)vt.insertBefore(h,vt.firstChild);
+  if(!w){w=document.createElement('div');w.id='nlWk'}w.innerHTML=nlWeek();
+  const R=$('deskR'),nb=$('nowBox');if(DESK.on&&R&&R.isConnected){if(R.firstChild!==w)R.insertBefore(w,R.firstChild)}else if(nb&&nb.nextSibling!==w)nb.after(w);
+  nlDecorate()}
+{const _rt78=renderToday;renderToday=function(){_rt78();try{nlToday()}catch(e){console.warn(e)}}}
+{const _ls78=LOOK.set;LOOK.set=function(k,v){_ls78.call(LOOK,k,v);if(k==='look')try{renderToday()}catch(e){}}}
+{const _da78=deskApply;deskApply=function(){_da78.apply(this,arguments);try{nlToday()}catch(e){}}}
+{const _ar78=agRedraw;agRedraw=function(){_ar78();try{if(S.view==='today'&&isNL())nlToday()}catch(e){}}}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act=nlWaitGo]');if(!b)return;e.stopImmediatePropagation();e.preventDefault();if(!qWait().length&&qOpen().length){typeof qSheet==='function'?qSheet():show('more');return}S.nlAg='';S.agSel='';S.nlWait=true;show('agents')},true);
 /* ---------- background record-keeping is spaced out, and silent in a hidden or out-of-date copy ---------- */
 {const gate=(fn,ms)=>{let last=0,tm=null;return function(){if(S.stale||document.visibilityState!=='visible')return;const n=Date.now(),w=last+ms-n;if(w<=0){last=n;return fn()}if(!tm)tm=setTimeout(()=>{tm=null;if(S.stale||document.visibilityState!=='visible')return;last=Date.now();try{fn()}catch(e){console.warn(e)}},w+50)}};
   scoreSync=gate(scoreSync,20000);trackPlan=gate(trackPlan,20000)}

@@ -670,3 +670,13 @@ open a specific chat yet; the send list uses WhatsApp's share link (the chat is 
 - Agents without a run-now task show "Set up Run now": copy the filled task text (Jarvis link from
   `settings/main.jarvisUrl`, connectors from `conns`), paste it into a new scheduled task, paste its link or id back
   (anything containing trig_...) to link it.
+### v78 (BUILD 76) — new-look Today
+- `#nlHero` at the top of Today: score ring (amber arc, "so far" until teaching ends, then the verdict) with "x of y
+  done", a Next up card (first open item, its time and length, "before teaching at …"), and an amber Waiting strip
+  (agent items + questions; tap opens the Agents tab with the waiting list open, or the questions if only those wait).
+  Desktop: the three cards side by side across the page. The old Today "Agents" card is hidden in the new look (re-homed).
+- Docket rows are decorated after each render, nothing re-built: tick and tag in the item's category colour (Centre,
+  Growth/ABA, Health, People, Life; `nlCat` from area, category and title), done rows muted, fixed blocks tagged "fixed".
+  Tag sits by the time on desktop and under the title on phones. Drag, tap menu, undo and the tap guard are unchanged.
+- `#nlWk` "This week so far": from the time log; phone = one stacked bar with hours and the balance mode; desktop = bars
+  against the balance targets, at the top of the right column. Everything else on Today stays below.
