@@ -2,7 +2,7 @@
 
 Written by the owner on 2026-11-27; names and amounts removed here because the repository is public. The named copy is
 on the agent's project page in Jarvis. Status: stage 2 (written). Stage 1 was done by hand on 2026-11-23; the first
-dry run against the written rules is in `STAGE1.md`.
+dry run against the written rules is in `STAGE1.md`. 2026-11-28: the owner chose to go live after one matching dry run, skipping the rehearsal stage.
 
 ## Goal
 Keep every active student's makeup balance (in hours) correct in the Scheduler. Positive = hours owed to the student.
