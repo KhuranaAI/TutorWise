@@ -690,3 +690,6 @@ open a specific chat yet; the send list uses WhatsApp's share link (the chat is 
 ### v80 (BUILD 78) — approve starts the save
 - Approve also writes `approvedAt`. For agents with `saveOnApprove:true` and a linked run-now task, the app fires one
   Run now ~60 s after the last approval (waits if a run is already going). Contract in agents/README.md.
+### v81 (BUILD 79) — see that approvals saved
+- Agent Output shows "Recently approved" (last 2 days): each approved draft as "Approved · saves on the next run",
+  "Saving now…", "Saved <when>" or "Not saved: <error>", read from the queue item's status.

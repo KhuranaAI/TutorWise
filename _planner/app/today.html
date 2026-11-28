@@ -2437,7 +2437,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.nextSkip=[];
-const BUILD=78;
+const BUILD=79;
 const DH=id=>`<span class="dh" data-drag="${id}" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg></span>`;
 /* his own ranking (dragged in Tasks) decides between two ranked items */
 const ordBoth=(a,b)=>Number.isFinite(a.ord)&&Number.isFinite(b.ord)?a.ord-b.ord:0;
@@ -4671,8 +4671,11 @@ function agOutHist(p){const runs=agRuns(p.id).filter(r=>r.status!=='running');if
   return runs.slice(0,12).map(r=>`<div class="card agout"><div class="agoh"><span class="m">${esc(agWhen(r.at))}${r.kind?' · '+esc(r.kind):''}</span>${r.status==='failed'?'<span class="agrh bad">Failed</span>':r.saved?'<span class="agrh ok">Saved</span>':'<span class="agrh">Rehearsal · nothing saved</span>'}</div>
     <div class="agot">${esc(r.title||'')}</div>${r.found?`<div class="m" style="white-space:pre-wrap;margin-top:6px">${esc(r.found)}</div>`:''}
     ${(r.changes||[]).length?`<div class="m" style="margin-top:8px"><b>${r.saved?'Changed':'Would change'}:</b></div><ul class="agch">${r.changes.map(c=>`<li>${esc(c)}</li>`).join('')}</ul>`:''}</div>`).join('')}
-function agQs(p){const w=qWait(p.id);if(!w.length)return'';
-  return `<div class="agwh"><h3>Questions for you</h3><small>${w.length}</small></div>${w.map(x=>`<div class="agq">${qItem(x)}${x.kind!=='draft'?`<form class="qans" data-id="${x.id}"><input placeholder="Or answer in your own words" aria-label="Your answer"><button class="sm" type="submit">Save</button></form>`:''}</div>`).join('')}`}
+function agRecent(p){const cut=Date.now()-2*864e5,l=S.queue.filter(x=>x.agent===p.id&&['approved','saved','failed'].includes(x.status)&&Date.parse(x.savedAt||x.failedAt||x.approvedAt||x.doneAt||x.at||0)>cut).sort((a,b)=>String(b.approvedAt||b.doneAt||'').localeCompare(String(a.approvedAt||a.doneAt||''))).slice(0,10);if(!l.length)return'';
+  return `<div class="agwh"><h3>Recently approved</h3><small>${l.length}</small></div><div class="card">${l.map(x=>{const st=x.status==='saved'?['ok','Saved'+(x.savedAt?' '+agWhen(x.savedAt):'')]:x.status==='failed'?['bad','Not saved: '+(x.error||'see the run')]:['run',agRunning(p.id)?'Saving now…':'Approved · saves on the next run'];
+    return `<div class="item agrl"><span class="agrd ${st[0]}" aria-hidden="true"></span><div class="grow"><div class="t" style="font-size:14.5px">${esc(x.title||'')}</div><div class="m">${esc(st[1])}</div></div></div>`}).join('')}</div>`}
+function agQs(p){const w=qWait(p.id);if(!w.length)return agRecent(p);
+  return `<div class="agwh"><h3>Questions for you</h3><small>${w.length}</small></div>${w.map(x=>`<div class="agq">${qItem(x)}${x.kind!=='draft'?`<form class="qans" data-id="${x.id}"><input placeholder="Or answer in your own words" aria-label="Your answer"><button class="sm" type="submit">Save</button></form>`:''}</div>`).join('')}${agRecent(p)}`}
 function agRunList(p){const runs=agRuns(p.id);if(!runs.length)return'<div class="card"><div class="m">No runs yet.</div></div>';
   return `<div class="card">${runs.slice(0,30).map(r=>{const st=r.status==='running'?['run','Running']:r.status==='failed'?['bad','Error']:['ok','Done'];
     return `<div class="item agrl"><span class="agrd ${st[0]}" aria-hidden="true"></span><div class="grow"><div class="m">${esc(agWhen(r.at))} · ${esc(r.kind==='live'?'live':'rehearsal')} · ${st[1]}</div><div class="t" style="font-size:15px">${esc(short(r.status==='failed'?(r.found||r.title||'Failed'):(r.title||'')))}</div></div></div>`}).join('')}</div>`}
