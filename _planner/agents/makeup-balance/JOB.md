@@ -31,6 +31,9 @@ For each finished month:
    hours for the month they were bought for. Bought hours that are not used become owed hours (owner's ruling,
    2026-11-28). A bought block that says it runs past the month (e.g. "covers lessons through <date>") is counted in
    the months it covers; ask the owner how to split it.
+   Ruling 2026-11-28: when a subscription student uses up the month's hours early and buys a new block, hours done
+   beyond the month's quota are the first hours of the new block, not extra. The month nets to 0 and the block's
+   remaining hours carry into the next month as that month's expected hours.
 5. Month result = billed - attended.
 
 ## Step 2: current month, week by week
