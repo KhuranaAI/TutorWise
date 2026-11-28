@@ -22,6 +22,12 @@ Connectors to attach to a scheduled run: Scheduler, Billing, Google Sheets.
 - A week belongs to the month its Wednesday falls in (the scheduler's reporting month).
 - Never change billing. This agent only sets makeup balances.
 
+## Carry forward (owner's ruling, 2026-11-28)
+Balances carry forward month to month. A missed lesson stays owed until it is made up: a normal month afterwards does
+not clear it; the student has to do that many hours on top of the month's quota. The count starts at the October 2026
+reporting month. Anything owed from before that (for example a short week the scheduler files under September) is the
+student's opening balance, kept as an entry in the manual-adjustments list with reason "opening balance".
+
 ## Step 1: closed months (billed against attended)
 For each finished month:
 1. Hourly students: billed hours = the hours on that month's tuition charge in Billing.

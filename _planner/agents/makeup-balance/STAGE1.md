@@ -32,3 +32,13 @@ Findings that should change the job description once the owner has ruled:
 
 Next: owner rulings, apply them to the job description, then stage 3 (rehearsal on a schedule: attach the Scheduler,
 Billing and Google Sheets connectors; report only, never save).
+
+## Second dry run, 2026-11-28 (with Scheduler, Billing and Google Sheets; nothing saved)
+All four November weeks finished. After the owner's rulings (bought hours count as billed; a renewed block carries into
+the next month; missed lessons stay owed until made up; an opening balance from before October), the run matches his
+numbers for all 14 students. Run 1 of 2 needed. What moved: a student with no lessons booked in the last week (+ a full
+week, confirmed); last-week over/under for three students; one subscription student zeroed because a mid-month renewal
+covers the extra hours (6 h of the new block left for December); one student short in the week of Sep 28 (filed under
+September) carried in as a +1 opening balance. Finding 5 above was wrong for that student: the October hours matched,
+the owed hour came from the earlier week. Still open: whether a money credit on a bill settles an owed hour (owner kept
+the student at the full balance), and whether bought hours noted on the October tab belong to October.
