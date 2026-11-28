@@ -27,11 +27,16 @@ For each finished month:
 1. Hourly students: billed hours = the hours on that month's tuition charge in Billing.
 2. Monthly or quarterly subscription students: billed hours = Lessons/Week from that month's tab x weeks in the month.
 3. Attended hours = attended_hours for the student in month_summary.
-4. Month result = billed - attended.
+4. Hours bought on top of the plan (the sheet's Additional Fee Notes, e.g. "additional 2 hours") are added to billed
+   hours for the month they were bought for. Bought hours that are not used become owed hours (owner's ruling,
+   2026-11-28). A bought block that says it runs past the month (e.g. "covers lessons through <date>") is counted in
+   the months it covers; ask the owner how to split it.
+5. Month result = billed - attended.
 
 ## Step 2: current month, week by week
 For each finished week of the current month:
-1. Expected = the student's Lessons/Week from that month's tab.
+1. Expected = the student's Lessons/Week from that month's tab, plus any hours bought for this month (Step 1, item 4),
+   spread over the month's weeks.
 2. Actual = attended hours that week, from get_week.
 3. Week result = expected - actual.
 4. Exception: if the month was already billed short to cover a short week (billed hours < Lessons/Week x weeks), do not
