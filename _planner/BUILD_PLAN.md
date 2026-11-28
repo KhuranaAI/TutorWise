@@ -662,3 +662,11 @@ open a specific chat yet; the send list uses WhatsApp's share link (the chat is 
   average of the last finished runs, else `etaMin` or 12 minutes. A "Running now · ready around ..." banner counts down.
 - No trigger yet: the request is saved to `nextAsk` and he is told why. Capability: Claude Code Remote [fire_trigger].
 - The run-now task texts live with him (they contain his Jarvis link), not in this repo.
+### v77 (BUILD 75) — a workflow to make agents
+- Recipe: `_planner/agents/RECIPE.md`, templates in `_planner/agents/templates/`, project skill `/build-agent`.
+- Agents tab: "+ New agent". He gives name, team, what it should do, what it reads, how often; Claude drafts the job
+  (Goal / Sources / Rules / Steps / Output / When), one-line job, up to 4 questions and an icon; he edits, answers,
+  redrafts if wanted, then Create: `projects/ag_<slug>` (paused, team, icon, conns, often, n) + four stage tasks.
+- Agents without a run-now task show "Set up Run now": copy the filled task text (Jarvis link from
+  `settings/main.jarvisUrl`, connectors from `conns`), paste it into a new scheduled task, paste its link or id back
+  (anything containing trig_...) to link it.
