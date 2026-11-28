@@ -59,3 +59,19 @@ The conversation is kept in the `agentchat` collection ({agent, who: me|agent, t
 
 **Every run of an agent must first read its `instr` and open `nextAsk` items and follow them**, then mark each `nextAsk`
 it handled as `done: true`, saying so in its run summary. The chat never runs the job itself and never sends anything out.
+
+## Record format (what shows on an agent's page)
+**Each run → `agentruns/<RUN_ID>`** (RUN_ID like `run_<short>_<UTC yyyymmddhhmm>`, or the one the app passes):
+`{agent:"ag_<slug>", at, startedAt, finishedAt, status:"running"|"done"|"failed", kind:"rehearsal"|"live", saved:false|true,
+title:"one line", found:"plain summary, under 1200 chars", changes:["would change / changed lines"]}`
+→ Output view: one card per run, newest first ("Rehearsal · nothing saved" / "Saved" / "Failed" + found). Runs view: when, kind, status, title.
+
+**Each question or draft → `queue/<id>`:**
+`{agent:"ag_<slug>", at, kind:"question" (options: 2-3 short answers → buttons) | "draft" (body → Approve/Edit/Reject/Copy),
+title:"one line", rehearsal:true|false, status:"waiting", run:RUN_ID}`
+→ top of Output as "Questions for you"; he can also type an answer. Answers land as `status:"answered", answer`.
+If he answers in the agent's own chat, that chat writes the same: `{status:"answered", answer, doneAt, via:"agent chat"}`.
+Never re-ask an item that is waiting or answered. Pin writes to existing documents with `if_version`.
+
+**Agent chats.** Each active agent has its own Claude chat session that owns its job files (`_planner/agents/<slug>/`)
+and dry runs, and takes its open questions to him one at a time. They do not change app code.
