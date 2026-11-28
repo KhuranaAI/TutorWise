@@ -2437,7 +2437,7 @@ const seedOf=s=>[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
 const vary=(arr,key)=>arr[seedOf(today()+key)%arr.length];
 const dayDoc=d=>S.days.get(d)||{};
 S.notes=[];S.people=[];S.hab=new Map();S.pat=null;S.nextSkip=[];
-const BUILD=77;
+const BUILD=78;
 const DH=id=>`<span class="dh" data-drag="${id}" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg></span>`;
 /* his own ranking (dragged in Tasks) decides between two ranked items */
 const ordBoth=(a,b)=>Number.isFinite(a.ord)&&Number.isFinite(b.ord)?a.ord-b.ord:0;
@@ -4313,7 +4313,7 @@ function agTodayCard(){const w=qWait();if(!w.length)return'';const by={};for(con
   return `<button class="lnk agt" data-act="agents"><span class="grow">Agents: ${w.length} waiting for you<small>${Object.entries(by).map(([a,c])=>{const p=S.projects.find(y=>y.id===a);return esc(p?agName(p):'Agent')+' '+c}).join(' · ')}</small></span></button>`}
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,id=b.dataset.id;
   const H={agents:()=>{S.agSel='';agentsSheet()},agOpen:()=>{S.agSel=id;agentsSheet();$('sheetBody').scrollTop=0},agBack:()=>{S.agSel='';agentsSheet()},
-    qiOk:async()=>{await db.doc('queue/'+id).update({status:'approved',doneAt:stamp()});toast('Approved.',1400)},
+    qiOk:async()=>{const ts=new Date().toISOString();await db.doc('queue/'+id).update({status:'approved',doneAt:stamp(),approvedAt:ts});toast('Approved.',1400);try{if(typeof agAutoSave==='function')agAutoSave(id)}catch(er){console.warn(er)}},
     qiNo:async()=>{await db.doc('queue/'+id).update({status:'rejected',doneAt:stamp()});toast('Rejected.',1400)},
     qiAns:async()=>{await db.doc('queue/'+id).update({status:'answered',answer:b.dataset.v,doneAt:stamp()});toast('Answered: '+b.dataset.v,1600)},
     qiEdit:()=>{S.qEdit=id;agRedraw()},qiEditX:()=>{S.qEdit='';agRedraw()},
@@ -4502,7 +4502,7 @@ Return JSON only: {"reply":"...","ops":[...]}`}
 async function acApply(p,ops){const done=[],ids=new Set(qWait(p.id).map(x=>x.id));
   for(const o of (Array.isArray(ops)?ops:[]).slice(0,6)){try{
     if(o.op==='answer'&&ids.has(o.id)&&o.answer){await db.doc('queue/'+o.id).update({status:'answered',answer:String(o.answer).slice(0,300),doneAt:stamp(),via:'agent chat'});done.push('answered')}
-    else if(o.op==='approve'&&ids.has(o.id)){await db.doc('queue/'+o.id).update({status:'approved',doneAt:stamp(),via:'agent chat'});done.push('approved')}
+    else if(o.op==='approve'&&ids.has(o.id)){await db.doc('queue/'+o.id).update({status:'approved',doneAt:stamp(),approvedAt:new Date().toISOString(),via:'agent chat'});done.push('approved');try{agAutoSave(o.id)}catch(er){}}
     else if(o.op==='reject'&&ids.has(o.id)){await db.doc('queue/'+o.id).update({status:'rejected',doneAt:stamp(),via:'agent chat'});done.push('rejected')}
     else if(o.op==='edit'&&ids.has(o.id)&&o.body){await db.doc('queue/'+o.id).update({body:String(o.body).slice(0,4000),edited:stamp()});done.push('draft edited')}
     else if(o.op==='instruct'&&o.text){const l=[...(p.instr||[]),{t:String(o.text).slice(0,400),at:stamp()}].slice(-30);await db.doc('projects/'+p.id).update({instr:l,up:stamp()});p.instr=l;done.push('instruction saved')}
@@ -4686,6 +4686,11 @@ function agRunList(p){const runs=agRuns(p.id);if(!runs.length)return'<div class=
   return h}}
 document.addEventListener('submit',async e=>{const f=e.target.closest('.qans');if(!f)return;e.preventDefault();e.stopImmediatePropagation();const v=(f.querySelector('input')?.value||'').trim();if(!v)return;
   try{await db.doc('queue/'+f.dataset.id).update({status:'answered',answer:v.slice(0,500),doneAt:stamp(),via:'typed'});toast('Saved. Its next run will use your answer.',1800)}catch(er){toast('Couldn’t save that. Try again.',2000)}},true);
+/* ---------- v80: approving a draft of a "save on approve" agent starts one Run now (batched: about a minute after the last approval) ---------- */
+function agAutoSave(qid){const x=S.queue.find(y=>y.id===qid);const p=x&&S.projects.find(y=>y.id===x.agent);if(!p||!p.saveOnApprove||!p.trigger)return;
+  S.asT=S.asT||{};clearTimeout(S.asT[p.id]);const go=async()=>{if(agRunning(p.id)){S.asT[p.id]=setTimeout(go,120000);return}
+    const r=await agRunNow(p,'Save the drafts he approved (status "approved"), then mark each one saved.');toast(r.ok?`Saving your approvals: ${agName(p)} is running now.`:r.msg,3200)};
+  S.asT[p.id]=setTimeout(go,60000);toast(`${agName(p)} will save your approvals in about a minute.`,2200)}
 /* ---------- background record-keeping is spaced out, and silent in a hidden or out-of-date copy ---------- */
 {const gate=(fn,ms)=>{let last=0,tm=null;return function(){if(S.stale||document.visibilityState!=='visible')return;const n=Date.now(),w=last+ms-n;if(w<=0){last=n;return fn()}if(!tm)tm=setTimeout(()=>{tm=null;if(S.stale||document.visibilityState!=='visible')return;last=Date.now();try{fn()}catch(e){console.warn(e)}},w+50)}};
   scoreSync=gate(scoreSync,20000);trackPlan=gate(trackPlan,20000)}

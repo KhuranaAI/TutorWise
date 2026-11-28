@@ -687,3 +687,6 @@ open a specific chat yet; the send list uses WhatsApp's share link (the chat is 
 - Job (job description, Run now setup) and Talk (agent chat) are kept behind small header links, not removed.
 - Each active agent now also has its own Claude chat session that owns its job files and dry runs; they were given the
   agentruns / queue record format and their open questions.
+### v80 (BUILD 78) — approve starts the save
+- Approve also writes `approvedAt`. For agents with `saveOnApprove:true` and a linked run-now task, the app fires one
+  Run now ~60 s after the last approval (waits if a run is already going). Contract in agents/README.md.

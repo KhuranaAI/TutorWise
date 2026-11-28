@@ -75,3 +75,13 @@ Never re-ask an item that is waiting or answered. Pin writes to existing documen
 
 **Agent chats.** Each active agent has its own Claude chat session that owns its job files (`_planner/agents/<slug>/`)
 and dry runs, and takes its open questions to him one at a time. They do not change app code.
+
+## Approve → save (agents that change records, from v80)
+- Approve in Jarvis (or "approve" in the agent's Talk) writes `queue/<id>`: `{status:"approved", approvedAt: ISO, doneAt}`.
+  Edit writes `{body, edited}`; Reject writes `{status:"rejected", doneAt}`; a typed or chat answer writes `{status:"answered", answer, doneAt, via}`.
+- The run that saves an approved draft then writes `{status:"saved", savedAt: ISO, change_id, savedBy: RUN_ID}`, or on
+  failure `{status:"failed", error, failedAt}` (leave it for him; never retry silently). It saves exactly the approved
+  body (re-check with a dry run first; if the numbers moved since, write a new draft instead of saving).
+- If the agent project has `saveOnApprove: true` and a linked `trigger`, the app starts one Run now about a minute after
+  his last approval (batched), with REQUEST "Save the drafts he approved…". Its run-now task must be the live version
+  (saves allowed only for approved drafts) and must have the connectors attached.
