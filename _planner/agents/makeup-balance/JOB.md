@@ -2,7 +2,7 @@
 
 Written by the owner on 2026-11-27; names and amounts removed here because the repository is public. The named copy is
 on the agent's project page in Jarvis. Status: stage 2 (written). Stage 1 was done by hand on 2026-11-23; the first
-dry run against the written rules is in `STAGE1.md`.
+dry run against the written rules is in `STAGE1.md`. 2026-11-28: the owner chose to go live after one matching dry run. Every balance change waits in the approval queue; the agent saves only what he approved.
 
 ## Goal
 Keep every active student's makeup balance (in hours) correct in the Scheduler. Positive = hours owed to the student.
@@ -22,16 +22,30 @@ Connectors to attach to a scheduled run: Scheduler, Billing, Google Sheets.
 - A week belongs to the month its Wednesday falls in (the scheduler's reporting month).
 - Never change billing. This agent only sets makeup balances.
 
+## Carry forward (owner's ruling, 2026-11-28)
+Balances carry forward month to month. A missed lesson stays owed until it is made up: a normal month afterwards does
+not clear it; the student has to do that many hours on top of the month's quota. The count starts at the October 2026
+reporting month. Anything owed from before that (for example a short week the scheduler files under September) is the
+student's opening balance, kept as an entry in the manual-adjustments list with reason "opening balance".
+
 ## Step 1: closed months (billed against attended)
 For each finished month:
 1. Hourly students: billed hours = the hours on that month's tuition charge in Billing.
 2. Monthly or quarterly subscription students: billed hours = Lessons/Week from that month's tab x weeks in the month.
 3. Attended hours = attended_hours for the student in month_summary.
-4. Month result = billed - attended.
+4. Hours bought on top of the plan (the sheet's Additional Fee Notes, e.g. "additional 2 hours") are added to billed
+   hours for the month they were bought for. Bought hours that are not used become owed hours (owner's ruling,
+   2026-11-28). A bought block that says it runs past the month (e.g. "covers lessons through <date>") is counted in
+   the months it covers; ask the owner how to split it.
+   Ruling 2026-11-28: when a subscription student uses up the month's hours early and buys a new block, hours done
+   beyond the month's quota are the first hours of the new block, not extra. The month nets to 0 and the block's
+   remaining hours carry into the next month as that month's expected hours.
+5. Month result = billed - attended.
 
 ## Step 2: current month, week by week
 For each finished week of the current month:
-1. Expected = the student's Lessons/Week from that month's tab.
+1. Expected = the student's Lessons/Week from that month's tab, plus any hours bought for this month (Step 1, item 4),
+   spread over the month's weeks.
 2. Actual = attended hours that week, from get_week.
 3. Week result = expected - actual.
 4. Exception: if the month was already billed short to cover a short week (billed hours < Lessons/Week x weeks), do not
